@@ -1,0 +1,175 @@
+{% extends "layout/control.html" %}
+
+{% block title %}图片管理{% endblock %}
+
+{% block head %}
+<style>
+    #page {
+        text-align: center;
+    }
+    .waterfall {
+        -moz-column-count: auto;
+        -webkit-column-count: auto;
+        column-count: auto;
+        -moz-column-width: 15em;
+        -webkit-column-width: 15em;
+        column-width: 15em;
+        -moz-column-gap: 1em;
+        -webkit-column-gap: 1em;
+        column-gap: 1em;
+    }
+    .pin {
+        margin: 0 0.125em 1em;
+        /*
+        padding: 1em;
+        -moz-page-break-inside: avoid;
+        -webkit-column-break-inside: avoid;
+        break-inside: avoid;
+        background: white;
+        -moz-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12), 0 1px 2px 0 rgba(0, 0, 0, 0.24);
+        -webkit-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12), 0 1px 2px 0 rgba(0, 0, 0, 0.24);
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12), 0 1px 2px 0 rgba(0, 0, 0, 0.24);
+        */
+    }
+    .pin img {
+        width: 100%;
+        /*padding-bottom: 1em;*/
+        margin-bottom: 0.5em;
+        border-bottom: 0px solid #fff;
+    }
+    .pin .description {
+        text-align: center;
+        position: absolute;
+    }
+    body .my-layer .layui-layer-btn .layui-layer-btn0 {
+        background: #FF5722;
+        border-color: #FF5722;
+        color: #fff;
+    }
+    body .my-layer .layui-layer-btn .layui-layer-btn2 {
+        background: #01AAED;
+        border-color: #01AAED;
+        color: #fff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="layui-container">
+    <div id="waterfall" class="waterfall"></div>
+    <div id="page"></div>
+</div>
+{% endblock %}
+
+{% block script %}
+{% include "ref/upload_show.html" %}
+<script>
+    layui.use(['picbed', 'laypage', 'flow', 'element', 'layer', 'laytpl', 'util'], function () {
+        var $ = layui.jquery,
+            picbed = layui.picbed,
+            util = layui.util,
+            flow = layui.flow,
+            layer = layui.layer,
+            laytpl = layui.laytpl,
+            element = layui.element,
+            laypage = layui.laypage;
+        var curr = location.hash.replace('#!page=', ''),
+            limit = parseInt("{{ request.args.limit or 10 }}");
+        function get_pics(page, limit, success) {
+            picbed.ajax("{{ url_for('api.waterfall', sort='desc') }}&page=" + page + "&limit=" + limit, function (res) {
+                console.log(res);
+                var shaDatas = {};
+                var html = res.data.map(function (img) {
+                    img["ctime"] = util.toDateString(img.ctime * 1000);
+                    img["is_control"] = true;
+                    shaDatas[img.sha] = img;
+                    return '<div class="pin"><img lay-src="' + img.src +'" data-sha="' + img.sha + '"></div>';
+                }).join("");
+                $("#waterfall").html(html);
+                flow.lazyimg(); 
+                success && success(res);
+                $("#waterfall").find(".pin img").on("click", function() {
+                    var sha = $(this).data("sha"),
+                        src = this.src;
+                    laytpl(upload_show_tpl.innerHTML).render(shaDatas[sha], function(html){
+                        layer.open({
+                            type: 1,
+                            title: false,
+                            closeBtn: true,
+                            area: document.body.clientWidth > 550 ? '550px' : 'auto',
+                            maxHeight: '500px',
+                            id: 'upload_show_area',
+                            skin: 'my-layer',
+                            shade: 0.1,
+                            shadeClose: true,
+                            btn: ['删除', '关闭', '原图'],
+                            btnAlign: 'c',
+                            content: html,
+                            success: function(layero, indexo) {
+                                element.render('tab');
+                                if (shaDatas[sha]["status"] === 'deleted') {
+                                    layero.children(".layui-layer-btn").children(".layui-layer-btn0").text("已删除");
+                                }
+                                $(layero).find('.upload_show_copy').on('click', function() {
+                                    var copyId = $(this).data('copyid');
+                                    picbed.Clipboard.copy($(copyId).text());
+                                });
+                            },
+                            yes: function(index, layero){
+                                //按钮【删除】的回调
+                                if (layero.children(".layui-layer-btn").children(".layui-layer-btn0").text() === "确认删除") {
+                                    picbed.ajax("{{ url_for('api.shamgr', sha='') }}" + sha, function(res) {
+                                        layer.msg("已删除", {icon:1});
+                                        shaDatas[sha]["status"] = "deleted";
+                                        layero.children(".layui-layer-btn").children(".layui-layer-btn0").text("已删除");
+                                    }, {
+                                        method: 'delete'
+                                    });
+                                } else {
+                                    if (layero.children(".layui-layer-btn").children(".layui-layer-btn0").text() === "删除") {
+                                        layero.children(".layui-layer-btn").children(".layui-layer-btn0").text("确认删除");
+                                    }
+                                }
+                            },
+                            btn2: function(index, layero){
+                                //按钮【关闭】的回调
+                                layer.close(index);
+                            },
+                            btn3: function(index, layero) {
+                                //按钮【原图】的回调
+                                var id = "jump-" + sha,
+                                    a = document.createElement("a");
+                                a.style.display='none';
+                                a.setAttribute("href", src);
+                                a.setAttribute("target", "_blank");
+                                a.setAttribute("id", id);
+                                if(!document.getElementById(id)) {
+                                    document.body.appendChild(a);
+                                }
+                                a.click();
+                                return false;
+                            },
+                        });
+                    });
+                });
+            }, {
+                method: 'get'
+            });
+        }
+        get_pics(curr, limit, function (res) {
+            laypage.render({
+                elem: 'page',
+                count: res.count,
+                limit: limit,
+                hash: 'page',
+                curr: curr, //起始页
+                jump: function (obj, first) {
+                    if (!first) {
+                        get_pics(obj.curr, obj.limit);
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

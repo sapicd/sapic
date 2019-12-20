@@ -1,0 +1,78 @@
+{% extends "layout/public.html" %}
+
+{% block title %}登录{% endblock %}
+
+{% block head %}
+<style>
+    /*登录区域*/
+    .layui-input-block {
+        margin-left: 0;
+    }
+    .login-area {
+        width: 266px;
+        border-radius: 20px;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .remember {
+        text-align: left;
+    }
+    .login-area .title {
+        color: #009688;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+        <div class="login-area">
+            <h3 class="title">{{ g.site.login_title or '登录你的Picbed' }}</h3>
+            <form class="layui-form" action="">
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <input type="text" name="username" required lay-verify="required" placeholder="请输入登录用户" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <input type="password" name="password" required lay-verify="required" placeholder="请输入登录密码" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block remember">
+                        <input type="checkbox" name="remember" value="true" checked="checked" title="记住我" autocomplete="off">
+                    </div>
+                </div>
+                <input type="hidden" name="set_state" value="true">
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn layui-btn-fluid" lay-submit lay-filter="login">登录</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    layui.use(['picbed', 'form', 'layer'], function(){
+        var picbed = layui.picbed,
+            form = layui.form;
+        //监听提交
+        form.on('submit(login)', function(data) {
+            picbed.ajax("{{ url_for('api.login') }}", function(res) {
+                layer.msg("登录成功，即将跳转...", {icon:1,time:1000}, function() {
+                    location.href = "{{ request.args.next or '/' }}";
+                });
+            }, {
+                data: data.field
+            });
+            return false;
+        });
+    });
+</script>
+{% endblock %}

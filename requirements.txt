@@ -1,0 +1,4 @@
+Flask>=1.0.0
+gunicorn<20
+gevent<=1.4.0
+redis>2.10.0

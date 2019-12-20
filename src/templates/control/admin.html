@@ -1,0 +1,446 @@
+{% extends "layout/control.html" %}
+
+{% block title %}图床管理员{% endblock %}
+
+{% block head %}
+<style>
+    .layui-elem-field legend {
+        font-size: 13px;
+    }
+    .layui-elem-field {
+        font-size: 12px;
+    }
+    .layui-elem-field .layui-elem-field legend {
+        font-size: 10px;
+    }
+    .layui-elem-field legend {
+        font-size: 13px;
+        font-weight: bold;
+        color: #009688;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="layui-container">
+    <div class="layui-tab layui-tab-brief" lay-filter="tab">
+        <ul class="layui-tab-title">
+            <li class="layui-this" lay-id="setting">网站设置</li>
+            <li lay-id="hook">钩子扩展</li>
+        </ul>
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <form class="layui-form" id="control" lay-filter="setting" autocomplete="off">
+                    <fieldset class="layui-elem-field layui-field-title">
+                        <legend>站点</legend>
+                        <div class="layui-field-box">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">标题后缀</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="title_suffix" value="{{ g.site.title_suffix }}"
+                                        placeholder="站点标题后缀，默认是：| Hello picbed" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">登录欢迎文案</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="login_title" value="{{ g.site.login_title }}"
+                                        placeholder="登录页面的标题文字，默认是：登录你的Picbed" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">图标</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="favicon" value="{{ g.site.favicon }}" placeholder="站点图标地址"
+                                        autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">背景图</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="bg_mg" value="{{ g.site.bg_mg }}" placeholder="站点背景图地址，双击可选择默认提供的背景图"
+                                        autocomplete="off" class="layui-input" list="bg_mg_defaults">
+                                    <datalist id="bg_mg_defaults">
+                                        <option value="https://open.saintic.com/api/bingPic">
+                                        <option value="{{ url_for('static', filename='img/bg1.jpg') }}">
+                                        <option value="{{ url_for('static', filename='img/bg2.jpg') }}">
+                                        <option value="{{ url_for('static', filename='img/bg3.jpg') }}">
+                                        <option value="{{ url_for('static', filename='img/bg4.jpg') }}">
+                                        <option value="{{ url_for('static', filename='img/bg5.jpg') }}">
+                                    </datalist>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">背景透明度</label>
+                                <div class="layui-input-block">
+                                    <input type="number" step=0.1 min=0 max=1 name="bg_ransparency" value="{{ g.site.bg_ransparency }}"
+                                        placeholder="站点背景透明度，0-1之间（值越大越透明），默认是：0.5，目前仅首页有效" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">Logo</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="logo" value="{{ g.site.logo }}"
+                                        placeholder="站点Logo地址，默认是：{{ url_for('static', filename='img/logo.png') }}"
+                                        autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">备案号</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="beian" value="{{ g.site.beian }}" placeholder="ICP备案号，若有公网安备亦可以填写"
+                                        autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">页脚</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="footer" value="{{ g.site.footer }}" placeholder="位于Copyright年份与版权声明之间"
+                                        autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">禁止用户名</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="forbidden_username" value="{{ g.site.forbidden_username }}" placeholder="注册时禁止使用的用户名，以逗号分割多个，默认包含anonymous"
+                                        autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            {% set sas = get_call_list("site_auth", _type="func") %}
+                            <div class="layui-form-item">
+                                <label class="layui-form-label" id="tip-sa"><b style="color: red;">?</b> 认证方式</label>
+                                <div class="layui-input-block">
+                                    <select name="auth_includes" lay-verify="required">
+                                        {% for h in sas %}
+                                        <option value="{{ h.name }}" {% if h.name in g.site.auth_includes %}selected="selected"
+                                            {% endif %}>{{ h.name }}{% if h.description %}（{{ h.description }}）{% endif %}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            {{ intpl("sitesetting") }}
+                        </div>
+                    </fieldset>
+                    <fieldset class="layui-elem-field layui-field-title">
+                        <legend>上传</legend>
+                        <div class="layui-field-box">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">匿名上传</label>
+                                <div class="layui-input-block">
+                                    <input type="checkbox" name="anonymous" lay-skin="switch" lay-text="ON|OFF"
+                                        {% if is_true(g.site.anonymous) %}checked="checked" {% endif %} autocomplete="off"
+                                        value="1">
+                                </div>
+                            </div>
+                            <div class="layui-form-item layui-form-text">
+                                <label class="layui-form-label">首页上传区域提示</label>
+                                <div class="layui-input-block">
+                                    <textarea name="upload_beforehtml" placeholder="首页上传区域上方文字提示"
+                                        value="" class="layui-textarea"></textarea>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">图片后缀限制</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="upload_exts" value="{{ g.site.upload_exts }}"
+                                        placeholder="上传允许的扩展名，以竖线（|）分隔，默认是：jpg|png|gif|bmp|jpeg|webp" autocomplete="off"
+                                        class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">大小限制</label>
+                                <div class="layui-input-block">
+                                    <input type="number" step=1 name="upload_size" max=10 min=1 value="{{ g.site.upload_size }}"
+                                        placeholder="上传允许的大小，最大10，单位MB，默认是：10" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">数量限制</label>
+                                <div class="layui-input-block">
+                                    <input type="number" step=1 min=0 max=10 name="upload_number" value="{{ g.site.upload_number }}"
+                                        placeholder="上传允许的数量，最大10，默认是：10" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            {% set bes = get_call_list("upimg_save", _type="func") %}
+                            <div class="layui-form-item">
+                                <label class="layui-form-label" id="tip-be"><b style="color: red;">?</b> 存储后端</label>
+                                <div class="layui-input-block">
+                                    <select name="upload_includes" lay-verify="required">
+                                        {% for h in bes %}
+                                        <option value="{{ h.name }}" {% if h.name in g.site.upload_includes %}selected="selected"
+                                            {% endif %}>{{ h.name }}{% if h.description %}（{{ h.description }}）{% endif %}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">图片路径前缀规则</label>
+                                <div class="layui-input-block">
+                                    <input type="radio" name="upload_path_rule" value="default" title="默认(无子目录)"
+                                        {% if g.site.upload_path_rule|d("default") == "default" %}checked="checked" {% endif %}
+                                        autocomplete="off">
+                                    <input type="radio" name="upload_path_rule" value="date1" title="年/月/日"
+                                        {% if g.site.upload_path_rule == "date1" %}checked="checked" {% endif %} autocomplete="off">
+                                    <input type="radio" name="upload_path_rule" value="date2" title="年月日"
+                                        {% if g.site.upload_path_rule == "date2" %}checked="checked" {% endif %} autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">图片文件命名规则</label>
+                                <div class="layui-input-block">
+                                    <input type="radio" name="upload_file_rule" value="default" title="默认(原名)"
+                                        {% if g.site.upload_file_rule|d("default") == "default" %}checked="checked" {% endif %}
+                                        autocomplete="off">
+                                    <input type="radio" name="upload_file_rule" value="time1" title="时间戳(毫秒)"
+                                        {% if g.site.upload_file_rule == "time1" %}checked="checked" {% endif %} autocomplete="off">
+                                    <input type="radio" name="upload_file_rule" value="time2" title="时间戳+随机数"
+                                        {% if g.site.upload_file_rule == "time2" %}checked="checked" {% endif %} autocomplete="off">
+                                    <input type="radio" name="upload_file_rule" value="time3" title="年月日时分秒+随机数"
+                                        {% if g.site.upload_file_rule == "time3" %}checked="checked" {% endif %} autocomplete="off">
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset class="layui-elem-field layui-field-title">
+                        <legend>钩子</legend>
+                        <div class="layui-field-box">
+                            {{ intpl("hooksetting") }}
+                        </div>
+                    </fieldset>
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                            <button class="layui-btn" lay-submit lay-filter="*">立即提交</button>
+                            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="layui-tab-item">
+                <table id="hook" lay-filter="hook" class="layui-table"></table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+{% raw %}
+<script type="text/html" id="hook_action">
+    {{#  if(d.state === 'enabled'){ }}
+    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal" lay-event="disable">禁用</a>
+    {{# } else { }}
+    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-warm" lay-event="enable">启用</a>
+    {{#  } }}
+    {{#  if(d.family !== 'local'){ }}
+    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-danger" lay-event="remove">删除</a>
+    {{#  } }}
+</script>
+<script type="text/html" id="toolbar">
+    <div class="layui-btn-group">
+        <button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="reloadHookManager">重载钩子管理器</button>
+        <button class="layui-btn layui-btn-sm" lay-event="addHookName">添加第三方钩子</button>
+    </div>
+</script>
+{% endraw %}
+<script>
+    layui.use(['picbed', 'layer', 'form', 'table', 'element', 'util'], function () {
+        var $ = layui.$,
+            picbed = layui.picbed,
+            util = layui.util,
+            form = layui.form,
+            layer = layui.layer,
+            table = layui.table,
+            element = layui.element;
+        //显示当前tab
+        if (location.hash) {
+            element.tabChange('tab', location.hash.replace(/^#/, ''));
+        }
+        //监听tab切换
+        element.on('tab(tab)', function (data) {
+            var othis = $(this),
+                layid = othis.attr('lay-id');
+            if (layid) {
+                location.hash = layid;
+            }
+        });
+        $('#tip-be').on("mouseover click",function() {
+            layer.tips('存储后端取决于扩展的钩子方法：upimg_save',
+                '#tip-be', {tips: 1}
+            );
+        });
+        $('#tip-sa').on("mouseover click",function() {
+            layer.tips('认证方式取决于扩展的钩子方法：site_auth',
+                '#tip-sa', {tips: 1}
+            );
+        });
+        //表单赋值
+        form.val("setting", {
+            upload_beforehtml: "{{ g.site.upload_beforehtml|safe }}",
+        });
+        //提交网站设置
+        form.on('submit(*)', function(data){
+            console.log(data.field);
+            if (document.forms['control'].checkValidity() === false) {
+                layer.msg("发现部分参数不合法",{icon:0});
+                document.forms['control'].reportValidity();
+                return false;
+            }
+            if (!data.field.hasOwnProperty("anonymous")) {
+                data.field["anonymous"] = 0;
+            }
+            picbed.ajax("{{ url_for('api.config') }}", function(res) {
+                if (res.code === 0) {
+                    layer.msg("已修改配置", {icon:1});
+                } else {
+                    layer.msg(res.msg, {icon:0});
+                }
+            }, {
+                data: data.field
+            });
+            return false;
+        });
+        //钩子扩展管理
+        var tableIns = table.render({
+            elem: "#hook",
+            url: "{{ url_for('api.hook', Action='query') }}",
+            method: "POST",
+            cols: [
+                [{
+                        field: 'name',
+                        title: '钩子名称',
+                        sort: true,
+                        fixed: 'left'
+                    },
+                    {
+                        field: 'version',
+                        title: '版本',
+                        width: 80
+                    },
+                    {
+                        field: 'author',
+                        title: '作者'
+                    },
+                    {
+                        field: 'description',
+                        title: '描述',
+                        minWidth: 150
+                    },
+                    {
+                        field: 'family',
+                        title: '所属',
+                        templet: function (d) {
+                            return d.family === 'local' ? '本地' : '第三方';
+                        }
+                    },
+                    {
+                        field: 'catalog',
+                        title: '分类',
+                        hide: true,
+                        templet: function (d) {
+                            return d.catalog ? d.catalog : '未分类';
+                        }
+                    },
+                    {
+                        field: 'ltime',
+                        title: '加载时间',
+                        hide: true,
+                        templet: function (d) {
+                            return util.toDateString(d.ltime * 1000);
+                        }
+                    },
+                    {
+                        field: 'mtime',
+                        title: '修改时间',
+                        hide: true,
+                        templet: function (d) {
+                            return util.toDateString(d.mtime * 1000);
+                        }
+                    },
+                    {
+                        field: 'state',
+                        title: '状态',
+                        width: 80,
+                        templet: function (d) {
+                            if (d.state === 'enabled') {
+                                return '<scan style="color:#5FB878">enabled</scan>';
+                            } else {
+                                return '<scan style="color:#FF5722">disabled</scan>';
+                            }
+                        }
+                    },
+                    {
+                        fixed: 'right',
+                        minWidth: 50,
+                        align: 'left',
+                        toolbar: '#hook_action'
+                    }
+                ]
+            ],
+            toolbar: '#toolbar',
+            title: '钩子扩展列表',
+            size: 'sm',
+            skin: 'line',
+        });
+        //监听表格工具条
+        table.on('tool(hook)', function (obj) {
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值
+            var tr = obj.tr; //获得当前行 tr 的 DOM 对象（如果有的话）
+            if (layEvent === 'disable') { //禁用钩子
+                picbed.ajax("{{ url_for('api.hook', Action='disable') }}", function(res) {
+                    layer.msg("已禁用钩子：" + data.name, {icon:1});
+                    obj.update({state:'disabled'});
+                    tr[0].lastChild.innerHTML='<div class="layui-table-cell laytable-cell-1-0-9"><a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-warm" lay-event="enable">启用</a></div>';
+                }, {
+                    data: {name:data.name}
+                });
+            } else if (layEvent === 'enable') { //启用钩子
+                picbed.ajax("{{ url_for('api.hook', Action='enable') }}", function(res) {
+                    layer.msg("已启用钩子：" + data.name, {icon:1});
+                    obj.update({state:'enabled'});
+                    tr[0].lastChild.innerHTML='<div class="layui-table-cell laytable-cell-1-0-9"><a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal" lay-event="disable">禁用</a></div>';
+                }, {
+                    data: {name:data.name}
+                });
+            } else if (layEvent === 'remove') { //删除第三方钩子
+                layer.confirm('真的删除 ' + data.name + ' 么？', {icon:3,title:"请确认"}, function (index) {
+                    layer.close(index);
+                    //向服务端发送删除指令
+                    picbed.ajax("{{ url_for('api.hook', Action='remove_third_hook') }}", function(res) {
+                        layer.msg("已删除钩子：" + data.name, {icon:1});
+                        obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                    }, {
+                        data: {name: data.name}
+                    });
+                });
+            }
+        });
+        //监听头部工具栏事件
+        table.on('toolbar(hook)', function(obj){
+            var layEvent = obj.event; //获得 lay-event 对应的值
+            if (layEvent === "reloadHookManager") {
+                picbed.ajax("{{ url_for('api.hook', Action='reload') }}", function(res) {
+                    layer.msg("已重载钩子管理器", {icon:1});
+                    tableIns.reload();
+                });
+            } else if (layEvent === "addHookName") {
+                layer.prompt({
+                    formType: 0,
+                    title: '钩子模块名（本地需已安装）',
+                    shade: 0
+                }, function(value, index, elem){
+                    if (value) {
+                        layer.close(index);
+                        picbed.ajax("{{ url_for('api.hook', Action='add_third_hook') }}", function(res) {
+                            layer.msg("已添加钩子：" + value, {icon:1});
+                            tableIns.reload();
+                        }, {
+                            data: {name:value}
+                        });
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

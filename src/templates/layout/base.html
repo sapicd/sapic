@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="keywords" content="SaintIC,picbed,图床">
+    <title>{% block LayoutTitle %}{% endblock %}{{ g.site.title_suffix or ' | Hello picbed' }}</title>
+    <link href="{{ g.site.favicon or 'https://static.saintic.com/cdn/images/favicon-32.png' }}" rel="icon" type="image/x-icon" />
+    <link href="{{ g.site.favicon or 'https://static.saintic.com/cdn/images/favicon-32.png' }}" rel="shortcut icon" type="image/x-icon" />
+    <link href="{{ url_for('static', filename='layui/css/layui.css', v=Version) }}" rel="stylesheet" media="all">
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+        body, html {
+            height: 100%;
+        }
+        html {
+            background-image: url("{{ g.site.bg_mg or url_for('static', filename='img/bg5.jpg') }}");
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: cover;
+            font-family: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Heiti SC", "MicrosoftYaHei", "WenQuanYi Micro Hei", sans-serif;
+        }
+        /*全局页面导航栏*/
+        .layui-nav .layui-nav-item a {
+            color: #23262E;
+            font-weight: bold;
+        }
+        .layui-nav .layui-nav-item a:hover {
+            color: #23262E;
+        }
+        /*公开页面布局*/
+        .layui-layout-admin .layui-header {
+            background-color: transparent;    
+        }
+        .layui-layout-admin .layui-body {
+            left: 0px;
+            text-align: center;
+        }
+        .layui-layout-admin .layui-footer {
+            left: 0px;
+            /*color: #999;*/
+            text-align: center;
+            background-color: transparent;
+        }
+        .layui-layout-admin .layui-logo img {
+            height: 80%;
+        }
+        @media screen and (max-width: 400px) {
+            .layui-layout-admin .layui-logo {
+                width: auto;
+                height: auto;
+            }
+            .layui-layout-admin .layui-logo img {
+                max-width: 100px;
+            }
+        }
+    </style>
+    {% block LayoutHead %}{% endblock %}
+</head>
+
+<body>
+{% block LayoutBody %}{% endblock %}
+<script src="{{ url_for('static', filename='layui/layui.all.js', v=Version) }}"></script>
+<script>
+    layui.config({
+        base: "/static/mymod/",
+        version: "{{ Version }}"
+    }).use('picbed');
+</script>
+{% block LayoutScript %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,60 @@
+{% raw %}
+<script id="upload_show_tpl" type="text/html">
+<div style="padding: 15px">
+    {{# if (d.is_control === true) { }}
+    <p>文件名：{{ d.filename }}</p>
+    <p>唯一标识：{{ d.sha }}</p>
+    <p>上传时间：{{ d.ctime }}</p>
+    <p>所属用户：{{ d.user }}</p>
+    <p>图片状态：
+        {{# if (d.status === 'enabled') { }}
+        <scan style="color:green">{{ d.status }}</scan>
+        {{# } else { }}
+        <scan style="color:red">{{ d.status }}</scan>
+        {{# } }}
+    </p>
+    {{# } else { }}
+    <p>文件名：<a href="{{ d.api }}" target="_blank">{{ d.filename }}</a></p>
+    {{# } }}
+    <div class="layui-row layui-col-space2">
+        <div class="layui-col-xs12 layui-col-sm4 layui-col-md2">
+            <img src="{{ d.src }}" style="max-width:80px;padding-top:61px;">
+        </div>
+        <div class="layui-col-xs12 layui-col-sm8 layui-col-md10">
+            <div class="layui-tab layui-tab-brief">
+                <ul class="layui-tab-title">
+                    <li class="layui-this">URL</li>
+                    <li>HTML</li>
+                    <li>rST</li>
+                    <li>Markdown</li>
+                </ul>
+                <div class="layui-tab-content">
+                    <div class="layui-tab-item layui-show">
+                        <textarea class="layui-textarea" readonly id="url">{{ d.src }}</textarea>
+                        <button type="button" class="layui-btn layui-btn-sm layui-btn-fluid upload_show_copy"
+                            data-copyid="#url">复制</button>
+                    </div>
+                    <div class="layui-tab-item">
+                        <textarea class="layui-textarea" readonly
+                            id="html"><img src="{{ d.src }}" alt="{{ d.filename }}"></textarea>
+                        <button type="button" class="layui-btn layui-btn-sm layui-btn-fluid upload_show_copy"
+                            data-copyid="#html">复制</button>
+                    </div>
+                    <div class="layui-tab-item">
+                        <textarea class="layui-textarea" readonly id="rst">.. image:: {{ d.src }}</textarea>
+                        <button type="button" class="layui-btn layui-btn-sm layui-btn-fluid upload_show_copy"
+                            data-copyid="#rst">复制</button>
+                    </div>
+                    <div class="layui-tab-item">
+                        <textarea class="layui-textarea" readonly
+                            id="markdown">![{{ d.filename }}]({{ d.src }})</textarea>
+                        <button type="button" class="layui-btn layui-btn-sm layui-btn-fluid upload_show_copy"
+                            data-copyid="#markdown">复制</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</script>
+{% endraw %}
