@@ -14,7 +14,7 @@ from sys import modules
 from os import listdir, getpid
 from os.path import join, dirname, abspath, isdir, isfile, splitext, basename,\
     getmtime
-from jinja2 import ChoiceLoader, FileSystemLoader
+from jinja2 import ChoiceLoader, FileSystemLoader, PackageLoader
 from flask import render_template, render_template_string, Markup
 from utils.tool import Attribution
 from utils._compat import string_types, integer_types, iteritems, PY2
@@ -61,6 +61,7 @@ class HookManager(object):
         #: register extension with app
         app.extensions = getattr(app, 'extensions', None) or {}
         app.extensions['hookmanager'] = self
+        self.app = app
 
     @property
     def __last_load_time(self):
@@ -185,7 +186,8 @@ class HookManager(object):
                 except ImportError:
                     continue
                 else:
-                    if hasattr(ho, "__version__") and hasattr(ho, "__author__"):
+                    if hasattr(ho, "__version__") and \
+                            hasattr(ho, "__author__"):
                         ho.__mtime__ = getmtime(self.__get_fileorparent(ho))
                         ho.__family__ = "third"
                         self.__hooks[hn] = self.__get_meta(ho)
@@ -259,6 +261,10 @@ class HookManager(object):
     def add_third_hook(self, third_hook_name):
         if third_hook_name:
             self.__third_hooks = third_hook_name
+            if hasattr(self, 'app'):
+                self.app.jinja_loader.loaders.append(
+                    PackageLoader(third_hook_name)
+                )
             self.reload()
 
     def remove_third_hook(self, third_hook_name):

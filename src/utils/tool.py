@@ -66,7 +66,7 @@ def get_current_timestamp(is_float=False):
 
 def create_redis_engine(redis_url=None):
     from config import REDIS
-    return from_url(redis_url or REDIS, charset="utf-8", decode_responses=True)
+    return from_url(redis_url or REDIS, decode_responses=True)
 
 
 def gen_rnd_filename(fmt):
@@ -114,7 +114,6 @@ def ListEqualSplit(l, n=5):
 
 
 class Attribution(dict):
-    """A dict that allows for object-like property access syntax."""
 
     def __getattr__(self, name):
         try:
@@ -124,7 +123,6 @@ class Attribution(dict):
 
 
 class Attribute(dict):
-    """A dict that allows for object-like property access syntax."""
 
     def __getattr__(self, name):
         try:

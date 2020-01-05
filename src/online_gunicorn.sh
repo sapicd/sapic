@@ -17,7 +17,9 @@ fi
 host=$(python -c "from config import GLOBAL;print(GLOBAL['Host'])")
 port=$(python -c "from config import GLOBAL;print(GLOBAL['Port'])")
 procname=$(python -c "from config import GLOBAL;print(GLOBAL['ProcessName'])")
-cpu_count=$(cat /proc/cpuinfo | grep "processor" | wc -l)
+if [ -z $cpu_count ]; then
+    cpu_count=$(cat /proc/cpuinfo | grep "processor" | wc -l)
+fi
 [ -d ${dir}/logs ] || mkdir -p ${dir}/logs
 logfile=${dir}/logs/gunicorn.log
 pidfile=${dir}/logs/${procname}.pid

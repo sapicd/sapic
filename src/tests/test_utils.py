@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from utils._compat import PY2
 from utils.tool import Attribution, md5, sha1, rsp, get_current_timestamp, \
-    allowed_file, parse_valid_comma, parse_valid_verticaline, is_true, 
-    hmac_sha256
+    allowed_file, parse_valid_comma, parse_valid_verticaline, is_true, \
+    hmac_sha256, sha256
 
 
 class UtilsTest(unittest.TestCase):
@@ -40,6 +39,10 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(v, hmac_sha256('key', 'text'))
         self.assertEqual(v, hmac_sha256(b'key', b'text'))
         self.assertEqual(v, hmac_sha256(u'key', u'text'))
+        self.assertEqual(
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+            sha256("abc")
+        )
 
 
 if __name__ == '__main__':
