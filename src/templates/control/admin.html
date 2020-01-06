@@ -42,6 +42,20 @@
                                 </div>
                             </div>
                             <div class="layui-form-item">
+                                <label class="layui-form-label">站点关键词</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="seo_keywords" value="{{ g.site.seo_keywords }}"
+                                        placeholder="指定站点的关键词：keywords" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">站点描述</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="seo_description" value="{{ g.site.seo_description }}"
+                                        placeholder="指定站点的内容描述：description" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
                                 <label class="layui-form-label">登录欢迎文案</label>
                                 <div class="layui-input-block">
                                     <input type="text" name="login_title" value="{{ g.site.login_title }}"
@@ -107,6 +121,7 @@
                                 </div>
                             </div>
                             {% set sas = get_call_list("site_auth", _type="func") %}
+                            <!--
                             <div class="layui-form-item">
                                 <label class="layui-form-label" id="tip-sa"><b style="color: red;">?</b> 认证方式</label>
                                 <div class="layui-input-block">
@@ -118,6 +133,7 @@
                                     </select>
                                 </div>
                             </div>
+                            -->
                             {{ intpl("sitesetting") }}
                         </div>
                     </fieldset>

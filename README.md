@@ -7,9 +7,7 @@
 
 ## 部署
 
-大致部署说明（后续Release时发布详细文档）
-
-1. 要求： Python2.7、Python3.5+和Redis
+1. 要求： Python2.7、Python3.5+（含PyPy）和Redis
 
 2. 下载： `git clone https://github.com/staugur/picbed && cd picbed/src`
 
@@ -27,6 +25,31 @@
     // 正式环境，若需前台启动，将start换成run即可
     $ sh online_gunicorn.sh start
 ```
+
+6. Nginx:
+```
+// 默认配置下，picbed启动监听127.0.0.1:9514，nginx配置示例：
+server {
+    listen 80;
+    server_name Picbed.domain.name;
+    charset utf-8;
+    client_max_body_size 12M;
+    location ~ ^\/static\/.*$ {
+        root /path/to/picbed/src/;
+    }
+    location / {
+       proxy_pass http://127.0.0.1:9514;
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+       proxy_set_header X-Forwarded-Proto $scheme;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+## 文档
+
+详细文档请访问：[picbed docs](https://docs.saintic.com/picbed)
 
 ## 扩展钩子
 
