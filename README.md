@@ -19,9 +19,13 @@
 
 5. 启动： 
 ```
-    $ python cli.py -sa            # 首先创建一个管理员账号
-    $ make run                     # 开发环境启动
-    $ sh online_gunicorn.sh start  # 正式环境，若需前台启动，将start换成run即可
+    // 首先创建一个管理员账号 -h/--help显示帮助
+    $ python cli.py sa -u user -p password --isAdmin 
+
+    // 开发环境启动
+    $ make run
+    // 正式环境，若需前台启动，将start换成run即可
+    $ sh online_gunicorn.sh start
 ```
 
 ## 扩展钩子

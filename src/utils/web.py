@@ -22,12 +22,11 @@ from ._compat import PY2, text_type
 rc = create_redis_engine()
 
 
-def default_login_auth():
+def default_login_auth(dSid=None):
     """默认登录解密，返回: (signin:boolean, userinfo:dict)"""
-    sid = request.cookies.get("dSid") or ""
+    sid = request.cookies.get("dSid") or dSid or ""
     signin = False
     userinfo = {}
-    print('web', sid, type(sid))
     try:
         if PY2 and isinstance(sid, text_type):
             sid = sid.encode("utf-8")
@@ -36,31 +35,27 @@ def default_login_auth():
             sid = sid.decode("utf-8")
         usr, expire, sha = sid.split(".")
         expire = int(expire)
-    except (TypeError, ValueError, AttributeError, Exception) as e:
-        current_app.logger.info(e, exc_info=True)
+    except (TypeError, ValueError, AttributeError, Exception):
+        pass
     else:
-        print('web', usr, expire, sha)
         if expire > get_current_timestamp():
-            ak = rsp("account")
+            ak = rsp("accounts")
             pipe = rc.pipeline()
             pipe.sismember(ak, usr)
-            pipe.hgetall(rsp("user", usr))
+            pipe.hgetall(rsp("account", usr))
             try:
                 result = pipe.execute()
             except RedisError:
                 pass
             else:
-                print('web', result)
                 if isinstance(result, (tuple, list)) and len(result) == 2:
                     has_usr, userinfo = result
                     if has_usr and userinfo and isinstance(userinfo, dict):
                         pwd = userinfo.pop("password", None)
-                        print('web', pwd, current_app.config["SECRET_KEY"])
                         if sha256("%s:%s:%s:%s" % (
                             usr, pwd, expire, current_app.config["SECRET_KEY"]
                         )) == sha:
                             signin = True
-                            print('web', signin)
     if not signin:
         userinfo = {}
     return (signin, userinfo)
@@ -175,7 +170,6 @@ def get_site_config():
 
 def set_site_config(mapping):
     if mapping and isinstance(mapping, dict):
-        print(mapping)
         s = get_storage()
         cfg = s.get("siteconfig") or {}
         cfg.update(mapping)

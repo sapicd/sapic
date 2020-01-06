@@ -31,11 +31,9 @@ rc = create_redis_engine()
 
 @bp.after_request
 def translate(res):
-    print("translate", res.is_json)
     if res.is_json:
         data = res.get_json()
         if isinstance(data, dict):
-            print('translate', data, type(data))
             res.set_data(json.dumps(dfr(data)))
     return res
 
@@ -60,9 +58,9 @@ def login():
         #: Remember me 7d
         max_age = 604800
     if usr and pwd and check_username(usr) and len(pwd) >= 6:
-        ak = rsp("account")
+        ak = rsp("accounts")
         if rc.sismember(ak, usr):
-            userinfo = rc.hgetall(rsp("user", usr))
+            userinfo = rc.hgetall(rsp("account", usr))
             password = userinfo.get("password")
             if password and check_password_hash(password, pwd):
                 expire = get_current_timestamp() + max_age
@@ -80,7 +78,6 @@ def login():
                     expire=expire,
                     # is_admin=is_true(userinfo.get("is_admin"))
                 )
-                print('login set_state', set_state, type(res), res)
                 if set_state:
                     res = make_response(jsonify(res))
                     res.set_cookie(
@@ -198,7 +195,6 @@ def waterfall():
     try:
         page = int(page) - 1
         limit = int(limit)
-        print(sort, page, limit, is_mgr)
         if page < 0:
             raise ValueError
     except (ValueError, TypeError):
@@ -278,8 +274,8 @@ def shamgr(sha):
                 pipe = rc.pipeline()
                 pipe.srem(gk, sha)
                 pipe.sadd(dk, sha)
-                pipe.hset(ik, 'status', 'deleted')
-                pipe.srem(rsp("index", "user", g.userinfo.username), sha)
+                pipe.hset(ik, "status", "deleted")
+                pipe.srem(rsp("index", "user", husr), sha)
                 try:
                     pipe.execute()
                 except RedisError:
@@ -318,7 +314,6 @@ def upload():
         allowed_file,
         suffix=parse_valid_verticaline(g.cfg.upload_exts)
     )
-    print(f.filename)
     if f and allowed_suffix(f.filename):
         try:
             rc.ping()
@@ -356,7 +351,6 @@ def upload():
         #: 钩子返回结果（目前版本最终结果中应该最多只有1条数据）
         data = []
         #: 保存图片的钩子回调
-
         def callback(result):
             logger.info(result)
             if result["sender"] == "up2local":

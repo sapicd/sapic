@@ -48,7 +48,6 @@ def before_request():
     g.cfg = Attribute(g.site)
     #: Required field: username, is_admin
     g.userinfo = Attribute(g.userinfo)
-    print('before_request', g.signin, g.userinfo)
     g.is_admin = is_true(g.userinfo.is_admin)
 
 

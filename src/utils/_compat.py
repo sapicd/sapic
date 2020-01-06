@@ -24,7 +24,6 @@ if PY2:  # pragma: nocover
     text_type = unicode
     string_types = (str, unicode)
     integer_types = (int, long)
-    raw_input = raw_input
 
 else:  # pragma: nocover
 
@@ -37,4 +36,3 @@ else:  # pragma: nocover
     text_type = str
     string_types = (str,)
     integer_types = (int, )
-    raw_input = input

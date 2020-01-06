@@ -15,14 +15,16 @@
         <a href="javascript:;">
             <img src="{{ g.userinfo.avatar or 'https://static.saintic.com/cdn/images/defaultAvatar.png' }}"
                 class="layui-nav-img">
-            控制台
+            {{ g.userinfo.nickname or g.userinfo.username }}
         </a>
         <dl class="layui-nav-child">
             <!--
             <dd><a href="{{ url_for('front.profile') }}">个人资料</a></dd>
             -->
             <dd><a href="{{ url_for('front.image') }}">我的图片</a></dd>
+            {% if g.is_admin %}
             <dd><a href="{{ url_for('front.admin') }}">站点管理</a></dd>
+            {% endif %}
             <hr class="navbar-divider">
             <dd><a href="{{ url_for('front.logout') }}">登出</a></dd>
         </dl>
