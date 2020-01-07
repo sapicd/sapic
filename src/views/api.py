@@ -253,7 +253,7 @@ def shamgr(sha):
         if rc.sismember(gk, sha):
             data = rc.hgetall(ik)
             data.update(
-                senders=None,
+                senders=json.loads(data["senders"]) if g.is_admin else None,
                 ctime=int(data["ctime"]),
             )
             res.update(code=0, data=data)

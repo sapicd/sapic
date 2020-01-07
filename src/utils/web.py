@@ -138,6 +138,8 @@ def dfr(res, default='en-US'):
             "The upload_path type error": "upload_path类型错误",
             "The upyun parameter error": "又拍云相关参数错误",
             "Please install upyun module": "请安装upyun模块",
+            "Please install qiniu module": "请安装qiniu模块",
+            "The qiniu parameter error": "七牛云相关参数错误",
             "An unknown error occurred in the program": "程序发生未知错误",
             "Anonymous user is not sign in": "匿名用户未登录",
             "No valid username found": "未发现有效用户名",

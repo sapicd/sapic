@@ -60,6 +60,7 @@ server {
 | 名称 | 作用 | GitHub |
 | --- | --- | --- |
 | up2upyun | 将图片保存到又拍云USS中 | [staugur/picbed-up2upyun](https://github.com/staugur/picbed-up2upyun) |
+| up2qiniu | 将图片保存到七牛云KODO中 | [staugur/picbed-up2qiniu](https://github.com/staugur/picbed-up2qiniu) |
 
 ## 预览图
 

@@ -132,3 +132,4 @@ src/static/upload/
 .vscode/
 src/tests/forTestHook.py
 src/online_preboot.sh
+src/.qiniu_pythonsdk_hostscache.json

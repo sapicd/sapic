@@ -6,7 +6,6 @@ python:
 - '3.6'
 - '3.7'
 - nightly
-- pypy
 - pypy3
 env:
   global:
@@ -16,11 +15,6 @@ env:
   - FLASK_VERSION=1.0
   - FLASK_VERSION=1.1.0
 jobs:
-  exclude:
-  - python: pypy
-    env: FLASK_VERSION=1.0
-  - python: pypy3
-    env: FLASK_VERSION=0.11
   allow_failures:
   - python: nightly
 services:
