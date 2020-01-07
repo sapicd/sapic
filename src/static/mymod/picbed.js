@@ -127,7 +127,9 @@ layui.define(["layer", "util", "element"], function (exports) {
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    layer.msg("系统异常，请稍后再试，状态码：" + XMLHttpRequest.status + "，" + textStatus, {icon:2});
+                    layer.msg("系统异常，请稍后再试，状态码：" + XMLHttpRequest.status + "，" + textStatus, {
+                        icon: 2
+                    });
                 },
                 complete: options.complete ? options.complete : function () {}
             });
@@ -176,7 +178,10 @@ layui.define(["layer", "util", "element"], function (exports) {
             } else {
                 return false;
             }
-        }
+        },
+        escape2Html: function (str) {
+            return $("<div>").html(str).text();
+        },
     };
     //输出接口
     exports('picbed', api);

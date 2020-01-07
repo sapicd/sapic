@@ -94,6 +94,7 @@
             number: number > 10 ? 10 : number,
             size: (size > 10 ? 10 : size) * 1024,
             choose: function(obj){
+                $(".before-upload-area").hide();
                 var files = this.files = obj.pushFile();
                 $("#action").removeClass("layui-hide");
                 $(".layui-table:first").removeClass("layui-hide");

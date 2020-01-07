@@ -31,7 +31,7 @@
 // 默认配置下，picbed启动监听127.0.0.1:9514，nginx配置示例：
 server {
     listen 80;
-    server_name Picbed.domain.name;
+    server_name picbed.domain.name;
     charset utf-8;
     client_max_body_size 12M;
     location ~ ^\/static\/.*$ {
@@ -49,7 +49,17 @@ server {
 
 ## 文档
 
-详细文档请访问：[picbed docs](https://docs.saintic.com/picbed)
+详细文档请访问：[Picbed Docs](https://docs.saintic.com/picbed)
+
+## 演示站
+
+https://picbed.saintic.com
+
+测试账号：demo
+
+测试密码：123456
+
+对外服务，允许匿名上传，但是目前上传的图片保留删除权利！
 
 ## 扩展钩子
 

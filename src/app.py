@@ -29,7 +29,7 @@ app.config.update(
     MAX_CONTENT_LENGTH=10 * 1024 * 1024,
 )
 
-HookManager(app)
+hm = HookManager(app)
 
 app.register_blueprint(front_bp)
 app.register_blueprint(api_bp, url_prefix="/api")
@@ -43,12 +43,21 @@ def GlobalTemplateVariables():
 @app.before_request
 def before_request():
     g.signin, g.userinfo = default_login_auth()
+    #: Trigger hook, you can modify flask.g
+    hm.call("before_request")
     #: No Required field
     g.site = get_site_config()
     g.cfg = Attribute(g.site)
     #: Required field: username, is_admin
     g.userinfo = Attribute(g.userinfo)
     g.is_admin = is_true(g.userinfo.is_admin)
+
+
+@app.after_request
+def after_request(res):
+    #: Trigger hook, you can modify the response
+    hm.call("after_request", res=res)
+    return res
 
 
 @app.errorhandler(500)
