@@ -22,6 +22,26 @@ from ._compat import PY2, text_type
 rc = create_redis_engine()
 
 
+def get_referrer_url():
+    """获取上一页地址"""
+    if request.referrer and request.referrer.startswith(request.host_url) and request.endpoint and not "api." in request.endpoint:
+        url = request.referrer
+    else:
+        url = None
+    return url
+
+
+def get_redirect_url(endpoint="front.index"):
+    """获取重定向地址"""
+    url = request.args.get('next')
+    if not url:
+        if endpoint != "front.index":
+            url = url_for(endpoint)
+        else:
+            url = get_referrer_url() or url_for(endpoint)
+    return url
+
+
 def default_login_auth(dSid=None):
     """默认登录解密，返回: (signin:boolean, userinfo:dict)"""
     sid = request.cookies.get("dSid") or dSid or ""
@@ -143,6 +163,7 @@ def dfr(res, default='en-US'):
             "An unknown error occurred in the program": "程序发生未知错误",
             "Anonymous user is not sign in": "匿名用户未登录",
             "No valid username found": "未发现有效用户名",
+            "The username or password parameter error": "用户名或密码参数错误",
             "No data": "没有数据",
             "No file or image format allowed": "未获取到文件或不允许的图片格式",
             "Program data storage service error": "程序数据存储服务异常",

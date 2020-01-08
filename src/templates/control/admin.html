@@ -27,6 +27,7 @@
         <ul class="layui-tab-title">
             <li class="layui-this" lay-id="setting">网站设置</li>
             <li lay-id="hook">钩子扩展</li>
+            <li lay-id="picbed">全站图片管理</li>
         </ul>
         <div class="layui-tab-content">
             <div class="layui-tab-item layui-show">
@@ -120,20 +121,6 @@
                                         autocomplete="off" class="layui-input">
                                 </div>
                             </div>
-                            {% set sas = get_call_list("site_auth", _type="func") %}
-                            <!--
-                            <div class="layui-form-item">
-                                <label class="layui-form-label" id="tip-sa"><b style="color: red;">?</b> 认证方式</label>
-                                <div class="layui-input-block">
-                                    <select name="auth_includes" lay-verify="required">
-                                        {% for h in sas %}
-                                        <option value="{{ h.name }}" {% if h.name in g.site.auth_includes %}selected="selected"
-                                            {% endif %}>{{ h.name }}{% if h.description %}（{{ h.description }}）{% endif %}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                            -->
                             {{ intpl("sitesetting") }}
                         </div>
                     </fieldset>
@@ -220,6 +207,18 @@
                     <fieldset class="layui-elem-field layui-field-title">
                         <legend>钩子</legend>
                         <div class="layui-field-box">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label" id="tip-sa"><b style="color: red;">?</b> 第三方认证</label>
+                                <div class="layui-input-block">
+                                    <select name="site_auth">
+                                        <option value="">默认（取消选择）</option>
+                                        {% for h in get_call_list("site_auth", _type="bool") %}
+                                        <option value="{{ h.name }}" {% if h.name == g.site.site_auth %}selected="selected"
+                                            {% endif %}>{{ h.name }}{% if h.description %}（{{ h.description }}）{% endif %}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
                             {{ intpl("hooksetting") }}
                         </div>
                     </fieldset>
@@ -234,6 +233,7 @@
             <div class="layui-tab-item">
                 <table id="hook" lay-filter="hook" class="layui-table"></table>
             </div>
+            <div class="layui-tab-item"></div>
         </div>
     </div>
 </div>
@@ -269,13 +269,21 @@
             element = layui.element;
         //显示当前tab
         if (location.hash) {
-            element.tabChange('tab', location.hash.replace(/^#/, ''));
+            var layid = location.hash.replace(/^#/, '');
+            element.tabChange('tab', layid);
+            // Maybe layui bug
+            if (layid === "picbed") {
+                location.href = "{{ url_for('front.image', is_mgr=1) }}";
+            }
         }
         //监听tab切换
         element.on('tab(tab)', function (data) {
             var othis = $(this),
                 layid = othis.attr('lay-id');
             if (layid) {
+                if (layid === "picbed") {
+                    location.href = "{{ url_for('front.image', is_mgr=1) }}";
+                }
                 location.hash = layid;
             }
         });
@@ -285,7 +293,7 @@
             );
         });
         $('#tip-sa').on("mouseover click",function() {
-            layer.tips('认证方式取决于扩展的钩子方法：site_auth',
+            layer.tips('注意：如不熟悉请勿开启！<br>第三方认证方式取决于扩展的钩子方法：<br>登录路由：login_handler<br>登出路由：logout_handler<br>登录接口：login_api',
                 '#tip-sa', {tips: 1}
             );
         });

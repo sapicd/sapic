@@ -16,12 +16,12 @@ from base64 import urlsafe_b64encode as b64encode
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash
 from flask import Blueprint, request, g, url_for, current_app, abort, \
-    make_response, jsonify
+    make_response, jsonify, Response
 from functools import partial
 from redis.exceptions import RedisError
 from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     parse_valid_verticaline, get_today, gen_rnd_filename, create_redis_engine,\
-    rsp, get_current_timestamp, ListEqualSplit, sha256
+    rsp, get_current_timestamp, ListEqualSplit, sha256, generate_random
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username
 
@@ -57,6 +57,13 @@ def login():
     if is_true(request.form.get("remember")):
         #: Remember me 7d
         max_age = 604800
+    #: 登录接口钩子
+    if g.cfg.site_auth:
+        so = current_app.extensions["hookmanager"].proxy(g.cfg.site_auth)
+        if so and hasattr(so, "login_api"):
+            result = so.login_api(usr, pwd, set_state, max_age, is_secure)
+            if result and isinstance(result, Response):
+                return result
     if usr and pwd and check_username(usr) and len(pwd) >= 6:
         ak = rsp("accounts")
         if rc.sismember(ak, usr):
@@ -92,7 +99,7 @@ def login():
         else:
             res.update(msg="No valid username found")
     else:
-        res.update(msg="Parameter error")
+        res.update(msg="The username or password parameter error")
     return res
 
 
@@ -252,9 +259,15 @@ def shamgr(sha):
         ik = rsp("image", sha)
         if rc.sismember(gk, sha):
             data = rc.hgetall(ik)
+            u, n = data["src"], data["filename"]
             data.update(
                 senders=json.loads(data["senders"]) if g.is_admin else None,
                 ctime=int(data["ctime"]),
+                tpl=dict(
+                    HTML="<img src='%s' alt='%s'>" % (u, n),
+                    rST=".. image:: %s" % u,
+                    Markdown="![%s](%s)" % (n, u)
+                )
             )
             res.update(code=0, data=data)
         else:
@@ -322,13 +335,16 @@ def upload():
             res.update(code=2, msg="Program data storage service error")
             return res
         stream = f.stream.read()
+        suffix = splitext(f.filename)[-1]
         filename = secure_filename(f.filename)
+        if "." not in filename:
+            filename = "%s%s" % (generate_random(8), suffix)
         #: 根据文件名规则重定义图片名
         upload_file_rule = g.cfg.upload_file_rule
         if upload_file_rule in ("time1", "time2", "time3"):
             filename = "%s%s" % (
                 gen_rnd_filename(upload_file_rule),
-                splitext(filename)[-1]
+                suffix
             )
         #: 上传文件位置前缀规则
         upload_path_rule = g.cfg.upload_path_rule

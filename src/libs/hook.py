@@ -238,12 +238,21 @@ class HookManager(object):
 
     @property
     def get_enabled_hooks(self):
-        """Get all enabled hooks"""
+        """Get all enabled hooks, return list"""
         return [
             h
             for h in self.get_all_hooks
             if h.state == 'enabled'
         ]
+
+    @property
+    def get_enabled_map_hooks(self):
+        """Get map enabled hooks, return dict"""
+        return {
+            name: h
+            for name, h in iteritems(self.get_map_hooks)
+            if h.state == 'enabled'
+        }
 
     def disable(self, name):
         if name in self.get_map_hooks:
@@ -272,13 +281,17 @@ class HookManager(object):
             self.__third_hooks = "%s:delete" % third_hook_name
             self.reload()
 
-    def proxy(self, name):
-        if name in self.get_map_hooks:
-            return self.get_map_hooks[name]["proxy"]
+    def proxy(self, name, is_enabled=True):
+        if is_enabled:
+            if name in self.get_enabled_map_hooks:
+                return self.get_enabled_map_hooks[name]["proxy"]
+        else:
+            if name in self.get_map_hooks:
+                return self.get_map_hooks[name]["proxy"]
 
     def get_call_list(self, _callname, _include=[], _exclude=[], _type='all'):
         hooks = []
-        for h in self.get_enabled_hooks:
+        for h in sorted(self.get_enabled_hooks, key=lambda h: h.name):
             if _include and isinstance(_include, (tuple, list)):
                 if h.name not in _include:
                     continue
@@ -287,15 +300,18 @@ class HookManager(object):
                     continue
             hin = False
             tpl = getattr(h.proxy, "intpl_%s" % _callname, None)
-            func = getattr(h.proxy, _callname, None)
+            cn = getattr(h.proxy, _callname, None)
             if _type == "func":
-                if callable(func):
+                if callable(cn):
                     hin = True
             elif _type == "tpl":
                 if tpl:
                     hin = True
+            elif _type == "bool":
+                if cn is True:
+                    hin = True
             else:
-                if callable(func) or tpl:
+                if callable(cn) or tpl:
                     hin = True
             if hin:
                 if PY2 and h.description:
@@ -314,7 +330,7 @@ class HookManager(object):
         **kwargs
     ):
         """Try to execute the func method in all enabled hooks"""
-        for h in self.get_enabled_hooks:
+        for h in sorted(self.get_enabled_hooks, key=lambda h: h.name):
             if _include and isinstance(_include, (tuple, list)):
                 if h.name not in _include:
                     continue
@@ -342,7 +358,7 @@ class HookManager(object):
 
     def call_intpl(self, _tplname, _include=[], _exclude=[], **context):
         result = []
-        for h in self.get_enabled_hooks:
+        for h in sorted(self.get_enabled_hooks, key=lambda h: h.name):
             if _include and isinstance(_include, (tuple, list)):
                 if h.name not in _include:
                     continue

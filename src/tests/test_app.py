@@ -1,24 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from random import sample
 from jinja2 import ChoiceLoader
 from utils.web import default_login_auth, get_site_config
+from utils.tool import generate_random
 from app import app
 from cli import exec_createuser
-
-
-def generate_random(length=6):
-    code_list = []
-    for i in range(10):  # 0-9数字
-        code_list.append(str(i))
-    for i in range(65, 91):  # A-Z
-        code_list.append(chr(i))
-    for i in range(97, 123):  # a-z
-        code_list.append(chr(i))
-
-    myslice = sample(code_list, length)
-    return ''.join(myslice)
 
 
 class AppTest(unittest.TestCase):

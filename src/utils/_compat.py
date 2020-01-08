@@ -24,6 +24,8 @@ if PY2:  # pragma: nocover
     text_type = unicode
     string_types = (str, unicode)
     integer_types = (int, long)
+    from urllib import urlencode
+    from urllib2 import Request, urlopen
 
 else:  # pragma: nocover
 
@@ -36,3 +38,5 @@ else:  # pragma: nocover
     text_type = str
     string_types = (str,)
     integer_types = (int, )
+    from urllib.parse import urlencode
+    from urllib.request import Request, urlopen

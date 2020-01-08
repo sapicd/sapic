@@ -7,7 +7,7 @@
     Cli Entrance
 
     :copyright: (c) 2020 by staugur.
-    :license: MIT, see LICENSE for more details.
+    :license: BSD 3-Clause, see LICENSE for more details.
 """
 
 import click

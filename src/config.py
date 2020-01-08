@@ -28,6 +28,9 @@ GLOBAL = {
 
     "HookReloadTime": int(getenv("picbed_hookreloadtime", 600)),
     # 钩子管理器默认重载时间，单位：秒
+
+    "SecretKey": getenv("picbed_secretkey"),
+    # Web应用密钥，默认随机。如果设置，那么登录态cookie在重启应用后仍有效。
 }
 
 

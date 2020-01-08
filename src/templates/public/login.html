@@ -65,8 +65,9 @@
         //监听提交
         form.on('submit(login)', function(data) {
             picbed.ajax("{{ url_for('api.login') }}", function(res) {
+                var next = res.next || "{{ request.args.next or '/' }}";
                 layer.msg("登录成功，即将跳转...", {icon:1,time:1000}, function() {
-                    location.href = "{{ request.args.next or '/' }}";
+                    location.href = next;
                 });
             }, {
                 data: data.field

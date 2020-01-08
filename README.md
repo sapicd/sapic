@@ -71,6 +71,7 @@ https://picbed.saintic.com
 | --- | --- | --- |
 | up2upyun | 将图片保存到又拍云USS中 | [staugur/picbed-up2upyun](https://github.com/staugur/picbed-up2upyun) |
 | up2qiniu | 将图片保存到七牛云KODO中 | [staugur/picbed-up2qiniu](https://github.com/staugur/picbed-up2qiniu) |
+| passport | 接入passport登录 | [staugur/picbed-ssoclient](https://github.com/staugur/picbed-ssoclient) |
 
 ## 预览图
 
@@ -87,3 +88,10 @@ https://picbed.saintic.com
 ![控制台管理员功能](./Snapshot/5.png)
 
 ![管理我的图片](./Snapshot/6.png)
+
+## TODO
+
+- [x] 登录登出钩子
+- [] 扩展阿里云OSS、腾讯云COS及其他公共图床
+- [] 第三方网站直接上传
+- [] 聚合图床

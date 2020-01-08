@@ -14,7 +14,7 @@ import hashlib
 from re import compile
 from time import time
 from datetime import datetime
-from random import randrange
+from random import randrange, sample
 from redis import from_url
 from .log import Logger
 from ._compat import string_types, text_type, PY2
@@ -111,6 +111,19 @@ def is_true(value):
 
 def ListEqualSplit(l, n=5):
     return [l[i:i+n] for i in range(0, len(l), n)]
+
+
+def generate_random(length=6):
+    code_list = []
+    for i in range(10):  # 0-9数字
+        code_list.append(str(i))
+    for i in range(65, 91):  # A-Z
+        code_list.append(chr(i))
+    for i in range(97, 123):  # a-z
+        code_list.append(chr(i))
+
+    myslice = sample(code_list, length)
+    return ''.join(myslice)
 
 
 class Attribution(dict):

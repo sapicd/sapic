@@ -6,7 +6,7 @@
     Entrance
 
     :copyright: (c) 2019 by staugur.
-    :license: MIT, see LICENSE for more details.
+    :license: BSD 3-Clause, see LICENSE for more details.
 """
 
 from uuid import uuid4
@@ -16,6 +16,7 @@ from views import front_bp, api_bp
 from utils.tool import Attribute, err_logger, is_true
 from utils.web import get_site_config, JsonResponse, default_login_auth
 from libs.hook import HookManager
+from config import GLOBAL
 
 __author__ = 'staugur'
 __email__ = 'staugur@saintic.com'
@@ -25,7 +26,7 @@ __doc__ = 'Flask-based Web self-built pictures bed'
 app = Flask(__name__)
 app.response_class = JsonResponse
 app.config.update(
-    SECRET_KEY=str(uuid4()),
+    SECRET_KEY=GLOBAL.get("SecretKey") or str(uuid4()),
     MAX_CONTENT_LENGTH=10 * 1024 * 1024,
 )
 
