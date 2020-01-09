@@ -215,7 +215,7 @@ class HookManager(object):
     def __get_valid_tpl(self):
         return [
             h.tplpath
-            for h in self.get_enabled_hooks
+            for h in self.get_all_hooks
             if isdir(h.tplpath)
         ]
 

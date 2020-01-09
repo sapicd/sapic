@@ -10,10 +10,10 @@
 """
 
 from uuid import uuid4
-from flask import Flask, g, jsonify
+from flask import Flask, g, jsonify, request
 from version import __version__
 from views import front_bp, api_bp
-from utils.tool import Attribute, err_logger, is_true
+from utils.tool import Attribute, err_logger, is_true, parse_valid_comma
 from utils.web import get_site_config, JsonResponse, default_login_auth
 from libs.hook import HookManager
 from config import GLOBAL
@@ -58,6 +58,14 @@ def before_request():
 def after_request(res):
     #: Trigger hook, you can modify the response
     hm.call("after_request", res=res)
+    if g.cfg.cors:
+        if g.cfg.cors == "*":
+            res.headers.add("Access-Control-Allow-Origin", "*")
+        else:
+            cors = parse_valid_comma(g.cfg.cors)
+            origin = request.headers.get("Origin")
+            if origin in cors:
+                res.headers.add("Access-Control-Allow-Origin", origin)
     return res
 
 

@@ -121,6 +121,13 @@
                                         autocomplete="off" class="layui-input">
                                 </div>
                             </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">CORS</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="cors" value="{{ g.site.cors }}" placeholder="设置跨域允许的源站，允许*，推荐设置为多个完整URL(不包含域名末尾的/，英文逗号分隔)"
+                                        autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
                             {{ intpl("sitesetting") }}
                         </div>
                     </fieldset>
