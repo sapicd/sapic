@@ -18,10 +18,13 @@
             {{ g.userinfo.nickname or g.userinfo.username }}
         </a>
         <dl class="layui-nav-child">
-            <!--
-            <dd><a href="{{ url_for('front.profile') }}">个人资料</a></dd>
-            -->
-            <dd><a href="{{ url_for('front.image') }}">我的图片</a></dd>
+            {% if request.endpoint == "front.my" %}
+            <dd><a>个人资料</a></dd>
+            <dd><a>我的图片</a></dd>
+            {% else %}
+            <dd><a href="{{ url_for('front.my', _anchor='!profile') }}">个人资料</a></dd>
+            <dd><a href="{{ url_for('front.my', _anchor='!picbed') }}">我的图片</a></dd>
+            {% endif %}
             {% if g.is_admin %}
             <dd><a href="{{ url_for('front.admin') }}">站点管理</a></dd>
             {% endif %}

@@ -280,7 +280,7 @@
             element.tabChange('tab', layid);
             // Maybe layui bug
             if (layid === "picbed") {
-                location.href = "{{ url_for('front.image', is_mgr=1) }}";
+                location.href = "{{ url_for('front.my', is_mgr=1, _anchor='!picbed') }}";
             }
         }
         //监听tab切换
@@ -289,7 +289,7 @@
                 layid = othis.attr('lay-id');
             if (layid) {
                 if (layid === "picbed") {
-                    location.href = "{{ url_for('front.image', is_mgr=1) }}";
+                    location.href = "{{ url_for('front.my', is_mgr=1, _anchor='!picbed') }}";
                 }
                 location.hash = layid;
             }

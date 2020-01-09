@@ -51,10 +51,10 @@ def profile():
     return render_template("control/profile.html")
 
 
-@bp.route("/control/image.pic")
+@bp.route("/control/profile.pic")
 @login_required
-def image():
-    return render_template("control/image.html")
+def my():
+    return render_template("control/my.html")
 
 
 @bp.route("/control/admin.ext")

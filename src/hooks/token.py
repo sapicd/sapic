@@ -12,7 +12,7 @@
 
 __version__ = '0.1.0'
 __author__ = 'staugur'
-__description__ = '使用Token验证Api请求'
+__description__ = '使用Token验证Api'
 
 
 from flask import request, g

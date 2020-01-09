@@ -56,8 +56,20 @@
 
 {% block content %}
 <div class="layui-container">
-    <div id="waterfall" class="waterfall"></div>
-    <div id="page"></div>
+    <div class="layui-tab layui-tab-brief" lay-filter="tab">
+        <ul class="layui-tab-title">
+            <li class="layui-this" lay-id="profile">个人资料</li>
+            <li lay-id="picbed">我的图片</li>
+        </ul>
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+            </div>
+            <div class="layui-tab-item">
+                <div id="waterfall" class="waterfall"></div>
+                <div id="page"></div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -73,8 +85,22 @@
             laytpl = layui.laytpl,
             element = layui.element,
             laypage = layui.laypage;
-        var curr = location.hash.replace('#!page=', ''),
+        //显示当前tab
+        if (location.hash) {
+            var layid = location.hash.replace(/^#!/, '').replace(/^#%21/, '').split('=')[0];
+            element.tabChange('tab', layid);
+        }
+        //监听tab切换
+        element.on('tab(tab)', function (data) {
+            var othis = $(this),
+                layid = othis.attr('lay-id');
+            if (layid) {
+                location.hash = '!' + layid;
+            }
+        });
+        var curr = location.hash.replace('#!picbed=', ''),
             limit = parseInt("{{ request.args.limit or 10 }}");
+        //获取我的图片流方法
         function get_pics(page, limit, success) {
             picbed.ajax("{{ url_for('api.waterfall', sort='desc', is_mgr=request.args.is_mgr)|safe }}&page=" + page + "&limit=" + limit, function (res) {
                 console.log(res);
@@ -154,12 +180,13 @@
                 });
             });
         }
+        //初始加载图片
         get_pics(curr, limit, function (res) {
             laypage.render({
                 elem: 'page',
                 count: res.count,
                 limit: limit,
-                hash: 'page',
+                hash: 'picbed',
                 curr: curr, //起始页
                 jump: function (obj, first) {
                     if (!first) {
