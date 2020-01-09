@@ -43,9 +43,7 @@ def sha1(text):
 
 
 def sha256(text):
-    if PY2 and isinstance(text, text_type):
-        text = text.encode("utf-8")
-    if not PY2 and isinstance(text, text_type):
+    if isinstance(text, text_type):
         text = text.encode("utf-8")
     return hashlib.sha256(text).hexdigest()
 

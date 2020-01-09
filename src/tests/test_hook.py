@@ -11,7 +11,7 @@ class HookTest(unittest.TestCase):
 
     def setUp(self):
         self.tf = join(
-            dirname(dirname(abspath(__file__))), "tests", 'forTestHook.py'
+            dirname(dirname(abspath(__file__))), "tests", "forTestHook.py"
         )
         self.hm = HookManager(hooks_dir="tests")
         if isfile(self.tf):

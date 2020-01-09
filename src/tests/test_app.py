@@ -62,6 +62,7 @@ class AppTest(unittest.TestCase):
         self.assertIn("expire", data)
         self.assertEqual(data["code"], 0)
         with self.app.test_request_context():
+            self.app.preprocess_request()
             (signin, userinfo) = default_login_auth(data["sid"])
             self.assertTrue(signin)
             self.assertIsInstance(userinfo, dict)
@@ -91,11 +92,11 @@ class AppTest(unittest.TestCase):
         self.client.post("/api/hook?Action=disable", data=dict(
             name='up2local'
         ))
-        self.assertEqual(0, len(hm.get_enabled_hooks))
+        self.assertEqual(1, len(hm.get_enabled_hooks))
         self.client.post("/api/hook?Action=enable", data=dict(
             name='up2local'
         ))
-        self.assertEqual(1, len(hm.get_enabled_hooks))
+        self.assertEqual(2, len(hm.get_enabled_hooks))
 
 
 if __name__ == '__main__':

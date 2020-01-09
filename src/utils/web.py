@@ -15,11 +15,9 @@ from redis.exceptions import RedisError
 from flask import g, redirect, request, url_for, abort, Response, jsonify,\
     current_app
 from libs.storage import get_storage
-from .tool import logger, get_current_timestamp, create_redis_engine, rsp, \
-    sha256, username_pat, parse_valid_comma
+from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
+    parse_valid_comma
 from ._compat import PY2, text_type
-
-rc = create_redis_engine()
 
 
 def get_referrer_url():
@@ -60,7 +58,7 @@ def default_login_auth(dSid=None):
     else:
         if expire > get_current_timestamp():
             ak = rsp("accounts")
-            pipe = rc.pipeline()
+            pipe = g.rc.pipeline()
             pipe.sismember(ak, usr)
             pipe.hgetall(rsp("account", usr))
             try:
@@ -110,6 +108,12 @@ def admin_apilogin_required(f):
         else:
             return abort(404)
     return decorated_function
+
+
+def parseAuthorization():
+    auth = request.headers.get("Authorization")
+    if auth and "auth".startswith("token "):
+        return auth.lstrip("token ")
 
 
 def parseAcceptLanguage(acceptLanguage, defaultLanguage="zh-CN"):
@@ -171,6 +175,8 @@ def dfr(res, default='en-US'):
             "No valid backend storage service": "无有效后端存储服务",
             "The third module not found": "第三方模块未发现",
             "Password verification failed": "密码验证失败",
+            "Existing token": "已有token",
+            "No tokens yet": "还未有token",
         },
     }
     if isinstance(res, dict) and "en" not in language:

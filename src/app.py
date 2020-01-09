@@ -13,7 +13,8 @@ from uuid import uuid4
 from flask import Flask, g, jsonify, request
 from version import __version__
 from views import front_bp, api_bp
-from utils.tool import Attribute, err_logger, is_true, parse_valid_comma
+from utils.tool import Attribute, err_logger, is_true, parse_valid_comma, \
+    create_redis_engine
 from utils.web import get_site_config, JsonResponse, default_login_auth
 from libs.hook import HookManager
 from config import GLOBAL
@@ -31,6 +32,7 @@ app.config.update(
 )
 
 hm = HookManager(app)
+rc = create_redis_engine()
 
 app.register_blueprint(front_bp)
 app.register_blueprint(api_bp, url_prefix="/api")
@@ -43,6 +45,7 @@ def GlobalTemplateVariables():
 
 @app.before_request
 def before_request():
+    g.rc = rc
     g.signin, g.userinfo = default_login_auth()
     #: Trigger hook, you can modify flask.g
     hm.call("before_request")

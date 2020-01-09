@@ -73,6 +73,30 @@ https://picbed.saintic.com
 | up2qiniu | 将图片保存到七牛云KODO中 | [staugur/picbed-up2qiniu](https://github.com/staugur/picbed-up2qiniu) |
 | passport | 接入passport登录 | [staugur/picbed-ssoclient](https://github.com/staugur/picbed-ssoclient) |
 
+## TODO
+
+[x] 登录登出钩子
+[] 扩展阿里云OSS、腾讯云COS及其他公共图床
+[x] 第三方网站直接上传
+[] 聚合图床
+[] base64图片上传
+[] 粘贴上传
+
+## 客户端上传
+
+#### - 使用PicGo上传到自定义的picbed图床
+
+[下载PicGo](https://github.com/Molunerfinn/PicGo/releases)并安装，打开主界面，在 **插件设置** 中搜索 **web-uploader** 并安装，然后在 **图床设置-自定义Web图床** 中按照如下方式填写：
+
+```
+url: http[s]://你的picbed域名/api/upload
+paramName: picbed
+jsonPath: src
+customHeader和customBody暂不用填写
+```
+
+设置完之后选择自定义Web图床为默认图床即可。
+
 ## 预览图
 
 目前beta版本基本完成，先来几张预览图（PS：前几张大概是平板效果，最后一张是PC效果）
@@ -88,10 +112,3 @@ https://picbed.saintic.com
 ![控制台管理员功能](./Snapshot/5.png)
 
 ![管理我的图片](./Snapshot/6.png)
-
-## TODO
-
-[x] 登录登出钩子
-[] 扩展阿里云OSS、腾讯云COS及其他公共图床
-[] 第三方网站直接上传
-[] 聚合图床

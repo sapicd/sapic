@@ -20,13 +20,12 @@ from flask import Blueprint, request, g, url_for, current_app, abort, \
 from functools import partial
 from redis.exceptions import RedisError
 from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
-    parse_valid_verticaline, get_today, gen_rnd_filename, create_redis_engine,\
+    parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, \
     rsp, get_current_timestamp, ListEqualSplit, sha256, generate_random
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username
 
 bp = Blueprint("api", "api")
-rc = create_redis_engine()
 
 
 @bp.after_request
@@ -66,8 +65,8 @@ def login():
                 return result
     if usr and pwd and check_username(usr) and len(pwd) >= 6:
         ak = rsp("accounts")
-        if rc.sismember(ak, usr):
-            userinfo = rc.hgetall(rsp("account", usr))
+        if g.rc.sismember(ak, usr):
+            userinfo = g.rc.hgetall(rsp("account", usr))
             password = userinfo.get("password")
             if password and check_password_hash(password, pwd):
                 expire = get_current_timestamp() + max_age
@@ -187,9 +186,57 @@ def hook():
     return res
 
 
-@bp.route("/waterfall")
+@bp.route("/token", methods=["GET", "POST"])
+@apilogin_required
+def token():
+    if request.method == "GET":
+        return abort(404)
+    res = dict(code=1)
+    usr = g.userinfo.username
+    tk = rsp("tokens")
+    ak = rsp("account", usr)
+    Action = request.args.get("Action")
+    if Action == "create":
+        if g.rc.hget(ak, "token"):
+            res.update(msg="Existing token")
+        else:
+            token = "%s.%s.%s" % (
+                usr,
+                get_current_timestamp(),
+                hmac_sha256(g.rc.hget(ak, "password"), usr)
+            )
+            token = b64encode(token.encode("utf-8")).decode("utf-8")
+            try:
+                pipe = g.rc.pipeline()
+                pipe.hset(tk, token, usr)
+                pipe.hset(ak, "token", token)
+                pipe.execute()
+            except RedisError:
+                res.update(msg="Program data storage service error")
+            else:
+                res.update(code=0)
+    elif Action == "revoke":
+        token = g.rc.hget(ak, "token")
+        if token:
+            try:
+                pipe = g.rc.pipeline()
+                pipe.hdel(tk, token)
+                pipe.hdel(ak, "token")
+                pipe.execute()
+            except RedisError:
+                res.update(msg="Program data storage service error")
+            else:
+                res.update(code=0)
+        else:
+            res.update(msg="No tokens yet")
+    return res
+
+
+@bp.route("/waterfall", methods=["GET", "POST"])
 @apilogin_required
 def waterfall():
+    if request.method == "GET":
+        return abort(404)
     res = dict(code=1, msg=None)
     #: 依次根据ctime、filename排序
     sort = request.args.get("sort") or "desc"
@@ -212,8 +259,8 @@ def waterfall():
                 uk = rsp("index", "global")
             else:
                 uk = rsp("index", "user", g.userinfo.username)
-            pipe = rc.pipeline()
-            for sha in rc.smembers(uk):
+            pipe = g.rc.pipeline()
+            for sha in g.rc.smembers(uk):
                 pipe.hgetall(rsp("image", sha))
             try:
                 result = pipe.execute()
@@ -257,8 +304,8 @@ def shamgr(sha):
     if request.method == "GET":
         gk = rsp("index", "global")
         ik = rsp("image", sha)
-        if rc.sismember(gk, sha):
-            data = rc.hgetall(ik)
+        if g.rc.sismember(gk, sha):
+            data = g.rc.hgetall(ik)
             u, n = data["src"], data["filename"]
             data.update(
                 senders=json.loads(data["senders"]) if g.is_admin else None,
@@ -278,13 +325,13 @@ def shamgr(sha):
         gk = rsp("index", "global")
         dk = rsp("index", "deleted")
         ik = rsp("image", sha)
-        if rc.sismember(gk, sha):
+        if g.rc.sismember(gk, sha):
             #: 图片所属用户
             #: - 如果不是匿名，那么判断请求用户是否属所属用户或管理员
             #: - 如果是匿名上传，那么只有管理员有权删除
-            husr = rc.hget(ik, "user")
+            husr = g.rc.hget(ik, "user")
             if g.is_admin or (g.userinfo.username == husr):
-                pipe = rc.pipeline()
+                pipe = g.rc.pipeline()
                 pipe.srem(gk, sha)
                 pipe.sadd(dk, sha)
                 pipe.hset(ik, "status", "deleted")
@@ -329,7 +376,7 @@ def upload():
     )
     if f and allowed_suffix(f.filename):
         try:
-            rc.ping()
+            g.rc.ping()
         except RedisError as e:
             logger.error(e, exc_info=True)
             res.update(code=2, msg="Program data storage service error")
@@ -367,6 +414,7 @@ def upload():
         #: 钩子返回结果（目前版本最终结果中应该最多只有1条数据）
         data = []
         #: 保存图片的钩子回调
+
         def callback(result):
             logger.info(result)
             if result["sender"] == "up2local":
@@ -401,7 +449,7 @@ def upload():
             )
             return res
         #: 存储数据
-        pipe = rc.pipeline()
+        pipe = g.rc.pipeline()
         pipe.sadd(rsp("index", "global"), sha)
         if g.signin and g.userinfo.username:
             pipe.sadd(rsp("index", "user", g.userinfo.username), sha)
