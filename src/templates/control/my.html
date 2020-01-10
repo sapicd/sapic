@@ -161,7 +161,6 @@
         //获取我的图片流方法
         function get_pics(page, limit, success) {
             picbed.ajax("{{ url_for('api.waterfall', sort='desc', is_mgr=request.args.is_mgr)|safe }}&page=" + page + "&limit=" + limit, function (res) {
-                console.log(res);
                 var shaDatas = {};
                 var html = res.data.map(function (img) {
                     img["ctime"] = util.toDateString(img.ctime * 1000);
@@ -236,6 +235,11 @@
                         });
                     });
                 });
+            }, {
+                msgprefix: false,
+                fail: function(res) {
+                    $("#waterfall").text("无数据");
+                }
             });
         }
         //初始加载图片

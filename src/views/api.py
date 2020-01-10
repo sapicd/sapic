@@ -420,14 +420,15 @@ def shamgr(sha):
                                 sha=sha,
                                 upload_path=info["upload_path"],
                                 filename=info["filename"],
-                                local_basedir=join(
+                                basedir=(join(
                                     current_app.root_path,
                                     current_app.static_folder,
                                     UPLOAD_FOLDER
-                                )
+                                ) if i["sender"] == "up2local"
+                                    else i.get("basedir"))
                             )
                     except (ValueError, AttributeError, Exception) as e:
-                        logger.error(e, exc_info=True)
+                        logger.warning(e, exc_info=True)
             else:
                 return abort(403)
         else:

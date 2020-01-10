@@ -45,7 +45,7 @@ def upimg_save(**kwargs):
     return res
 
 
-def upimg_delete(sha, upload_path, filename, local_basedir):
-    filepath = join(local_basedir, upload_path, filename)
+def upimg_delete(sha, upload_path, filename, basedir):
+    filepath = join(basedir, upload_path, filename)
     if isfile(filepath):
         remove(filepath)
