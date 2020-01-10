@@ -20,6 +20,7 @@
     }
     .layui-upload-drag {
         background-color: transparent;
+        padding: 20px;
     }
     .layui-upload-drag:hover {
         border:1px dotted #999;
@@ -32,7 +33,7 @@
         border-spacing: 0;
     }
     .a { width: 55px; }
-    .b { word-wrap:break-word;word-break:break-all;text-align:left; }
+    .b { text-align:left; }
     .c { max-width: 50px; }
     .d { max-width: 50px; }
     .e { max-width: 80px; }
@@ -53,7 +54,7 @@
                     <thead>
                         <tr>
                             <th class="a">预览</th>
-                            <th class="b">文件名</th>
+                            <th class="b">文件</th>
                             <th class="c">大小(KB)</th>
                             <th class="d">状态</th>
                             <th class="e">进度</th>
@@ -101,7 +102,7 @@
                 obj.preview(function(index, file, result){
                     var tr = $(['<tr id="upload-'+ index +'">'
                         ,'<td class="a"><img src="'+ result +'" style="max-width:50px" class="layui-upload-img"></td>'
-                        ,'<td class="b">'+ file.name +'</td>'
+                        ,'<td class="b">'+ (picbed.isMobile ? file.type.replace(/^image\//, '') : file.name) +'</td>'
                         ,'<td class="c">'+ (file.size/1024).toFixed(1) +'</td>'
                         ,'<td class="d">等待</td>'
                         ,'<td class="e"><div id="progress-' + index + '"></div></td>'

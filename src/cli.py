@@ -12,9 +12,10 @@
 
 import click
 from redis.exceptions import RedisError
+from werkzeug.security import generate_password_hash
 from utils.tool import rsp, get_current_timestamp, create_redis_engine, is_true
 from utils.web import check_username
-from werkzeug.security import generate_password_hash
+from libs.storage import get_storage
 
 
 def echo(msg, color=None):
@@ -78,5 +79,19 @@ if __name__ == "__main__":
             avatar=avatar,
             nickname=nickname,
         )
+
+    @cli.command()
+    @click.option('--HookLoadTime/--no-HookLoadTime', default=False,
+                  help=u'删除钩子加载时间', show_default=True)
+    @click.option('--HookThirds/--no-HookThirds', default=False,
+                  help=u'删除已加载的第三方钩子', show_default=True)
+    def clean(hookloadtime, hookthirds):
+        """清理系统"""
+        if hookloadtime:
+            s = get_storage()
+            del s['hookloadtime']
+        if hookthirds:
+            s = get_storage()
+            del s['hookthirds']
 
     cli()

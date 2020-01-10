@@ -14,7 +14,7 @@ from random import choice
 from os.path import join, splitext
 from base64 import urlsafe_b64encode as b64encode
 from werkzeug.utils import secure_filename
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from flask import Blueprint, request, g, url_for, current_app, abort, \
     make_response, jsonify, Response
 from functools import partial
@@ -24,6 +24,7 @@ from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     rsp, get_current_timestamp, ListEqualSplit, sha256, generate_random
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username
+from utils._compat import iteritems
 
 bp = Blueprint("api", "api")
 
@@ -195,17 +196,21 @@ def token():
     usr = g.userinfo.username
     tk = rsp("tokens")
     ak = rsp("account", usr)
+    #: 生成token
+    gen_token = lambda: b64encode(
+        ("%s.%s.%s.%s" % (
+            generate_random(),
+            usr,
+            get_current_timestamp(),
+            hmac_sha256(g.rc.hget(ak, "password"), usr)
+        )).encode("utf-8")
+    ).decode("utf-8")
     Action = request.args.get("Action")
     if Action == "create":
         if g.rc.hget(ak, "token"):
             res.update(msg="Existing token")
         else:
-            token = "%s.%s.%s" % (
-                usr,
-                get_current_timestamp(),
-                hmac_sha256(g.rc.hget(ak, "password"), usr)
-            )
-            token = b64encode(token.encode("utf-8")).decode("utf-8")
+            token = gen_token()
             try:
                 pipe = g.rc.pipeline()
                 pipe.hset(tk, token, usr)
@@ -214,7 +219,7 @@ def token():
             except RedisError:
                 res.update(msg="Program data storage service error")
             else:
-                res.update(code=0)
+                res.update(code=0, token=token)
     elif Action == "revoke":
         token = g.rc.hget(ak, "token")
         if token:
@@ -229,6 +234,65 @@ def token():
                 res.update(code=0)
         else:
             res.update(msg="No tokens yet")
+    elif Action == "reset":
+        oldToken = g.rc.hget(ak, "token")
+        token = gen_token()
+        try:
+            pipe = g.rc.pipeline()
+            if oldToken:
+                pipe.hdel(tk, oldToken)
+            pipe.hset(tk, token, usr)
+            pipe.hset(ak, "token", token)
+            pipe.execute()
+        except RedisError:
+            res.update(msg="Program data storage service error")
+        else:
+            res.update(code=0, token=token)
+    return res
+
+
+@bp.route("/myself", methods=["GET", "POST"])
+@apilogin_required
+def my():
+    if request.method == "GET":
+        return abort(404)
+    res = dict(code=1)
+    ak = rsp("account", g.userinfo.username)
+    Action = request.args.get("Action")
+    if Action == "updateProfile":
+        allowed_fields = ["nickname", "avatar"]
+        data = {
+            k: v
+            for k, v in iteritems(request.form.to_dict())
+            if k in allowed_fields
+        }
+        try:
+            data.update(mtime=get_current_timestamp())
+            g.rc.hmset(ak, data)
+        except RedisError:
+            res.update(msg="Program data storage service error")
+        else:
+            res.update(code=0)
+    elif Action == "updatePassword":
+        passwd = request.form.get("passwd")
+        repasswd = request.form.get("repasswd")
+        if passwd and repasswd:
+            if len(passwd) < 6:
+                res.update(msg="Password must be at least 6 characters")
+            else:
+                if passwd != repasswd:
+                    res.update(msg="Confirm passwords do not match")
+                else:
+                    try:
+                        g.rc.hmset(ak, dict(
+                            password=generate_password_hash(passwd),
+                        ))
+                    except RedisError:
+                        res.update(msg="Program data storage service error")
+                    else:
+                        res.update(code=0)
+        else:
+            res.update(msg="Parameter error")
     return res
 
 
@@ -414,7 +478,6 @@ def upload():
         #: 钩子返回结果（目前版本最终结果中应该最多只有1条数据）
         data = []
         #: 保存图片的钩子回调
-
         def callback(result):
             logger.info(result)
             if result["sender"] == "up2local":

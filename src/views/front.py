@@ -45,19 +45,13 @@ def logout():
     return res
 
 
-@bp.route("/control/profile.im")
-@login_required
-def profile():
-    return render_template("control/profile.html")
-
-
-@bp.route("/control/profile.pic")
+@bp.route("/control/myself")
 @login_required
 def my():
     return render_template("control/my.html")
 
 
-@bp.route("/control/admin.ext")
+@bp.route("/control/admin")
 @admin_apilogin_required
 def admin():
     return render_template("control/admin.html")

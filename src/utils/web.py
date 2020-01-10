@@ -112,7 +112,7 @@ def admin_apilogin_required(f):
 
 def parseAuthorization():
     auth = request.headers.get("Authorization")
-    if auth and "auth".startswith("token "):
+    if auth and auth.startswith("token "):
         return auth.lstrip("token ")
 
 
@@ -175,6 +175,8 @@ def dfr(res, default='en-US'):
             "No valid backend storage service": "无有效后端存储服务",
             "The third module not found": "第三方模块未发现",
             "Password verification failed": "密码验证失败",
+            "Password must be at least 6 characters": "密码最少6位",
+            "Confirm passwords do not match": "确认密码不匹配",
             "Existing token": "已有token",
             "No tokens yet": "还未有token",
         },

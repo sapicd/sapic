@@ -13,9 +13,8 @@
     {% if g.signin %}
     <li class="layui-nav-item">
         <a href="javascript:;">
-            <img src="{{ g.userinfo.avatar or 'https://static.saintic.com/cdn/images/defaultAvatar.png' }}"
-                class="layui-nav-img">
-            {{ g.userinfo.nickname or g.userinfo.username }}
+            <img id="avatar" src="{{ g.userinfo.avatar or 'https://static.saintic.com/cdn/images/defaultAvatar.png' }}" class="layui-nav-img">
+            <cite id="nickname">{{ g.userinfo.nickname or g.userinfo.username }}</cite>
         </a>
         <dl class="layui-nav-child">
             {% if request.endpoint == "front.my" %}

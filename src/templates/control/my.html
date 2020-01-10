@@ -1,6 +1,6 @@
 {% extends "layout/control.html" %}
 
-{% block title %}图片管理{% endblock %}
+{% block title %}个人中心{% endblock %}
 
 {% block head %}
 <style>
@@ -59,10 +59,67 @@
     <div class="layui-tab layui-tab-brief" lay-filter="tab">
         <ul class="layui-tab-title">
             <li class="layui-this" lay-id="profile">个人资料</li>
+            <li lay-id="password">修改密码</li>
             <li lay-id="picbed">我的图片</li>
         </ul>
         <div class="layui-tab-content">
             <div class="layui-tab-item layui-show">
+                <form lay-filter="profileForm" class="layui-form layui-form-pane">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">用户名</label>
+                        <div class="layui-input-inline">
+                            <input type="text" required="" autocomplete="off" value="{{ g.userinfo.username }}"
+                                class="layui-input layui-disabled" disabled="">
+                        </div>
+                        <div class="layui-form-mid layui-word-aux">
+                            {% if g.is_admin %}
+                            <scan style="color: #5FB878;font-weight: bold;">你好，管理员！</scan>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">昵称</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="nickname" autocomplete="off" value="{{ g.userinfo.nickname }}"
+                                placeholder="个性化的别名" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">头像</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="avatar" autocomplete="off" value="{{ g.userinfo.avatar }}"
+                                placeholder="头像URL" class="layui-input">
+                        </div>
+                    </div>
+                    {{ intpl("profile") }}
+                    <div class="layui-form-item">
+                        <button class="layui-btn" lay-filter="profile" lay-submit="">保存</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </form>
+            </div>
+            <div class="layui-tab-item">
+                <form class="layui-form layui-form-pane">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">新密码</label>
+                        <div class="layui-input-inline">
+                            <input type="password" name="passwd" required="" lay-verify="required" autocomplete="off"
+                                class="layui-input">
+                        </div>
+                        <div class="layui-form-mid layui-word-aux">至少6个字符</div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">确认密码</label>
+                        <div class="layui-input-inline">
+                            <input type="password" name="repasswd" required="" lay-verify="required" autocomplete="off"
+                                class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <button class="layui-btn" lay-filter="passwd" lay-submit="">确认修改</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </form>
             </div>
             <div class="layui-tab-item">
                 <div id="waterfall" class="waterfall"></div>
@@ -76,11 +133,12 @@
 {% block script %}
 {% include "ref/upload_show.html" %}
 <script>
-    layui.use(['picbed', 'laypage', 'flow', 'element', 'layer', 'laytpl', 'util'], function () {
+    layui.use(['picbed', 'laypage', 'flow', 'form', 'element', 'layer', 'laytpl', 'util'], function () {
         var $ = layui.jquery,
             picbed = layui.picbed,
             util = layui.util,
             flow = layui.flow,
+            form = layui.form,
             layer = layui.layer,
             laytpl = layui.laytpl,
             element = layui.element,
@@ -194,6 +252,72 @@
                     }
                 }
             });
+        });
+        //监听资料修改
+        form.on('submit(profile)', function(data){
+            var post = data.field;
+            delete post.token;
+            picbed.ajax("{{ url_for('api.my', Action='updateProfile') }}", function(res) {
+                layer.msg("已修改资料", {icon:1});
+                if (post.avatar) {
+                    $("#avatar").attr("src", post.avatar);
+                }
+                if (post.nickname) {
+                    $("#nickname").text(post.nickname);
+                }
+            }, {
+                data: post
+            });
+            return false;
+        });
+        //监听密码修改
+        form.on('submit(passwd)', function(data){
+            picbed.ajax("{{ url_for('api.my', Action='updatePassword') }}", function(res) {
+                layer.msg("已修改密码", {icon:1});
+            }, {
+                data: data.field
+            });
+            return false;
+        });
+        //监听token动作
+        $("#createToken").on("click", function() {
+            picbed.ajax("{{ url_for('api.token', Action='create') }}", function(res) {
+                layer.msg("Token创建成功", {icon:1});
+            　　$("#token").removeAttr("readonly");
+                form.val("profileForm", {token: res.token});
+                $("#token").attr("readonly","readonly");
+                $("#yesToken").removeClass("layui-hide");
+                $("#yesToken").addClass("layui-show");
+                $("#noToken").removeClass("layui-show");
+                $("#noToken").addClass("layui-hide");
+            })
+        });
+        $("#revokeToken").on("click", function() {
+            picbed.ajax("{{ url_for('api.token', Action='revoke') }}", function(res) {
+                layer.msg("Token已销毁", {icon:1});
+            　　$("#token").removeAttr("readonly");
+                form.val("profileForm", {token: ''});
+                $("#token").attr("readonly","readonly");
+                $("#yesToken").removeClass("layui-show");
+                $("#yesToken").addClass("layui-hide");
+                $("#noToken").removeClass("layui-hide");
+                $("#noToken").addClass("layui-show");
+            })
+        });
+        $("#resetToken").on("click", function() {
+            picbed.ajax("{{ url_for('api.token', Action='reset') }}", function(res) {
+                layer.msg("Token重置成功", {icon:1});
+            　　$("#token").removeAttr("readonly");
+                form.val("profileForm", {token: res.token});
+                $("#token").attr("readonly","readonly");
+                $("#yesToken").removeClass("layui-hide");
+                $("#yesToken").addClass("layui-show");
+                $("#noToken").removeClass("layui-show");
+                $("#noToken").addClass("layui-hide");
+            })
+        });
+        $("#copyToken").on("click", function() {
+            picbed.Clipboard.copy($("#token").val());
         });
     });
 </script>
