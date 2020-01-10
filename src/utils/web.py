@@ -112,8 +112,8 @@ def admin_apilogin_required(f):
 
 def parseAuthorization():
     auth = request.headers.get("Authorization")
-    if auth and auth.startswith("token "):
-        return auth.lstrip("token ")
+    if auth and auth.startswith("Token "):
+        return auth.lstrip("Token ")
 
 
 def parseAcceptLanguage(acceptLanguage, defaultLanguage="zh-CN"):

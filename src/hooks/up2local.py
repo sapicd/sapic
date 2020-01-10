@@ -9,12 +9,12 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 __author__ = 'staugur'
 __description__ = '将图片保存到本地'
 
-from os import makedirs
-from os.path import exists, join
+from os import makedirs, remove
+from os.path import exists, join, isfile
 from utils._compat import string_types
 
 
@@ -43,3 +43,9 @@ def upimg_save(**kwargs):
         else:
             res.update(msg="The upload_path type error")
     return res
+
+
+def upimg_delete(sha, upload_path, filename, local_basedir):
+    filepath = join(local_basedir, upload_path, filename)
+    if isfile(filepath):
+        remove(filepath)

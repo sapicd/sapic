@@ -27,7 +27,8 @@ from utils.web import dfr, admin_apilogin_required, apilogin_required, \
 from utils._compat import iteritems
 
 bp = Blueprint("api", "api")
-
+#: 定义本地上传的钩子在保存图片时的基础目录前缀（在static子目录下）
+UPLOAD_FOLDER = "upload"
 
 @bp.after_request
 def translate(res):
@@ -369,9 +370,10 @@ def waterfall():
 def shamgr(sha):
     """图片查询、删除接口"""
     res = dict(code=1)
+    gk = rsp("index", "global")
+    ik = rsp("image", sha)
+    dk = rsp("index", "deleted")
     if request.method == "GET":
-        gk = rsp("index", "global")
-        ik = rsp("image", sha)
         if g.rc.sismember(gk, sha):
             data = g.rc.hgetall(ik)
             u, n = data["src"], data["filename"]
@@ -390,14 +392,12 @@ def shamgr(sha):
     elif request.method == "DELETE":
         if not g.signin:
             return abort(403)
-        gk = rsp("index", "global")
-        dk = rsp("index", "deleted")
-        ik = rsp("image", sha)
         if g.rc.sismember(gk, sha):
             #: 图片所属用户
             #: - 如果不是匿名，那么判断请求用户是否属所属用户或管理员
             #: - 如果是匿名上传，那么只有管理员有权删除
-            husr = g.rc.hget(ik, "user")
+            info = g.rc.hgetall(ik)
+            husr = info.get("user")
             if g.is_admin or (g.userinfo.username == husr):
                 pipe = g.rc.pipeline()
                 pipe.srem(gk, sha)
@@ -410,6 +410,24 @@ def shamgr(sha):
                     res.update(msg="Program data storage service error")
                 else:
                     res.update(code=0)
+                    try:
+                        #: 删除图片尝试执行senders的upimg_delete方法
+                        senders = json.loads(info.get("senders"))
+                        for i in senders:
+                            current_app.extensions["hookmanager"].proxy(
+                                i["sender"]
+                            ).upimg_delete(
+                                sha=sha,
+                                upload_path=info["upload_path"],
+                                filename=info["filename"],
+                                local_basedir=join(
+                                    current_app.root_path,
+                                    current_app.static_folder,
+                                    UPLOAD_FOLDER
+                                )
+                            )
+                    except (ValueError, AttributeError, Exception) as e:
+                        logger.error(e, exc_info=True)
             else:
                 return abort(403)
         else:
@@ -487,7 +505,7 @@ def upload():
             if result["sender"] == "up2local":
                 result["src"] = url_for(
                     "static",
-                    filename=join("upload", upload_path, filename),
+                    filename=join(UPLOAD_FOLDER, upload_path, filename),
                     _external=True
                 )
             data.append(dfr(result))
@@ -500,7 +518,7 @@ def upload():
             stream=stream,
             upload_path=upload_path,
             local_basedir=join(
-                current_app.root_path, current_app.static_folder, 'upload'
+                current_app.root_path, current_app.static_folder, UPLOAD_FOLDER
             )
         )
         #: 判定后端存储全部失败时，上传失败

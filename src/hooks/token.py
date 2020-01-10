@@ -25,7 +25,7 @@ intpl_profile = u"""
 <div class="layui-form-item">
     <label class="layui-form-label">Token</label>
     <div class="layui-input-inline">
-        <input type="text" name="token" id="token" autocomplete="off" value="{{ g.userinfo.token }}" class="layui-input" readonly="" placeholder="Api登录密钥">
+        <input type="text" name="token" id="token" autocomplete="off" value="{{ g.userinfo.token }}" class="layui-input" readonly="" placeholder="暂无Api登录密钥">
     </div>
     <div class="layui-form-mid layui-word-aux">
         {% if g.userinfo.token %}

@@ -76,12 +76,12 @@ https://picbed.saintic.com
 ## TODO
 
 - [x] 登录登出钩子
-- [ ] 扩展阿里云OSS、腾讯云COS及其他公共图床
 - [x] 第三方网站直接上传
+- [ ] 扩展阿里云OSS、腾讯云COS及其他公共图床
 - [ ] 聚合图床
 - [ ] base64图片上传
 - [ ] 粘贴上传
-- [ ] 图片物理删除
+- [x] 图片物理删除
 
 ## 客户端上传
 
@@ -95,7 +95,7 @@ paramName: picbed
 jsonPath: src
 # 以上是匿名上传，仅在管理员开启匿名时才能上传成功
 # 如需登录上传，请使用token(在控制台-个人资料-Token查看)，以下两种任选:
-customHeader: {"Authorization": "token 你的Token值"}
+customHeader: {"Authorization": "Token 你的Token值"}
 customBody: {"token": "你的Token值"}
 ```
 
