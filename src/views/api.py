@@ -273,6 +273,10 @@ def my():
             res.update(msg="Program data storage service error")
         else:
             res.update(code=0)
+            #: 更新资料触发一次钩子
+            current_app.extensions["hookmanager"].call(
+                "profile_update", **data
+            )
     elif Action == "updatePassword":
         passwd = request.form.get("passwd")
         repasswd = request.form.get("repasswd")
