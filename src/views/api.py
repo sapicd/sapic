@@ -438,7 +438,7 @@ def shamgr(sha):
     return res
 
 
-@bp.route('/upload', methods=['POST'])
+@bp.route("/upload", methods=["POST"])
 def upload():
     """上传逻辑：
     0. 判断是否登录，如果未登录则判断是否允许匿名上传
@@ -566,3 +566,17 @@ def upload():
     else:
         res.update(msg="No file or image format allowed")
     return res
+
+
+@bp.route("/extendpoint", methods=["GET", "POST"])
+def ep():
+    if request.method == "GET":
+        return abort(404)
+    Object = request.args.get("Object")
+    Action = request.args.get("Action")
+    if Object and Action:
+        obj = current_app.extensions["hookmanager"].proxy(Object)
+        if obj and hasattr(obj, Action):
+            result = getattr(obj, Action)()
+            if result and isinstance(result, Response):
+                return result
