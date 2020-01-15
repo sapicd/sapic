@@ -10,10 +10,10 @@
 """
 
 from uuid import uuid4
-from flask import Flask, g, jsonify, request
+from flask import Flask, g, request, render_template
 from version import __version__
 from views import front_bp, api_bp
-from utils.tool import Attribute, err_logger, is_true, parse_valid_comma, \
+from utils.tool import Attribute, is_true, parse_valid_comma, err_logger, \
     create_redis_engine
 from utils.web import get_site_config, JsonResponse, default_login_auth
 from libs.hook import HookManager
@@ -73,38 +73,10 @@ def after_request(res):
 
 
 @app.errorhandler(500)
-def server_error(error=None):
-    if error:
-        err_logger.error(error, exc_info=True)
-    message = {
-        "msg": "Internal Server Error",
-        "code": 500
-    }
-    return jsonify(message), 500
-
-
 @app.errorhandler(404)
-def not_found(error=None):
-    message = {
-        'code': 404,
-        'msg': 'Not Found'
-    }
-    resp = jsonify(message)
-    resp.status_code = 404
-    return resp
-
-
 @app.errorhandler(403)
-def permission_denied(error=None):
-    return jsonify({
-        "msg": "Forbidden",
-        "code": 403
-    }), 403
-
-
 @app.errorhandler(413)
-def request_entity_too_large(error):
-    return jsonify({
-        "msg": "Request Entity Too Large",
-        "code": 403
-    }), 413
+def page_error(e):
+    if getattr(e, "code", None) == 500:
+        err_logger.error(e, exc_info=True)
+    return render_template("public/error.html", e=e)

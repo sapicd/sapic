@@ -21,7 +21,8 @@ from functools import partial
 from redis.exceptions import RedisError
 from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, \
-    rsp, get_current_timestamp, ListEqualSplit, sha256, generate_random
+    rsp, get_current_timestamp, ListEqualSplit, sha256, generate_random, \
+    err_logger
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username
 from utils._compat import iteritems
@@ -29,6 +30,20 @@ from utils._compat import iteritems
 bp = Blueprint("api", "api")
 #: 定义本地上传的钩子在保存图片时的基础目录前缀（在static子目录下）
 UPLOAD_FOLDER = "upload"
+
+
+@bp.errorhandler(500)
+@bp.errorhandler(404)
+@bp.errorhandler(403)
+@bp.errorhandler(413)
+def api_error(e):
+    if getattr(e, "code", None) == 500:
+        err_logger.error(e, exc_info=True)
+    return jsonify(dict(
+        msg=e.name,
+        code=e.code
+    )), e.code
+
 
 @bp.after_request
 def translate(res):
@@ -298,7 +313,7 @@ def token():
     return res
 
 
-@bp.route("/myself", methods=["GET", "POST"])
+@bp.route("/myself", methods=["GET", "PUT"])
 @apilogin_required
 def my():
     if request.method == "GET":
@@ -458,6 +473,8 @@ def shamgr(sha):
                     res.update(code=0)
                     try:
                         #: 删除图片尝试执行senders的upimg_delete方法
+                        #: 后端钩子未禁用时才会执行删除
+                        #: TODO 无论禁用与否都删除?
                         senders = json.loads(info.get("senders"))
                         for i in senders:
                             current_app.extensions["hookmanager"].proxy(

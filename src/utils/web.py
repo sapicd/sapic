@@ -46,6 +46,8 @@ def default_login_auth(dSid=None):
     signin = False
     userinfo = {}
     try:
+        if not sid:
+            raise ValueError
         if PY2 and isinstance(sid, text_type):
             sid = sid.encode("utf-8")
         sid = b64decode(sid)

@@ -270,6 +270,7 @@
                     $("#nickname").text(post.nickname);
                 }
             }, {
+                method: 'PUT',
                 data: post
             });
             return false;
@@ -279,6 +280,7 @@
             picbed.ajax("{{ url_for('api.my', Action='updatePassword') }}", function(res) {
                 layer.msg("已修改密码", {icon:1});
             }, {
+                method: 'PUT',
                 data: data.field
             });
             return false;
