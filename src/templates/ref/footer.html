@@ -1,4 +1,12 @@
 <!-- 底部 -->
-{{ g.site.beian }} Copyright &copy; <script>document.write(new Date().getFullYear());</script>
+{% if g.site.beian %}
+    {% if "," in g.site.beian %}
+    <a href="http://www.beian.miit.gov.cn" target="_blank">{{ g.site.beian.split(",")[0] }}</a>
+    <a href="http://www.beian.gov.cn" target="_blank">{{ g.site.beian.split(",")[1] }}</a>
+    {% else %}
+    <a href="http://www.beian.miit.gov.cn" target="_blank">{{ g.site.beian }}</a>
+    {% endif %}
+{% endif %}
+Copyright &copy; <script>document.write(new Date().getFullYear());</script>
 {{ g.site.footer }} All rights reserved.
 Powered by <a href="https://github.com/staugur/picbed" target="_blank">picbed</a>

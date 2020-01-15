@@ -10,8 +10,9 @@
 """
 
 from flask import Blueprint, render_template, make_response, redirect, \
-    url_for, current_app, Response, g
+    url_for, current_app, Response, g, abort
 from utils.web import login_required, admin_apilogin_required
+from utils.tool import is_true
 
 bp = Blueprint("front", "front")
 
@@ -43,6 +44,14 @@ def logout():
     res = make_response(redirect(url_for("front.index")))
     res.set_cookie(key='dSid',  value='', expires=0)
     return res
+
+
+@bp.route("/register")
+def register():
+    if is_true(g.cfg.register):
+        return render_template("public/register.html")
+    else:
+        return abort(404)
 
 
 @bp.route("/control/myself")

@@ -59,12 +59,15 @@ def login():
         #: Remember me 7d
         max_age = 604800
     #: 登录接口钩子
-    if g.cfg.site_auth:
-        so = current_app.extensions["hookmanager"].proxy(g.cfg.site_auth)
-        if so and hasattr(so, "login_api"):
-            result = so.login_api(usr, pwd, set_state, max_age, is_secure)
-            if result and isinstance(result, Response):
-                return result
+    try:
+        if g.cfg.site_auth:
+            so = current_app.extensions["hookmanager"].proxy(g.cfg.site_auth)
+            if so and hasattr(so, "login_api"):
+                result = so.login_api(usr, pwd, set_state, max_age, is_secure)
+                if result and isinstance(result, Response):
+                    return result
+    except (ValueError, TypeError, Exception) as e:
+        logger.warning(e, exc_info=True)
     if usr and pwd and check_username(usr) and len(pwd) >= 6:
         ak = rsp("accounts")
         if g.rc.sismember(ak, usr):
@@ -101,6 +104,49 @@ def login():
             res.update(msg="No valid username found")
     else:
         res.update(msg="The username or password parameter error")
+    return res
+
+
+@bp.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "GET" or is_true(g.cfg.register) is False:
+        return abort(404)
+    res = dict(code=1)
+    #: Required fields
+    username = request.form.get("username")
+    password = request.form.get("password")
+    if username and password:
+        if check_username(username):
+            if len(password) < 6:
+                res.update(msg="Password must be at least 6 characters")
+            else:
+                ak = rsp("accounts")
+                if g.rc.sismember(ak, username):
+                    res.update(msg="The username already exists")
+                else:
+                    #: 参数校验通过，执行注册
+                    options = dict(
+                        username=username,
+                        password=generate_password_hash(password),
+                        is_admin=0,
+                        avatar=request.form.get("avatar") or "",
+                        nickname=request.form.get("nickname") or "",
+                        ctime=get_current_timestamp(),
+                    )
+                    uk = rsp("account", username)
+                    pipe = g.rc.pipeline()
+                    pipe.sadd(ak, username)
+                    pipe.hmset(uk, options)
+                    try:
+                        pipe.execute()
+                    except RedisError:
+                        res.update(msg="Program data storage service error")
+                    else:
+                        res.update(code=0)
+        else:
+            res.update(
+                msg="The username is invalid or registration is not allowed"
+            )
     return res
 
 

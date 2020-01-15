@@ -39,5 +39,14 @@
         <a href="{{ url_for('front.login') }}">登录</a>
         {% endif %}
     </li>
+    {% if is_true(g.site.register) %}
+    <li class="layui-nav-item {% if request.endpoint == 'front.register' %}layui-this{% endif %}">
+        {% if request.endpoint == 'front.register' %}
+        <a>注册</a>
+        {% else %}
+        <a href="{{ url_for('front.register') }}">注册</a>
+        {% endif %}
+    </li>
+    {% endif %}
     {% endif %}
 </ul>

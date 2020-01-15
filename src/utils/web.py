@@ -180,6 +180,8 @@ def dfr(res, default='en-US'):
             "Confirm passwords do not match": "确认密码不匹配",
             "Existing token": "已有token",
             "No tokens yet": "还未有token",
+            "The username is invalid or registration is not allowed": "用户名不合法或不允许注册",
+            "The username already exists": "用户名已存在",
         },
     }
     if isinstance(res, dict) and "en" not in language:

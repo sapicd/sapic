@@ -103,7 +103,7 @@
                             <div class="layui-form-item">
                                 <label class="layui-form-label">备案号</label>
                                 <div class="layui-input-block">
-                                    <input type="text" name="beian" value="{{ g.site.beian }}" placeholder="ICP备案号，若有公网安备亦可以填写"
+                                    <input type="text" name="beian" value="{{ g.site.beian }}" placeholder="ICP备案号，若有公网安备请加逗号(英文，无空格)再填写公安备案号"
                                         autocomplete="off" class="layui-input">
                                 </div>
                             </div>
@@ -126,6 +126,14 @@
                                 <div class="layui-input-block">
                                     <input type="text" name="cors" value="{{ g.site.cors }}" placeholder="设置跨域允许的源站，允许*，推荐设置为多个完整URL(不包含域名末尾的/，英文逗号分隔)"
                                         autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">开放注册</label>
+                                <div class="layui-input-block">
+                                    <input type="checkbox" name="register" lay-skin="switch" lay-text="ON|OFF"
+                                        {% if is_true(g.site.register) %}checked="checked" {% endif %} autocomplete="off"
+                                        value="1">
                                 </div>
                             </div>
                             {{ intpl("sitesetting") }}
@@ -318,6 +326,9 @@
             }
             if (!data.field.hasOwnProperty("anonymous")) {
                 data.field["anonymous"] = 0;
+            }
+            if (!data.field.hasOwnProperty("register")) {
+                data.field["register"] = 0;
             }
             picbed.ajax("{{ url_for('api.config') }}", function(res) {
                 if (res.code === 0) {

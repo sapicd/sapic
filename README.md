@@ -68,22 +68,24 @@ https://picbed.saintic.com
 目前我写的钩子如下：
 
 | 名称 | 作用 | GitHub |
-| --- | --- | --- |
+| ---- | ----- | ----- |
 | up2upyun | 将图片保存到又拍云USS中 | [staugur/picbed-up2upyun](https://github.com/staugur/picbed-up2upyun) |
 | up2qiniu | 将图片保存到七牛云KODO中 | [staugur/picbed-up2qiniu](https://github.com/staugur/picbed-up2qiniu) |
 | up2oss | 将图片保存到阿里云OSS中 | [staugur/picbed-up2oss](https://github.com/staugur/picbed-up2oss) |
+| up2cos | 将图片保存到腾讯云COS中 | [staugur/picbed-up2cos](https://github.com/staugur/picbed-up2cos) |
 | passport | 接入passport登录 | [staugur/picbed-ssoclient](https://github.com/staugur/picbed-ssoclient) |
 
 ## TODO
 
 - [x] 登录登出钩子
 - [x] 第三方网站直接上传
-- [ ] 可选开放注册
-- [ ] 扩展腾讯云COS及其他公共图床
-- [ ] 聚合图床
+- [x] 可选开放注册
+- [x] 图片物理删除
+- [x] 已经扩展又拍、七牛、阿里云、腾讯云对象存储
+- [ ] 继续扩展其他公共图床，如青云、Ucloud、微博图床、sm.ms
 - [ ] base64图片上传
 - [ ] 粘贴上传
-- [x] 图片物理删除
+- [ ] V2-聚合图床
 
 ## 客户端上传
 
