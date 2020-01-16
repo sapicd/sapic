@@ -22,7 +22,7 @@ from redis.exceptions import RedisError
 from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, \
     rsp, get_current_timestamp, ListEqualSplit, sha256, generate_random, \
-    err_logger
+    err_logger, format_upload_src
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username
 from utils._compat import iteritems
@@ -599,6 +599,7 @@ def upload():
             )
             return res
         #: 存储数据
+        defaultSrc = data[0]["src"]
         pipe = g.rc.pipeline()
         pipe.sadd(rsp("index", "global"), sha)
         if g.signin and g.userinfo.username:
@@ -610,7 +611,7 @@ def upload():
             user=g.userinfo.username if g.signin else 'anonymous',
             ctime=get_current_timestamp(),
             status='enabled',  # disabled, deleted
-            src=data[0]["src"],
+            src=defaultSrc,
             sender=data[0]["sender"],
             senders=json.dumps(data)
         ))
@@ -623,10 +624,13 @@ def upload():
             res.update(
                 code=0,
                 filename=filename,
-                src=data[0]["src"],
                 sender=data[0]["sender"],
                 api=url_for("api.shamgr", sha=sha, _external=True),
             )
+            #: format指定图片地址的显示字段，默认src，可以用点号指定
+            #: 比如data.src，那么返回格式{code, filename..., data:{src}, ...}
+            fmt = request.form.get("format", request.args.get("format"))
+            res.update(format_upload_src(fmt, defaultSrc))
     else:
         res.update(msg="No file or image format allowed")
     return res

@@ -24,6 +24,7 @@ err_logger = Logger("error").getLogger
 comma_pat = compile(r"\s*,\s*")
 verticaline_pat = compile(r"\s*\|\s*")
 username_pat = compile(r'^[a-zA-Z][0-9a-zA-Z\_]{0,31}$')
+point_pat = compile(r'^\w{1,9}\.?\w{1,9}$')
 
 
 def rsp(*args):
@@ -122,6 +123,17 @@ def generate_random(length=6):
 
     myslice = sample(code_list, length)
     return ''.join(myslice)
+
+
+def format_upload_src(fmt, value):
+    if fmt and isinstance(fmt, string_types):
+        if point_pat.match(fmt):
+            if "." in fmt:
+                fmts = fmt.split('.')
+                return {fmts[0]: {fmts[1]: value}}
+            else:
+                return {fmt: value}
+    return dict(src=value)
 
 
 class Attribution(dict):
