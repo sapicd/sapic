@@ -73,6 +73,7 @@ https://picbed.saintic.com
 | up2qiniu | 将图片保存到七牛云KODO中 | [staugur/picbed-up2qiniu](https://github.com/staugur/picbed-up2qiniu) |
 | up2oss | 将图片保存到阿里云OSS中 | [staugur/picbed-up2oss](https://github.com/staugur/picbed-up2oss) |
 | up2cos | 将图片保存到腾讯云COS中 | [staugur/picbed-up2cos](https://github.com/staugur/picbed-up2cos) |
+| up2smms | 将图片保存到sm.ms中 | [staugur/picbed-up2smms](https://github.com/staugur/picbed-up2smms) |
 | passport | 接入passport登录 | [staugur/picbed-ssoclient](https://github.com/staugur/picbed-ssoclient) |
 
 ## TODO
@@ -82,7 +83,7 @@ https://picbed.saintic.com
 - [x] 可选开放注册
 - [x] 图片物理删除
 - [x] 已经扩展又拍、七牛、阿里云、腾讯云对象存储
-- [ ] 继续扩展其他公共图床，如青云、Ucloud、微博图床、sm.ms
+- [ ] 继续扩展其他公共图床，如青云、Ucloud、微博图床
 - [ ] base64图片上传
 - [ ] 粘贴上传
 - [ ] V2-聚合图床

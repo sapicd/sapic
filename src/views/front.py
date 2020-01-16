@@ -11,7 +11,8 @@
 
 from flask import Blueprint, render_template, make_response, redirect, \
     url_for, current_app, Response, g, abort
-from utils.web import login_required, admin_apilogin_required
+from utils.web import admin_apilogin_required, anonymous_required, \
+    login_required
 from utils.tool import is_true
 
 bp = Blueprint("front", "front")
@@ -47,6 +48,7 @@ def logout():
 
 
 @bp.route("/register")
+@anonymous_required
 def register():
     if is_true(g.cfg.register):
         return render_template("public/register.html")

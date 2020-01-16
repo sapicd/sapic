@@ -22,7 +22,9 @@ from ._compat import PY2, text_type
 
 def get_referrer_url():
     """获取上一页地址"""
-    if request.referrer and request.referrer.startswith(request.host_url) and request.endpoint and not "api." in request.endpoint:
+    if request.method == "GET" and request.referrer and \
+            request.referrer.startswith(request.host_url) and \
+            request.endpoint and "api." not in request.endpoint:
         url = request.referrer
     else:
         url = None
@@ -86,6 +88,15 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if not g.signin:
             return redirect(url_for('front.login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def anonymous_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if g.signin:
+            return redirect(url_for('front.index'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -167,6 +178,7 @@ def dfr(res, default='en-US'):
             "Please install qiniu module": "请安装qiniu模块",
             "The qiniu parameter error": "七牛云相关参数错误",
             "The aliyun parameter error": "阿里云相关参数错误",
+            "The sm.ms parameter error": "sm.ms相关参数错误",
             "An unknown error occurred in the program": "程序发生未知错误",
             "Anonymous user is not sign in": "匿名用户未登录",
             "No valid username found": "未发现有效用户名",

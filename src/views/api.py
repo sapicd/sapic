@@ -488,7 +488,8 @@ def shamgr(sha):
                                     current_app.static_folder,
                                     UPLOAD_FOLDER
                                 ) if i["sender"] == "up2local"
-                                    else i.get("basedir"))
+                                    else i.get("basedir")),
+                                save_result=i
                             )
                     except (ValueError, AttributeError, Exception) as e:
                         logger.warning(e, exc_info=True)

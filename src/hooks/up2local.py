@@ -9,7 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __author__ = 'staugur'
 __description__ = '将图片保存到本地'
 
@@ -45,7 +45,7 @@ def upimg_save(**kwargs):
     return res
 
 
-def upimg_delete(sha, upload_path, filename, basedir):
+def upimg_delete(sha, upload_path, filename, basedir, save_result):
     filepath = join(basedir, upload_path, filename)
     if isfile(filepath):
         remove(filepath)

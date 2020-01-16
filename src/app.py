@@ -15,7 +15,8 @@ from version import __version__
 from views import front_bp, api_bp
 from utils.tool import Attribute, is_true, parse_valid_comma, err_logger, \
     create_redis_engine
-from utils.web import get_site_config, JsonResponse, default_login_auth
+from utils.web import get_site_config, JsonResponse, default_login_auth, \
+    get_redirect_url
 from libs.hook import HookManager
 from config import GLOBAL
 
@@ -55,6 +56,7 @@ def before_request():
     #: Required field: username, is_admin
     g.userinfo = Attribute(g.userinfo)
     g.is_admin = is_true(g.userinfo.is_admin)
+    g.next = get_redirect_url()
 
 
 @app.after_request

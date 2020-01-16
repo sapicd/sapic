@@ -51,7 +51,12 @@
                 </div>
                 <div class="layui-form-item">
                     <div class="layui-input-block">
-                        <input type="password" name="password" required lay-verify="required|pass" lay-verType="tips" placeholder="登录密码" autocomplete="off" class="layui-input">
+                        <input type="password" name="password" required lay-verify="required|pass" lay-verType="tips" placeholder="设置登录密码" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <input type="password" required lay-verify="required|repass" lay-verType="tips" placeholder="确认登录密码" autocomplete="off" class="layui-input">
                     </div>
                 </div>
                 <div class="layui-form-item register-checkbox">
@@ -121,7 +126,13 @@
             },
             pass: [
                 /^[\S]{6,12}$/, '密码至少6位，且不能出现空格'
-            ]
+            ],
+            repass: function(value) {
+                var pwd = $('input[name="password"]').val();
+                if(value !== pwd) {
+                    return '两次输入的密码不一致!';
+                }
+            }
         });
         //监听提交
         form.on('submit(register)', function (data) {
