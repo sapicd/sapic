@@ -13,7 +13,14 @@
 
 3. 依赖： `pip install -r requirements.txt`
 
-4. 配置： `config.py`即配置文件，可以从环境变量中读取配置信息，必需的是picbed_redis_url
+4. 配置：
+```
+config.py即配置文件，首先从环境变量中读取配置信息，无法找到时使用内置默认值，必需的是picbed_redis_url。
+
+所需环境变量可以配置到如`.bash_profile`文件中，不过推荐的是写入到`.env`文件里，它不会被提交到仓库，而程序启动时配置文件会先加载其中的环境变量，格式是k=v，比如：
+
+picbed_redis_url=redis://@localhost
+```
 
 5. 启动： 
 ```
@@ -74,6 +81,7 @@ https://picbed.saintic.com
 | up2oss | 将图片保存到阿里云OSS中 | [staugur/picbed-up2oss](https://github.com/staugur/picbed-up2oss) |
 | up2cos | 将图片保存到腾讯云COS中 | [staugur/picbed-up2cos](https://github.com/staugur/picbed-up2cos) |
 | up2smms | 将图片保存到sm.ms中 | [staugur/picbed-up2smms](https://github.com/staugur/picbed-up2smms) |
+| up2superbed | 将图片保存到聚合图床`superbed.cn` | [staugur/picbed-up2superbed](https://github.com/staugur/picbed-up2superbed) |
 | passport | 接入passport登录 | [staugur/picbed-ssoclient](https://github.com/staugur/picbed-ssoclient) |
 
 ## TODO
@@ -82,8 +90,8 @@ https://picbed.saintic.com
 - [x] 第三方网站直接上传
 - [x] 可选开放注册
 - [x] 图片物理删除
-- [x] 已经扩展又拍、七牛、阿里云、腾讯云对象存储
-- [ ] 继续扩展其他公共图床，如青云、Ucloud、微博图床
+- [x] 已经扩展又拍、七牛、阿里云、腾讯云等对象存储
+- [ ] 持续继续扩展其他公共图床或对象存储，如青云、UCloud、微博图床
 - [ ] base64图片上传
 - [ ] 粘贴上传
 - [ ] V2-聚合图床

@@ -12,7 +12,7 @@ test:
 	python -m unittest discover -p "test_*.py"
 
 run:
-	export FLASK_ENV=development FLASK_APP=app.py FLASK_DEBUG=1 && flask run --host $(HOST) --port $(PORT)
+	export FLASK_ENV=development FLASK_APP=app.py FLASK_DEBUG=1 FLASK_SKIP_DOTENV=1 PIPENV_DONT_LOAD_ENV=1 && flask run --host $(HOST) --port $(PORT)
 
 clean:
 	find . -name '*.pyc' -exec rm -f {} +

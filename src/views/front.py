@@ -24,6 +24,7 @@ def index():
 
 
 @bp.route("/login")
+@anonymous_required
 def login():
     if g.cfg.site_auth:
         so = current_app.extensions["hookmanager"].proxy(g.cfg.site_auth)

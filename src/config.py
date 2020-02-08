@@ -10,7 +10,17 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-from os import getenv
+from os import getenv, environ
+from os.path import isfile, dirname, join
+from utils._compat import iteritems, Properties
+
+ENV = join(dirname(__file__), ".env")
+if isfile(ENV):
+    envs = Properties(ENV).getProperties()
+    if envs and isinstance(envs, dict):
+        for k, v in iteritems(envs):
+            if k and v:
+                environ[k] = v
 
 GLOBAL = {
 
