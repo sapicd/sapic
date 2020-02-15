@@ -509,6 +509,7 @@ def upload():
     1. 获取上传的文件，判断允许格式
     2. 生成文件名、唯一sha值、上传目录等，选择图片存储的后端钩子（单一）
         - 存储图片的钩子目前版本仅一个，默认是up2local（如果禁用则保存失败）
+        - 如果提交album参数会自动创建相册，否则归档到默认相册
     3. 解析钩子数据，钩子回调数据格式：{code=?, sender=hook_name, src=?}
         - 后端保存失败或无后端的情况都要立刻返回响应
     4. 此时保存图片成功，持久化存储到全局索引、用户索引
@@ -520,6 +521,8 @@ def upload():
         res.update(code=403, msg="Anonymous user is not sign in")
         return res
     f = request.files.get('picbed')
+    #: 相册名称，可以是任意字符串
+    album = (request.form.get("album") or "") if g.signin else 'default'
     #: 实时获取后台配置中允许上传的后缀，如: jpg|jpeg|png
     allowed_suffix = partial(
         allowed_file,
@@ -606,6 +609,7 @@ def upload():
             pipe.sadd(rsp("index", "user", g.userinfo.username), sha)
         pipe.hmset(rsp("image", sha), dict(
             sha=sha,
+            album=album,
             filename=filename,
             upload_path=upload_path,
             user=g.userinfo.username if g.signin else 'anonymous',
@@ -648,3 +652,9 @@ def ep():
             result = getattr(obj, Action)()
             if result and isinstance(result, Response):
                 return result
+
+
+@bp.route("/album")
+@apilogin_required
+def album():
+    pass

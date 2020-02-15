@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
     cli
@@ -11,11 +10,12 @@
 """
 
 import click
+from flask.cli import AppGroup
 from redis.exceptions import RedisError
 from werkzeug.security import generate_password_hash
-from utils.tool import rsp, get_current_timestamp, create_redis_engine, is_true
-from utils.web import check_username
 from libs.storage import get_storage
+from .tool import rsp, get_current_timestamp, create_redis_engine, is_true
+from .web import check_username
 
 
 def echo(msg, color=None):
@@ -57,41 +57,37 @@ def exec_createuser(username, password, **kwargs):
         echo("用户名不合法或不允许注册", "yellow")
 
 
-if __name__ == "__main__":
+sa_cli = AppGroup('sa', help='Administrator commands')
 
-    @click.group(context_settings={'help_option_names': ['-h', '--help']})
-    def cli():
-        pass
 
-    @cli.command()
-    @click.option('--username', '-u', type=str, help=u'用户名')
-    @click.option('--password', '-p', type=str, help=u'用户密码')
-    @click.option('--isAdmin/--no-isAdmin', default=False,
-                  help=u'是否为管理员', show_default=True)
-    @click.option('--avatar', '-a', type=str, default='', help=u'头像地址')
-    @click.option('--nickname', '-n', type=str, default='', help=u'昵称')
-    def sa(username, password, isadmin, avatar, nickname):
-        """创建账号"""
-        exec_createuser(
-            username,
-            password,
-            is_admin=isadmin,
-            avatar=avatar,
-            nickname=nickname,
-        )
+@sa_cli.command()
+@click.option('--username', '-u', type=str, help=u'用户名')
+@click.option('--password', '-p', type=str, help=u'用户密码')
+@click.option('--isAdmin/--no-isAdmin', default=False,
+              help=u'是否为管理员', show_default=True)
+@click.option('--avatar', '-a', type=str, default='', help=u'头像地址')
+@click.option('--nickname', '-n', type=str, default='', help=u'昵称')
+def create(username, password, isadmin, avatar, nickname):
+    """创建账号"""
+    exec_createuser(
+        username,
+        password,
+        is_admin=isadmin,
+        avatar=avatar,
+        nickname=nickname,
+    )
 
-    @cli.command()
-    @click.option('--HookLoadTime/--no-HookLoadTime', default=False,
-                  help=u'删除钩子加载时间', show_default=True)
-    @click.option('--HookThirds/--no-HookThirds', default=False,
-                  help=u'删除已加载的第三方钩子', show_default=True)
-    def clean(hookloadtime, hookthirds):
-        """清理系统"""
-        if hookloadtime:
-            s = get_storage()
-            del s['hookloadtime']
-        if hookthirds:
-            s = get_storage()
-            del s['hookthirds']
 
-    cli()
+@sa_cli.command()
+@click.option('--HookLoadTime/--no-HookLoadTime', default=False,
+              help=u'删除钩子加载时间', show_default=True)
+@click.option('--HookThirds/--no-HookThirds', default=False,
+              help=u'删除已加载的第三方钩子', show_default=True)
+def clean(hookloadtime, hookthirds):
+    """清理系统"""
+    if hookloadtime:
+        s = get_storage()
+        del s['hookloadtime']
+    if hookthirds:
+        s = get_storage()
+        del s['hookthirds']

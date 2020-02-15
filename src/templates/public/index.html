@@ -85,6 +85,7 @@
             elem: '#upload',
             url: '{{ url_for("api.upload") }}',
             method: 'POST',
+            data: {album: "{{ request.args.album }}"},
             accept: 'images',
             exts: exts,
             multiple: true,
