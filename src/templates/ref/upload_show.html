@@ -6,7 +6,7 @@
     <p>唯一标识：{{ d.sha }}</p>
     <p>上传时间：{{ d.ctime }}</p>
     <p>所属用户：{{ d.user }}</p>
-    <p>所属相册：{{ d.album }}</p>
+    <p>所属相册：{{ d.album || '' }}</p>
     <p>图片状态：
         {{# if (d.status === 'enabled') { }}
         <scan style="color:green">{{ d.status }}</scan>

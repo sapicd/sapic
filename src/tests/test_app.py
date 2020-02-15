@@ -5,7 +5,7 @@ from jinja2 import ChoiceLoader
 from utils.web import default_login_auth, get_site_config
 from utils.tool import generate_random
 from app import app
-from cli import exec_createuser
+from utils.cli import exec_createuser
 
 
 class AppTest(unittest.TestCase):

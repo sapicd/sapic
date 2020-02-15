@@ -37,7 +37,8 @@
     .c { max-width: 50px; }
     .d { max-width: 50px; }
     .e { max-width: 80px; }
-    .f { max-width: 80px; }
+    .f { max-width: 150px; min-width: 80px; }
+    .g { max-width: 80px; }
 </style>
 {% endblock %}
 
@@ -58,7 +59,8 @@
                             <th class="c">大小(KB)</th>
                             <th class="d">状态</th>
                             <th class="e">进度</th>
-                            <th class="f">操作</th>
+                            <th class="f">相册</th>
+                            <th class="g">操作</th>
                         </tr>
                     </thead>
                     <tbody id="previewList"></tbody>
@@ -95,6 +97,11 @@
             field: "picbed",
             number: number > 10 ? 10 : number,
             size: (size > 10 ? 10 : size) * 1024,
+            updateData: function(index, data) {
+                //改源码upload.js
+                //typeof options.updateData === 'function' &&  options.updateData(index, options.data);
+                data.album = $("#album-" + index).val();
+            },
             choose: function(obj){
                 $(".before-upload-area").hide();
                 var files = this.files = obj.pushFile();
@@ -107,7 +114,8 @@
                         ,'<td class="c">'+ (file.size/1024).toFixed(1) +'</td>'
                         ,'<td class="d">等待</td>'
                         ,'<td class="e"><div id="progress-' + index + '"></div></td>'
-                        ,'<td class="f">'
+                        ,'<td class="f"><input type="text" id="album-' + index + '" autocomplete="off" class="layui-input" value="{{ request.args.album }}"></td>'
+                        ,'<td class="g">'
                         ,'<button class="layui-btn layui-btn-xs upload-reload layui-hide">重传</button>'
                         ,'<button class="layui-btn layui-btn-xs layui-btn-danger upload-delete">删除</button>'
                         ,'</td>'
@@ -131,7 +139,8 @@
                 }
             },
             progress: function(index, v){
-                //改源码: https://fly.layui.com/jie/57627/#item-1576644708860
+                //改源码upload.js
+                //options.progress(index, percent, options.item[0], e)
                 $('#progress-' + index).text(v + '%');
             },
             done: function(res, index, upload){
@@ -139,7 +148,7 @@
                 if(res.code === 0){ //上传成功
                     var tr = upviewDom.find('tr#upload-'+ index),tds = tr.children();
                     tds.eq(3).html('<span style="color: #5FB878;">成功</span>');
-                    tds.eq(5).html('<button class="layui-btn layui-btn-xs layui-btn-normal upload-show" data-index="' + index + '">查看</button>'); //清空操作
+                    tds.eq(6).html('<button class="layui-btn layui-btn-xs layui-btn-normal upload-show" data-index="' + index + '">查看</button>'); //清空操作
                     delete this.files[index]; //删除文件队列已经上传成功的文件
                     //layer.closeAll('loading');
                     tr.find('.upload-show').on('click', function(){
@@ -172,7 +181,7 @@
             error: function(index, upload, err_msg){
                 var tr = upviewDom.find('tr#upload-'+ index),tds = tr.children();
                 tds.eq(3).html('<span style="color: #FF5722;"><abbr title="' + err_msg + '">失败</abbr></span>');
-                tds.eq(5).find('.upload-reload').removeClass('layui-hide'); //显示重传
+                tds.eq(6).find('.upload-reload').removeClass('layui-hide'); //显示重传
                 //layer.closeAll('loading');
             }
         });
