@@ -259,9 +259,9 @@
                         get_pics(obj.curr, obj.limit);
                     } else {
                         //初始加载相册列表
-                        var html = '<a href="' + '{{ url_for("front.my", _anchor="!picbed")|safe }}' + '"><span class="layui-badge">所有图片</span></a>&nbsp;&nbsp;';
+                        var uri = "{{ (url_for('front.my', is_mgr=request.args.is_mgr) + '&album=')|safe if request.args.is_mgr else url_for('front.my', album='') }}";
+                        var html = '<a href="' + uri.replace("?album=", "").replace("&album=", "") + '#!picbed"><span class="layui-badge">所有图片</span></a>&nbsp;&nbsp;';
                         html += res.albums.map(function(album) {
-                            var uri = "{{ (url_for('front.my', is_mgr=request.args.is_mgr) + '&album=')|safe if request.args.is_mgr else url_for('front.my', album='') }}";
                             return '<a href="' + uri + album + '#!picbed"><span class="layui-badge layui-bg-green">' +  album + '</span></a>&nbsp;&nbsp;';
                         }).join('');
                         $("#albums").html(html);

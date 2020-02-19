@@ -534,7 +534,7 @@ def upload():
         return res
     f = request.files.get('picbed')
     #: 相册名称，可以是任意字符串
-    album = (request.form.get("album") or "") if g.signin else 'default'
+    album = (request.form.get("album") or "") if g.signin else 'anonymous'
     #: 实时获取后台配置中允许上传的后缀，如: jpg|jpeg|png
     allowed_suffix = partial(
         allowed_file,
