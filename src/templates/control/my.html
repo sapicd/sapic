@@ -51,6 +51,9 @@
         border-color: #01AAED;
         color: #fff;
     }
+    #albums {
+        margin-bottom: 10px;
+    }
 </style>
 {% endblock %}
 
@@ -122,6 +125,7 @@
                 </form>
             </div>
             <div class="layui-tab-item">
+                <div id="albums"></div>
                 <div id="waterfall" class="waterfall"></div>
                 <div id="page"></div>
             </div>
@@ -160,7 +164,7 @@
             limit = parseInt("{{ request.args.limit or 10 }}");
         //获取我的图片流方法
         function get_pics(page, limit, success) {
-            picbed.ajax("{{ url_for('api.waterfall', sort='desc', is_mgr=request.args.is_mgr)|safe }}&page=" + page + "&limit=" + limit, function (res) {
+            picbed.ajax("{{ url_for('api.waterfall', sort='desc', is_mgr=request.args.is_mgr, album=request.args.album)|safe }}&page=" + page + "&limit=" + limit, function (res) {
                 var shaDatas = {};
                 var html = res.data.map(function (img) {
                     img["ctime"] = util.toDateString(img.ctime * 1000);
@@ -253,6 +257,14 @@
                 jump: function (obj, first) {
                     if (!first) {
                         get_pics(obj.curr, obj.limit);
+                    } else {
+                        //初始加载相册列表
+                        var html = '<a href="' + '{{ url_for("front.my", _anchor="!picbed")|safe }}' + '"><span class="layui-badge">所有图片</span></a>&nbsp;&nbsp;';
+                        html += res.albums.map(function(album) {
+                            var uri = "{{ (url_for('front.my', is_mgr=request.args.is_mgr) + '&album=')|safe if request.args.is_mgr else url_for('front.my', album='') }}";
+                            return '<a href="' + uri + album + '#!picbed"><span class="layui-badge layui-bg-green">' +  album + '</span></a>&nbsp;&nbsp;';
+                        }).join('');
+                        $("#albums").html(html);
                     }
                 }
             });

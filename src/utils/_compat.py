@@ -72,7 +72,7 @@ class Properties(object):
                         strs[0].strip(),
                         self.properties, strs[1].strip()
                     )
-        except Exception, e:
+        except Exception as e:
             raise e
         else:
             pro_file.close()

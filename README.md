@@ -63,7 +63,7 @@ server {
 
 ## TODO
 
-转移到[GitHub Projects](https://github.com/staugur/picbed/projects/2)
+转移到：[GitHub Projects](https://github.com/staugur/picbed/projects/2)
 
 ## 演示站
 

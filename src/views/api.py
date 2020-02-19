@@ -19,6 +19,7 @@ from flask import Blueprint, request, g, url_for, current_app, abort, \
     make_response, jsonify, Response
 from functools import partial
 from redis.exceptions import RedisError
+from collections import Counter
 from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, \
     rsp, get_current_timestamp, ListEqualSplit, sha256, generate_random, \
@@ -259,7 +260,7 @@ def token():
     tk = rsp("tokens")
     ak = rsp("account", usr)
     #: 生成token
-    gen_token = lambda: b64encode(
+    def gen_token(): return b64encode(
         ("%s.%s.%s.%s" % (
             generate_random(),
             usr,
@@ -376,6 +377,8 @@ def waterfall():
     limit = request.args.get("limit") or 10
     #: 管理员账号读取所有图片数据
     is_mgr = is_true(request.args.get("is_mgr"))
+    #: 相册，当album不为空时，近返回此相册数据
+    album = request.args.get("album", request.form.get("album"))
     try:
         page = int(page) - 1
         limit = int(limit)
@@ -397,14 +400,22 @@ def waterfall():
             except RedisError:
                 res.update(msg="Program data storage service error")
             else:
+                #: 最终返回的经过过滤、排序等处理后的数据
                 data = []
+                #: 该用户或管理员级别所能查看的所有相册
+                albums = []
                 if result and isinstance(result, (tuple, list)):
                     for i in result:
+                        albums.append(i.get("album"))
                         i.update(
                             senders=json.loads(i["senders"]),
                             ctime=int(i["ctime"]),
                         )
-                        data.append(i)
+                        if album:
+                            if i.get("album") == album:
+                                data.append(i)
+                        else:
+                            data.append(i)
                 data = sorted(
                     data,
                     key=lambda k: (k.get('ctime', 0), k.get('filename', '')),
@@ -418,7 +429,8 @@ def waterfall():
                         code=0,
                         count=count,
                         data=data[page],
-                        pageCount=pageCount
+                        pageCount=pageCount,
+                        albums=list(set([i for i in albums if i])),
                     )
                 else:
                     res.update(code=3, msg="No data")
@@ -559,7 +571,7 @@ def upload():
         #: 定义文件名唯一索引
         sha = "sha1.%s.%s" % (get_current_timestamp(True), sha1(filename))
         #: 定义保存图片时仅使用某些钩子，如: up2local
-        #: TODO 目前版本仅允许设置了一个，后续考虑聚合
+        #: TODO 目前版本仅允许设置了一个，后续聚合
         includes = parse_valid_comma(g.cfg.upload_includes or 'up2local')
         if len(includes) > 1:
             includes = [choice(includes)]
@@ -654,7 +666,33 @@ def ep():
                 return result
 
 
-@bp.route("/album")
+@bp.route("/album", methods=["GET", "POST"])
 @apilogin_required
 def album():
-    pass
+    if request.method == "GET":
+        return abort(404)
+    res = dict(code=1, msg=None)
+    #: 管理员账号查询所有相册
+    is_mgr = is_true(request.args.get("is_mgr"))
+    if g.userinfo.username:
+        if is_mgr and g.is_admin:
+            uk = rsp("index", "global")
+        else:
+            uk = rsp("index", "user", g.userinfo.username)
+        pipe = g.rc.pipeline()
+        for sha in g.rc.smembers(uk):
+            pipe.hget(rsp("image", sha), "album")
+        try:
+            result = pipe.execute()
+        except RedisError:
+            res.update(msg="Program data storage service error")
+        else:
+            albums = [i for i in result if i]
+            res.update(
+                code=0,
+                data=list(set(albums)),
+                counter=Counter(albums)
+            )
+    else:
+        res.update(msg="No valid username found")
+    return jsonify(res)
