@@ -39,6 +39,10 @@
     .e { max-width: 80px; }
     .f { max-width: 150px; min-width: 80px; }
     .g { max-width: 80px; }
+    .layui-layout-admin .layui-footer {
+        line-height: initial;
+        padding: 0;
+    }
 </style>
 {% endblock %}
 
@@ -114,7 +118,7 @@
                         ,'<td class="c">'+ (file.size/1024).toFixed(1) +'</td>'
                         ,'<td class="d">等待</td>'
                         ,'<td class="e"><div id="progress-' + index + '"></div></td>'
-                        ,'<td class="f"><input type="text" id="album-' + index + '" autocomplete="off" class="layui-input" value="{{ request.args.album }}"></td>'
+                        ,'<td class="f">{% if g.signin %}<input type="text" id="album-' + index + '" autocomplete="off" class="layui-input" value="{{ request.args.album }}">{% else %}<i class="layui-icon layui-icon-close"></i>{% endif %}</td>'
                         ,'<td class="g">'
                         ,'<button class="layui-btn layui-btn-xs upload-reload layui-hide">重传</button>'
                         ,'<button class="layui-btn layui-btn-xs layui-btn-danger upload-delete">删除</button>'
