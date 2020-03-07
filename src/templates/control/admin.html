@@ -136,6 +136,14 @@
                                         value="1">
                                 </div>
                             </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">禁止普通用户登录</label>
+                                <div class="layui-input-block">
+                                    <input type="checkbox" name="disable_login" lay-skin="switch" lay-text="ON|OFF"
+                                        {% if is_true(g.site.disable_login) %}checked="checked" {% endif %} autocomplete="off"
+                                        value="1">
+                                </div>
+                            </div>
                             {{ intpl("sitesetting") }}
                         </div>
                     </fieldset>

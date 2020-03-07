@@ -196,6 +196,7 @@ def dfr(res, default='en-US'):
             "No tokens yet": "还未有token",
             "The username is invalid or registration is not allowed": "用户名不合法或不允许注册",
             "The username already exists": "用户名已存在",
+            "Normal user login has been disabled": "已禁止普通用户登录",
         },
     }
     if isinstance(res, dict) and "en" not in language:

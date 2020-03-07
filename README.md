@@ -18,7 +18,7 @@
 config.py即配置文件，首先从环境变量中读取配置信息，无法找到时使用内置默认值，
 必需的是picbed_redis_url。
 
-所需环境变量可以配置到如 全局或家目录.bash_profile 文件中，不过推荐的是写入到 程序目录下.env 文件里，
+所需环境变量可以配置到如 全局或家目录的.bash_profile 文件中，不过推荐的是写入到 程序目录下.env 文件里，
 它不会被提交到仓库，而程序启动时配置文件会先加载其中的环境变量，格式是k=v，
 比如：
 
@@ -67,13 +67,9 @@ server {
 
 ## 演示站
 
-https://picbed.saintic.com
+http://picbed.demo.saintic.com
 
-测试账号：test
-
-测试密码：123456
-
-对外服务(请勿修改密码)，允许匿名上传，但是目前上传的图片保留删除权利！
+对外服务，允许匿名上传，但是目前上传的图片保留删除权利！
 
 ## 扩展钩子
 
@@ -90,6 +86,8 @@ https://picbed.saintic.com
 | up2smms | 将图片保存到sm.ms中 | [staugur/picbed-up2smms](https://github.com/staugur/picbed-up2smms) |
 | up2superbed | 将图片保存到聚合图床`superbed.cn` | [staugur/picbed-up2superbed](https://github.com/staugur/picbed-up2superbed) |
 | passport | 接入passport登录 | [staugur/picbed-ssoclient](https://github.com/staugur/picbed-ssoclient) |
+
+更多钩子可以在我的[github](https://github.com/search?q=user%3Astaugur+picbed)搜索。
 
 ## 客户端上传
 

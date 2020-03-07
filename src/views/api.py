@@ -88,6 +88,10 @@ def login():
         ak = rsp("accounts")
         if g.rc.sismember(ak, usr):
             userinfo = g.rc.hgetall(rsp("account", usr))
+            if is_true(g.cfg.disable_login) and \
+                    not is_true(userinfo.get("is_admin")):
+                res.update(msg="Normal user login has been disabled")
+                return res
             password = userinfo.get("password")
             if password and check_password_hash(password, pwd):
                 expire = get_current_timestamp() + max_age
@@ -260,6 +264,7 @@ def token():
     tk = rsp("tokens")
     ak = rsp("account", usr)
     #: 生成token
+
     def gen_token(): return b64encode(
         ("%s.%s.%s.%s" % (
             generate_random(),
@@ -580,6 +585,7 @@ def upload():
         #: 钩子返回结果（目前版本最终结果中应该最多只有1条数据）
         data = []
         #: 保存图片的钩子回调
+
         def callback(result):
             logger.info(result)
             if result["sender"] == "up2local":
