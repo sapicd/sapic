@@ -31,9 +31,10 @@ picbed_redis_url=redis://@localhost
 $ flask sa create -u USER -p PASSWORD --isAdmin
 
 // 开发环境启动
-$ make run
-// 正式环境，若需前台启动，将start换成run即可
-$ sh online_gunicorn.sh start
+$ make dev
+
+// 正式环境，若需前台启动，将start换成run即可；其他支持stop、reload、restart、status
+$ make start 或 sh online_gunicorn.sh start
 ```
 
 6. Nginx:
@@ -109,17 +110,18 @@ customBody: {"token": "你的Token值", "album: "相册名或留空"}
 
 #### - 使用uPic上传到自定义的picbed图床
 
-[下载uPic](https://github.com/gee1k/uPic)并安装，在 **设置-图床** 中添加 **自定义**，信息如下：
+[下载uPic](https://github.com/gee1k/uPic)并安装，在 **偏好设置-图床** 中添加 **自定义**，信息如下：
 
 ```
 API地址：http[s]://你的picbed域名/api/upload
 请求方式：POST
 文件字段名：picbed
-  # 其他字段中选择 **增加Header字段** 或 **增加Body字段**，任选一种方式：
-  # - Headers数据
+其他字段：增加Header字段 或 增加Body字段，任选一种方式：
+  - Headers数据
     key: Authorization
     value: Token 你的Token值
-  #- Body数据
+
+  - Body数据
     key: token
     value: 你的Token值
   # 如需设置相册，请增加Body字段，key为album，value即相册名

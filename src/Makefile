@@ -11,8 +11,26 @@ help:
 test:
 	python -m unittest discover -p "test_*.py"
 
-run:
+dev:
 	export FLASK_ENV=development FLASK_APP=app.py FLASK_DEBUG=1 FLASK_SKIP_DOTENV=1 PIPENV_DONT_LOAD_ENV=1 && flask run --host $(HOST) --port $(PORT)
+
+run:
+	sh online_gunicorn.sh run
+
+start:
+	sh online_gunicorn.sh start
+
+stop:
+	sh online_gunicorn.sh stop
+
+reload:
+	sh online_gunicorn.sh reload
+
+restart:
+	sh online_gunicorn.sh restart
+
+status:
+	sh online_gunicorn.sh status
 
 clean:
 	find . -name '*.pyc' -exec rm -f {} +
