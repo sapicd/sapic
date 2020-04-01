@@ -6,7 +6,14 @@
     <p>唯一标识：{{ d.sha }}</p>
     <p>上传时间：{{ d.ctime }}</p>
     <p>所属用户：{{ d.user }}</p>
-    <p>所属相册：{{ d.album || '' }}</p>
+    <p>
+        <div class="layui-form" action="">
+            所属相册：
+            <input type="text" name="album" autocomplete="off" value="{{ d.album || '' }}">
+            <input type="hidden" name="sha" autocomplete="off" value="{{ d.sha }}">
+            <button type="button" class="layui-btn layui-btn-xs layui-btn-radius" lay-submit lay-filter="updateAlbumSubmit"><i class="layui-icon layui-icon-ok"></i></button>
+        </div>
+    </p>
     <p>图片状态：
         {{# if (d.status === 'enabled') { }}
         <scan style="color:green">{{ d.status }}</scan>

@@ -102,10 +102,29 @@ jsonPath: src
 # 以上是匿名上传，仅在管理员开启匿名时才能上传成功
 # 如需登录上传，请使用token(在控制台-个人资料-Token查看)，以下两种任选:
 customHeader: {"Authorization": "Token 你的Token值"}
-customBody: {"token": "你的Token值"}
+customBody: {"token": "你的Token值", "album: "相册名或留空"}
 ```
 
 设置完之后选择自定义Web图床为默认图床即可。
+
+#### - 使用uPic上传到自定义的picbed图床
+
+[下载uPic](https://github.com/gee1k/uPic)并安装，在 **设置-图床** 中添加 **自定义**，信息如下：
+
+```
+API地址：http[s]://你的picbed域名/api/upload
+请求方式：POST
+文件字段名：picbed
+  # 其他字段中选择 **增加Header字段** 或 **增加Body字段**，任选一种方式：
+  # - Headers数据
+    key: Authorization
+    value: Token 你的Token值
+  #- Body数据
+    key: token
+    value: 你的Token值
+  # 如需设置相册，请增加Body字段，key为album，value即相册名
+URL路径：["src"]
+```
 
 ## 预览图
 

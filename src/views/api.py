@@ -444,7 +444,7 @@ def waterfall():
     return res
 
 
-@bp.route("/sha/<sha>", methods=["GET", "DELETE"])
+@bp.route("/sha/<sha>", methods=["GET", "DELETE", "PUT"])
 def shamgr(sha):
     """图片查询、删除接口"""
     res = dict(code=1)
@@ -514,6 +514,23 @@ def shamgr(sha):
                 return abort(403)
         else:
             return abort(404)
+    elif request.method == "PUT":
+        Action = request.args.get("Action") or request.form.get("Action")
+        if Action == "updateAlbum":
+            if not g.signin:
+                return abort(403)
+            #: 更改相册名，允许图片所属用户或管理员修改，允许置空
+            album = request.form.get("album")
+            shaOwner = g.rc.hget(ik, "user")
+            if g.userinfo.username == shaOwner or g.is_admin:
+                try:
+                    g.rc.hset(ik, "album", album)
+                except RedisError:
+                    res.update(msg="Program data storage service error")
+                else:
+                    res.update(code=0)
+            else:
+                res.update(msg="Illegal users are not allowed to modify")
     else:
         return abort(405)
     return res
@@ -585,7 +602,6 @@ def upload():
         #: 钩子返回结果（目前版本最终结果中应该最多只有1条数据）
         data = []
         #: 保存图片的钩子回调
-
         def callback(result):
             logger.info(result)
             if result["sender"] == "up2local":

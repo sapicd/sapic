@@ -162,10 +162,11 @@
         });
         var curr = location.hash.replace('#!picbed=', ''),
             limit = parseInt("{{ request.args.limit or 10 }}");
+        //将所有图片数据提到"全局"
+        var shaDatas = {};
         //获取我的图片流方法
         function get_pics(page, limit, success) {
             picbed.ajax("{{ url_for('api.waterfall', sort='desc', is_mgr=request.args.is_mgr, album=request.args.album)|safe }}&page=" + page + "&limit=" + limit, function (res) {
-                var shaDatas = {};
                 var html = res.data.map(function (img) {
                     img["ctime"] = util.toDateString(img.ctime * 1000);
                     img["is_control"] = true;
@@ -336,6 +337,20 @@
         });
         $("#copyToken").on("click", function() {
             picbed.Clipboard.copy($("#token").val());
+        });
+        //监听相册修改
+        form.on('submit(updateAlbumSubmit)', function(data){
+            var album = data.field.album,
+                sha = data.field.sha;
+            picbed.ajax("{{ url_for('api.shamgr', sha='') }}" + sha, function(res) {
+                layer.msg("已修改", {icon:1});
+                shaDatas[sha]["album"] = album;
+
+            }, {
+                method: "PUT",
+                data: {Action: "updateAlbum", album: album}
+            });
+            return false;
         });
     });
 </script>

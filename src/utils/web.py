@@ -180,12 +180,12 @@ def dfr(res, default='en-US'):
             "The aliyun parameter error": "阿里云相关参数错误",
             "The sm.ms parameter error": "sm.ms相关参数错误",
             "An unknown error occurred in the program": "程序发生未知错误",
+            "Program data storage service error": "程序数据存储服务异常",
             "Anonymous user is not sign in": "匿名用户未登录",
             "No valid username found": "未发现有效用户名",
             "The username or password parameter error": "用户名或密码参数错误",
             "No data": "没有数据",
             "No file or image format allowed": "未获取到文件或不允许的图片格式",
-            "Program data storage service error": "程序数据存储服务异常",
             "All backend storage services failed to save pictures": "后端存储服务图片保存全部失败",
             "No valid backend storage service": "无有效后端存储服务",
             "The third module not found": "第三方模块未发现",
@@ -197,6 +197,7 @@ def dfr(res, default='en-US'):
             "The username is invalid or registration is not allowed": "用户名不合法或不允许注册",
             "The username already exists": "用户名已存在",
             "Normal user login has been disabled": "已禁止普通用户登录",
+            "Illegal users are not allowed to modify": "不合法的用户禁止修改",
         },
     }
     if isinstance(res, dict) and "en" not in language:

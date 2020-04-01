@@ -24,7 +24,7 @@ from config import GLOBAL
 __author__ = 'staugur'
 __email__ = 'staugur@saintic.com'
 __date__ = '2019-12-20'
-__doc__ = 'Flask-based Web self-built pictures bed'
+__doc__ = 'Flask-based web self-built pictures bed'
 
 app = Flask(__name__)
 app.response_class = JsonResponse
@@ -43,7 +43,7 @@ app.cli.add_command(sa_cli)
 
 @app.context_processor
 def GlobalTemplateVariables():
-    return {"Version": __version__, "is_true": is_true}
+    return {"Version": __version__, "Doc": __doc__, "is_true": is_true}
 
 
 @app.before_request
