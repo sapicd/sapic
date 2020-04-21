@@ -365,6 +365,20 @@ def my():
                         res.update(code=0)
         else:
             res.update(msg="Parameter error")
+    elif Action == "updateUserCfg":
+        #: 更新用户设置，为避免覆盖ak字段，所有更新的key必须`ucfg_`开头
+        cfgs = request.form.to_dict()
+        if cfgs:
+            for k in cfgs:
+                if not k.startswith("ucfg_"):
+                    res.update(msg="The user setting must start with `ucfg_`")
+                    return jsonify(res)
+            try:
+                g.rc.hmset(ak, cfgs)
+            except RedisError:
+                res.update(msg="Program data storage service error")
+            else:
+                res.update(code=0)
     return res
 
 
@@ -602,6 +616,7 @@ def upload():
         #: 钩子返回结果（目前版本最终结果中应该最多只有1条数据）
         data = []
         #: 保存图片的钩子回调
+
         def callback(result):
             logger.info(result)
             if result["sender"] == "up2local":

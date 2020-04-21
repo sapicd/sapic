@@ -198,6 +198,7 @@ def dfr(res, default='en-US'):
             "The username already exists": "用户名已存在",
             "Normal user login has been disabled": "已禁止普通用户登录",
             "Illegal users are not allowed to modify": "不合法的用户禁止修改",
+            "The user setting must start with `ucfg_`": "用户设置必须以`ucfg_`开头",
         },
     }
     if isinstance(res, dict) and "en" not in language:

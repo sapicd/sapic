@@ -37,6 +37,9 @@
         margin-bottom: 0.5em;
         border-bottom: 0px solid #fff;
     }
+    .pin img:hover {
+        transform:scale({{ g.userinfo.ucfg_mypic_scale or 1|float }});
+    }
     .pin .description {
         text-align: center;
         position: absolute;
@@ -63,6 +66,8 @@
         <ul class="layui-tab-title">
             <li class="layui-this" lay-id="profile">个人资料</li>
             <li lay-id="password">修改密码</li>
+            <li lay-id="setting">用户设置<span class="layui-badge-dot"></span>
+            </li>
             <li lay-id="picbed">我的图片</li>
         </ul>
         <div class="layui-tab-content">
@@ -125,6 +130,56 @@
                 </form>
             </div>
             <div class="layui-tab-item">
+                <blockquote class="layui-elem-quote">这是您在站点中的个性化设置，仅在个人登录后有效，不会影响到其他人！</blockquote>
+                <form class="layui-form layui-form-pane" id="control" lay-filter="setting" autocomplete="off">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">背景图</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="ucfg_bg_mg" value="{{ g.userinfo.ucfg_bg_mg }}"
+                                placeholder="背景图地址，下拉可选择默认提供的背景图" autocomplete="off" class="layui-input"
+                                list="bg_mg_defaults">
+                            <datalist id="bg_mg_defaults">
+                                <option value="https://open.saintic.com/api/bingPic">
+                                <option value="{{ url_for('static', filename='img/bg1.jpg') }}">
+                                <option value="{{ url_for('static', filename='img/bg2.jpg') }}">
+                                <option value="{{ url_for('static', filename='img/bg3.jpg') }}">
+                                <option value="{{ url_for('static', filename='img/bg4.jpg') }}">
+                                <option value="{{ url_for('static', filename='img/bg5.jpg') }}">
+                            </datalist>
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">背景透明度</label>
+                        <div class="layui-input-block">
+                            <input type="number" step=0.1 min=0 max=1 name="ucfg_bg_ransparency"
+                                value="{{ g.userinfo.ucfg_bg_ransparency }}" placeholder="背景透明度，0-1之间（值越大越透明），默认是：0.5，目前仅首页有效"
+                                autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">图片放大度</label>
+                        <div class="layui-input-block">
+                            <input type="number" step=0.1 min=1 max=2 name="ucfg_mypic_scale"
+                                value="{{ g.userinfo.ucfg_mypic_scale }}" placeholder="定义我的图片页面鼠标悬浮图片时放大的倍数，1-2之间，默认是1不放大"
+                                autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">图片数量</label>
+                        <div class="layui-input-block">
+                            <input type="number" step=1 min=1 max=100 name="ucfg_mypic_limit"
+                                value="{{ g.userinfo.ucfg_mypic_limit }}" placeholder="定义我的图片页面每次查询图床的数量，默认10"
+                                autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    {{ intpl("usersetting") }}
+                    <div class="layui-form-item">
+                        <button class="layui-btn" lay-submit lay-filter="*">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </form>
+            </div>
+            <div class="layui-tab-item">
                 <div id="albums"></div>
                 <div id="waterfall" class="waterfall"></div>
                 <div id="page"></div>
@@ -161,12 +216,13 @@
             }
         });
         var curr = location.hash.replace('#!picbed=', ''),
-            limit = parseInt("{{ request.args.limit or 10 }}");
+            limit = parseInt("{{ request.args.limit or g.userinfo.ucfg_mypic_limit or 10 }}");
         //将所有图片数据提到"全局"
         var shaDatas = {};
         //获取我的图片流方法
-        function get_pics(page, limit, success) {
-            picbed.ajax("{{ url_for('api.waterfall', sort='desc', is_mgr=request.args.is_mgr, album=request.args.album)|safe }}&page=" + page + "&limit=" + limit, function (res) {
+        function get_pics(page, success) {
+            var url = "{{ url_for('api.waterfall', sort='desc', is_mgr=request.args.is_mgr, album=request.args.album)|safe }}&limit=" + limit + "&page=" + page;
+            picbed.ajax(url, function (res) {
                 var html = res.data.map(function (img) {
                     img["ctime"] = util.toDateString(img.ctime * 1000);
                     img["is_control"] = true;
@@ -175,7 +231,7 @@
                 }).join("");
                 $("#waterfall").html(html);
                 flow.lazyimg(); 
-                success && success(res);
+                typeof success === "function" && success(res);
                 $("#waterfall").find(".pin img").on("click", function() {
                     var sha = $(this).data("sha"),
                         src = this.src;
@@ -248,7 +304,7 @@
             });
         }
         //初始加载图片
-        get_pics(curr, limit, function (res) {
+        get_pics(curr, function (res) {
             laypage.render({
                 elem: 'page',
                 count: res.count,
@@ -257,7 +313,7 @@
                 curr: curr, //起始页
                 jump: function (obj, first) {
                     if (!first) {
-                        get_pics(obj.curr, obj.limit);
+                        get_pics(obj.curr);
                     } else {
                         //初始加载相册列表
                         var uri = "{{ (url_for('front.my', is_mgr=request.args.is_mgr) + '&album=')|safe if request.args.is_mgr else url_for('front.my', album='') }}";
@@ -349,6 +405,26 @@
             }, {
                 method: "PUT",
                 data: {Action: "updateAlbum", album: album}
+            });
+            return false;
+        });
+        //监听用户设置
+        form.on('submit(*)', function(data){
+            console.log(data.field);
+            if (document.forms['control'].checkValidity() === false) {
+                layer.msg("发现部分参数不合法",{icon:0});
+                document.forms['control'].reportValidity();
+                return false;
+            }
+            picbed.ajax("{{ url_for('api.my', Action='updateUserCfg') }}", function(res) {
+                if (res.code === 0) {
+                    layer.msg("已修用户改配置", {icon:1});
+                } else {
+                    layer.msg(res.msg, {icon:0});
+                }
+            }, {
+                method: "PUT",
+                data: data.field
             });
             return false;
         });

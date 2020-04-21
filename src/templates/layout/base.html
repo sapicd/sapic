@@ -14,7 +14,7 @@
             height: 100%;
         }
         html {
-            background-image: url("{{ g.site.bg_mg or url_for('static', filename='img/bg5.jpg') }}");
+            background-image: url("{{ g.userinfo.ucfg_bg_mg or g.site.bg_mg or url_for('static', filename='img/bg5.jpg') }}");
             background-repeat: no-repeat;
             background-attachment: fixed;
             background-size: cover;
