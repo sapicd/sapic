@@ -10,7 +10,7 @@
 """
 
 import json
-from random import choice
+from random import choice, randint
 from os.path import join, splitext
 from base64 import urlsafe_b64encode as b64encode
 from werkzeug.utils import secure_filename
@@ -57,7 +57,9 @@ def translate(res):
 
 @bp.route("/")
 def index():
-    return "Hello picbed."
+    return jsonify(
+        "Hello %s." % (g.userinfo.username if g.signin else "picbed")
+    )
 
 
 @bp.route("/login", methods=["GET", "POST"])
@@ -263,26 +265,28 @@ def token():
     usr = g.userinfo.username
     tk = rsp("tokens")
     ak = rsp("account", usr)
-    #: 生成token
 
-    def gen_token(): return b64encode(
-        ("%s.%s.%s.%s" % (
-            generate_random(),
-            usr,
-            get_current_timestamp(),
-            hmac_sha256(g.rc.hget(ak, "password"), usr)
-        )).encode("utf-8")
-    ).decode("utf-8")
+    def gen_token(key):
+        """生成可以用key校验的token"""
+        return b64encode(
+            ("%s.%s.%s.%s" % (
+                generate_random(),
+                usr,
+                get_current_timestamp(),
+                hmac_sha256(key, usr)
+            )).encode("utf-8")
+        ).decode("utf-8")
     Action = request.args.get("Action")
     if Action == "create":
         if g.rc.hget(ak, "token"):
             res.update(msg="Existing token")
         else:
-            token = gen_token()
+            tkey = generate_random(randint(6, 12))
+            token = gen_token(tkey)
             try:
                 pipe = g.rc.pipeline()
                 pipe.hset(tk, token, usr)
-                pipe.hset(ak, "token", token)
+                pipe.hmset(ak, dict(token=token, token_key=tkey))
                 pipe.execute()
             except RedisError:
                 res.update(msg="Program data storage service error")
@@ -304,13 +308,14 @@ def token():
             res.update(msg="No tokens yet")
     elif Action == "reset":
         oldToken = g.rc.hget(ak, "token")
-        token = gen_token()
+        tkey = generate_random(randint(6, 12))
+        token = gen_token(tkey)
         try:
             pipe = g.rc.pipeline()
             if oldToken:
                 pipe.hdel(tk, oldToken)
             pipe.hset(tk, token, usr)
-            pipe.hset(ak, "token", token)
+            pipe.hmset(ak, dict(token=token, token_key=tkey))
             pipe.execute()
         except RedisError:
             res.update(msg="Program data storage service error")
@@ -372,7 +377,7 @@ def my():
             for k in cfgs:
                 if not k.startswith("ucfg_"):
                     res.update(msg="The user setting must start with `ucfg_`")
-                    return jsonify(res)
+                    return res
             try:
                 g.rc.hmset(ak, cfgs)
             except RedisError:
@@ -732,4 +737,4 @@ def album():
             )
     else:
         res.update(msg="No valid username found")
-    return jsonify(res)
+    return res

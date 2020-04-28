@@ -9,11 +9,9 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __author__ = 'staugur'
 __description__ = '使用Token验证Api'
-
 
 from flask import request, g
 from base64 import urlsafe_b64decode as b64decode
@@ -71,7 +69,9 @@ def before_request():
                 userinfo = g.rc.hgetall(ak)
                 if userinfo and isinstance(userinfo, dict):
                     pwd = userinfo.pop("password", None)
-                    if hmac_sha256(pwd, usr) == sig:
+                    tkey = userinfo.pop("token_key", None)
+                    if hmac_sha256(pwd, usr) == sig or \
+                            (tkey and hmac_sha256(tkey, usr) == sig):
                         g.signin = True
                         g.userinfo = userinfo
 
