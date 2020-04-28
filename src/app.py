@@ -10,8 +10,7 @@
 """
 
 from uuid import uuid4
-from flask import Flask, g, request, render_template
-from version import __version__
+from flask import Flask, g, request, render_template, jsonify
 from views import front_bp, api_bp
 from utils.tool import Attribute, is_true, parse_valid_comma, err_logger, \
     create_redis_engine
@@ -20,6 +19,7 @@ from utils.web import get_site_config, JsonResponse, default_login_auth, \
 from utils.cli import sa_cli
 from libs.hook import HookManager
 from config import GLOBAL
+from version import __version__
 
 __author__ = 'staugur'
 __email__ = 'staugur@saintic.com'
@@ -77,10 +77,16 @@ def after_request(res):
 
 
 @app.errorhandler(500)
+@app.errorhandler(405)
 @app.errorhandler(404)
 @app.errorhandler(403)
 @app.errorhandler(413)
 def page_error(e):
     if getattr(e, "code", None) == 500:
         err_logger.error(e, exc_info=True)
-    return render_template("public/error.html", e=e)
+    if request.path.startswith("/api/"):
+        return jsonify(dict(
+            msg=e.name,
+            code=e.code
+        )), e.code
+    return render_template("public/error.html", e=e), e.code

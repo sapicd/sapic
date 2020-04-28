@@ -23,7 +23,7 @@ from collections import Counter
 from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, \
     rsp, get_current_timestamp, ListEqualSplit, sha256, generate_random, \
-    err_logger, format_upload_src
+    format_upload_src
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username
 from utils._compat import iteritems
@@ -31,19 +31,6 @@ from utils._compat import iteritems
 bp = Blueprint("api", "api")
 #: 定义本地上传的钩子在保存图片时的基础目录前缀（在static子目录下）
 UPLOAD_FOLDER = "upload"
-
-
-@bp.errorhandler(500)
-@bp.errorhandler(404)
-@bp.errorhandler(403)
-@bp.errorhandler(413)
-def api_error(e):
-    if getattr(e, "code", None) == 500:
-        err_logger.error(e, exc_info=True)
-    return jsonify(dict(
-        msg=e.name,
-        code=e.code
-    )), e.code
 
 
 @bp.after_request
@@ -737,4 +724,12 @@ def album():
             )
     else:
         res.update(msg="No valid username found")
+    return res
+
+
+@bp.route("/link", methods=["POST"])
+def link():
+    if request.method == "GET":
+        return abort(404)
+    res = dict(code=1, msg=None)
     return res
