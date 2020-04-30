@@ -39,11 +39,11 @@ class AppTest(unittest.TestCase):
         rv = self.client.get("/api", follow_redirects=True)
         self.assertIn(b"Hello picbed", rv.data)
 
-        rv = self.client.post("/api/login")
-        self.assertEqual(404, rv.status_code)
-        self.assertIn(b"Not Found", rv.data)
+        rv = self.client.get("/api/login")
+        self.assertEqual(405, rv.status_code)
+        self.assertIn(b"Not Allowed", rv.data)
 
-        rv = self.client.get("/api/config")
+        rv = self.client.post("/api/config")
         self.assertEqual(404, rv.status_code)
 
     def test_comment_login_logout(self):
@@ -74,7 +74,7 @@ class AppTest(unittest.TestCase):
         self.assertEqual(403, rv.status_code)
 
         self.logout()
-        rv = self.client.get("/api/config")
+        rv = self.client.post("/api/config")
         self.assertEqual(404, rv.status_code)
 
     def test_admin(self):

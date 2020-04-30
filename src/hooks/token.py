@@ -51,8 +51,7 @@ def parseAuthorization(prefix="Token"):
 
 
 def get_request_origin():
-    return request.headers.get("Origin") or \
-        request.url_root.rstrip("/")
+    return request.headers.get("Origin")
 
 
 def get_request_ip():
@@ -130,7 +129,7 @@ def before_request():
                     ip=get_request_ip(),
                     agent=request.headers.get('User-Agent', ''),
                     referer=request.headers.get('Referer', ''),
-                    origin=get_request_origin(),
+                    origin=request.headers.get('Origin', ''),
                     ep=request.endpoint,
                     authentication=authentication,
                     authorization=authorization,
