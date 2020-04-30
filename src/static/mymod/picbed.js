@@ -183,6 +183,9 @@ layui.define(["layer", "util", "element"], function (exports) {
             return $("<div>").html(str).text();
         },
         isMobile: (navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone|Opera Mini)/i)) ? true : false,
+        str2star: function (str, start = 4, end = -4) {
+            return str.length > (start + Math.abs(end)) ? str.substr(0, start) + '****' + str.substr(end) : str;
+        },
     };
     //输出接口
     exports('picbed', api);

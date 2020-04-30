@@ -14,6 +14,7 @@ from os import getenv, environ
 from os.path import isfile, dirname, join
 from utils._compat import iteritems, Properties
 
+#: TODO modify environ, memory oom
 ENV = join(dirname(__file__), ".env")
 if isfile(ENV):
     envs = Properties(ENV).getProperties()

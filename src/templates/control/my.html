@@ -130,7 +130,8 @@
                 </form>
             </div>
             <div class="layui-tab-item">
-                <blockquote class="layui-elem-quote">这是您在站点中的个性化设置，仅在个人登录后有效，不会影响到其他人！</blockquote>
+                <table id="linktokenTable" class="layui-table" lay-filter="linktokenTable"></table>
+                <blockquote class="layui-elem-quote">以下是您在站点中的个性化设置，仅在个人登录后有效，不会影响到其他人！</blockquote>
                 <form class="layui-form layui-form-pane" id="control" lay-filter="setting" autocomplete="off">
                     <div class="layui-form-item">
                         <label class="layui-form-label">背景图</label>
@@ -191,17 +192,65 @@
 
 {% block script %}
 {% include "ref/upload_show.html" %}
+{% raw %}
+<script type="text/html" id="linktoken_action">
+    <div class="layui-btn-group">
+        <a class="layui-btn layui-btn-xs" lay-event="copy">复制</a>
+        {{# if(d.status === "1" || d.status === 1) { }}
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="disable">禁用</a>
+        {{# } else { }}
+        <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="enable">启用</a>
+        {{# } }}
+        <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
+    </div>
+</script>
+<script type="text/html" id="toolbar">
+    <div>
+        <i class="layui-icon layui-icon-about" id="linktokentip"></i>
+        Token分权引用表(LinkToken)：基于Token的最小权限分发引用，<a href="javascript:;" lay-event="newLink" style="color:#009688;font-weight:bold">添加一个引用</a>试试吧！
+    </div>
+</script>
+<script type="text/html" id="show_editor_area">
+    <form class="layui-form" style="padding:10px" lay-filter="linktokenForm">
+        {{# if(d.action === "edit") { }}
+        <div class="layui-form-item">
+            <input type="text" class="layui-input layui-disabled" name="LinkId" autocomplete="off" required lay-verify="required" lay-verType="tips" value="{{ d.LinkToken }}" readonly>
+        </div>
+        {{# } }}
+        <div class="layui-form-item">
+            <input type="text" class="layui-input" name="allow_origin" placeholder="允许调用的安全来源根域名(有协议无路径)，逗号分隔多条" autocomplete="off" required lay-verify="required" lay-verType="tips">
+        </div>
+        <div class="layui-form-item">
+            <input type="text" class="layui-input" name="allow_ip" placeholder="[可选]允许调用的安全来源IP，留空则不限制，逗号分隔多条" autocomplete="off">
+        </div>
+        <div class="layui-form-item">
+            <input type="text" class="layui-input" name="album" placeholder="[可选]相册名，引用于上传图片接口时设置的默认相册" autocomplete="off">
+        </div>
+        <div class="layui-form-item">
+            {{# if(d.action === "create") { }}
+            <button class="layui-btn layui-btn-xs" lay-submit lay-filter="linktokenAdd">添加</button>
+            {{# } }}
+            {{# if(d.action === "edit") { }}
+            <button class="layui-btn layui-btn-xs" lay-submit lay-filter="linktokenModify">修改</button>
+            {{# } }}
+        </div>
+    </form>
+</script>
+{% endraw %}
 <script>
-    layui.use(['picbed', 'laypage', 'flow', 'form', 'element', 'layer', 'laytpl', 'util'], function () {
+    layui.use(['picbed', 'laypage', 'flow', 'form', 'element', 'layer', 'laytpl', 'util', 'table'], function () {
         var $ = layui.jquery,
             picbed = layui.picbed,
             util = layui.util,
             flow = layui.flow,
             form = layui.form,
             layer = layui.layer,
+            table = layui.table,
             laytpl = layui.laytpl,
             element = layui.element,
             laypage = layui.laypage;
+
         //显示当前tab
         if (location.hash) {
             var layid = location.hash.replace(/^#!/, '').replace(/^#%21/, '').split('=')[0];
@@ -422,6 +471,242 @@
                 } else {
                     layer.msg(res.msg, {icon:0});
                 }
+            }, {
+                method: "PUT",
+                data: data.field
+            });
+            return false;
+        });
+        //以下是Token分权表格管理
+        function showCopyLinkToken(LinkToken) {
+            let content = [
+                '<div style="padding: 15px"><p>已成功添加新引用！</p>',
+                '<scan style="color:green;font-weight:bold">LinkToken:</scan> ' + picbed.str2star(LinkToken, 8, -8),
+                '<scan style="color:green;font-weight:bold">LinkScript:</scan> 在外部网站中使用js自动上传到picbed。',
+                '&nbsp;&nbsp;&nbsp;- 手动方式需要写js，在引用页面调用up2picbed函数初始化，相对复杂，但灵活度高!',
+                '&nbsp;&nbsp;&nbsp;- 自动方式不需要写js，所有选项可通过dataset定义，但有局限，详细使用请参考文档！',
+                '</div>',
+            ].join("<br>");
+            let sdk = "{{ url_for('static', filename='sdk/uploader.js', _external=True) }}",
+                url = "{{ url_for('api.upload', _external=True) }}";
+            layer.open({
+                type: 1,
+                title: false,
+                closeBtn: true,
+                area: '430px',
+                maxHeight: '500px',
+                skin: 'my-layer',
+                shade: 0.1,
+                shadeClose: true,
+                btn: ['复制手动引用', '仅复制LinkToken', '复制自动引用'],
+                btnAlign: 'c',
+                content: content,
+                yes: function(index, layero){
+                    //按钮【复制手动引用】的回调
+                    picbed.Clipboard.copy(`<script src="${sdk}" data-url="${url}" data-token="${LinkToken}"><\/script>`);
+                    return false;
+                },
+                btn2: function(index, layero) {
+                    //按钮【仅复制LinkToken】的回调
+                    picbed.Clipboard.copy(LinkToken);
+                    return false;
+                },
+                btn3: function(index, layero){
+                    //按钮【复制自动引用】的回调
+                    picbed.Clipboard.copy(`<script src="${sdk}" data-url="${url}" data-token="${LinkToken}" data-auto="true"><\/script>`);
+                    return false;
+                },
+            });
+        }
+        var tableIns = table.render({
+            elem: '#linktokenTable',
+            url: '{{ url_for("api.link", is_mgr=request.args.is_mgr) }}',
+            page: false,
+            size: 'sm',
+            cols: [
+                [{
+                        field: 'LinkId',
+                        title: 'ID',
+                        width: 80,
+                        fixed: 'left'
+                    },
+                    {
+                        field: 'LinkToken',
+                        title: 'LinkToken',
+                        hide: true
+                    },
+                    {
+                        field: 'user',
+                        title: '所属',
+                        width: 70,
+                        hide: true,
+                    },
+                    {
+                        field: 'album',
+                        title: '相册',
+                        width: 90,
+                    },
+                    {
+                        field: 'allow_origin',
+                        title: '允许来源主机',
+                    },
+                    {
+                        field: 'allow_ip',
+                        title: '允许来源IP',
+                        width: 90
+                    },
+                    {
+                        field: 'ctime',
+                        title: '创建时间',
+                        width: 145,
+                        templet: function (d) {
+                            return util.toDateString(parseInt(d.ctime) * 1000);
+                        }
+                    },
+                    {
+                        field: 'mtime',
+                        title: '修改时间',
+                        width: 150,
+                        hide: true,
+                        templet: function (d) {
+                            return d.mtime ? util.toDateString(parseInt(d.mtime) * 1000) : '暂无修改';
+                        }
+                    },
+                    {
+                        field: 'status',
+                        title: '状态',
+                        width: 70,
+                        templet: function (d) {
+                            return (d.status === 1 || d.status === "1") ?  '<scan style="color:#5FB878">启用中</scan>' : '<scan style="color:#FF5722">已禁用</scan>';
+                        }
+                    },
+                    {
+                        fixed: 'right',
+                        width: 170,
+                        align: 'center',
+                        toolbar: '#linktoken_action'
+                    }
+                ]
+            ],
+            toolbar: '#toolbar',
+            title: 'LinkToken',
+            defaultToolbar: [{
+                title: '重载表格',
+                layEvent: 'LAYTABLE_RELOAD', //事件名，用于 toolbar 事件中使用
+                icon: 'layui-icon-refresh' //图标类名
+            }, 'filter', 'print', 'exports'],
+            done: function() {
+                $("#linktokentip").on("mouseover", function() {
+                    let tip = [
+                        "&nbsp;&nbsp;&nbsp;&nbsp;Token分权引用(LinkToken)是将Token的映射，Token权限颗粒化，方便分发。",
+                        "用户可以创建分权引用，定义调用此引用的安全来源主机地址、IP，并限定访问某个路由或某个路径，提交后会得到一个最小权限的LinkToken！",
+                        "然后就可以在其他网站跨域调用(请求头格式 => Authorization:LinkToken 值)，比如上传图片，实际上也是为了外部上传图片开发的。",
+                        "可引申为授权，LinkToken可以随处使用，即便丢失也不会影响其他，禁用或删除即可，不会泄露Token。"
+                    ].join("<br>&nbsp;&nbsp;&nbsp;&nbsp;");
+                    layer.tips(tip, "#linktokentip", {tips:3, time:10000});
+                });
+            }
+        });
+        //监听工具条
+        table.on('tool(linktokenTable)', function (obj) {
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值
+            var tr = obj.tr; //获得当前行 tr 的 DOM 对象（如果有的话）
+            if (layEvent === "edit") {
+                laytpl(show_editor_area.innerHTML).render({action: "edit"}, function (html) {
+                    layer.open({
+                        type: 1,
+                        shade: 0.1,
+                        shadeClose: true,
+                        cloaseBtn: true,
+                        title: '修改引用',
+                        skin: 'layui-layer-molv',
+                        area: '400px',
+                        content: html,
+                        success: function () {
+                            form.val("linktokenForm", data);
+                            form.render();
+                        }
+                    });
+                });
+            } else if (layEvent === "del") {
+                layer.confirm('确认删除引用吗？', {
+                    icon: 3,
+                    title: false,
+                    closeBtn: 0,
+                    btn: ['确认删除','取消'] //按钮
+                }, function(index) {
+                    picbed.ajax("{{ url_for('api.link') }}", function(res) {
+                        layer.msg("已删除引用", {icon:1});
+                        obj.del();
+                    }, {
+                        method: "DELETE",
+                        data: {LinkId:data.LinkId}
+                    });
+                    layer.close(index);
+                }, function(index){
+                    layer.close(index);
+                });
+            } else if (layEvent === "copy") {
+                showCopyLinkToken(data.LinkToken);
+            }  else if (layEvent === "disable") {
+                picbed.ajax('{{ url_for("api.link", Action="disable") }}', function(res) {
+                    layer.msg("已禁用", {icon:1});
+                    obj.update({status: 0});
+                }, {
+                    method: "PUT",
+                    data: {LinkId: data.LinkId}
+                });
+            }   else if (layEvent === "enable") {
+                picbed.ajax('{{ url_for("api.link", Action="enable") }}', function(res) {
+                    layer.msg("已启用", {icon:1});
+                    obj.update({status: 1});
+                }, {
+                    method: "PUT",
+                    data: {LinkId: data.LinkId}
+                });
+            }
+        });
+        //监听头部工具栏事件
+        table.on('toolbar(linktokenTable)', function (obj) {
+            var layEvent = obj.event; //获得 lay-event 对应的值
+            if (layEvent === "newLink") {
+                laytpl(show_editor_area.innerHTML).render({action: "create"}, function (html) {
+                    layer.open({
+                        type: 1,
+                        shade: 0.1,
+                        shadeClose: true,
+                        cloaseBtn: true,
+                        title: '添加新引用',
+                        skin: 'layui-layer-molv',
+                        area: '400px',
+                        content: html,
+                        success: function () {
+                            form.render();
+                        }
+                    });
+                });
+            } else if (layEvent === "LAYTABLE_RELOAD") {
+                tableIns.reload();
+            }
+        });
+        //监听引用添加按钮提交
+        form.on('submit(linktokenAdd)', function (data) {
+            picbed.ajax('{{ url_for("api.link") }}', function(res) {
+                layer.closeAll('page');
+                showCopyLinkToken(res.LinkToken);
+                tableIns.reload();
+            }, {
+                data: data.field
+            });
+            return false;
+        });
+        //监听引用修改按钮提交
+        form.on('submit(linktokenModify)', function (data) {
+            picbed.ajax('{{ url_for("api.link") }}', function(res) {
+                layer.msg("已修改", {icon:1});
+                layer.closeAll('page');
+                tableIns.reload();
             }, {
                 method: "PUT",
                 data: data.field

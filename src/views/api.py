@@ -23,7 +23,7 @@ from collections import Counter
 from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, \
     rsp, get_current_timestamp, ListEqualSplit, sha256, generate_random, \
-    format_upload_src
+    format_upload_src, check_origin, get_origin, check_ip, gen_uuid
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username
 from utils._compat import iteritems
@@ -49,10 +49,8 @@ def index():
     )
 
 
-@bp.route("/login", methods=["GET", "POST"])
+@bp.route("/login", methods=["POST"])
 def login():
-    if request.method == "GET":
-        return abort(404)
     res = dict(code=1)
     usr = request.form.get("username")
     pwd = request.form.get("password")
@@ -116,9 +114,9 @@ def login():
     return res
 
 
-@bp.route("/register", methods=["GET", "POST"])
+@bp.route("/register", methods=["POST"])
 def register():
-    if request.method == "GET" or is_true(g.cfg.register) is False:
+    if is_true(g.cfg.register) is False:
         return abort(404)
     res = dict(code=1)
     #: Required fields
@@ -159,11 +157,9 @@ def register():
     return res
 
 
-@bp.route("/config", methods=["GET", "POST"])
+@bp.route("/config", methods=["POST"])
 @admin_apilogin_required
 def config():
-    if request.method == "GET":
-        return abort(404)
     try:
         set_site_config(request.form.to_dict())
     except Exception as e:
@@ -173,11 +169,9 @@ def config():
         return dict(code=0)
 
 
-@bp.route("/hook", methods=["GET", "POST"])
+@bp.route("/hook", methods=["POST"])
 @admin_apilogin_required
 def hook():
-    if request.method == "GET":
-        return abort(404)
     res = dict(code=1, msg=None)
     Action = request.args.get("Action")
     hm = current_app.extensions["hookmanager"]
@@ -243,11 +237,9 @@ def hook():
     return res
 
 
-@bp.route("/token", methods=["GET", "POST"])
+@bp.route("/token", methods=["POST"])
 @apilogin_required
 def token():
-    if request.method == "GET":
-        return abort(404)
     res = dict(code=1)
     usr = g.userinfo.username
     tk = rsp("tokens")
@@ -311,11 +303,9 @@ def token():
     return res
 
 
-@bp.route("/myself", methods=["GET", "PUT"])
+@bp.route("/myself", methods=["PUT", "POST"])
 @apilogin_required
 def my():
-    if request.method == "GET":
-        return abort(404)
     res = dict(code=1)
     ak = rsp("account", g.userinfo.username)
     Action = request.args.get("Action")
@@ -374,11 +364,9 @@ def my():
     return res
 
 
-@bp.route("/waterfall", methods=["GET", "POST"])
+@bp.route("/waterfall", methods=["POST"])
 @apilogin_required
 def waterfall():
-    if request.method == "GET":
-        return abort(404)
     res = dict(code=1, msg=None)
     #: 依次根据ctime、filename排序
     sort = request.args.get("sort") or "desc"
@@ -562,7 +550,9 @@ def upload():
         return res
     f = request.files.get('picbed')
     #: 相册名称，可以是任意字符串
-    album = (request.form.get("album") or "") if g.signin else 'anonymous'
+    album = (
+        request.form.get("album") or getattr(g, "up_album", "")
+    ) if g.signin else 'anonymous'
     #: 实时获取后台配置中允许上传的后缀，如: jpg|jpeg|png
     allowed_suffix = partial(
         allowed_file,
@@ -677,14 +667,13 @@ def upload():
             fmt = request.form.get("format", request.args.get("format"))
             res.update(format_upload_src(fmt, defaultSrc))
     else:
-        res.update(msg="No file or image format allowed")
+        res.update(msg="No file or image format error")
     return res
 
 
-@bp.route("/extendpoint", methods=["GET", "POST"])
+@bp.route("/extendpoint", methods=["POST"])
 def ep():
-    if request.method == "GET":
-        return abort(404)
+    """专用于钩子扩展API方法"""
     Object = request.args.get("Object")
     Action = request.args.get("Action")
     if Object and Action:
@@ -695,11 +684,9 @@ def ep():
                 return result
 
 
-@bp.route("/album", methods=["GET", "POST"])
+@bp.route("/album", methods=["POST"])
 @apilogin_required
 def album():
-    if request.method == "GET":
-        return abort(404)
     res = dict(code=1, msg=None)
     #: 管理员账号查询所有相册
     is_mgr = is_true(request.args.get("is_mgr"))
@@ -727,9 +714,200 @@ def album():
     return res
 
 
-@bp.route("/link", methods=["POST"])
+@bp.route("/link", methods=["GET", "POST", "PUT", "DELETE"])
+@apilogin_required
 def link():
-    if request.method == "GET":
-        return abort(404)
     res = dict(code=1, msg=None)
+    ltk = rsp("linktokens")
+    username = g.userinfo.username
+    if request.method == "GET":
+        is_mgr = is_true(request.args.get("is_mgr"))
+        linktokens = g.rc.hgetall(ltk)
+        pipe = g.rc.pipeline()
+        for ltid, usr in iteritems(linktokens):
+            if is_mgr and g.is_admin:
+                pipe.hgetall(rsp("linktoken", ltid))
+            else:
+                if username == usr:
+                    pipe.hgetall(rsp("linktoken", ltid))
+        try:
+            result = pipe.execute()
+        except RedisError:
+            res.update(msg="Program data storage service error")
+        else:
+            res.update(code=0, data=result, count=len(result))
+    elif request.method == "POST":
+        #: 安全的引用来源
+        origin = parse_valid_comma(request.form.get("allow_origin"))
+        ip = parse_valid_comma(request.form.get("allow_ip")) or ""
+        #: 定义此引用上传图片时默认设置的相册名
+        album = request.form.get("album") or ""
+        """Maybe TODO administrator limit endpoints, user select
+        allow_ep = request.form.get("allow_ep")
+        allow_path = request.form.get("allow_path")
+        allow_method = request.form.get("allow_method")
+        """
+        #: 判断用户是否有token
+        ak = rsp("account", username)
+        if not g.rc.hget(ak, "token"):
+            res.update(msg="No tokens yet")
+            return res
+        if not origin or not isinstance(origin, (tuple, list)):
+            res.update(msg="Invalid url address")
+            return res
+        for url in origin:
+            if url and not check_origin(url):
+                res.update(msg="Invalid url address")
+                return res
+        if ip:
+            for i in ip:
+                if i and not check_ip(i):
+                    res.update(msg="Invalid IP address")
+                    return res
+            ip = ",".join(ip)
+        origin = ",".join([get_origin(url) for url in origin if url])
+        #: 生成一个引用
+        LinkId = gen_uuid()
+        LinkSecret = generate_password_hash(LinkId)
+        lid = "%s:%s:%s" % (
+            get_current_timestamp(),
+            LinkId,
+            hmac_sha256(LinkId, LinkSecret)
+        )
+        LinkToken = b64encode(lid.encode("utf-8")).decode("utf-8")
+        pipe = g.rc.pipeline()
+        pipe.hset(ltk, LinkId, username)
+        pipe.hmset(rsp("linktoken", LinkId), dict(
+            LinkId=LinkId,
+            LinkSecret=LinkSecret,
+            LinkToken=LinkToken,
+            ctime=get_current_timestamp(),
+            user=username,
+            album=album,
+            status=1,  # 状态，1是启用，0是禁用
+            allow_origin=origin,
+            allow_ip=ip,
+            allow_ep="api.index,api.upload",
+            allow_path="",
+            allow_method="post",
+        ))
+        try:
+            pipe.execute()
+        except RedisError:
+            res.update(msg="Program data storage service error")
+        else:
+            res.update(code=0, LinkToken=LinkToken)
+    elif request.method == "PUT":
+        LinkId = request.form.get("LinkId")
+        Action = request.args.get("Action")
+        key = rsp("linktoken", LinkId)
+        if Action == "disable":
+            try:
+                g.rc.hset(key, "status", 0)
+            except RedisError:
+                res.update(msg="Program data storage service error")
+            else:
+                res.update(code=0)
+            return res
+        elif Action == "enable":
+            try:
+                g.rc.hset(key, "status", 1)
+            except RedisError:
+                res.update(msg="Program data storage service error")
+            else:
+                res.update(code=0)
+            return res
+        if LinkId and g.rc.exists(key):
+            origin = parse_valid_comma(request.form.get("allow_origin"))
+            ip = parse_valid_comma(request.form.get("allow_ip")) or ""
+            album = request.form.get("album") or ""
+            if not origin or not isinstance(origin, (tuple, list)):
+                res.update(msg="Invalid url address")
+                return res
+            for url in origin:
+                if url and not check_origin(url):
+                    res.update(msg="Invalid url address")
+                    return res
+            if ip:
+                for i in ip:
+                    if i and not check_ip(i):
+                        res.update(msg="Invalid IP address")
+                        return res
+                ip = ",".join(ip)
+            origin = ",".join([get_origin(url) for url in origin if url])
+            pipe = g.rc.pipeline()
+            pipe.hset(ltk, LinkId, username)
+            pipe.hmset(key, dict(
+                mtime=get_current_timestamp(),
+                album=album,
+                allow_origin=origin,
+                allow_ip=ip,
+            ))
+            try:
+                pipe.execute()
+            except RedisError:
+                res.update(msg="Program data storage service error")
+            else:
+                res.update(code=0)
+        else:
+            res.update(msg="Not found the LinkId")
+    elif request.method == "DELETE":
+        LinkId = request.form.get("LinkId")
+        if LinkId:
+            pipe = g.rc.pipeline()
+            pipe.hdel(ltk, LinkId)
+            pipe.delete(rsp("linktoken", LinkId))
+            try:
+                pipe.execute()
+            except RedisError:
+                res.update(msg="Program data storage service error")
+            else:
+                res.update(code=0)
+        else:
+            res.update(msg="Parameter error")
+    return res
+
+
+@bp.route("/report/<classify>")
+@apilogin_required
+def report(classify):
+    res = dict(code=1)
+    start = request.args.get("start")
+    end = request.args.get("end")
+    page = request.args.get("page")
+    limit = request.args.get("limit")
+    sort = (request.args.get("sort") or "asc").upper()
+    if classify in ("linktokens",):
+        try:
+            #: start、end可正可负
+            start = int(start)
+            end = int(end)
+        except (ValueError, TypeError):
+            try:
+                page = int(page)
+                limit = int(limit or 10)
+                if page - 1 < 0:
+                    raise ValueError
+            except (ValueError, TypeError):
+                res.update(msg="Parameter error")
+                return res
+            else:
+                start = (page-1) * limit
+                end = start + limit - 1
+        if isinstance(start, int) and isinstance(end, int):
+            key = rsp("report", classify)
+            pipe = g.rc.pipeline()
+            pipe.llen(key)
+            pipe.lrange(key, start, end)
+            result = pipe.execute()
+            if result and isinstance(result, list) and len(result) == 2:
+                count, data = result
+                if sort == "DESC":
+                    data.reverse()
+                data = [json.loads(i) for i in data if i]
+                res.update(code=0, data=data, count=count)
+        else:
+            res.update(msg="Wrong query range parameter")
+    else:
+        return abort(404)
     return res

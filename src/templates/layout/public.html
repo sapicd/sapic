@@ -8,6 +8,13 @@
     body, html {
         overflow: hidden;
     }
+    html {
+        background-image: url("{{ g.userinfo.ucfg_bg_mg or g.site.bg_mg or url_for('static', filename='img/bg5.jpg') }}");
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-size: cover;
+        font-family: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Heiti SC", "MicrosoftYaHei", "WenQuanYi Micro Hei", sans-serif;
+    }
     body {
         background-color: rgba(255, 255, 255, {{ g.userinfo.ucfg_bg_ransparency or g.site.bg_ransparency or 0.5|float }});
     }

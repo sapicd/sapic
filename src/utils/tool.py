@@ -11,13 +11,14 @@
 
 import hmac
 import hashlib
-from re import compile
+from uuid import uuid4
+from re import compile, IGNORECASE
 from time import time
 from datetime import datetime
 from random import randrange, sample
 from redis import from_url
 from .log import Logger
-from ._compat import string_types, text_type, PY2
+from ._compat import string_types, text_type, PY2, urlparse
 
 logger = Logger("sys").getLogger
 err_logger = Logger("error").getLogger
@@ -25,6 +26,14 @@ comma_pat = compile(r"\s*,\s*")
 verticaline_pat = compile(r"\s*\|\s*")
 username_pat = compile(r'^[a-zA-Z][0-9a-zA-Z\_]{0,31}$')
 point_pat = compile(r'^\w{1,9}\.?\w{1,9}$')
+url_pat = compile(
+    r'^(?:http)s?://'
+    r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'
+    r'localhost|'
+    r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
+    r'(?::\d+)?'
+    r'(?:/?|[/?]\S+)$', IGNORECASE
+)
 
 
 def rsp(*args):
@@ -152,3 +161,43 @@ class Attribute(dict):
             return self[name]
         except KeyError:
             return ''
+
+
+def get_origin(url):
+    """从url提取出符合CORS格式的origin地址"""
+    parsed_uri = urlparse(url)
+    return '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
+
+
+def check_origin(addr):
+    """Check whether UrlAddr is in a valid host origin, for example::
+
+        http://ip:port
+        https://abc.com
+    """
+    if addr and isinstance(addr, string_types):
+        try:
+            origin = get_origin(addr)
+        except (ValueError, TypeError, Exception):
+            return False
+        else:
+            return url_pat.match(origin)
+    return False
+
+
+def check_ip(ip_str):
+    sep = ip_str.split('.')
+    if len(sep) != 4:
+        return False
+    for x in sep:
+        try:
+            int_x = int(x)
+            if int_x < 0 or int_x > 255:
+                return False
+        except ValueError:
+            return False
+    return True
+
+
+def gen_uuid():
+    return uuid4().hex

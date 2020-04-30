@@ -3,7 +3,7 @@
 import unittest
 from utils.tool import Attribution, md5, sha1, rsp, get_current_timestamp, \
     allowed_file, parse_valid_comma, parse_valid_verticaline, is_true, \
-    hmac_sha256, sha256
+    hmac_sha256, sha256, check_origin, get_origin
 
 
 class UtilsTest(unittest.TestCase):
@@ -43,6 +43,21 @@ class UtilsTest(unittest.TestCase):
             "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
             sha256("abc")
         )
+
+    def test_checkorigin(self):
+        self.assertTrue(check_origin('http://127.0.0.1'))
+        self.assertTrue(check_origin('http://localhost:5000'))
+        self.assertTrue(check_origin('https://abc.com'))
+        self.assertTrue(check_origin('https://abc.com:8443'))
+        self.assertFalse(check_origin('ftp://192.168.1.2'))
+        self.assertFalse(check_origin('rsync://192.168.1.2'))
+        self.assertFalse(check_origin('192.168.1.2'))
+        self.assertFalse(check_origin('example.com'))
+        self.assertFalse(check_origin('localhost'))
+        self.assertFalse(check_origin('127.0.0.1:8000'))
+        self.assertFalse(check_origin('://127.0.0.1/hello-world'))
+        self.assertEqual(get_origin("http://abc.com/hello"), "http://abc.com")
+        self.assertEqual(get_origin("https://abc.com/"), "https://abc.com")
 
 
 if __name__ == '__main__':

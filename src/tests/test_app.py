@@ -39,7 +39,7 @@ class AppTest(unittest.TestCase):
         rv = self.client.get("/api", follow_redirects=True)
         self.assertIn(b"Hello picbed", rv.data)
 
-        rv = self.client.get("/api/login")
+        rv = self.client.post("/api/login")
         self.assertEqual(404, rv.status_code)
         self.assertIn(b"Not Found", rv.data)
 
@@ -69,6 +69,8 @@ class AppTest(unittest.TestCase):
             self.assertEqual(user, userinfo["username"])
 
         rv = self.client.get("/api/config")
+        self.assertEqual(405, rv.status_code)
+        rv = self.client.post("/api/config")
         self.assertEqual(403, rv.status_code)
 
         self.logout()

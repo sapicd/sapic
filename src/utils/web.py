@@ -123,12 +123,6 @@ def admin_apilogin_required(f):
     return decorated_function
 
 
-def parseAuthorization():
-    auth = request.headers.get("Authorization")
-    if auth and auth.startswith("Token "):
-        return auth.lstrip("Token ")
-
-
 def parseAcceptLanguage(acceptLanguage, defaultLanguage="zh-CN"):
     if not acceptLanguage:
         return defaultLanguage
@@ -185,7 +179,7 @@ def dfr(res, default='en-US'):
             "No valid username found": "未发现有效用户名",
             "The username or password parameter error": "用户名或密码参数错误",
             "No data": "没有数据",
-            "No file or image format allowed": "未获取到文件或不允许的图片格式",
+            "No file or image format error": "未获取到文件或不允许的图片格式",
             "All backend storage services failed to save pictures": "后端存储服务图片保存全部失败",
             "No valid backend storage service": "无有效后端存储服务",
             "The third module not found": "第三方模块未发现",
@@ -199,6 +193,10 @@ def dfr(res, default='en-US'):
             "Normal user login has been disabled": "已禁止普通用户登录",
             "Illegal users are not allowed to modify": "不合法的用户禁止修改",
             "The user setting must start with `ucfg_`": "用户设置必须以`ucfg_`开头",
+            "Invalid IP address": "无效的IP地址",
+            "Invalid url address": "无效的url",
+            "Not found the LinkId": "没有此LinkId",
+            "Wrong query range parameter": "查询范围错误",
         },
     }
     if isinstance(res, dict) and "en" not in language:
