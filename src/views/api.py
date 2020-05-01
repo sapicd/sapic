@@ -21,9 +21,10 @@ from functools import partial
 from redis.exceptions import RedisError
 from collections import Counter
 from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
-    parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, \
-    rsp, get_current_timestamp, ListEqualSplit, sha256, generate_random, \
-    format_upload_src, check_origin, get_origin, check_ip, gen_uuid
+    parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, rsp, \
+    sha256, get_current_timestamp, ListEqualSplit, generate_random, Relation, \
+    format_upload_src, check_origin, get_origin, check_ip, gen_uuid, \
+    parse_er, parse_ir
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username
 from utils._compat import iteritems
@@ -720,6 +721,59 @@ def link():
     res = dict(code=1, msg=None)
     ltk = rsp("linktokens")
     username = g.userinfo.username
+
+    def check_body():
+        """校验post、put参数，返回值有效说明校验不通过"""
+        allow_origin = request.form.get("allow_origin")
+        allow_ip = request.form.get("allow_ip")
+        allow_ep = request.form.get("allow_ep")
+        allow_method = request.form.get("allow_method")
+        er = request.form.get("exterior_relation")
+        ir = request.form.get("interior_relation")
+        if allow_origin:
+            origins = parse_valid_comma(allow_origin)
+            if not origins or not isinstance(origins, (tuple, list)):
+                return "Invalid url address"
+            for url in origins:
+                if url and not check_origin(url):
+                    return "Invalid url address"
+        if allow_ip:
+            ips = parse_valid_comma(allow_ip)
+            if not ips or not isinstance(ips, (tuple, list)):
+                return "Invalid IP address"
+            for ip in ips:
+                if ip and not check_ip(ip):
+                    return "Invalid IP address"
+        if allow_ep:
+            eps = parse_valid_comma(allow_ep)
+            if not eps or not isinstance(eps, (tuple, list)):
+                return "Not found the endpoint"
+            for ep in eps:
+                if ep and ep not in current_app.view_functions.keys():
+                    return "Not found the endpoint"
+        if allow_method:
+            methods = parse_valid_comma(allow_method)
+            if not methods or not isinstance(methods, (tuple, list)):
+                return "Invalid HTTP method"
+            for md in methods:
+                if md and md.upper() not in ["GET", "POST", "PUT", "DELETE"]:
+                    return "Invalid HTTP method"
+        if er:
+            # er允许!开头，但尾部允许，不过前后都不允许&|,
+            if er.startswith("&") or er.startswith("|") or er.startswith(",") \
+                    or er.endswith("&") or er.endswith("|") \
+                    or er.endswith("!") or er.endswith(","):
+                return "Invalid exterior_relation"
+            try:
+                parse_er(er)
+            except (ValueError, TypeError):
+                return "Invalid exterior_relation"
+        if ir:
+            try:
+                parse_ir(ir)
+            except (ValueError, TypeError):
+                return "Invalid interior_relation"
+
     if request.method == "GET":
         is_mgr = is_true(request.args.get("is_mgr"))
         linktokens = g.rc.hgetall(ltk)
@@ -736,36 +790,37 @@ def link():
             res.update(msg="Program data storage service error")
         else:
             res.update(code=0, data=result, count=len(result))
+
     elif request.method == "POST":
-        #: 安全的引用来源
-        origin = parse_valid_comma(request.form.get("allow_origin"))
-        ip = parse_valid_comma(request.form.get("allow_ip")) or ""
         #: 定义此引用上传图片时默认设置的相册名
         album = request.form.get("album") or ""
-        """Maybe TODO administrator limit endpoints, user select
-        allow_ep = request.form.get("allow_ep")
-        allow_path = request.form.get("allow_path")
-        allow_method = request.form.get("allow_method")
-        """
+        #: 定义以下几个权限之间的允许访问条件，and or not
+        er = request.form.get("exterior_relation") or ""
+        #: 定义权限内部允许访问条件 in, not in,
+        ir = request.form.get("interior_relation") or ""
+        #: 定义权限项及默认值，检测参数时不包含默认值
+        allow_origin = request.form.get("allow_origin") or ""
+        allow_ip = request.form.get("allow_ip") or ""
+        # TODO Administrator limit, user select
+        allow_ep = request.form.get("allow_ep") or "api.index,api.upload"
+        allow_method = request.form.get("allow_method") or "post"
         #: 判断用户是否有token
         ak = rsp("account", username)
         if not g.rc.hget(ak, "token"):
             res.update(msg="No tokens yet")
             return res
-        if not origin or not isinstance(origin, (tuple, list)):
-            res.update(msg="Invalid url address")
+        cv = check_body()
+        if cv:
+            res.update(msg=cv)
             return res
-        for url in origin:
-            if url and not check_origin(url):
-                res.update(msg="Invalid url address")
-                return res
-        if ip:
-            for i in ip:
-                if i and not check_ip(i):
-                    res.update(msg="Invalid IP address")
-                    return res
-            ip = ",".join(ip)
-        origin = ",".join([get_origin(url) for url in origin if url])
+        if allow_origin:
+            allow_origin = ",".join(
+                [
+                    get_origin(url)
+                    for url in parse_valid_comma(allow_origin)
+                    if url
+                ]
+            )
         #: 生成一个引用
         LinkId = gen_uuid()
         LinkSecret = generate_password_hash(LinkId)
@@ -785,11 +840,12 @@ def link():
             user=username,
             album=album,
             status=1,  # 状态，1是启用，0是禁用
-            allow_origin=origin,
-            allow_ip=ip,
-            allow_ep="api.index,api.upload",
-            allow_path="",
-            allow_method="post",
+            allow_origin=allow_origin,
+            allow_ip=allow_ip,
+            allow_ep=allow_ep,
+            allow_method=allow_method,
+            exterior_relation=er,
+            interior_relation=ir,
         ))
         try:
             pipe.execute()
@@ -797,6 +853,7 @@ def link():
             res.update(msg="Program data storage service error")
         else:
             res.update(code=0, LinkToken=LinkToken)
+
     elif request.method == "PUT":
         LinkId = request.form.get("LinkId")
         Action = request.args.get("Action")
@@ -818,30 +875,36 @@ def link():
                 res.update(code=0)
             return res
         if LinkId and g.rc.exists(key):
-            origin = parse_valid_comma(request.form.get("allow_origin"))
-            ip = parse_valid_comma(request.form.get("allow_ip")) or ""
             album = request.form.get("album") or ""
-            if not origin or not isinstance(origin, (tuple, list)):
-                res.update(msg="Invalid url address")
+            er = request.form.get("exterior_relation") or ""
+            ir = request.form.get("interior_relation") or ""
+            allow_origin = request.form.get("allow_origin") or ""
+            allow_ip = request.form.get("allow_ip") or ""
+            allow_ep = request.form.get("allow_ep") or "api.index,api.upload"
+            allow_method = request.form.get("allow_method") or "post"
+            cv = check_body()
+            if cv:
+                res.update(msg=cv)
                 return res
-            for url in origin:
-                if url and not check_origin(url):
-                    res.update(msg="Invalid url address")
-                    return res
-            if ip:
-                for i in ip:
-                    if i and not check_ip(i):
-                        res.update(msg="Invalid IP address")
-                        return res
-                ip = ",".join(ip)
-            origin = ",".join([get_origin(url) for url in origin if url])
+            if allow_origin:
+                allow_origin = ",".join(
+                    [
+                        get_origin(url)
+                        for url in parse_valid_comma(allow_origin)
+                        if url
+                    ]
+                )
             pipe = g.rc.pipeline()
             pipe.hset(ltk, LinkId, username)
             pipe.hmset(key, dict(
                 mtime=get_current_timestamp(),
                 album=album,
-                allow_origin=origin,
-                allow_ip=ip,
+                allow_origin=allow_origin,
+                allow_ip=allow_ip,
+                allow_ep=allow_ep,
+                allow_method=allow_method,
+                exterior_relation=er,
+                interior_relation=ir,
             ))
             try:
                 pipe.execute()
@@ -851,6 +914,7 @@ def link():
                 res.update(code=0)
         else:
             res.update(msg="Not found the LinkId")
+
     elif request.method == "DELETE":
         LinkId = request.form.get("LinkId")
         if LinkId:
@@ -865,6 +929,7 @@ def link():
                 res.update(code=0)
         else:
             res.update(msg="Parameter error")
+
     return res
 
 

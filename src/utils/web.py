@@ -196,6 +196,10 @@ def dfr(res, default='en-US'):
             "Invalid IP address": "无效的IP地址",
             "Invalid url address": "无效的url",
             "Not found the LinkId": "没有此LinkId",
+            "Not found the endpoint": "无此endpoint路由端点",
+            "Invalid HTTP method": "无效http方法",
+            "Invalid exterior_relation": "无效的exterior_relation规则",
+            "Invalid interior_relation": "无效的interior_relation规则",
             "Wrong query range parameter": "查询范围错误",
         },
     }

@@ -13,15 +13,17 @@
     {% if g.signin %}
     <li class="layui-nav-item">
         <a href="javascript:;">
-            <img id="avatar" src="{{ g.userinfo.avatar or 'https://static.saintic.com/cdn/images/defaultAvatar.png' }}" class="layui-nav-img">
+            <img id="avatar" src="{{ g.userinfo.avatar or url_for('static', filename='img/defaultAvatar.png') }}" class="layui-nav-img">
             <cite id="nickname">{{ g.userinfo.nickname or g.userinfo.username }}</cite>
         </a>
         <dl class="layui-nav-child">
             {% if request.endpoint == "front.my" %}
             <dd><a>个人资料</a></dd>
+            <dd><a>用户设置</a></dd>
             <dd><a>我的图片</a></dd>
             {% else %}
             <dd><a href="{{ url_for('front.my', _anchor='!profile') }}">个人资料</a></dd>
+            <dd><a href="{{ url_for('front.my', _anchor='!setting') }}">用户设置</a></dd>
             <dd><a href="{{ url_for('front.my', _anchor='!picbed') }}">我的图片</a></dd>
             {% endif %}
             {% if g.is_admin %}

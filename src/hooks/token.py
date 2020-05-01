@@ -9,14 +9,15 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __author__ = 'staugur'
 __description__ = '使用Token验证Api'
 
 import json
 from flask import request, g
 from base64 import urlsafe_b64decode as b64decode
-from utils.tool import rsp, hmac_sha256, logger, get_current_timestamp
+from utils.tool import rsp, hmac_sha256, logger, get_current_timestamp, \
+    parse_valid_comma, Relation
 from utils._compat import PY2, text_type
 
 intpl_profile = u"""
@@ -43,6 +44,8 @@ intpl_profile = u"""
 </div>
 """
 
+intpl_before_usersetting = u'<table id="linktokenTable" class="layui-table" lay-filter="linktokenTable"></table>'
+
 
 def parseAuthorization(prefix="Token"):
     auth = request.headers.get("Authorization")
@@ -68,6 +71,30 @@ def is_allow_ip(secure_ips):
         if access_ip not in secure_ips:
             return False
     return True
+
+
+def is_allow_ep(ir, allow_ep):
+    """根据ir规则判断endpoint是否在allow_ep允许之内"""
+    if allow_ep:
+        if ir:
+            pass
+        else:
+            return True
+    else:
+        return True
+
+
+def verify_allowed_rule(Ld):
+    """根据er、ir规则判断是否放行请求"""
+    allow_ip = parse_valid_comma(Ld["allow_ip"]) or []
+    allow_ep = parse_valid_comma(Ld["allow_ep"]) or []
+    allow_origin = parse_valid_comma(Ld["allow_origin"]) or []
+    allow_method = parse_valid_comma(Ld["allow_method"]) or []
+    er = Ld["exterior_relation"]
+    ir = Ld["interior_relation"]
+    if not er and not ir:
+        #: 默认模式，er是and，ir是in
+        pass
 
 
 def before_request():

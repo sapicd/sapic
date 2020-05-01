@@ -15,7 +15,7 @@ from os.path import isfile, dirname, join
 from utils._compat import iteritems, Properties
 
 #: TODO modify environ, memory oom
-ENV = join(dirname(__file__), ".env")
+ENV = join(dirname(__file__), ".cfg")
 if isfile(ENV):
     envs = Properties(ENV).getProperties()
     if envs and isinstance(envs, dict):

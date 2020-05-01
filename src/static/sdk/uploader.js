@@ -188,7 +188,7 @@ var up2picbed = (function () {
             return jsSelf;
         };
     }();
-    /*opt选项用于构造Uploader类，无值时读取dataset自身的初始化参数，支持如下：
+    /* opt选项用于构造Uploader类，无值时读取dataset自身的初始化参数，支持如下：
      * @param url: [必需]picbed上传接口地址
      * @param elem: [默认#up2picbed]绑定上传的button元素
      * @param auto: [注意]当值为true时脚本会自动初始化，否则需要在手动调用up2picbed函数初始化elem上传

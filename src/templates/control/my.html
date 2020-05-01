@@ -130,7 +130,7 @@
                 </form>
             </div>
             <div class="layui-tab-item">
-                <table id="linktokenTable" class="layui-table" lay-filter="linktokenTable"></table>
+                {{ intpl("before_usersetting") }}
                 <blockquote class="layui-elem-quote">以下是您在站点中的个性化设置，仅在个人登录后有效，不会影响到其他人！</blockquote>
                 <form class="layui-form layui-form-pane" id="control" lay-filter="setting" autocomplete="off">
                     <div class="layui-form-item">
@@ -219,20 +219,37 @@
         </div>
         {{# } }}
         <div class="layui-form-item">
-            <input type="text" class="layui-input" name="allow_origin" placeholder="允许调用的安全来源根域名(有协议无路径)，逗号分隔多条" autocomplete="off" required lay-verify="required" lay-verType="tips">
-        </div>
-        <div class="layui-form-item">
-            <input type="text" class="layui-input" name="allow_ip" placeholder="[可选]允许调用的安全来源IP，留空则不限制，逗号分隔多条" autocomplete="off">
-        </div>
-        <div class="layui-form-item">
             <input type="text" class="layui-input" name="album" placeholder="[可选]相册名，引用于上传图片接口时设置的默认相册" autocomplete="off">
+        </div>
+        <blockquote class="layui-elem-quote">分权引用限定条件，以下参数均可留空，逗号分隔多条</blockquote>
+        <div class="layui-form-item">
+            <input type="text" class="layui-input" name="allow_origin" placeholder="允许调用的安全来源根域名(有协议无路径)，留空则不限制" autocomplete="off">
+        </div>
+        <div class="layui-form-item">
+            <input type="text" class="layui-input" name="allow_ip" placeholder="允许调用的安全来源IP，留空则不限制" autocomplete="off">
+        </div>
+        <div class="layui-form-item">
+            <input type="text" class="layui-input" name="allow_ep" placeholder="允许访问的路由端点，留空默认api.index,api.upload" autocomplete="off">
+        </div>        
+        <div class="layui-form-item">
+            <input type="text" class="layui-input" name="allow_method" placeholder="允许访问的HTTP方法，留空默认post" autocomplete="off">
+        </div>
+        <blockquote class="layui-elem-quote">允许访问规则，使用符号
+            <scan style="color:#009688">&& || !</scan>
+            <scan style="color:#FF5722"> >> << </scan>表示and、or、not，in, not in，以此规则综合判断是否允许请求。<a href="https://docs.saintic.com/picbed/usage.html#LinkToken" target="_blank" title="LinkToken文档"><i class="layui-icon layui-icon-link"></i></a>
+        </blockquote>
+        <div class="layui-form-item">
+            <input type="text" class="layui-input layui-disabled" name="exterior_relation" placeholder="限定条件之间的规则，可用符号: && || !" autocomplete="off" disabled>
+        </div>
+        <div class="layui-form-item">
+            <input type="text" class="layui-input layui-disabled" name="interior_relation" placeholder="限定条件内部的规则，可用符号: >> <<" autocomplete="off" disabled>
         </div>
         <div class="layui-form-item">
             {{# if(d.action === "create") { }}
-            <button class="layui-btn layui-btn-xs" lay-submit lay-filter="linktokenAdd">添加</button>
+            <button class="layui-btn layui-btn-sm layui-btn-fluid" lay-submit lay-filter="linktokenAdd">添加</button>
             {{# } }}
             {{# if(d.action === "edit") { }}
-            <button class="layui-btn layui-btn-xs" lay-submit lay-filter="linktokenModify">修改</button>
+            <button class="layui-btn layui-btn-sm layui-btn-fluid" lay-submit lay-filter="linktokenModify">修改</button>
             {{# } }}
         </div>
     </form>
@@ -484,7 +501,7 @@
                 '<scan style="color:green;font-weight:bold">LinkToken:</scan> ' + picbed.str2star(LinkToken, 8, -8),
                 '<scan style="color:green;font-weight:bold">LinkScript:</scan> 在外部网站中使用js自动上传到picbed。',
                 '&nbsp;&nbsp;&nbsp;- 手动方式需要写js，在引用页面调用up2picbed函数初始化，相对复杂，但灵活度高!',
-                '&nbsp;&nbsp;&nbsp;- 自动方式不需要写js，所有选项可通过dataset定义，但有局限，详细使用请参考文档！',
+                '&nbsp;&nbsp;&nbsp;- 自动方式不需要写js，所有选项可通过dataset定义，但有局限，详细使用请<a href="https://docs.saintic.com/picbed/usage.html#LinkToken" target="_blank" title="LinkToken文档" style="color:#009688">参考文档</a>！',
                 '</div>',
             ].join("<br>");
             let sdk = "{{ url_for('static', filename='sdk/uploader.js', _external=True) }}",
@@ -527,7 +544,7 @@
                 [{
                         field: 'LinkId',
                         title: 'ID',
-                        width: 80,
+                        width: 70,
                         fixed: 'left'
                     },
                     {
@@ -538,7 +555,6 @@
                     {
                         field: 'user',
                         title: '所属',
-                        width: 70,
                         hide: true,
                     },
                     {
@@ -548,17 +564,37 @@
                     },
                     {
                         field: 'allow_origin',
-                        title: '允许来源主机',
+                        title: '允许源域名',
                     },
                     {
                         field: 'allow_ip',
-                        title: '允许来源IP',
-                        width: 90
+                        title: '允许源IP',
+                        width: 80
+                    },
+                    {
+                        field: 'allow_ep',
+                        title: '允许路由端点',
+                    },
+                    {
+                        field: 'allow_method',
+                        title: '允许方法',
+                        width: 80
+                    },
+                    {
+                        field: 'exterior_relation',
+                        title: '平行规则',
+                        hide: true
+                    },
+                    {
+                        field: 'interior_relation',
+                        title: '内部规则',
+                        hide: true
                     },
                     {
                         field: 'ctime',
                         title: '创建时间',
                         width: 145,
+                        hide: true,
                         templet: function (d) {
                             return util.toDateString(parseInt(d.ctime) * 1000);
                         }
@@ -566,7 +602,7 @@
                     {
                         field: 'mtime',
                         title: '修改时间',
-                        width: 150,
+                        width: 145,
                         hide: true,
                         templet: function (d) {
                             return d.mtime ? util.toDateString(parseInt(d.mtime) * 1000) : '暂无修改';
@@ -582,8 +618,8 @@
                     },
                     {
                         fixed: 'right',
-                        width: 170,
-                        align: 'center',
+                        width: 165,
+                        align: 'left',
                         toolbar: '#linktoken_action'
                     }
                 ]
@@ -601,7 +637,8 @@
                         "&nbsp;&nbsp;&nbsp;&nbsp;Token分权引用(LinkToken)是将Token的映射，Token权限颗粒化，方便分发。",
                         "用户可以创建分权引用，定义调用此引用的安全来源主机地址、IP，并限定访问某个路由或某个路径，提交后会得到一个最小权限的LinkToken！",
                         "然后就可以在其他网站跨域调用(请求头格式 => Authorization:LinkToken 值)，比如上传图片，实际上也是为了外部上传图片开发的。",
-                        "可引申为授权，LinkToken可以随处使用，即便丢失也不会影响其他，禁用或删除即可，不会泄露Token。"
+                        "可引申为授权，LinkToken可以随处使用，即便丢失也不会影响其他，禁用或删除即可，不会泄露Token。",
+                        "详情请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#LinkToken' target='_blank' style='color:#009688'>LinkToken</a>",
                     ].join("<br>&nbsp;&nbsp;&nbsp;&nbsp;");
                     layer.tips(tip, "#linktokentip", {tips:3, time:10000});
                 });
