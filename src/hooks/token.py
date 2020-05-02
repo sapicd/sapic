@@ -17,7 +17,7 @@ import json
 from flask import request, g
 from base64 import urlsafe_b64decode as b64decode
 from utils.tool import rsp, hmac_sha256, logger, get_current_timestamp, \
-    parse_valid_comma, Relation
+    parse_valid_comma, Attribution
 from utils._compat import PY2, text_type
 
 intpl_profile = u"""
@@ -53,17 +53,17 @@ def parseAuthorization(prefix="Token"):
         return auth.lstrip("%s " % prefix)
 
 
-def get_request_origin():
+def get_origin():
     return request.headers.get("Origin")
 
 
-def get_request_ip():
+def get_ip():
     return request.headers.get('X-Real-Ip', request.remote_addr)
 
 
 def is_allow_ip(secure_ips):
     """当secure_ips有效时，检测access_ip值，否则直接通过"""
-    access_ip = get_request_ip()
+    access_ip = get_ip()
     if secure_ips:
         if not isinstance(secure_ips, (tuple, list)):
             secure_ips = secure_ips.split(",")
@@ -73,28 +73,52 @@ def is_allow_ip(secure_ips):
     return True
 
 
-def is_allow_ep(ir, allow_ep):
-    """根据ir规则判断endpoint是否在allow_ep允许之内"""
-    if allow_ep:
-        if ir:
-            pass
-        else:
-            return True
+def is_allow_origin(secure_origins):
+    """当secure_origins有效时，检测access_origin值，否则直接通过"""
+    access_origin = get_origin()
+    if secure_origins:
+        if not isinstance(secure_origins, (tuple, list)):
+            secure_origins = secure_origins.split(",")
+        secure_origins = [o for o in secure_origins if o]
+        if access_origin not in secure_origins:
+            return False
+    return True
+
+
+def _allow_ir(ir, allow):
+    """//"""
+    if ir:
+        for key in allow.keys():
+            ir = ir.replace(key, allow[key])
+        print("_allow_ir: %s" % ir)
     else:
         return True
 
 
-def verify_allowed_rule(Ld):
+def verify_rule(Ld):
     """根据er、ir规则判断是否放行请求"""
-    allow_ip = parse_valid_comma(Ld["allow_ip"]) or []
-    allow_ep = parse_valid_comma(Ld["allow_ep"]) or []
-    allow_origin = parse_valid_comma(Ld["allow_origin"]) or []
-    allow_method = parse_valid_comma(Ld["allow_method"]) or []
+    allow = Attribution(dict(
+        ip=parse_valid_comma(Ld["allow_ip"]) or [],
+        ep=parse_valid_comma(Ld["allow_ep"]) or [],
+        origin=parse_valid_comma(Ld["allow_origin"]) or [],
+        method=parse_valid_comma(Ld["allow_method"]) or [],
+    ))
+    #: 参数 逻辑运算符 参数 逻辑运算符 参数...
+    #: 参数: origin and ip and ep or method
+    #: 逻辑运算符: and or not in not in
+    #: er控制的是参数之前的逻辑运算符
+    #: ir控制的是参数如何返回True
     er = Ld["exterior_relation"]
     ir = Ld["interior_relation"]
+
+    ip = get_ip()
+    ep = request.endpoint
+    origin = get_origin()
     if not er and not ir:
         #: 默认模式，er是and，ir是in
-        pass
+        if is_allow_ip(allow.ip) and ep in allow.ep and \
+                is_allow_origin(allow.origin):
+            return True
 
 
 def before_request():
@@ -129,8 +153,9 @@ def before_request():
                 status = int(Ld.get("status", 1))
                 if status == 1 and hmac_sha256(LinkId, secret) == LinkSig:
                     authentication = "ok"
+                    # 权限校验规则
                     #: 此不仅限于AJAX跨域请求了，相当于token分权
-                    origin = get_request_origin()
+                    origin = get_origin()
                     #: 限定允许访问部分路由，并校验安全域名、ip
                     allow_ip = Ld["allow_ip"]
                     allow_ep = Ld["allow_ep"].split(",")
@@ -153,7 +178,7 @@ def before_request():
                     LinkId=LinkId,
                     user=usr,
                     ctime=get_current_timestamp(),
-                    ip=get_request_ip(),
+                    ip=get_ip(),
                     agent=request.headers.get('User-Agent', ''),
                     referer=request.headers.get('Referer', ''),
                     origin=request.headers.get('Origin', ''),

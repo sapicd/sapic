@@ -22,9 +22,8 @@ from redis.exceptions import RedisError
 from collections import Counter
 from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, rsp, \
-    sha256, get_current_timestamp, ListEqualSplit, generate_random, Relation, \
-    format_upload_src, check_origin, get_origin, check_ip, gen_uuid, \
-    parse_er, parse_ir
+    sha256, get_current_timestamp, ListEqualSplit, generate_random, er_pat, \
+    format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username
 from utils._compat import iteritems
@@ -759,19 +758,10 @@ def link():
                 if md and md.upper() not in ["GET", "POST", "PUT", "DELETE"]:
                     return "Invalid HTTP method"
         if er:
-            # er允许!开头，但尾部允许，不过前后都不允许&|,
-            if er.startswith("&") or er.startswith("|") or er.startswith(",") \
-                    or er.endswith("&") or er.endswith("|") \
-                    or er.endswith("!") or er.endswith(","):
-                return "Invalid exterior_relation"
-            try:
-                parse_er(er)
-            except (ValueError, TypeError):
+            if not er_pat.match(er.strip()):
                 return "Invalid exterior_relation"
         if ir:
-            try:
-                parse_ir(ir)
-            except (ValueError, TypeError):
+            if not ir_pat.match(ir.strip()):
                 return "Invalid interior_relation"
 
     if request.method == "GET":
@@ -795,9 +785,9 @@ def link():
         #: 定义此引用上传图片时默认设置的相册名
         album = request.form.get("album") or ""
         #: 定义以下几个权限之间的允许访问条件，and or not
-        er = request.form.get("exterior_relation") or ""
+        er = request.form.get("exterior_relation", "").strip()
         #: 定义权限内部允许访问条件 in, not in,
-        ir = request.form.get("interior_relation") or ""
+        ir = request.form.get("interior_relation", "").strip()
         #: 定义权限项及默认值，检测参数时不包含默认值
         allow_origin = request.form.get("allow_origin") or ""
         allow_ip = request.form.get("allow_ip") or ""
@@ -876,8 +866,8 @@ def link():
             return res
         if LinkId and g.rc.exists(key):
             album = request.form.get("album") or ""
-            er = request.form.get("exterior_relation") or ""
-            ir = request.form.get("interior_relation") or ""
+            er = request.form.get("exterior_relation", "").strip()
+            ir = request.form.get("interior_relation", "").strip()
             allow_origin = request.form.get("allow_origin") or ""
             allow_ip = request.form.get("allow_ip") or ""
             allow_ep = request.form.get("allow_ep") or "api.index,api.upload"

@@ -34,8 +34,8 @@ url_pat = compile(
     r'(?::\d+)?'
     r'(?:/?|[/?]\S+)$', IGNORECASE
 )
-er_group_pat = compile(r",(&&|\|\|),")
-er_pat = compile(r'(&&|\|\||!)')
+er_pat = compile(r'^(and|or|not|\s|ip|ep|origin|method|\(|\)|in|not in)+$')
+ir_pat = compile(r'^(in|not in|\s|ip|ep|origin|method|\(|\))+$')
 
 
 def rsp(*args):
@@ -206,7 +206,7 @@ def gen_uuid():
 
 
 class Relation:
-    """将符号替换为内置方法
+    """将LinkToken功能中用到的符号替换为内置方法
     1. && = _and
     2. || = _or
     3. !  = _not
@@ -248,44 +248,3 @@ class Relation:
     @staticmethod
     def _notin(src, dst):
         return src not in dst
-
-
-def parse_er(er):
-    """解析er规则，其格式是opt1&&opt2||opt3，前面最多一个!，后面不能有符号"""
-    if er:
-        ers = er_group_pat.split(er)
-        rules = []
-        for er in ers:
-            if er == "&&":
-                rules.append(Relation._and)
-            elif er == "||":
-                rules.append(Relation._or)
-            else:
-                r = []
-                for i in er_pat.split(er):
-                    try:
-                        f = Relation.signal2func(i)
-                    except ValueError:
-                        if i:
-                            if i in ("ip", "ep", "origin", "method"):
-                                r.append(i)
-                            else:
-                                raise
-                    else:
-                        r.append(f)
-                if r:
-                    rules.append(r)
-        #: 合法的rules是至少三个元素的list
-        if len(ers) == 1:
-            rules = rules[0]
-        return rules
-
-
-def parse_ir(ir):
-    """解析ir规则，其格式是opt1:>>,opt2:<<"""
-    if ir:
-        return {
-            i.split(":")[0]: i.split(":")[1]
-            for i in parse_valid_comma(ir)
-            if i
-        }
