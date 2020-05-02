@@ -34,8 +34,9 @@ url_pat = compile(
     r'(?::\d+)?'
     r'(?:/?|[/?]\S+)$', IGNORECASE
 )
-er_pat = compile(r'^(and|or|not|\s|ip|ep|origin|method|\(|\)|in|not in)+$')
-ir_pat = compile(r'^(in|not in|\s|ip|ep|origin|method|\(|\))+$')
+er_pat = compile(r'^(and|or|not|\s|ip|ep|origin|method|\(|\))+$')
+ir_pat = compile(r'^(in|not in|\s|ip|ep|origin|method|\(|\)|,|:)+$')
+ALLOWED_RULES = ("ip", "ep", "method", "origin")
 
 
 def rsp(*args):
@@ -205,46 +206,10 @@ def gen_uuid():
     return uuid4().hex
 
 
-class Relation:
-    """将LinkToken功能中用到的符号替换为内置方法
-    1. && = _and
-    2. || = _or
-    3. !  = _not
-    4. << = _in
-    5. >> = _notin
-    """
-
-    @classmethod
-    def signal2func(cls, s):
-        if s == "&&":
-            return cls._and
-        elif s == "||":
-            return cls._or
-        elif s == "!":
-            return cls._not
-        elif s == "<<":
-            return cls._in
-        elif s == ">>":
-            return cls._notin
-        else:
-            raise ValueError
-
-    @staticmethod
-    def _and(a1, a2):
-        return a1 and a2
-
-    @staticmethod
-    def _or(o1, o2):
-        return o1 or o2
-
-    @staticmethod
-    def _not(n):
-        return not n
-
-    @staticmethod
-    def _in(src, dst):
-        return src in dst
-
-    @staticmethod
-    def _notin(src, dst):
-        return src not in dst
+def check_ir(ir):
+    """解析ir规则，其格式是: in:opt1, not in:opt2"""
+    if ir:
+        for i in parse_valid_comma(ir):
+            opr, opt = i.split(":")
+            if opt not in ALLOWED_RULES or opr not in ("in", "not in"):
+                raise ValueError

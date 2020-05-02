@@ -17,7 +17,7 @@ import json
 from flask import request, g
 from base64 import urlsafe_b64decode as b64decode
 from utils.tool import rsp, hmac_sha256, logger, get_current_timestamp, \
-    parse_valid_comma, Attribution
+    parse_valid_comma, Attribution, ALLOWED_RULES
 from utils._compat import PY2, text_type
 
 intpl_profile = u"""
@@ -54,71 +54,83 @@ def parseAuthorization(prefix="Token"):
 
 
 def get_origin():
-    return request.headers.get("Origin")
+    return request.headers.get("Origin") or ""
 
 
 def get_ip():
     return request.headers.get('X-Real-Ip', request.remote_addr)
 
 
-def is_allow_ip(secure_ips):
-    """当secure_ips有效时，检测access_ip值，否则直接通过"""
-    access_ip = get_ip()
-    if secure_ips:
-        if not isinstance(secure_ips, (tuple, list)):
-            secure_ips = secure_ips.split(",")
-        secure_ips = [ip for ip in secure_ips if ip]
-        if access_ip not in secure_ips:
-            return False
-    return True
-
-
-def is_allow_origin(secure_origins):
-    """当secure_origins有效时，检测access_origin值，否则直接通过"""
-    access_origin = get_origin()
-    if secure_origins:
-        if not isinstance(secure_origins, (tuple, list)):
-            secure_origins = secure_origins.split(",")
-        secure_origins = [o for o in secure_origins if o]
-        if access_origin not in secure_origins:
-            return False
-    return True
+def _parse_ir(ir):
+    """解析ir规则，其格式是: in:opt1, not in:opt2"""
+    if ir:
+        rules = {}
+        for i in parse_valid_comma(ir):
+            opr, opt = i.split(":")
+            if opt in ALLOWED_RULES and opr in ("in", "not in"):
+                rules[opt] = opr
+        return rules
 
 
 def _allow_ir(ir, allow):
-    """//"""
-    if ir:
-        for key in allow.keys():
-            ir = ir.replace(key, allow[key])
-        print("_allow_ir: %s" % ir)
-    else:
-        return True
+    """解析ir规则，返回所有参数最终判断True的语句字符串
+    :param ir: in opt, not in opt, 默认in
+    :return: {opt:(access_opt in/not in secure_opt), opt:(other)...}
+    """
+    #: ir解析成{opt:not in, opt:in, ...}
+    rules = _parse_ir(ir) or {}
+    cmd = {}
+    for opt in ALLOWED_RULES:
+        #: 只有用户定义了参数的安全项时才判断访问来源合法性
+        if allow[opt].secure:
+            cmd[opt] = "('%s' %s %s)" % (
+                allow[opt].access, rules.get(opt, "in"), allow[opt].secure
+            )
+        else:
+            cmd[opt] = "True"
+    return cmd
 
 
 def verify_rule(Ld):
     """根据er、ir规则判断是否放行请求"""
     allow = Attribution(dict(
-        ip=parse_valid_comma(Ld["allow_ip"]) or [],
-        ep=parse_valid_comma(Ld["allow_ep"]) or [],
-        origin=parse_valid_comma(Ld["allow_origin"]) or [],
-        method=parse_valid_comma(Ld["allow_method"]) or [],
+        ip=Attribution(dict(
+            access=get_ip(),
+            secure=parse_valid_comma(Ld["allow_ip"]) or []
+        )),
+        origin=Attribution(dict(
+            access=get_origin(),
+            secure=parse_valid_comma(Ld["allow_origin"]) or []
+        )),
+        ep=Attribution(dict(
+            access=request.endpoint,
+            secure=parse_valid_comma(Ld["allow_ep"]) or []
+        )),
+        method=Attribution(dict(
+            access=request.method,
+            secure=[
+                m.upper()
+                for m in parse_valid_comma(Ld["allow_method"]) or []
+                if m
+            ]
+        ))
     ))
     #: 参数 逻辑运算符 参数 逻辑运算符 参数...
-    #: 参数: origin and ip and ep or method
+    #: 参数: origin and ip and ep and method
     #: 逻辑运算符: and or not in not in
-    #: er控制的是参数之前的逻辑运算符
+    #: er控制的是参与逻辑运算的参数及之间的逻辑运算符
     #: ir控制的是参数如何返回True
     er = Ld["exterior_relation"]
     ir = Ld["interior_relation"]
-
-    ip = get_ip()
-    ep = request.endpoint
-    origin = get_origin()
-    if not er and not ir:
-        #: 默认模式，er是and，ir是in
-        if is_allow_ip(allow.ip) and ep in allow.ep and \
-                is_allow_origin(allow.origin):
-            return True
+    if not er:
+        er = "origin and ip and ep and method"
+    #: ir定义的最终规则
+    ir_cmd = _allow_ir(ir, allow)
+    #: 综合er、ir构建最终执行的命令字符串
+    for opt in ALLOWED_RULES:
+        er = er.replace(opt, ir_cmd[opt])
+    logger.debug("last er: %s" % er)
+    return eval(er)
 
 
 def before_request():
@@ -153,15 +165,8 @@ def before_request():
                 status = int(Ld.get("status", 1))
                 if status == 1 and hmac_sha256(LinkId, secret) == LinkSig:
                     authentication = "ok"
-                    # 权限校验规则
-                    #: 此不仅限于AJAX跨域请求了，相当于token分权
-                    origin = get_origin()
-                    #: 限定允许访问部分路由，并校验安全域名、ip
-                    allow_ip = Ld["allow_ip"]
-                    allow_ep = Ld["allow_ep"].split(",")
-                    allow_origin = Ld["allow_origin"].split(",")
-                    if is_allow_ip(allow_ip) and request.endpoint in allow_ep \
-                            and origin in allow_origin:
+                    #: 权限校验规则
+                    if verify_rule(Ld):
                         authorization = "ok"
                         logger.info("LinkToken ok and permission pass")
                         g.up_album = Ld.get("album")
@@ -181,7 +186,7 @@ def before_request():
                     ip=get_ip(),
                     agent=request.headers.get('User-Agent', ''),
                     referer=request.headers.get('Referer', ''),
-                    origin=request.headers.get('Origin', ''),
+                    origin=get_origin(),
                     ep=request.endpoint,
                     authentication=authentication,
                     authorization=authorization,

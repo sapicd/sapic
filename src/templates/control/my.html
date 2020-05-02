@@ -223,26 +223,26 @@
         </div>
         <blockquote class="layui-elem-quote">分权引用限定条件，以下参数均可留空，逗号分隔多条</blockquote>
         <div class="layui-form-item">
-            <input type="text" class="layui-input" name="allow_origin" placeholder="允许调用的安全来源根域名(有协议无路径)，留空则不限制" autocomplete="off">
+            <input type="text" class="layui-input" name="allow_origin" placeholder="origin: 允许调用的安全来源根域名，留空则不限制" autocomplete="off">
         </div>
         <div class="layui-form-item">
-            <input type="text" class="layui-input" name="allow_ip" placeholder="允许调用的安全来源IP，留空则不限制" autocomplete="off">
+            <input type="text" class="layui-input" name="allow_ip" placeholder="ip: 允许调用的安全来源IP，留空则不限制" autocomplete="off">
         </div>
         <div class="layui-form-item">
-            <input type="text" class="layui-input" name="allow_ep" placeholder="允许访问的路由端点，留空默认api.index,api.upload" autocomplete="off">
+            <input type="text" class="layui-input" name="allow_ep" placeholder="ep: 允许访问的路由端点，留空默认api.index,api.upload" autocomplete="off">
         </div>        
         <div class="layui-form-item">
-            <input type="text" class="layui-input" name="allow_method" placeholder="允许访问的HTTP方法，留空默认post" autocomplete="off">
+            <input type="text" class="layui-input" name="allow_method" placeholder="method: 允许访问的HTTP方法，留空默认post" autocomplete="off">
         </div>
-        <blockquote class="layui-elem-quote">允许访问规则，使用符号
-            <scan style="color:#009688">&& || !</scan>
-            <scan style="color:#FF5722"> >> << </scan>表示and、or、not，in, not in，以此规则综合判断是否允许请求。<a href="https://docs.saintic.com/picbed/usage.html#LinkToken" target="_blank" title="LinkToken文档"><i class="layui-icon layui-icon-link"></i></a>
+        <blockquote class="layui-elem-quote">允许访问规则，可使用运算符
+            <scan style="color:#009688">and, or, not,</scan>
+            <scan style="color:#FF5722"> in, not in </scan>灵活定义访问条件，以此规则综合判断是否允许请求。<a href="https://docs.saintic.com/picbed/usage.html#LinkToken" target="_blank" title="LinkToken文档"><i class="layui-icon layui-icon-link"></i></a>
         </blockquote>
         <div class="layui-form-item">
-            <input type="text" class="layui-input layui-disabled" name="exterior_relation" placeholder="限定条件之间的规则，可用符号: && || !" autocomplete="off" disabled>
+            <input type="text" class="layui-input" name="exterior_relation" placeholder="限定条件之间的规则, 格式: opt and/or/not opt" autocomplete="off">
         </div>
         <div class="layui-form-item">
-            <input type="text" class="layui-input layui-disabled" name="interior_relation" placeholder="限定条件内部的规则，可用符号: >> <<" autocomplete="off" disabled>
+            <input type="text" class="layui-input" name="interior_relation" placeholder="限定条件内部的规则, 格式: in/not in:opt" autocomplete="off">
         </div>
         <div class="layui-form-item">
             {{# if(d.action === "create") { }}
