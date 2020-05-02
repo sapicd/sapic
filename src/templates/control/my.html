@@ -150,6 +150,13 @@
                         </div>
                     </div>
                     <div class="layui-form-item">
+                        <label class="layui-form-label">移动端背景</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="ucfg_bg_mobile" value="{{ g.userinfo.ucfg_bg_mobile }}"
+                                placeholder="移动端背景图地址，若无设置默认采用上述背景图" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
                         <label class="layui-form-label">背景透明度</label>
                         <div class="layui-input-block">
                             <input type="number" step=0.1 min=0 max=1 name="ucfg_bg_ransparency"
@@ -166,7 +173,7 @@
                         </div>
                     </div>
                     <div class="layui-form-item">
-                        <label class="layui-form-label">图片数量</label>
+                        <label class="layui-form-label">图片加载数</label>
                         <div class="layui-input-block">
                             <input type="number" step=1 min=1 max=100 name="ucfg_mypic_limit"
                                 value="{{ g.userinfo.ucfg_mypic_limit }}" placeholder="定义我的图片页面每次查询图床的数量，默认10"

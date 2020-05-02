@@ -43,7 +43,7 @@ def translate(res):
     return res
 
 
-@bp.route("/")
+@bp.route("/", methods=["GET", "POST"])
 def index():
     return jsonify(
         "Hello %s." % (g.userinfo.username if g.signin else "picbed")
