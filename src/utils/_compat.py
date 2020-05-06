@@ -10,6 +10,7 @@
 """
 
 from sys import version_info
+from os import getenv
 
 PY2 = version_info[0] == 2
 
@@ -46,9 +47,13 @@ else:  # pragma: nocover
 
 class Properties(object):
 
-    def __init__(self, fileName):
+    def __init__(self, fileName, from_env=False):
+        #: 读取配置文件
         self.fileName = fileName
+        #: 使用get方法查询无果时，是否从环境变量读取
+        self.from_env = from_env
         self.properties = {}
+        self._getProperties()
 
     def __getDict(self, strName, dictName, value):
 
@@ -60,7 +65,7 @@ class Properties(object):
             dictName[strName] = value
             return
 
-    def getProperties(self):
+    def _getProperties(self):
         try:
             pro_file = open(self.fileName, 'Ur')
             for line in pro_file.readlines():
@@ -74,8 +79,17 @@ class Properties(object):
                         strs[0].strip(),
                         self.properties, strs[1].strip()
                     )
-        except Exception as e:
-            raise e
+        except IOError:
+            pass
         else:
             pro_file.close()
         return self.properties
+
+    def get(self, k, default_value=None):
+        if not self.properties:
+            self._getProperties()
+        v = self.properties.get(k)
+        if self.from_env is True:
+            if not v:
+                v = getenv(k)
+        return v or default_value

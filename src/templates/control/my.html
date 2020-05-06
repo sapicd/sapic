@@ -384,6 +384,7 @@
                 limit: limit,
                 hash: 'picbed',
                 curr: curr, //起始页
+                layout: ['count', 'prev', 'page', 'next'],
                 jump: function (obj, first) {
                     if (!first) {
                         get_pics(obj.curr);
@@ -399,6 +400,20 @@
                 }
             });
         });
+        //监听图片键盘
+        document.onkeydown = function(e) {
+            if (location.hash.startsWith("#!picbed")) {
+                var keynum = window.event ? e.keyCode : e.which;
+                switch(keynum){
+                    case 37: //左键
+                        $('div[id="page"]').find('a[class="layui-laypage-prev"]')[0].click(); //前一页点击事件
+                        return false;
+                    case 39: //右键
+                        $('div[id="page"]').find('a[class="layui-laypage-next"]')[0].click(); //下一页点击事件
+                        return false;
+                }
+            }
+        }
         //监听资料修改
         form.on('submit(profile)', function(data){
             var post = data.field;
