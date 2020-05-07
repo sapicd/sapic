@@ -122,7 +122,7 @@
                                 </div>
                             </div>
                             <div class="layui-form-item">
-                                <label class="layui-form-label">CORS</label>
+                                <label class="layui-form-label">CORS Origin</label>
                                 <div class="layui-input-block">
                                     <input type="text" name="cors" value="{{ g.site.cors }}" placeholder="设置跨域允许的源站，允许*，推荐设置为多个完整URL(包含协议但不包含域名路径部分及/，多个用英文逗号分隔)"
                                         autocomplete="off" class="layui-input">
@@ -326,7 +326,6 @@
         });
         //提交网站设置
         form.on('submit(*)', function(data){
-            console.log(data.field);
             if (document.forms['control'].checkValidity() === false) {
                 layer.msg("发现部分参数不合法",{icon:0});
                 document.forms['control'].reportValidity();
@@ -337,6 +336,13 @@
             }
             if (!data.field.hasOwnProperty("register")) {
                 data.field["register"] = 0;
+            }
+            if (data.field.cors && data.field.cors !== "*") {
+                let cors = data.field.cors.split(/\s*,\s*/).join(",");
+                if (cors.endsWith(",")) {
+                    cors = cors.substring(0, cors.length-1);
+                }
+                data.field["cors"] = cors;
             }
             picbed.ajax("{{ url_for('api.config') }}", function(res) {
                 if (res.code === 0) {

@@ -74,14 +74,14 @@ def _parse_ir(ir):
 
 def _allow_ir(ir, allow):
     """解析ir规则，返回所有参数最终判断True的语句字符串
-    :param ir: in opt, not in opt, 默认in
+    :param ir: in opt, not in opt
     :return: {opt:(access_opt in/not in secure_opt), opt:(other)...}
     """
     #: ir解析成{opt:not in, opt:in, ...}
     rules = _parse_ir(ir) or {}
     cmd = {}
     for opt in ALLOWED_RULES:
-        #: 只有用户定义了参数的安全项时才判断访问来源合法性
+        #: 只有用户定义了参数的安全项时才判断访问合法性
         if allow[opt].secure:
             cmd[opt] = "('%s' %s %s)" % (
                 allow[opt].access, rules.get(opt, "in"), allow[opt].secure

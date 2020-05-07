@@ -44,6 +44,7 @@ def translate(res):
 
 
 @bp.route("/", methods=["GET", "POST"])
+@bp.route("/index", methods=["GET", "POST"])
 def index():
     return jsonify(
         "Hello %s." % (g.userinfo.username if g.signin else "picbed")
@@ -788,6 +789,7 @@ def link():
             res.update(code=0, data=result, count=len(result))
 
     elif request.method == "POST":
+        comment = request.form.get("comment") or ""
         #: 定义此引用上传图片时默认设置的相册名
         album = request.form.get("album") or ""
         #: 定义以下几个权限之间的允许访问条件，opt and/or/not opt
@@ -834,6 +836,7 @@ def link():
             LinkToken=LinkToken,
             ctime=get_current_timestamp(),
             user=username,
+            comment=comment,
             album=album,
             status=1,  # 状态，1是启用，0是禁用
             allow_origin=allow_origin,
@@ -871,6 +874,7 @@ def link():
                 res.update(code=0)
             return res
         if LinkId and g.rc.exists(key):
+            comment = request.form.get("comment") or ""
             album = request.form.get("album") or ""
             er = request.form.get("exterior_relation", "").strip()
             ir = request.form.get("interior_relation", "").strip()
@@ -894,6 +898,7 @@ def link():
             pipe.hset(ltk, LinkId, username)
             pipe.hmset(key, dict(
                 mtime=get_current_timestamp(),
+                comment=comment,
                 album=album,
                 allow_origin=allow_origin,
                 allow_ip=allow_ip,

@@ -186,6 +186,25 @@ layui.define(["layer", "util", "element"], function (exports) {
         str2star: function (str, start = 4, end = -4) {
             return str.length > (start + Math.abs(end)) ? str.substr(0, start) + '****' + str.substr(end) : str;
         },
+        getHash: function (str, caseSensitive) {
+            /**
+             * 获取字符串的哈希值
+             * @param {String} str
+             * @param {Boolean} caseSensitive
+             * @return {Number} hashCode
+             */
+            if (!caseSensitive) {
+                str = str.toLowerCase();
+            }
+            // 1315423911=b'1001110011001111100011010100111'
+            var hash = 1315423911,
+                i, ch;
+            for (i = str.length - 1; i >= 0; i--) {
+                ch = str.charCodeAt(i);
+                hash ^= ((hash << 5) + ch + (hash >> 2));
+            }
+            return (hash & 0x7FFFFFFF);
+        },
     };
     //输出接口
     exports('picbed', api);

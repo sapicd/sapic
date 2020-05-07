@@ -199,6 +199,7 @@ var up2picbed = (function () {
      * @param exts: 允许上传的图片后缀
      * @param success: 上传成功的回调（通过字符串映射函数，传递响应结果，在脚本执行之前全局要有此函数，否则不生效）
      * @param fail: 上传失败或错误的回调（同success）
+     * @param progress: 上传进度回调，传递百分比
      */
     let init = (opt) => {
         if (!opt) opt = {};
