@@ -943,6 +943,7 @@ def report(classify):
     page = request.args.get("page")
     limit = request.args.get("limit")
     sort = (request.args.get("sort") or "asc").upper()
+    is_mgr = is_true(request.args.get("is_mgr"))
     if classify in ("linktokens",):
         try:
             #: start、end可正可负
@@ -970,8 +971,15 @@ def report(classify):
                 count, data = result
                 if sort == "DESC":
                     data.reverse()
-                data = [json.loads(i) for i in data if i]
-                res.update(code=0, data=data, count=count)
+                new = []
+                for r in data:
+                    r = json.loads(r)
+                    if is_mgr and g.is_admin:
+                        new.append(r)
+                    else:
+                        if r.get("user") == g.userinfo.username:
+                            new.append(r)
+                res.update(code=0, data=new, count=count)
         else:
             res.update(msg="Wrong query range parameter")
     else:

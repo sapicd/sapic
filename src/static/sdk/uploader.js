@@ -211,12 +211,11 @@ var up2picbed = (function () {
             elem = opt.elem || getSelf.dataset.elem || "#up2picbed",
             token = opt.token || getSelf.dataset.token,
             style = opt.style || getSelf.dataset.style,
-            data = opt.data || (getSelf.dataset.album ? {
-                album: getSelf.dataset.album
-            } : {}),
+            album = opt.album || getSelf.dataset.album,
             progress = opt.progress || (getSelf.dataset.progress && window[getSelf.dataset.progress]),
             success = opt.success || (getSelf.dataset.success && window[getSelf.dataset.success]),
-            fail = opt.fail || (getSelf.dataset.fail && window[getSelf.dataset.fail]);
+            fail = opt.fail || (getSelf.dataset.fail && window[getSelf.dataset.fail]),
+            data = {};
         if (!hasElem(elem)) {
             console.error("up2picbed未发现有效的elem");
             return false;
@@ -233,6 +232,9 @@ var up2picbed = (function () {
             if (!bgColor) bgColor = "#fff";
             document.querySelector(elem).style = `display:inline-block;margin-right:10px;padding:9px 15px;font-size:12px;background-color:${bgColor};color:${color};border:1px ${color} solid;border-radius:3px;cursor:pointer;user-select:none;`;
         }
+        if (album) {
+            data["album"] = album;
+        }
         return new Uploader({
             elem: elem,
             url: url,
@@ -242,10 +244,10 @@ var up2picbed = (function () {
             headers: {
                 "Authorization": `LinkToken ${token}`
             },
-            success: typeof success === "function" ? success : (res) => {
+            success: typeof success === "function" ? success : res => {
                 console.log(res);
             },
-            fail: typeof fail === "function" ? fail : (res) => {
+            fail: typeof fail === "function" ? fail : res => {
                 console.error(res);
             },
             progress: progress

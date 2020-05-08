@@ -61,6 +61,9 @@
         border-color: #01AAED;
         color: #fff;
     }
+    body .layui-laypage .layui-laypage-count {
+        background-color: #F6F6F6
+    }
     #albums {
         margin-bottom: 10px;
     }
@@ -591,7 +594,7 @@
                 '您可以使用以下按钮完成快捷复制，并<a href="https://docs.saintic.com/picbed/usage.html#linktoken" target="_blank" title="LinkToken文档" style="color:#009688">查阅文档</a>！',
                 '</div>',
             ].join("<br>");
-            let sdk = "{{ url_for('static', filename='sdk/uploader.js', _external=True) }}",
+            let sdk = "{{ url_for('static', filename='sdk/uploader.js', v=Version, _external=True) }}",
                 url = "{{ url_for('api.upload', _external=True) }}";
             layer.open({
                 type: 1,
