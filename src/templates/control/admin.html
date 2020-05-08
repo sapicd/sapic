@@ -115,16 +115,16 @@
                                 </div>
                             </div>
                             <div class="layui-form-item">
-                                <label class="layui-form-label">禁止用户名</label>
+                                <label class="layui-form-label">CORS Origin</label>
                                 <div class="layui-input-block">
-                                    <input type="text" name="forbidden_username" value="{{ g.site.forbidden_username }}" placeholder="注册时禁止使用的用户名，以逗号分割多个，默认包含anonymous"
+                                    <input type="text" name="cors" value="{{ g.site.cors }}" placeholder="设置跨域允许的源站，允许*，推荐设置为多个完整URL(包含协议但不包含域名路径部分及/，多个用英文逗号分隔)"
                                         autocomplete="off" class="layui-input">
                                 </div>
                             </div>
                             <div class="layui-form-item">
-                                <label class="layui-form-label">CORS Origin</label>
+                                <label class="layui-form-label">禁止注册用户名</label>
                                 <div class="layui-input-block">
-                                    <input type="text" name="cors" value="{{ g.site.cors }}" placeholder="设置跨域允许的源站，允许*，推荐设置为多个完整URL(包含协议但不包含域名路径部分及/，多个用英文逗号分隔)"
+                                    <input type="text" name="forbidden_username" value="{{ g.site.forbidden_username }}" placeholder="注册时禁止使用的用户名，以逗号分割多个，默认包含anonymous"
                                         autocomplete="off" class="layui-input">
                                 </div>
                             </div>

@@ -73,7 +73,7 @@ def login():
                     return result
     except (ValueError, TypeError, Exception) as e:
         logger.warning(e, exc_info=True)
-    if usr and pwd and check_username(usr) and len(pwd) >= 6:
+    if usr and pwd and len(pwd) >= 6:
         ak = rsp("accounts")
         if g.rc.sismember(ak, usr):
             userinfo = g.rc.hgetall(rsp("account", usr))
