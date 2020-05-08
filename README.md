@@ -14,49 +14,50 @@
 3. 依赖： `pip install -r requirements.txt`
 
 4. 配置：
-```
-config.py即配置文件，首先从环境变量中读取配置信息，无法找到时使用内置默认值，
-必需的是picbed_redis_url。
 
-所需环境变量可以配置到如 全局或家目录的.bash_profile 文件中，不过推荐的是写入到 程序目录下.env 文件里，
-它不会被提交到仓库，而程序启动时配置文件会先加载其中的环境变量，格式是k=v，
-比如：
+    源码src目录下的config.py即配置文件，它会加载中 `.cfg` 文件读取配置信息，
+    无法找到时加载环境变量，最后使用默认值，必需的配置项是picbed_redis_url。
 
-picbed_redis_url=redis://@localhost
-```
+    所以可以把配置项写到 `.bash_profile` 或 `.bashrc` 此类文件中在登录时加载，
+    也可以写入到.cfg文件里，这是推荐的方式，它不会被提交到仓库，格式是k=v，
+    每行一条。
+
+    比如：`picbed_redis_url=redis://@localhost`
 
 5. 启动： 
-```
-// 首先创建一个管理员账号 -h/--help显示帮助
-$ flask sa create -u USER -p PASSWORD --isAdmin
 
-// 开发环境启动
-$ make dev
+    ```
+    // 首先创建一个管理员账号 -h/--help显示帮助
+    $ flask sa create -u USER -p PASSWORD --isAdmin
 
-// 正式环境，若需前台启动，将start换成run即可；其他支持stop、reload、restart、status
-$ make start 或 sh online_gunicorn.sh start
-```
+    // 开发环境启动
+    $ make dev
+
+    // 正式环境，若需前台启动，将start换成run即可；其他支持stop、reload、restart、status
+    $ make start 或 sh online_gunicorn.sh start
+    ```
 
 6. Nginx:
-```
-// 默认配置下，picbed启动监听127.0.0.1:9514，nginx配置示例：
-server {
-    listen 80;
-    server_name picbed.domain.name;
-    charset utf-8;
-    client_max_body_size 12M;
-    location ~ ^\/static\/.*$ {
-        root /path/to/picbed/src/;
+
+    ```
+    // 默认配置下，picbed启动监听127.0.0.1:9514，nginx配置示例：
+    server {
+        listen 80;
+        server_name picbed.domain.name;
+        charset utf-8;
+        client_max_body_size 12M;
+        location ~ ^\/static\/.*$ {
+            root /path/to/picbed/src/;
+        }
+        location / {
+           proxy_pass http://127.0.0.1:9514;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-Proto $scheme;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
     }
-    location / {
-       proxy_pass http://127.0.0.1:9514;
-       proxy_set_header Host $host;
-       proxy_set_header X-Real-IP $remote_addr;
-       proxy_set_header X-Forwarded-Proto $scheme;
-       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-}
-```
+    ```
 
 ## 文档
 
@@ -70,7 +71,7 @@ server {
 
 http://picbed.demo.saintic.com
 
-对外服务，允许匿名上传，但是目前上传的图片保留删除权利！
+对外服务，为防止乱传已关闭匿名上传，随意注册，但不可用于非测试用途，图片保留删除权利！
 
 ## 扩展钩子
 
@@ -98,12 +99,19 @@ http://picbed.demo.saintic.com
 
 ```
 url: http[s]://你的picbed域名/api/upload
+
 paramName: picbed
+
 jsonPath: src
+
 # 以上是匿名上传，仅在管理员开启匿名时才能上传成功
-# 如需登录上传，请使用token(在控制台-个人资料-Token查看)，以下两种任选:
+## 如需登录上传，请使用token(在控制台-个人资料-Token查看)，以下两种任选:
 customHeader: {"Authorization": "Token 你的Token值"}
 customBody: {"token": "你的Token值", "album: "相册名或留空"}
+
+## 可用LinkToken替换Token(仅用于Header)：
+customHeader: {"Authorization": "LinkToken 你的LinkToken值"}
+customBody: {"album: "相册名或留空"}
 ```
 
 设置完之后选择自定义Web图床为默认图床即可。
@@ -114,17 +122,24 @@ customBody: {"token": "你的Token值", "album: "相册名或留空"}
 
 ```
 API地址：http[s]://你的picbed域名/api/upload
+ 
 请求方式：POST
+
 文件字段名：picbed
+
 其他字段：增加Header字段 或 增加Body字段，任选一种方式：
   - Headers数据
     key: Authorization
     value: Token 你的Token值
+    ## 可用LinkToken替换Token(仅用于Header)：
+    key: Authorization
+    value: LinkToken 你的LinkToken值
 
   - Body数据
     key: token
     value: 你的Token值
   # 如需设置相册，请增加Body字段，key为album，value即相册名
+
 URL路径：["src"]
 ```
 
