@@ -9,6 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
+import imghdr
 from io import BytesIO
 from functools import wraps
 from base64 import urlsafe_b64decode as b64decode, b64decode as pic64decode
@@ -200,8 +201,8 @@ def dfr(res, default='en-US'):
             "Not found the LinkId": "没有此LinkId",
             "Not found the endpoint": "无此endpoint路由端点",
             "Invalid HTTP method": "无效http方法",
-            "Invalid exterior_relation": "无效的exterior_relation规则",
-            "Invalid interior_relation": "无效的interior_relation规则",
+            "Invalid exterior_relation": "无效的exterior_relation平行规则",
+            "Invalid interior_relation": "无效的interior_relation内联规则",
             "Wrong query range parameter": "查询范围错误",
         },
     }
@@ -260,20 +261,23 @@ class Base64FileStorage(object):
 
     def __init__(self, b64str, filename=None):
         self._filename = filename
-        self._b64str = self._set_data_uri(b64str)
+        #: data uri scheme
+        self._b64str = self.__set_data_uri(b64str)
         self._parse = parse_data_uri(self._b64str)
-
-    def _set_data_uri(self, b64str):
-        try:
-            pic64decode(b64str)
-        except (BaseDecodeError, TypeError, ValueError):
-            raise ValueError("The attempt to decode the image failed")
+        if self.is_base64:
+            try:
+                self._parse["data"] = pic64decode(self._parse.data)
+            except (BaseDecodeError, TypeError, ValueError):
+                raise ValueError("The attempt to decode the image failed")
         else:
-            if not PY2 and not isinstance(b64str, text_type):
-                b64str = b64str.decode("utf-8")
-            if not b64str.startswith("data:"):
-                b64str = "data:;base64,%s" % b64str
-            return b64str
+            raise ValueError("Not found base64")
+
+    def __set_data_uri(self, b64str):
+        if not PY2 and not isinstance(b64str, text_type):
+            b64str = b64str.decode("utf-8")
+        if not b64str.startswith("data:"):
+            b64str = "data:;base64,%s" % b64str
+        return b64str
 
     @property
     def mimetype(self):
@@ -282,14 +286,13 @@ class Base64FileStorage(object):
     @property
     def filename(self):
         if not self._filename:
-            ext = "png"
-            if self.mimetype:
+            ext = imghdr.what(None, self._parse.data)
+            if not ext and self.mimetype:
                 mType, sType = self.mimetype.split("/")
                 if mType == "image":
                     ext = sType
-            return "{}.{}".format(get_current_timestamp(), ext)
-        else:
-            return self._filename
+            self._filename = "{}.{}".format(get_current_timestamp(), ext)
+        return self._filename
 
     @property
     def is_base64(self):
@@ -298,4 +301,4 @@ class Base64FileStorage(object):
     @property
     def stream(self):
         if self.is_base64:
-            return BytesIO(pic64decode(self._parse.data))
+            return BytesIO(self._parse.data)

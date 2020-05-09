@@ -266,10 +266,10 @@
             定义访问条件，以此规则综合判断是否允许请求。<a href="https://docs.saintic.com/picbed/usage.html#linktoken" target="_blank" title="LinkToken文档"><i class="layui-icon layui-icon-link"></i></a>
         </blockquote>
         <div class="layui-form-item">
-            <input type="text" class="layui-input" name="interior_relation" placeholder="限定条件内部的规则, 格式: in/not in:opt" autocomplete="off">
+            <input type="text" class="layui-input" name="interior_relation" placeholder="ir: 限定条件内部的规则, 格式: in/not in:opt" autocomplete="off">
         </div>
         <div class="layui-form-item">
-            <input type="text" class="layui-input" name="exterior_relation" placeholder="限定条件之间的规则, 格式: opt and/or/not opt and ()" autocomplete="off">
+            <input type="text" class="layui-input" name="exterior_relation" placeholder="er: 限定条件之间的规则, 格式: opt and/or/not opt and ()" autocomplete="off">
         </div>
         <div class="layui-form-item">
             {{# if(d.action === "create") { }}

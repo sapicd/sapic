@@ -202,11 +202,11 @@
         });
         //粘贴上传
         document.addEventListener('paste', function (event) {
-            var items = (event.clipboardData || window.clipboardData).items;
-            var file = null;
+            let items = (event.clipboardData || window.clipboardData).items;
+            let file = null;
             if (items && items.length) {
                 // 搜索剪切板items
-                for (var i = 0; i < items.length; i++) {
+                for (let i = 0; i < items.length; i++) {
                     if (items[i].type.indexOf('image') !== -1) {
                         file = items[i].getAsFile();
                         break;
@@ -230,8 +230,8 @@
             }
             //判断上传图片后缀
             if (exts) {
-                var EXTRE = new RegExp("(" + exts + "$)", "i");
-                var _ext = file.name.split(".");
+                let EXTRE = new RegExp("(" + exts + "$)", "i");
+                let _ext = file.name.split(".");
                 _ext = _ext[_ext.length - 1];
                 if (!EXTRE.test(_ext)) {
                     layer.msg("不支持的图片格式【" + _ext + "】", {icon: 0});
@@ -248,10 +248,11 @@
             */
 
             // 不预览直接上传
-            var data = new FormData();
+            let index = layer.msg('上传中', {icon: 16, time: 5000});
+            let data = new FormData();
             data.append(field, file, file.name);
             data.append("album", "{{ request.args.album }}");
-            var xhr = new XMLHttpRequest();
+            let xhr = new XMLHttpRequest();
 
             /* 上传进度
             if (xhr.upload) {
@@ -263,7 +264,8 @@
 
             // 上传结束
             xhr.onload = function () {
-                var res = JSON.parse(xhr.responseText);
+                layer.close(index);
+                let res = JSON.parse(xhr.responseText);
                 if (res.code === 0) {
                     layer.msg("上传成功", {icon: 1, time: 1000}, function() {
                         showUploadCopy(res);
@@ -276,7 +278,11 @@
                 layer.msg("网络异常，上传失败", {icon: 2});
             };
             xhr.open('POST', '{{ url_for("api.upload") }}', true);
-            xhr.send(data);
+            try {
+                xhr.send(data);
+            } catch (e) {
+                layer.msg(e.message, {icon: 2});
+            };
         });
     });
 </script>

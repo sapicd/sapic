@@ -32,6 +32,7 @@ from utils._compat import iteritems
 bp = Blueprint("api", "api")
 #: 定义本地上传的钩子在保存图片时的基础目录前缀（在static子目录下）
 UPLOAD_FOLDER = "upload"
+FIELD_NAME = "picbed"
 
 
 @bp.after_request
@@ -545,7 +546,6 @@ def upload():
     4. 此时保存图片成功，持久化存储到全局索引、用户索引
     5. 返回响应：{code:0, data={src=?, sender=success_saved_hook_name}}
     """
-    FIELD_NAME = "picbed"
     res = dict(code=1, msg=None)
     #: 匿名上传开关检测
     if not is_true(g.cfg.anonymous) and not g.signin:
@@ -558,8 +558,10 @@ def upload():
         filename = request.form.get("filename")
         if pic64str:
             try:
+                #: 注意，base64在部分客户端发起http请求时，可能+换成空格，出现异常
                 fp = Base64FileStorage(pic64str, filename)
-            except ValueError:
+            except ValueError as e:
+                logger.debug(e, exc_info=True)
                 fp = None
     #: 相册名称，可以是任意字符串
     album = (
