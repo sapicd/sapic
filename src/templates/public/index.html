@@ -83,10 +83,37 @@
             upload = layui.upload,
             laytpl = layui.laytpl,
             element = layui.element;
+
         var exts = "{{ g.site.upload_exts or 'jpg|png|gif|bmp|jpeg|webp' }}",
             size = parseFloat("{{ g.site.upload_size or 10 }}"), //MB
             number = parseInt("{{ g.site.upload_number or 10 }}"),
+            field = "picbed",
             upviewDom = $('#previewList');
+
+        var showUploadCopy = function(res) {
+            laytpl(upload_show_tpl.innerHTML).render(res, function (html) {
+                layer.open({
+                    type: 1,
+                    title: false,
+                    closeBtn: true,
+                    area: document.body.clientWidth > 550 ? '550px' : 'auto',
+                    maxHeight: '500px',
+                    shade: 0.1,
+                    shadeClose: true,
+                    skin: 'layui-layer-molv',
+                    content: html,
+                    success: function (layero, indexo) {
+                        element.render('tab');
+                        $(layero).find('.upload_show_copy').on('click', function () {
+                            var copyId = $(this).data('copyid');
+                            picbed.Clipboard.copy($(copyId).text());
+                        });
+                    }
+                });
+            });
+        };
+
+        //点击与拖拽上传
         var uploadListIns = upload.render({
             elem: '#upload',
             url: '{{ url_for("api.upload") }}',
@@ -98,38 +125,40 @@
             auto: false,
             bindAction: '#action',
             drag: true,
-            field: "picbed",
+            field: field,
             number: number > 10 ? 10 : number,
             size: (size > 10 ? 10 : size) * 1024,
-            updateData: function(index, data) {
+            updateData: function (index, data) {
                 //改源码upload.js
                 //typeof options.updateData === 'function' &&  options.updateData(index, options.data);
                 data.album = $("#album-" + index).val();
             },
-            choose: function(obj){
+            choose: function (obj) {
                 $(".before-upload-area").hide();
                 var files = this.files = obj.pushFile();
                 $("#action").removeClass("layui-hide");
                 $(".layui-table:first").removeClass("layui-hide");
-                obj.preview(function(index, file, result){
-                    var tr = $(['<tr id="upload-'+ index +'">'
-                        ,'<td class="a"><img src="'+ result +'" style="max-width:50px" class="layui-upload-img"></td>'
-                        ,'<td class="b">'+ (picbed.isMobile ? file.type.replace(/^image\//, '') : file.name) +'</td>'
-                        ,'<td class="c">'+ (file.size/1024).toFixed(1) +'</td>'
-                        ,'<td class="d">等待</td>'
-                        ,'<td class="e"><div id="progress-' + index + '"></div></td>'
-                        ,'<td class="f">{% if g.signin %}<input type="text" id="album-' + index + '" autocomplete="off" class="layui-input" value="{{ request.args.album }}">{% else %}<i class="layui-icon layui-icon-close"></i>{% endif %}</td>'
-                        ,'<td class="g">'
-                        ,'<button class="layui-btn layui-btn-xs upload-reload layui-hide">重传</button>'
-                        ,'<button class="layui-btn layui-btn-xs layui-btn-danger upload-delete">删除</button>'
-                        ,'</td>'
-                        ,'</tr>'].join(''));
+                obj.preview(function (index, file, result) {
+                    var tr = $([
+                        '<tr id="upload-' + index + '">',
+                        '<td class="a"><img src="' + result + '" style="max-width:50px" class="layui-upload-img"></td>',
+                        '<td class="b">' + (picbed.isMobile ? file.type.replace(/^image\//, '') : file.name) + '</td>',
+                        '<td class="c">' + (file.size / 1024).toFixed(1) + '</td>',
+                        '<td class="d">等待</td>',
+                        '<td class="e"><div id="progress-' + index + '"></div></td>',
+                        '<td class="f">{% if g.signin %}<input type="text" id="album-' + index + '" autocomplete="off" class="layui-input" value="{{ request.args.album }}">{% else %}<i class="layui-icon layui-icon-close"></i>{% endif %}</td>',
+                        '<td class="g">',
+                        '<button class="layui-btn layui-btn-xs upload-reload layui-hide">重传</button>',
+                        '<button class="layui-btn layui-btn-xs layui-btn-danger upload-delete">删除</button>',
+                        '</td>',
+                        '</tr>'
+                    ].join(''));
                     //单个重传
-                    tr.find('.upload-reload').on('click', function(){
+                    tr.find('.upload-reload').on('click', function () {
                         obj.upload(index, file);
                     });
                     //删除
-                    tr.find('.upload-delete').on('click', function(){
+                    tr.find('.upload-delete').on('click', function () {
                         delete files[index]; //删除对应的文件
                         tr.remove();
                         uploadListIns.config.elem.next()[0].value = '';
@@ -137,57 +166,117 @@
                     upviewDom.append(tr);
                 });
             },
-            before: function(obj){
+            before: function (obj) {
                 if (Object.keys(this.files).length === 0) {
-                    layer.msg("暂无图片等待上传！", {icon:1});
+                    layer.msg("暂无图片等待上传！", {icon: 1});
                 }
             },
-            progress: function(index, v){
+            progress: function (index, v) {
                 //改源码upload.js
                 //options.progress(index, percent, options.item[0], e)
                 $('#progress-' + index).text(v + '%');
             },
-            done: function(res, index, upload){
-                console.log(res);
-                if(res.code === 0){ //上传成功
-                    var tr = upviewDom.find('tr#upload-'+ index),tds = tr.children();
+            done: function (res, index, upload) {
+                if (res.code === 0) { //上传成功
+                    var tr = upviewDom.find('tr#upload-' + index),
+                        tds = tr.children();
                     tds.eq(3).html('<span style="color: #5FB878;">成功</span>');
                     tds.eq(6).html('<button class="layui-btn layui-btn-xs layui-btn-normal upload-show" data-index="' + index + '">查看</button>'); //清空操作
                     delete this.files[index]; //删除文件队列已经上传成功的文件
                     //layer.closeAll('loading');
-                    tr.find('.upload-show').on('click', function(){
-                        laytpl(upload_show_tpl.innerHTML).render(res, function(html){
-                            layer.open({
-                                type: 1,
-                                title: false,
-                                closeBtn: true,
-                                area: document.body.clientWidth > 550 ? '550px' : 'auto',
-                                maxHeight: '500px',
-                                shade: 0.1,
-                                shadeClose: true,
-                                skin: 'layui-layer-molv',
-                                content: html,
-                                success: function(layero, indexo) {
-                                    element.render('tab');
-                                    $(layero).find('.upload_show_copy').on('click', function() {
-                                        var copyId = $(this).data('copyid');
-                                        picbed.Clipboard.copy($(copyId).text());
-                                    });
-                                }
-                            });
-                        });
+                    tr.find('.upload-show').on('click', function () {
+                        showUploadCopy(res);
                     });
                     return;
                 } else {
                     this.error(index, upload, res.msg);
                 }
             },
-            error: function(index, upload, err_msg){
-                var tr = upviewDom.find('tr#upload-'+ index),tds = tr.children();
+            error: function (index, upload, err_msg) {
+                var tr = upviewDom.find('tr#upload-' + index),
+                    tds = tr.children();
                 tds.eq(3).html('<span style="color: #FF5722;"><abbr title="' + err_msg + '">失败</abbr></span>');
                 tds.eq(6).find('.upload-reload').removeClass('layui-hide'); //显示重传
                 //layer.closeAll('loading');
             }
+        });
+        //粘贴上传
+        document.addEventListener('paste', function (event) {
+            var items = (event.clipboardData || window.clipboardData).items;
+            var file = null;
+            if (items && items.length) {
+                // 搜索剪切板items
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        file = items[i].getAsFile();
+                        break;
+                    }
+                }
+            } else {
+                layer.msg("当前浏览器不支持", {icon: 2});
+                return;
+            }
+            if (!file) {
+                layer.msg("粘贴内容非图片", {icon: 0});
+                return;
+            }
+            // 此时file就是我们的剪切板中的图片File对象
+            //判断上传图片大小
+            if (size > 0) {
+                if ((file.size / 1024) > (size * 1024)) {
+                    layer.msg("上传图片超过限制大小【" + size + "KB】", {icon: 0});
+                    return;
+                }
+            }
+            //判断上传图片后缀
+            if (exts) {
+                var EXTRE = new RegExp("(" + exts + "$)", "i");
+                var _ext = file.name.split(".");
+                _ext = _ext[_ext.length - 1];
+                if (!EXTRE.test(_ext)) {
+                    layer.msg("不支持的图片格式【" + _ext + "】", {icon: 0});
+                    return;
+                }
+            }
+
+            /* 如果需要预览，可以执行下面代码
+            var reader = new FileReader()
+            reader.onload = function (event) {
+                preview.innerHTML = '<img src="' + event.target.result + '" class="upload-image">';
+            }
+            reader.readAsDataURL(file);
+            */
+
+            // 不预览直接上传
+            var data = new FormData();
+            data.append(field, file, file.name);
+            data.append("album", "{{ request.args.album }}");
+            var xhr = new XMLHttpRequest();
+
+            /* 上传进度
+            if (xhr.upload) {
+                xhr.upload.addEventListener('progress', function (event) {
+                    let percent = Math.round(100 * event.loaded / event.total) / 100 + '%';
+                }, false);
+            }
+            */
+
+            // 上传结束
+            xhr.onload = function () {
+                var res = JSON.parse(xhr.responseText);
+                if (res.code === 0) {
+                    layer.msg("上传成功", {icon: 1, time: 1000}, function() {
+                        showUploadCopy(res);
+                    });
+                } else {
+                    layer.msg("上传失败：" + res.msg, {icon: 2});
+                }
+            };
+            xhr.onerror = function () {
+                layer.msg("网络异常，上传失败", {icon: 2});
+            };
+            xhr.open('POST', '{{ url_for("api.upload") }}', true);
+            xhr.send(data);
         });
     });
 </script>

@@ -80,7 +80,7 @@ var up2picbed = (function () {
                 if (size > 10 * 1024) size = 10 * 1024;
                 let s = FILE.size / 1024;
                 if (s > size) {
-                    return self._alert("上传文件超过限制大小【" + size + "KB】");
+                    return self._alert("上传图片超过限制大小【" + size + "KB】");
                 }
             }
             //判断上传图片后缀
@@ -89,7 +89,7 @@ var up2picbed = (function () {
                 let ext = FILE.name.split(".");
                 ext = ext[ext.length - 1];
                 if (!EXTRE.test(ext)) {
-                    return self._alert("不支持的文件格式【" + ext + "】");
+                    return self._alert("不支持的图片格式【" + ext + "】");
                 }
             }
 
