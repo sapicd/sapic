@@ -255,10 +255,10 @@
             <input type="text" class="layui-input" name="allow_ip" placeholder="ip: 允许调用的安全来源IP，留空则不限制" autocomplete="off">
         </div>
         <div class="layui-form-item">
-            <input type="text" class="layui-input" name="allow_ep" placeholder="ep: 允许访问的路由端点，留空默认api.index,api.upload" autocomplete="off">
+            <input type="text" class="layui-input" name="allow_ep" id="render_multi_ep" placeholder="ep: 允许访问的路由端点，留空默认api.index,api.upload" autocomplete="off">
         </div>        
         <div class="layui-form-item">
-            <input type="text" class="layui-input" name="allow_method" placeholder="method: 允许访问的HTTP方法，留空默认post" autocomplete="off">
+            <input type="text" class="layui-input" name="allow_method" id="render_multi_method" placeholder="method: 允许访问的HTTP方法，留空默认post" autocomplete="off">
         </div>
         <blockquote class="layui-elem-quote">允许访问规则，可使用运算符
             <scan style="color:#FF5722"> in, not in, </scan>
@@ -537,8 +537,8 @@
             return false;
         });
         //以下是Token分权表格管理
-        function renderSelect(selectd_origin) {
-            /*渲染select下拉多选*/
+        function renderOriginSelect(selectd_origin) {
+            /*渲染origin的select下拉多选*/
             let cors = "{{ g.site.cors }}",
                 origins = cors.split(/\s*,\s*/);
             let data = origins.map(function(o) {
@@ -580,6 +580,96 @@
                         NEWJSON.push(item.origin);
                     });
                     $("#render_multi_origin").val(NEWJSON.join(","));
+                }
+            });
+        }
+        function renderEpSelect(selectd_ep) {
+            /*渲染ep的select下拉多选*/
+            let eps = ["api.index", "api.upload", "api.waterfall", "api.login", "api.register", "api.link"];
+            let data = eps.map(function(e) {
+                return {
+                    hash: picbed.getHash(e),
+                    ep: e
+                };
+            });
+            if (selectd_ep) {
+                let ses = selectd_ep.split(/\s*,\s*/);
+                ses = ses.map(function(e) {
+                    return picbed.getHash(e);
+                });
+                $("#render_multi_ep").attr("ts-selected", ses.join(","));
+            }
+            tableSelect.render({
+                elem: '#render_multi_ep',	//定义输入框input对象 必填
+                checkedKey: 'hash', //表格的唯一建值，非常重要，影响到选中状态 必填
+                selectText: '确认选择',
+                table: {	//定义表格参数，与LAYUI的TABLE模块一致，只是无需再定义表格elem
+                    data: data,
+                    page: false,
+                    size: 'sm',
+                    width: 200,
+                    cols: [[{
+                        type: 'checkbox'
+                    }, {
+                        field: "hash",
+                        title: "唯一标识",
+                        hide: true
+                    },{
+                        field: "ep",
+                        title: "端点(接口)",
+                    }]]
+                },
+                done: function (elem, data) {
+                    var NEWJSON = [];
+                    layui.each(data.data, function (index, item) {
+                        NEWJSON.push(item.ep);
+                    });
+                    $("#render_multi_ep").val(NEWJSON.join(","));
+                }
+            });
+        }
+        function renderMethodSelect(selectd_method) {
+            /*渲染method的select下拉多选*/
+            let methods = ["get", "post", "put", "delete"];
+            let data = methods.map(function(m) {
+                return {
+                    hash: picbed.getHash(m),
+                    method: m
+                };
+            });
+            if (selectd_method) {
+                let sms = selectd_method.split(/\s*,\s*/);
+                sms = sms.map(function(m) {
+                    return picbed.getHash(m);
+                });
+                $("#render_multi_method").attr("ts-selected", sms.join(","));
+            }
+            tableSelect.render({
+                elem: '#render_multi_method',	//定义输入框input对象 必填
+                checkedKey: 'hash', //表格的唯一建值，非常重要，影响到选中状态 必填
+                selectText: '确认选择',
+                table: {	//定义表格参数，与LAYUI的TABLE模块一致，只是无需再定义表格elem
+                    data: data,
+                    page: false,
+                    size: 'sm',
+                    width: 150,
+                    cols: [[{
+                        type: 'checkbox'
+                    }, {
+                        field: "hash",
+                        title: "唯一标识",
+                        hide: true
+                    },{
+                        field: "method",
+                        title: "方法",
+                    }]]
+                },
+                done: function (elem, data) {
+                    var NEWJSON = [];
+                    layui.each(data.data, function (index, item) {
+                        NEWJSON.push(item.method);
+                    });
+                    $("#render_multi_method").val(NEWJSON.join(","));
                 }
             });
         }
@@ -761,7 +851,9 @@
                         success: function () {
                             form.val("linktokenForm", data);
                             form.render();
-                            renderSelect(data.allow_origin);
+                            renderOriginSelect(data.allow_origin);
+                            renderEpSelect(data.allow_ep);
+                            renderMethodSelect(data.allow_method);
                         }
                     });
                 });
@@ -819,7 +911,9 @@
                         content: html,
                         success: function () {
                             form.render();
-                            renderSelect();
+                            renderOriginSelect();
+                            renderEpSelect();
+                            renderMethodSelect();
                         }
                     });
                 });
