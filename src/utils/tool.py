@@ -9,10 +9,10 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
+import re
 import hmac
 import hashlib
 from uuid import uuid4
-from re import compile, IGNORECASE
 from time import time
 from datetime import datetime
 from random import randrange, sample
@@ -22,20 +22,29 @@ from ._compat import string_types, text_type, PY2, urlparse
 
 logger = Logger("sys").getLogger
 err_logger = Logger("error").getLogger
-comma_pat = compile(r"\s*,\s*")
-verticaline_pat = compile(r"\s*\|\s*")
-username_pat = compile(r'^[a-zA-Z][0-9a-zA-Z\_]{0,31}$')
-point_pat = compile(r'^\w{1,9}\.?\w{1,9}$')
-url_pat = compile(
+comma_pat = re.compile(r"\s*,\s*")
+verticaline_pat = re.compile(r"\s*\|\s*")
+username_pat = re.compile(r'^[a-zA-Z][0-9a-zA-Z\_]{0,31}$')
+point_pat = re.compile(r'^\w{1,9}\.?\w{1,9}$')
+url_pat = re.compile(
     r'^(?:http)s?://'
-    r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'
+    r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+'
+    r'(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'
     r'localhost|'
     r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
     r'(?::\d+)?'
-    r'(?:/?|[/?]\S+)$', IGNORECASE
+    r'(?:/?|[/?]\S+)$', re.IGNORECASE
 )
-er_pat = compile(r'^(and|or|not|\s|ip|ep|origin|method|\(|\))+$')
-ir_pat = compile(r'^(in|not in|\s|ip|ep|origin|method|\(|\)|,|:)+$')
+_data_uri_pat = re.compile(r'^{}$'.format((
+    r'data:' +
+    r'(?P<mimetype>[\w]+\/[\w\-\+\.]+)?' +
+    r'(?:\;charset\=(?P<charset>[\w\-\+\.]+))?' +
+    r'(?P<base64>\;base64)?' +
+    r',(?P<data>.*)')),
+    re.DOTALL
+)
+er_pat = re.compile(r'^(and|or|not|\s|ip|ep|origin|method|\(|\))+$')
+ir_pat = re.compile(r'^(in|not in|\s|ip|ep|origin|method|\(|\)|,|:)+$')
 ALLOWED_RULES = ("ip", "ep", "method", "origin")
 
 
@@ -213,3 +222,25 @@ def check_ir(ir):
             opr, opt = i.split(":")
             if opt not in ALLOWED_RULES or opr not in ("in", "not in"):
                 raise ValueError
+
+
+def parse_data_uri(datauri):
+    """Parse Data URLs: data:[<media type>][;base64],<data>"""
+    if not PY2 and not isinstance(datauri, text_type):
+        datauri = datauri.decode("utf-8")
+    match = _data_uri_pat.match(datauri)
+    if match:
+        mimetype = match.group('mimetype') or None
+        charset = match.group('charset') or None
+        is_base64 = bool(match.group('base64'))
+        data = match.group('data')
+    else:
+        mimetype = charset = data = None
+        is_base64 = False
+
+    return Attribution(dict(
+        mimetype=mimetype,
+        charset=charset,
+        is_base64=is_base64,
+        data=data,
+    ))

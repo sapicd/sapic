@@ -9,14 +9,16 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
+from io import BytesIO
 from functools import wraps
-from base64 import urlsafe_b64decode as b64decode
+from base64 import urlsafe_b64decode as b64decode, b64decode as pic64decode
+from binascii import Error as BaseDecodeError
 from redis.exceptions import RedisError
 from flask import g, redirect, request, url_for, abort, Response, jsonify,\
     current_app
 from libs.storage import get_storage
 from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
-    parse_valid_comma
+    parse_valid_comma, parse_data_uri
 from ._compat import PY2, text_type
 
 
@@ -247,3 +249,53 @@ class JsonResponse(Response):
         if isinstance(rv, dict):
             rv = jsonify(rv)
         return super(JsonResponse, cls).force_type(rv, environ)
+
+
+class Base64FileStorage(object):
+    """上传接口中接受base64编码的图片。
+
+    允许来自前端的Data URI形式:
+        https://developer.mozilla.org/docs/Web/HTTP/data_URIs
+    """
+
+    def __init__(self, b64str, filename=None):
+        self._filename = filename
+        self._b64str = self._set_data_uri(b64str)
+        self._parse = parse_data_uri(self._b64str)
+
+    def _set_data_uri(self, b64str):
+        try:
+            pic64decode(b64str)
+        except (BaseDecodeError, TypeError, ValueError):
+            raise ValueError("The attempt to decode the image failed")
+        else:
+            if not PY2 and not isinstance(b64str, text_type):
+                b64str = b64str.decode("utf-8")
+            if not b64str.startswith("data:"):
+                b64str = "data:;base64,%s" % b64str
+            return b64str
+
+    @property
+    def mimetype(self):
+        return self._parse.mimetype
+
+    @property
+    def filename(self):
+        if not self._filename:
+            ext = "png"
+            if self.mimetype:
+                mType, sType = self.mimetype.split("/")
+                if mType == "image":
+                    ext = sType
+            return "{}.{}".format(get_current_timestamp(), ext)
+        else:
+            return self._filename
+
+    @property
+    def is_base64(self):
+        return self._parse.is_base64
+
+    @property
+    def stream(self):
+        if self.is_base64:
+            return BytesIO(pic64decode(self._parse.data))

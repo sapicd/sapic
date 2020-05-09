@@ -311,6 +311,15 @@
         });
         var curr = location.hash.replace('#!picbed=', ''),
             limit = parseInt("{{ request.args.limit or g.userinfo.ucfg_mypic_limit or 10 }}");
+        //Token提示
+        $("#tokentip").on("mouseover", function() {
+            let tip = [
+                "Token目前唯一一种能在API请求中认证用户的方法，它具备API所有权，一旦泄露风险极大！",
+                "所以建议您使用基于Token的分权引用LinkToken（用户设置）。",
+                "更多请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#token' target='_blank' style='color:#009688'>Token</a>",
+            ].join("<br>");
+            layer.tips(tip, this, {tips:3, time:5000});
+        });
         //将所有图片数据提到"全局"
         var shaDatas = {};
         //获取我的图片流方法

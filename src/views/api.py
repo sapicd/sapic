@@ -26,7 +26,7 @@ from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
     check_ir
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
-    set_site_config, check_username
+    set_site_config, check_username, Base64FileStorage
 from utils._compat import iteritems
 
 bp = Blueprint("api", "api")
@@ -545,12 +545,22 @@ def upload():
     4. 此时保存图片成功，持久化存储到全局索引、用户索引
     5. 返回响应：{code:0, data={src=?, sender=success_saved_hook_name}}
     """
+    FIELD_NAME = "picbed"
     res = dict(code=1, msg=None)
     #: 匿名上传开关检测
     if not is_true(g.cfg.anonymous) and not g.signin:
         res.update(code=403, msg="Anonymous user is not sign in")
         return res
-    f = request.files.get('picbed')
+    fp = request.files.get(FIELD_NAME)
+    #: 当fp无效时尝试读取base64
+    if not fp:
+        pic64str = request.form.get(FIELD_NAME)
+        filename = request.form.get("filename")
+        if pic64str:
+            try:
+                fp = Base64FileStorage(pic64str, filename)
+            except ValueError:
+                fp = None
     #: 相册名称，可以是任意字符串
     album = (
         request.form.get("album") or getattr(g, "up_album", "")
@@ -560,16 +570,16 @@ def upload():
         allowed_file,
         suffix=parse_valid_verticaline(g.cfg.upload_exts)
     )
-    if f and allowed_suffix(f.filename):
+    if fp and allowed_suffix(fp.filename):
         try:
             g.rc.ping()
         except RedisError as e:
             logger.error(e, exc_info=True)
             res.update(code=2, msg="Program data storage service error")
             return res
-        stream = f.stream.read()
-        suffix = splitext(f.filename)[-1]
-        filename = secure_filename(f.filename)
+        stream = fp.stream.read()
+        suffix = splitext(fp.filename)[-1]
+        filename = secure_filename(fp.filename)
         if "." not in filename:
             filename = "%s%s" % (generate_random(8), suffix)
         #: 根据文件名规则重定义图片名

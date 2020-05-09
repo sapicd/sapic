@@ -29,7 +29,6 @@ if PY2:  # pragma: nocover
     from urllib2 import Request, urlopen
     from urlparse import urlparse
 
-
 else:  # pragma: nocover
 
     def iteritems(d):

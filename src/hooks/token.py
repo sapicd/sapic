@@ -22,7 +22,7 @@ from utils._compat import PY2, text_type
 
 intpl_profile = u"""
 <div class="layui-form-item">
-    <label class="layui-form-label">Token</label>
+    <label class="layui-form-label"><i class="layui-icon layui-icon-about" id="tokentip"></i> Token</label>
     <div class="layui-input-inline">
         <input type="text" name="token" id="token" autocomplete="off" value="{{ g.userinfo.token }}" class="layui-input" readonly="" placeholder="暂无Api登录密钥">
     </div>

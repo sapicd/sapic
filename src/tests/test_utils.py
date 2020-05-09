@@ -3,7 +3,7 @@
 import unittest
 from utils.tool import Attribution, md5, sha1, rsp, get_current_timestamp, \
     allowed_file, parse_valid_comma, parse_valid_verticaline, is_true, \
-    hmac_sha256, sha256, check_origin, get_origin
+    hmac_sha256, sha256, check_origin, get_origin, parse_data_uri
 
 
 class UtilsTest(unittest.TestCase):
@@ -58,6 +58,37 @@ class UtilsTest(unittest.TestCase):
         self.assertFalse(check_origin('://127.0.0.1/hello-world'))
         self.assertEqual(get_origin("http://abc.com/hello"), "http://abc.com")
         self.assertEqual(get_origin("https://abc.com/"), "https://abc.com")
+
+    def test_datauri(self):
+        uri1 = 'data:,Hello%2C%20World!'
+        uri2 = 'data:text/plain;base64,SGVsbG8sIFdvcmxkIQ%3D%3D'
+        uri3 = 'data:text/html,%3Ch1%3EHello%2C%20World!%3C%2Fh1%3E'
+        uri4 = 'data:image/png;base64,isimagebase64=='
+        uri5 = 'data:text/plain;charset=utf-8;base64,VGhlIHF1'
+        rst1 = parse_data_uri(uri1)
+        self.assertIsNone(rst1.mimetype)
+        self.assertIsNone(rst1.charset)
+        self.assertFalse(rst1.is_base64)
+
+        rst2 = parse_data_uri(uri2)
+        self.assertEqual(rst2.mimetype, "text/plain")
+        self.assertIsNone(rst2.charset)
+        self.assertTrue(rst2.is_base64)
+
+        rst3 = parse_data_uri(uri3)
+        self.assertEqual(rst3.mimetype, "text/html")
+        self.assertIsNone(rst3.charset)
+        self.assertFalse(rst3.is_base64)
+
+        rst4 = parse_data_uri(uri4)
+        self.assertEqual(rst4.mimetype, "image/png")
+        self.assertIsNone(rst4.charset)
+        self.assertTrue(rst4.is_base64)
+    
+        rst5 = parse_data_uri(uri5)
+        self.assertEqual(rst5.mimetype, "text/plain")
+        self.assertEqual(rst5.charset, "utf-8")
+        self.assertTrue(rst5.is_base64)
 
 
 if __name__ == '__main__':
