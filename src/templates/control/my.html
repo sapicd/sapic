@@ -175,6 +175,12 @@
                         </div>
                     </div>
                     <div class="layui-form-item">
+                        <label class="layui-form-label">默认相册</label>
+                        <div class="layui-input-block">
+                            <input type="text" class="layui-input" name="ucfg_default_album" id="render_default_album" placeholder="定义我的图片页面默认加载的相册" value="{{ g.userinfo.ucfg_default_album }}" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
                         <label class="layui-form-label">图片放大度</label>
                         <div class="layui-input-block">
                             <input type="number" step=0.1 min=1 max=2 name="ucfg_mypic_scale"
@@ -282,6 +288,11 @@
     </form>
 </script>
 {% endraw %}
+{% if request.args.album == "all" %}
+{% set load_album = "" %}
+{% else %}
+{% set load_album = request.args.album or g.userinfo.ucfg_default_album %}
+{% endif %}
 <script>
     layui.use(['picbed', 'laypage', 'flow', 'form', 'element', 'layer', 'laytpl', 'util', 'table', 'tableSelect'], function () {
         var $ = layui.jquery,
@@ -320,11 +331,63 @@
             ].join("<br>");
             layer.tips(tip, this, {tips:3, time:3000});
         });
+        //渲染默认加载相册的select下拉多选
+        function renderDefaultAlbumSelect() {
+            let selectd_album = "{{ g.userinfo.ucfg_default_album or '' }}";
+            if (selectd_album) {
+                let sas = selectd_album.split(/\s*,\s*/);
+                sas = sas.map(function(a) {
+                    return picbed.getHash(a);
+                });
+                $("#render_default_album").attr("ts-selected", sas.join(","));
+            }
+            tableSelect.render({
+                elem: '#render_default_album',	//定义输入框input对象 必填
+                checkedKey: 'hash', //表格的唯一建值，非常重要，影响到选中状态 必填
+                selectText: '确认选择',
+                table: {	//定义表格参数，与LAYUI的TABLE模块一致，只是无需再定义表格elem
+                    url: "{{ url_for('api.album') }}", //不加载admin
+                    parseData: function(res) {
+                        return {
+                            "code": res.code,
+                            "msg": res.msg,
+                            "count": res.data.length,
+                            "data": res.data.map(function(a) {
+                                return {
+                                    hash: picbed.getHash(a),
+                                    album: a
+                                };
+                            })
+                        };
+                    },
+                    page: false,
+                    size: 'sm',
+                    width: 150,
+                    cols: [[{
+                        type: 'checkbox'
+                    }, {
+                        field: "hash",
+                        title: "唯一标识",
+                        hide: true
+                    },{
+                        field: "album",
+                        title: "相册名",
+                    }]]
+                },
+                done: function (elem, data) {
+                    var NEWJSON = [];
+                    layui.each(data.data, function (index, item) {
+                        NEWJSON.push(item.album);
+                    });
+                    $("#render_default_album").val(NEWJSON.join(","));
+                }
+            });
+        }
         //将所有图片数据提到"全局"
         var shaDatas = {};
         //获取我的图片流方法
         function get_pics(page, success) {
-            var url = "{{ url_for('api.waterfall', sort='desc', is_mgr=request.args.is_mgr, album=request.args.album)|safe }}&limit=" + limit + "&page=" + page;
+            var url = "{{ url_for('api.waterfall', sort='desc', is_mgr=request.args.is_mgr, album=load_album)|safe }}&limit=" + limit + "&page=" + page;
             picbed.ajax(url, function (res) {
                 var html = res.data.map(function (img) {
                     img["ctime"] = util.toDateString(img.ctime * 1000);
@@ -420,15 +483,19 @@
                         get_pics(obj.curr);
                     } else {
                         //初始加载相册列表
+                        var load_albums = "{{ load_album }}".split(/\s*,\s*/);
                         var uri = "{{ (url_for('front.my', is_mgr=request.args.is_mgr) + '&album=')|safe if request.args.is_mgr else url_for('front.my', album='') }}";
-                        var html = '<a href="' + uri.replace("?album=", "").replace("&album=", "") + '#!picbed"><span class="layui-badge">所有图片</span></a>&nbsp;&nbsp;';
+                        var html = '<a href="' + uri + 'all#!picbed"><span class="layui-badge">所有图片</span></a>&nbsp;&nbsp;';
                         html += res.albums.map(function(album) {
-                            return '<a href="' + uri + album + '#!picbed"><span class="layui-badge layui-bg-green">' +  album + '</span></a>&nbsp;&nbsp;';
+                            var color = picbed.arrayContains(load_albums, album) ? "layui-bg-cyan" : "layui-bg-green";
+                            return '<a href="' + uri + album + '#!picbed"><span class="layui-badge ' + color + '">' +  album + '</span></a>&nbsp;&nbsp;';
                         }).join('');
                         $("#albums").html(html);
                     }
                 }
             });
+            //渲染配置
+            renderDefaultAlbumSelect();
         });
         //监听图片键盘
         document.onkeydown = function(e) {

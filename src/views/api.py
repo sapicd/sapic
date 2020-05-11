@@ -24,7 +24,7 @@ from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, rsp, \
     sha256, get_current_timestamp, ListEqualSplit, generate_random, er_pat, \
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
-    check_ir
+    check_ir, username_pat
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format
 from utils._compat import iteritems
@@ -74,7 +74,7 @@ def login():
                     return result
     except (ValueError, TypeError, Exception) as e:
         logger.warning(e, exc_info=True)
-    if usr and pwd and len(pwd) >= 6:
+    if usr and username_pat.match(usr) and pwd and len(pwd) >= 6:
         ak = rsp("accounts")
         if g.rc.sismember(ak, usr):
             userinfo = g.rc.hgetall(rsp("account", usr))
@@ -367,7 +367,7 @@ def my():
     return res
 
 
-@bp.route("/waterfall", methods=["POST"])
+@bp.route("/waterfall", methods=["GET", "POST"])
 @apilogin_required
 def waterfall():
     res = dict(code=1, msg=None)
@@ -379,7 +379,7 @@ def waterfall():
     limit = request.args.get("limit") or 10
     #: 管理员账号读取所有图片数据
     is_mgr = is_true(request.args.get("is_mgr"))
-    #: 相册，当album不为空时，近返回此相册数据
+    #: 相册，当album不为空时，近返回此相册数据，允许逗号分隔多个
     album = request.args.get("album", request.form.get("album"))
     try:
         page = int(page) - 1
@@ -406,6 +406,7 @@ def waterfall():
                 data = []
                 #: 该用户或管理员级别所能查看的所有相册
                 albums = []
+                ask_albums = parse_valid_comma(album)
                 if result and isinstance(result, (tuple, list)):
                     for i in result:
                         albums.append(i.get("album"))
@@ -413,8 +414,8 @@ def waterfall():
                             senders=json.loads(i["senders"]),
                             ctime=int(i["ctime"]),
                         )
-                        if album:
-                            if i.get("album") == album:
+                        if ask_albums:
+                            if i.get("album") in ask_albums:
                                 data.append(i)
                         else:
                             data.append(i)
@@ -703,7 +704,7 @@ def ep():
                 return result
 
 
-@bp.route("/album", methods=["POST"])
+@bp.route("/album", methods=["GET", "POST"])
 @apilogin_required
 def album():
     res = dict(code=1, msg=None)

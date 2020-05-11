@@ -205,6 +205,15 @@ layui.define(["layer", "util", "element"], function (exports) {
             }
             return (hash & 0x7FFFFFFF);
         },
+        arrayContains: function (arr, obj) {
+            var i = arr.length;
+            while (i--) {
+                if (arr[i] === obj) {
+                    return true;
+                }
+            }
+            return false;
+        },
     };
     //输出接口
     exports('picbed', api);
