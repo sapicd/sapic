@@ -314,11 +314,11 @@
         //Token提示
         $("#tokentip").on("mouseover", function() {
             let tip = [
-                "Token目前唯一一种能在API请求中认证用户的方法，它具备API所有权，一旦泄露风险极大！",
+                "Token是目前唯一一种能在API请求中认证用户的方法，它具备API所有权，一旦泄露风险极大！",
                 "所以建议您使用基于Token的分权引用LinkToken（用户设置）。",
                 "更多请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#token' target='_blank' style='color:#009688'>Token</a>",
             ].join("<br>");
-            layer.tips(tip, this, {tips:3, time:5000});
+            layer.tips(tip, this, {tips:3, time:3000});
         });
         //将所有图片数据提到"全局"
         var shaDatas = {};
@@ -837,7 +837,7 @@
                         "然后就可以在其他网站跨域调用，比如上传图片，即便丢失也不会影响其他，禁用或删除即可，不会泄露Token。",
                         "更多请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#linktoken' target='_blank' style='color:#009688'>LinkToken</a>",
                     ].join("<br>&nbsp;&nbsp;&nbsp;&nbsp;");
-                    layer.tips(tip, "#linktokentip", {tips:3, time:10000});
+                    layer.tips(tip, "#linktokentip", {tips:3, time:3000});
                 });
             }
         });

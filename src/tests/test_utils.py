@@ -3,7 +3,8 @@
 import unittest
 from utils.tool import Attribution, md5, sha1, rsp, get_current_timestamp, \
     allowed_file, parse_valid_comma, parse_valid_verticaline, is_true, \
-    hmac_sha256, sha256, check_origin, get_origin, parse_data_uri
+    hmac_sha256, sha256, check_origin, get_origin, parse_data_uri, \
+    format_upload_src, format_apires
 
 
 class UtilsTest(unittest.TestCase):
@@ -42,6 +43,49 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(
             "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
             sha256("abc")
+        )
+        #: test format_upload_src
+        baseimg = 'img-url'
+        basefmt = {'src': baseimg}
+        self.assertEqual(format_upload_src(123, baseimg), basefmt)
+        self.assertEqual(format_upload_src(None, baseimg), basefmt)
+        self.assertEqual(format_upload_src([0], baseimg), basefmt)
+        self.assertEqual(format_upload_src('', baseimg), basefmt)
+        self.assertEqual(format_upload_src('.', baseimg), basefmt)
+        self.assertEqual(format_upload_src('.1', baseimg), basefmt)
+        self.assertEqual(format_upload_src('1.', baseimg), basefmt)
+        self.assertEqual(format_upload_src(1.1, baseimg), basefmt)
+        self.assertEqual(
+            format_upload_src('1.1', baseimg), {'1': {'1': baseimg}}
+        )
+        self.assertEqual(format_upload_src('u', baseimg), basefmt)
+        self.assertEqual(format_upload_src('im', baseimg), {'im': baseimg})
+        self.assertEqual(format_upload_src('url', baseimg), {'url': baseimg})
+        self.assertEqual(format_upload_src('i.am.src', baseimg), basefmt)
+        self.assertEqual(
+            format_upload_src('src.url', baseimg), {'src': {'url': baseimg}}
+        )
+        #: test format_apires
+        self.assertEqual(
+            format_apires({'code': 0}, "success", "bool"), {'success': True}
+        )
+        self.assertEqual(
+            format_apires({'code': 0}, oc="200"), {'code': 200}
+        )
+        self.assertEqual(
+            format_apires({'code': -1}, "status", "bool"), {'status': False}
+        )
+        self.assertEqual(
+            format_apires(dict(code=-1, msg='xxx'), 'errno', '200'),
+            {'errno': -1, 'msg': 'xxx'}
+        )
+        self.assertEqual(
+            format_apires(dict(code=-1, msg='xxx'), 'errno', '200', 'errmsg'),
+            {'errno': -1, 'errmsg': 'xxx'}
+        )
+        self.assertEqual(
+            format_apires(dict(code=0, msg='xxx'), '', '200', 'errmsg'),
+            {'code': 200, 'errmsg': 'xxx'}
         )
 
     def test_checkorigin(self):
@@ -84,7 +128,7 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(rst4.mimetype, "image/png")
         self.assertIsNone(rst4.charset)
         self.assertTrue(rst4.is_base64)
-    
+
         rst5 = parse_data_uri(uri5)
         self.assertEqual(rst5.mimetype, "text/plain")
         self.assertEqual(rst5.charset, "utf-8")

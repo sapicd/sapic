@@ -35,7 +35,7 @@ url_pat = re.compile(
     r'(?::\d+)?'
     r'(?:/?|[/?]\S+)$', re.IGNORECASE
 )
-_data_uri_pat = re.compile(r'^{}$'.format((
+data_uri_pat = re.compile(r'^{}$'.format((
     r'data:' +
     r'(?P<mimetype>[\w]+\/[\w\-\+\.]+)?' +
     r'(?:\;charset\=(?P<charset>[\w\-\+\.]+))?' +
@@ -44,7 +44,7 @@ _data_uri_pat = re.compile(r'^{}$'.format((
     re.DOTALL
 )
 er_pat = re.compile(r'^(and|or|not|\s|ip|ep|origin|method|\(|\))+$')
-ir_pat = re.compile(r'^(in|not in|\s|ip|ep|origin|method|\(|\)|,|:)+$')
+ir_pat = re.compile(r'^(in|not in|\s|ip|ep|origin|method|,|:)+$')
 ALLOWED_RULES = ("ip", "ep", "method", "origin")
 
 
@@ -147,6 +147,7 @@ def generate_random(length=6):
 
 
 def format_upload_src(fmt, value):
+    """转换upload路由中返回的src格式"""
     if fmt and isinstance(fmt, string_types):
         if point_pat.match(fmt):
             if "." in fmt:
@@ -155,6 +156,35 @@ def format_upload_src(fmt, value):
             else:
                 return {fmt: value}
     return dict(src=value)
+
+
+def format_apires(res, sn="code", oc=None, mn=None):
+    """转换API响应JSON的格式
+
+    可以用下面三个参数修改返回的res基本格式：
+    - sn: status_name规定数据状态的字段名称，默认code
+    - oc: ok_code规定成功的状态码，默认0，用字符串bool则会返回布尔类型
+    - mn: msg_name规定状态信息的字段名称，默认msg
+    """
+    if isinstance(res, dict) and "code" in res:
+        if not sn:
+            sn = "code"
+        code = res.pop("code")
+        if oc:
+            if oc == "bool":
+                #: ok_code要求bool时，成功返回True，否则False
+                code = True if code == 0 else False
+            else:
+                #: 不是bool就是int，成功返回oc，否则是code本身
+                try:
+                    code = int(oc) if code == 0 else code
+                except (ValueError, TypeError):
+                    pass
+        res[sn] = code
+        if mn and res.get("msg"):
+            msg = res.pop("msg")
+            res[mn] = msg
+    return res
 
 
 class Attribution(dict):
@@ -228,7 +258,7 @@ def parse_data_uri(datauri):
     """Parse Data URLs: data:[<media type>][;base64],<data>"""
     if not PY2 and not isinstance(datauri, text_type):
         datauri = datauri.decode("utf-8")
-    match = _data_uri_pat.match(datauri)
+    match = data_uri_pat.match(datauri)
     if match:
         mimetype = match.group('mimetype') or None
         charset = match.group('charset') or None

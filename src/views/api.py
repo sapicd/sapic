@@ -26,7 +26,7 @@ from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
     check_ir
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
-    set_site_config, check_username, Base64FileStorage
+    set_site_config, check_username, Base64FileStorage, change_res_format
 from utils._compat import iteritems
 
 bp = Blueprint("api", "api")
@@ -36,11 +36,11 @@ FIELD_NAME = "picbed"
 
 
 @bp.after_request
-def translate(res):
+def api_after_handler(res):
     if res.is_json:
         data = res.get_json()
         if isinstance(data, dict):
-            res.set_data(json.dumps(dfr(data)))
+            res.set_data(json.dumps(change_res_format(dfr(data))))
     return res
 
 
@@ -538,6 +538,9 @@ def upload():
     """上传逻辑：
     0. 判断是否登录，如果未登录则判断是否允许匿名上传
     1. 获取上传的文件，判断允许格式
+        - 拦截下判断文件，如果为空，尝试获取body中提交提交的base64
+        - 如果base64合法，那么会返回Base64FileStorage类，否则为空
+        - PS: 允许DATA URI形式, eg: data:image/png;base64,the base64 of image
     2. 生成文件名、唯一sha值、上传目录等，选择图片存储的后端钩子（单一）
         - 存储图片的钩子目前版本仅一个，默认是up2local（如果禁用则保存失败）
         - 如果提交album参数会自动创建相册，否则归档到默认相册
@@ -545,6 +548,7 @@ def upload():
         - 后端保存失败或无后端的情况都要立刻返回响应
     4. 此时保存图片成功，持久化存储到全局索引、用户索引
     5. 返回响应：{code:0, data={src=?, sender=success_saved_hook_name}}
+        - 允许使用一些参数调整响应数据、格式
     """
     res = dict(code=1, msg=None)
     #: 匿名上传开关检测
@@ -558,7 +562,7 @@ def upload():
         filename = request.form.get("filename")
         if pic64str:
             try:
-                #: 注意，base64在部分客户端发起http请求时，可能+换成空格，出现异常
+                #: base64在部分场景发起http请求时，+可能会换成空格导致异常
                 fp = Base64FileStorage(pic64str, filename)
             except ValueError as e:
                 logger.debug(e, exc_info=True)
@@ -678,6 +682,7 @@ def upload():
             )
             #: format指定图片地址的显示字段，默认src，可以用点号指定
             #: 比如data.src，那么返回格式{code, filename..., data:{src}, ...}
+            #: 比如imgUrl，那么返回格式{code, filename..., imgUrl(=src), ...}
             fmt = request.form.get("format", request.args.get("format"))
             res.update(format_upload_src(fmt, defaultSrc))
     else:

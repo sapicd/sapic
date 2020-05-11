@@ -19,7 +19,7 @@ from flask import g, redirect, request, url_for, abort, Response, jsonify,\
     current_app
 from libs.storage import get_storage
 from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
-    parse_valid_comma, parse_data_uri
+    parse_valid_comma, parse_data_uri, format_apires
 from ._compat import PY2, text_type
 
 
@@ -215,6 +215,17 @@ def dfr(res, default='en-US'):
                 logger.warn("Miss translation: %s" % msg)
             else:
                 res["msg"] = new
+    return res
+
+
+def change_res_format(res):
+    if isinstance(res, dict) and "code" in res:
+        sn = request.form.get(
+            "status_name", request.args.get("status_name")
+        ) or "code"
+        oc = request.form.get("ok_code", request.args.get("ok_code"))
+        mn = request.form.get("msg_name", request.args.get("msg_name"))
+        return format_apires(res, sn, oc, mn)
     return res
 
 
