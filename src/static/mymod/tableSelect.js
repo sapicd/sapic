@@ -31,13 +31,13 @@ layui.define(['table', 'jquery', 'form'], function (exports) {
             tableBox += '<div class="tableSelectBar">';
             tableBox += '<form class="layui-form" action="" style="display:inline-block;">';
             if(opt.searchKey) {
-                tableBox += '<input style="display:inline-block;width:190px;height:30px;vertical-align:middle;margin-right:-1px;border: 1px solid #C9C9C9;" type="text" name="' + opt.searchKey + '" placeholder="' + opt.searchPlaceholder + '" autocomplete="off" class="layui-input"><button class="layui-btn layui-btn-sm layui-btn-primary tableSelect_btn_search" lay-submit lay-filter="tableSelect_btn_search"><i class="layui-icon layui-icon-search"></i></button>';
+                tableBox += '<input style="display:inline-block;width:190px;height:30px;vertical-align:middle;margin-right:-1px;border: 1px solid #C9C9C9;" type="text" name="' + opt.searchKey + '" placeholder="' + opt.searchPlaceholder + '" autocomplete="off" class="layui-input"><button class="layui-btn layui-btn-xs layui-btn-primary tableSelect_btn_search" lay-submit lay-filter="tableSelect_btn_search"><i class="layui-icon layui-icon-search"></i></button>';
             }
             tableBox += '</form>';
             if(opt.searchKey) {
-                tableBox += '<button style="float:right;" class="layui-btn layui-btn-sm tableSelect_btn_select">' + selectText + '<span></span></button>';
+                tableBox += '<button style="float:right;" class="layui-btn layui-btn-xs tableSelect_btn_select">' + selectText + '<span></span></button>';
             } else {
-                tableBox += '<button class="layui-btn layui-btn-sm tableSelect_btn_select">' + selectText + '<span></span></button>';
+                tableBox += '<button class="layui-btn layui-btn-xs tableSelect_btn_select">' + selectText + '<span></span></button>';
             }
             tableBox += '</div>';
             tableBox += '<table id="' + tableName + '" lay-filter="' + tableName + '"></table>';

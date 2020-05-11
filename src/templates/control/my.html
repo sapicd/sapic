@@ -355,14 +355,16 @@
                             "data": res.data.map(function(a) {
                                 return {
                                     hash: picbed.getHash(a),
-                                    album: a
+                                    album: a,
+                                    count: res.counter[a]
                                 };
                             })
                         };
                     },
                     page: false,
                     size: 'sm',
-                    width: 150,
+                    width: 300,
+                    height: 200,
                     cols: [[{
                         type: 'checkbox'
                     }, {
@@ -372,6 +374,10 @@
                     },{
                         field: "album",
                         title: "相册名",
+                    }, {
+                        field: "count",
+                        title: "数量",
+                        width: 60
                     }]]
                 },
                 done: function (elem, data) {
@@ -798,7 +804,7 @@
         }
         var tableIns = table.render({
             elem: '#linktokenTable',
-            url: '{{ url_for("api.link", is_mgr=request.args.is_mgr) }}',
+            url: '{{ url_for("api.link") }}',
             page: false,
             size: 'sm',
             cols: [
