@@ -20,7 +20,7 @@ from utils.tool import rsp, hmac_sha256, logger, get_current_timestamp, \
     parse_valid_comma, Attribution, ALLOWED_RULES
 from utils._compat import PY2, text_type
 
-intpl_profile = u"""
+intpl_profile = """
 <div class="layui-form-item">
     <label class="layui-form-label"><i class="layui-icon layui-icon-about" id="tokentip"></i> Token</label>
     <div class="layui-input-inline">

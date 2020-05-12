@@ -17,7 +17,8 @@ from os.path import join, dirname, abspath, isdir, isfile, splitext, basename,\
 from jinja2 import ChoiceLoader, FileSystemLoader, PackageLoader
 from flask import render_template, render_template_string, Markup
 from utils.tool import Attribution
-from utils._compat import string_types, integer_types, iteritems, PY2
+from utils._compat import string_types, integer_types, iteritems, text_type, \
+    PY2
 from config import GLOBAL
 from .storage import get_storage
 
@@ -315,8 +316,8 @@ class HookManager(object):
                     hin = True
             if hin:
                 if PY2 and h.description:
-                    if not isinstance(h.description, unicode):
-                        h['description'] = h.description.decode("utf-8")
+                    if not isinstance(h.description, text_type):
+                        h["description"] = h.description.decode("utf-8")
                 hooks.append(dict(name=h.name, description=h.description))
         return hooks
 
@@ -374,6 +375,8 @@ class HookManager(object):
             if tpl.split(".")[-1] in ("html", "htm", "xhtml"):
                 content = render_template(tpl, **context)
             else:
+                if PY2 and not isinstance(tpl, text_type):
+                    tpl = tpl.decode("utf-8")
                 content = render_template_string(tpl, **context)
             if content:
                 result.append(content)

@@ -668,7 +668,10 @@ def upload():
             status='enabled',  # disabled, deleted
             src=defaultSrc,
             sender=data[0]["sender"],
-            senders=json.dumps(data)
+            senders=json.dumps(data),
+            agent=request.form.get(
+                "origin", request.headers.get('User-Agent', '')
+            ),
         ))
         try:
             pipe.execute()

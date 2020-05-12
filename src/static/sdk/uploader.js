@@ -2,6 +2,8 @@
 
 var up2picbed = (function () {
 
+    var version = '1.0';
+
     /* 上传类，options配置项如下
      * @param url {String}:  [必需]上传接口
      * @param elem {String}: [必需]上传绑定元素，推荐使用ID
@@ -235,6 +237,7 @@ var up2picbed = (function () {
         if (album) {
             data["album"] = album;
         }
+        data["origin"] = `uploader.js/${version}`;
         return new Uploader({
             elem: elem,
             url: url,
