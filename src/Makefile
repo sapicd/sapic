@@ -6,13 +6,19 @@ PORT:=$(shell python -c "from config import GLOBAL;print(GLOBAL['Port'])")
 help:
 	@echo " clean   remove unwanted stuff"
 	@echo " test    run test examples"
-	@echo " run     start a server for develpment"
+	@echo " dev     start server for develpment"
+	@echo " run     foreground start server for production"
+	@echo " start   background start server for production"
+	@echo " stop    shut down server in the background for production"
+	@echo " reload  reload server in the background for production"
+	@echo " restart restart server in the background for production"
+	@echo " status  show server status in the background for production"
 
 test:
 	python -m unittest discover -p "test_*.py"
 
 dev:
-	export FLASK_ENV=development FLASK_APP=app.py FLASK_DEBUG=1 FLASK_SKIP_DOTENV=1 PIPENV_DONT_LOAD_ENV=1 && flask run --host $(HOST) --port $(PORT)
+	export FLASK_ENV=development FLASK_APP=app.py FLASK_DEBUG=1 && flask run --host $(HOST) --port $(PORT)
 
 run:
 	sh online_gunicorn.sh run

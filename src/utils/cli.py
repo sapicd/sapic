@@ -48,7 +48,7 @@ def exec_createuser(username, password, **kwargs):
                 try:
                     pipe.execute()
                 except RedisError as e:
-                    echo(e.message, "red")
+                    echo(e, "red")
                 else:
                     echo("注册成功！", "green")
                 finally:

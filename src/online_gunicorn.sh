@@ -27,7 +27,6 @@ fi
 [ -d ${dir}/logs ] || mkdir -p ${dir}/logs
 logfile=${dir}/logs/gunicorn.log
 pidfile=${dir}/logs/${procname}.pid
-export FLASK_SKIP_DOTENV=1 PIPENV_DONT_LOAD_ENV=1
 
 function Monthly2Number() {
     case "$1" in

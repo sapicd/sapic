@@ -9,9 +9,9 @@ layui.define(["layer", "util", "element"], function (exports) {
     if (window != top) {
         top.location.href = location.href;
     }
-    //阻止IE7以下访问
-    if (device.ie && device.ie < 8) {
-        layer.alert('如果您非得使用 IE 浏览器访问，那么请使用 IE8+');
+    //阻止IE访问
+    if (device.ie) {
+        layer.alert('不支持IE浏览器访问，推荐使用Firefox、Chrome。', {title:false});
     }
     //右下角工具
     util.fixbar({

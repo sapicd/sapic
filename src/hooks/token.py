@@ -44,7 +44,7 @@ intpl_profile = """
 </div>
 """
 
-intpl_before_usersetting = u'<table id="linktokenTable" class="layui-table" lay-filter="linktokenTable"></table>'
+intpl_before_usersetting = '<table id="linktokenTable" class="layui-table" lay-filter="linktokenTable"></table>'
 
 
 def parseAuthorization(prefix="Token"):
@@ -177,7 +177,6 @@ def before_request():
                 else:
                     authentication = "fail"
                     authorization = "fail"
-                    logger.debug("LinkToken fail: %s" % LinkToken)
                 #: 统计入库
                 g.rc.lpush(rsp("report", "linktokens"), json.dumps(dict(
                     LinkId=LinkId,

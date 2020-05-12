@@ -821,7 +821,6 @@ def link():
         #: 定义权限项及默认值，检测参数时不包含默认值
         allow_origin = request.form.get("allow_origin") or ""
         allow_ip = request.form.get("allow_ip") or ""
-        # TODO Administrator limit, user select
         allow_ep = request.form.get("allow_ep") or "api.index,api.upload"
         allow_method = request.form.get("allow_method") or "post"
         #: 判断用户是否有token
@@ -985,12 +984,11 @@ def report(classify):
                 end = start + limit - 1
         if isinstance(start, int) and isinstance(end, int):
             key = rsp("report", classify)
-            pipe = g.rc.pipeline()
-            pipe.llen(key)
-            pipe.lrange(key, start, end)
-            result = pipe.execute()
-            if result and isinstance(result, list) and len(result) == 2:
-                count, data = result
+            try:
+                data = g.rc.lrange(key, start, end)
+            except RedisError:
+                res.update(msg="Program data storage service error")
+            else:
                 if sort == "DESC":
                     data.reverse()
                 new = []
@@ -1001,7 +999,7 @@ def report(classify):
                     else:
                         if r.get("user") == g.userinfo.username:
                             new.append(r)
-                res.update(code=0, data=new, count=count)
+                res.update(code=0, data=new, count=len(new))
         else:
             res.update(msg="Wrong query range parameter")
     else:

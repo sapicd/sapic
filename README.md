@@ -20,7 +20,7 @@
 
     所以可以把配置项写到 `.bash_profile` 或 `.bashrc` 此类文件中在登录时加载，
     也可以写入到.cfg文件里，这是推荐的方式，它不会被提交到仓库，格式是k=v，
-    每行一条。
+    每行一条，注意：v是所见即所得！
 
     比如：`picbed_redis_url=redis://@localhost`
 
@@ -63,13 +63,11 @@
 
 详细文档请访问：[Picbed Docs](https://docs.saintic.com/picbed)
 
-## TODO
-
-转移到：[GitHub Projects](https://github.com/staugur/picbed/projects/2)
-
 ## 演示站
 
 http://picbed.demo.saintic.com
+
+测试账号及密码：demo 123456（请勿修改）
 
 对外服务，为防止乱传已关闭匿名上传，随意注册，但不可用于非测试用途，图片保留删除权利！
 
@@ -145,7 +143,7 @@ URL路径：["src"]
 
 ## 预览图
 
-目前v1版本完成，看几张预览图（PS：前几张大概是平板效果，最后一张是PC效果）
+目前v1版本完成，看几张预览图：
 
 ![未登录首页](./Snapshot/1.png)
 
