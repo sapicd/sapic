@@ -32,7 +32,6 @@ from utils._compat import iteritems
 bp = Blueprint("api", "api")
 #: 定义本地上传的钩子在保存图片时的基础目录前缀（在static子目录下）
 UPLOAD_FOLDER = "upload"
-FIELD_NAME = "picbed"
 
 
 @bp.after_request
@@ -552,6 +551,8 @@ def upload():
         - 允许使用一些参数调整响应数据、格式
     """
     res = dict(code=1, msg=None)
+    #: 文件域或base64上传字段
+    FIELD_NAME = g.cfg.upload_field or "picbed"
     #: 匿名上传开关检测
     if not is_true(g.cfg.anonymous) and not g.signin:
         res.update(code=403, msg="Anonymous user is not sign in")

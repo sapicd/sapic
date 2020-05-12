@@ -187,6 +187,13 @@
                                         placeholder="上传允许的数量，最大10，默认是：10" autocomplete="off" class="layui-input">
                                 </div>
                             </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">上传字段</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="upload_field" value="{{ g.site.upload_field }}"
+                                        placeholder="Api上传接口获取文件或base64数据的字段名，默认picbed" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
                             {% set bes = get_call_list("upimg_save", _type="func") %}
                             <div class="layui-form-item">
                                 <label class="layui-form-label" id="tip-be"><b style="color: red;">?</b> 存储后端</label>

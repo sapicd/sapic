@@ -87,7 +87,7 @@
         var exts = "{{ g.site.upload_exts or 'jpg|png|gif|bmp|jpeg|webp' }}",
             size = parseFloat("{{ g.site.upload_size or 10 }}"), //MB
             number = parseInt("{{ g.site.upload_number or 10 }}"),
-            field = "picbed",
+            field = "{{ g.cfg.upload_field or 'picbed' }}",
             upviewDom = $('#previewList');
 
         var showUploadCopy = function(res) {
