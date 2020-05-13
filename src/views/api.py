@@ -53,7 +53,7 @@ def index():
 
 @bp.route("/login", methods=["POST"])
 def login():
-    res = dict(code=1)
+    res = dict(code=1, msg=None)
     usr = request.form.get("username")
     pwd = request.form.get("password")
     #: 定义是否设置cookie状态
@@ -120,7 +120,7 @@ def login():
 def register():
     if is_true(g.cfg.register) is False:
         return abort(404)
-    res = dict(code=1)
+    res = dict(code=1, msg=None)
     #: Required fields
     username = request.form.get("username")
     password = request.form.get("password")
@@ -242,7 +242,7 @@ def hook():
 @bp.route("/token", methods=["POST"])
 @apilogin_required
 def token():
-    res = dict(code=1)
+    res = dict(code=1, msg=None)
     usr = g.userinfo.username
     tk = rsp("tokens")
     ak = rsp("account", usr)
@@ -308,7 +308,7 @@ def token():
 @bp.route("/myself", methods=["PUT", "POST"])
 @apilogin_required
 def my():
-    res = dict(code=1)
+    res = dict(code=1, msg=None)
     ak = rsp("account", g.userinfo.username)
     Action = request.args.get("Action")
     if Action == "updateProfile":
@@ -444,7 +444,7 @@ def waterfall():
 @bp.route("/sha/<sha>", methods=["GET", "DELETE", "PUT"])
 def shamgr(sha):
     """图片查询、删除接口"""
-    res = dict(code=1)
+    res = dict(code=1, msg=None)
     gk = rsp("index", "global")
     ik = rsp("image", sha)
     dk = rsp("index", "deleted")
@@ -516,6 +516,8 @@ def shamgr(sha):
         if Action == "updateAlbum":
             if not g.signin:
                 return abort(403)
+            if not g.rc.sismember(gk, sha):
+                return abort(404)
             #: 更改相册名，允许图片所属用户或管理员修改，允许置空
             album = request.form.get("album")
             shaOwner = g.rc.hget(ik, "user")
@@ -527,7 +529,7 @@ def shamgr(sha):
                 else:
                     res.update(code=0)
             else:
-                res.update(msg="Illegal users are not allowed to modify")
+                return abort(403)
     else:
         return abort(405)
     return res
@@ -958,7 +960,7 @@ def link():
 @bp.route("/report/<classify>")
 @apilogin_required
 def report(classify):
-    res = dict(code=1)
+    res = dict(code=1, msg=None)
     start = request.args.get("start")
     end = request.args.get("end")
     page = request.args.get("page")
