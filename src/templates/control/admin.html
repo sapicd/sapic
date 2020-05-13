@@ -188,10 +188,10 @@
                                 </div>
                             </div>
                             <div class="layui-form-item">
-                                <label class="layui-form-label">上传字段</label>
+                                <label class="layui-form-label" style="color:red">上传字段</label>
                                 <div class="layui-input-block">
                                     <input type="text" name="upload_field" value="{{ g.site.upload_field }}"
-                                        placeholder="Api上传接口获取文件或base64数据的字段名，默认picbed" autocomplete="off" class="layui-input">
+                                        placeholder="Api上传接口获取文件或base64数据的字段名，默认picbed，谨慎修改！" autocomplete="off" class="layui-input">
                                 </div>
                             </div>
                             {% set bes = get_call_list("upimg_save", _type="func") %}
@@ -502,6 +502,20 @@
                         });
                     }
                 });
+            }
+        });
+        //检测版本更新
+        $.ajax({
+            url: "https://api.github.com/repos/staugur/picbed/releases/latest",
+            success: function(res) {
+                if (typeof res === "Object" && res.tag_name) {
+                    var last_version = res.tag_name,
+                        curr_version = "{{ Version }}";
+                    if (picbed.versionStringCompare(curr_version, last_version) === -1) {
+                        $("#verTip").html("<a href='" + res.html_url + "' style='color:#FF5722' target='_blank'>新版本</a>");
+                        layer.tips("发布于" + picbed.convertUTCTimeToLocalTime(res.published_at), "#verTip", {tips:3});
+                    }
+                }
             }
         });
     });

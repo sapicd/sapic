@@ -3,6 +3,7 @@
     <img src="{{ g.site.logo or url_for('static', filename='img/logo.png') }}">
 </a>
 <ul class="layui-nav layui-layout-right">
+    <li class="layui-nav-item" id="verTip"></li>
     <li class="layui-nav-item {% if request.endpoint == 'front.index' %}layui-this{% endif %}">
         {% if request.endpoint == 'front.index' %}
         <a>首页</a>

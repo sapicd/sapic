@@ -4,7 +4,7 @@ import unittest
 from utils.tool import Attribution, md5, sha1, rsp, get_current_timestamp, \
     allowed_file, parse_valid_comma, parse_valid_verticaline, is_true, \
     hmac_sha256, sha256, check_origin, get_origin, parse_data_uri, \
-    format_upload_src, format_apires
+    format_upload_src, format_apires, generate_random, check_ip
 
 
 class UtilsTest(unittest.TestCase):
@@ -87,6 +87,7 @@ class UtilsTest(unittest.TestCase):
             format_apires(dict(code=0, msg='xxx'), '', '200', 'errmsg'),
             {'code': 200, 'errmsg': 'xxx'}
         )
+        self.assertEqual(len(generate_random()), 6)
 
     def test_checkorigin(self):
         self.assertTrue(check_origin('http://127.0.0.1'))
@@ -102,6 +103,12 @@ class UtilsTest(unittest.TestCase):
         self.assertFalse(check_origin('://127.0.0.1/hello-world'))
         self.assertEqual(get_origin("http://abc.com/hello"), "http://abc.com")
         self.assertEqual(get_origin("https://abc.com/"), "https://abc.com")
+        self.assertTrue(check_ip("127.0.0.1"))
+        self.assertTrue(check_ip("1.2.3.4"))
+        self.assertTrue(check_ip("255.255.255.0"))
+        self.assertFalse(check_ip("1.2.3"))
+        self.assertFalse(check_ip("a.1.2.3"))
+        self.assertFalse(check_ip("999.1.2.3"))
 
     def test_datauri(self):
         uri1 = 'data:,Hello%2C%20World!'
