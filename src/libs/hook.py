@@ -16,7 +16,7 @@ from os.path import join, dirname, abspath, isdir, isfile, splitext, basename,\
     getmtime
 from jinja2 import ChoiceLoader, FileSystemLoader, PackageLoader
 from flask import render_template, render_template_string, Markup
-from utils.tool import Attribution
+from utils.tool import Attribution, logger
 from utils._compat import string_types, integer_types, iteritems, text_type, \
     PY2
 from config import GLOBAL
@@ -166,7 +166,11 @@ class HookManager(object):
                         #: was first imported.
                         if getattr(modules[fm], '__mtime__', 0) < getmtime(fa):
                             del modules[fm]
-                    fo = __import__(fm, fromlist=[self.__hooksdir])
+                    try:
+                        fo = __import__(fm, fromlist=[self.__hooksdir])
+                    except ImportError as e:
+                        logger.error(e, exc_info=True)
+                        continue
                     if hasattr(fo, "__version__") and \
                             hasattr(fo, "__author__"):
                         fo.__mtime__ = getmtime(fa)
@@ -184,7 +188,8 @@ class HookManager(object):
                         del hm
                 try:
                     ho = __import__(hn)
-                except ImportError:
+                except ImportError as e:
+                    logger.error(e, exc_info=True)
                     continue
                 else:
                     if hasattr(ho, "__version__") and \

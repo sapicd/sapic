@@ -9,13 +9,13 @@
 
 1. 要求： Python2.7、Python3.5+（含PyPy）和Redis
 
-2. 下载： `git clone https://github.com/staugur/picbed && cd picbed/src`
+2. 下载： `git clone https://github.com/staugur/picbed && cd picbed`
 
-3. 依赖： `pip install -r requirements.txt`
+3. 依赖： `pip install -r requirements/all.txt` # 也可以参考详情文档如何按需安装依赖包
 
 4. 配置：
 
-    源码src目录下的config.py即配置文件，它会加载中 `.cfg` 文件读取配置信息，
+    src目录下的config.py即配置文件，它会加载中 `.cfg` 文件读取配置信息，
     无法找到时加载环境变量，最后使用默认值，必需的配置项是picbed_redis_url。
 
     所以可以把配置项写到 `.bash_profile` 或 `.bashrc` 此类文件中在登录时加载，
@@ -79,16 +79,14 @@ http://picbed.demo.saintic.com
 
 | 名称 | 作用 | GitHub |
 | ---- | ----- | ----- |
-| up2upyun | 将图片保存到又拍云USS中 | [staugur/picbed-up2upyun](https://github.com/staugur/picbed-up2upyun) |
-| up2qiniu | 将图片保存到七牛云KODO中 | [staugur/picbed-up2qiniu](https://github.com/staugur/picbed-up2qiniu) |
-| up2oss | 将图片保存到阿里云OSS中 | [staugur/picbed-up2oss](https://github.com/staugur/picbed-up2oss) |
-| up2cos | 将图片保存到腾讯云COS中 | [staugur/picbed-up2cos](https://github.com/staugur/picbed-up2cos) |
+| up2upyun | 将图片保存到又拍云USS中 | 内置 |
+| up2qiniu | 将图片保存到七牛云KODO中 | 内置 |
+| up2oss | 将图片保存到阿里云OSS中 | 内置 |
+| up2cos | 将图片保存到腾讯云COS中 | 内置 |
 | up2smms | 将图片保存到sm.ms中 | [staugur/picbed-up2smms](https://github.com/staugur/picbed-up2smms) |
 | up2superbed | 将图片保存到聚合图床`superbed.cn` | [staugur/picbed-up2superbed](https://github.com/staugur/picbed-up2superbed) |
 
 更多钩子可以在我的[github](https://github.com/search?q=user%3Astaugur+picbed)搜索。
-
-PS：上述部分对象存储可能会归到内置。
 
 ## 客户端上传
 
