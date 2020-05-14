@@ -94,7 +94,7 @@ status)
     fi
     pid=$(cat $pidfile)
     procnum=$(ps aux | grep -v grep | grep $pid | grep $procname | wc -l)
-    m=$(ps -eO lstart | grep $pid | grep $procname | grep -vE "worker|grep|Team.Api\." | awk '{print $3}')
+    m=$(ps -eO lstart | grep $pid | grep $procname | grep -v grep | awk '{print $3}')
     t=$(Monthly2Number $m)
     if [[ "$procnum" != "1" ]]; then
         echo -e "\033[39;31m异常，pid文件与系统pid数量不相等。\033[0m"
@@ -104,8 +104,8 @@ status)
         echo -e "\033[39;33m${procname}\033[0m":
         echo "  pid: $pid"
         echo -e "  state:" "\033[39;32mrunning\033[0m"
-        echo -e "  process start time:" "\033[39;32m$(ps -eO lstart | grep $pid | grep $procname | grep -vE "worker|grep|Team.Api\." | awk '{print $6"-"$3"-"$4,$5}' | sed "s/${m}/${t}/")\033[0m"
-        echo -e "  process running time:" "\033[39;32m$(ps -eO etime| grep $pid | grep $procname | grep -vE "worker|grep|Team.Api\." | awk '{print $2}')\033[0m"
+        echo -e "  process start time:" "\033[39;32m$(ps -eO lstart | grep $pid | grep $procname | grep -v grep | awk '{print $6"-"$3"-"$4,$5}' | sed "s/${m}/${t}/")\033[0m"
+        echo -e "  process running time:" "\033[39;32m$(ps -eO etime| grep $pid | grep $procname | grep -v grep | awk '{print $2}')\033[0m"
     fi
     ;;
 

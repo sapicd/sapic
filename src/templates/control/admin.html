@@ -508,7 +508,7 @@
         $.ajax({
             url: "https://api.github.com/repos/staugur/picbed/releases/latest",
             success: function(res) {
-                if (typeof res === "Object" && res.tag_name) {
+                if (typeof res === "object" && res.tag_name) {
                     var last_version = res.tag_name,
                         curr_version = "{{ Version }}";
                     if (picbed.versionStringCompare(curr_version, last_version) === -1) {

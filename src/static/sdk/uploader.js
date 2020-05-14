@@ -127,7 +127,7 @@ var up2picbed = (function () {
             xhr.onload = function () {
                 let res = xhr.response;
                 if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304) {
-                    if (typeof res === "Object" && res.code === 0) {
+                    if (typeof res === "object" && res.code === 0) {
                         o.onSuccess && o.onSuccess(res);
                     } else {
                         o.onFail && o.onFail(res);

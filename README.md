@@ -19,8 +19,8 @@
     无法找到时加载环境变量，最后使用默认值，必需的配置项是picbed_redis_url。
 
     所以可以把配置项写到 `.bash_profile` 或 `.bashrc` 此类文件中在登录时加载，
-    也可以写入到.cfg文件里，这是推荐的方式，它不会被提交到仓库，格式是k=v，
-    每行一条，注意：v是所见即所得！
+    也可以写入到 **.cfg** 文件里，这是推荐的方式，它不会被提交到仓库，
+    格式是k=v，每行一条，注意：v是所见即所得！
 
     比如：`picbed_redis_url=redis://@localhost`
 
@@ -85,9 +85,10 @@ http://picbed.demo.saintic.com
 | up2cos | 将图片保存到腾讯云COS中 | [staugur/picbed-up2cos](https://github.com/staugur/picbed-up2cos) |
 | up2smms | 将图片保存到sm.ms中 | [staugur/picbed-up2smms](https://github.com/staugur/picbed-up2smms) |
 | up2superbed | 将图片保存到聚合图床`superbed.cn` | [staugur/picbed-up2superbed](https://github.com/staugur/picbed-up2superbed) |
-| passport | 接入passport登录 | [staugur/picbed-ssoclient](https://github.com/staugur/picbed-ssoclient) |
 
 更多钩子可以在我的[github](https://github.com/search?q=user%3Astaugur+picbed)搜索。
+
+PS：上述部分对象存储可能会归到内置。
 
 ## 客户端上传
 
