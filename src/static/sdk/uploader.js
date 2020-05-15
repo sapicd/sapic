@@ -2,11 +2,12 @@
 
 var up2picbed = (function () {
 
-    var version = '1.0';
+    let version = '1.1.0';
 
     /* 上传类，options配置项如下
      * @param url {String}:  [必需]上传接口
      * @param elem {String}: [必需]上传绑定元素，推荐使用ID
+     * @param name {String}: 上传文件域字段名，默认是picbed
      * @param size {Int}: 允许上传文件的最大值，单位Kb，默认10Mb
      * @param exts {String}:  允许上传的文件后缀集合，默认jpg|png|gif|bmp|jpeg|webp
      * @param timeout {Int}: 上传超时时间，单位毫秒，默认5000
@@ -25,7 +26,7 @@ var up2picbed = (function () {
             }
             options.size = parseInt(options.size || 10 * 1024);
             options.exts = options.exts || "jpg|png|gif|bmp|jpeg|webp";
-            options.name = "picbed";
+            options.name = options.name || "picbed";
             options.timeout = parseInt(options.timeout || 5000);
             options.responseType = "json";
             //当返回数据中code字段为0才触发success回调
@@ -193,6 +194,7 @@ var up2picbed = (function () {
     /* opt选项用于构造Uploader类，无值时读取dataset自身的初始化参数，支持如下：
      * @param url: [必需]picbed上传接口地址
      * @param elem: [默认#up2picbed]绑定上传的button元素
+     * @param name: [注意]上传文件域字段名，默认是picbed，一般不用设置，除非管理员修改过默认字段
      * @param auto: [注意]当值为true时脚本会自动初始化，否则需要在手动调用up2picbed函数初始化elem上传
      * @param token: [建议]picbed上传所需的LinkToken值，当然允许匿名可以省略
      * @param album: 定义上传图片所属相册，留空表示默认使用LinkToken设定值（仅当LinkToken认证成功此项才有效）
@@ -211,6 +213,7 @@ var up2picbed = (function () {
         }
         let url = opt.url || getSelf.dataset.url,
             elem = opt.elem || getSelf.dataset.elem || "#up2picbed",
+            name = opt.name || getSelf.dataset.name,
             token = opt.token || getSelf.dataset.token,
             style = opt.style || getSelf.dataset.style,
             album = opt.album || getSelf.dataset.album,
@@ -241,6 +244,7 @@ var up2picbed = (function () {
         return new Uploader({
             elem: elem,
             url: url,
+            name: name,
             size: opt.size || getSelf.dataset.size,
             exts: opt.exts || getSelf.dataset.exts,
             data: data,
