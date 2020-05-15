@@ -20,7 +20,7 @@ jobs:
 services:
 - redis
 install:
-- pip install -r src/requirements.txt
+- pip install -r requirements/all.txt
 - pip install Flask==$FLASK_VERSION
 - pip install codecov
 script:

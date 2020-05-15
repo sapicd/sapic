@@ -1,6 +1,6 @@
 # picbed
 
-基于Flask的Web自建图床，默认存储在本地，支持扩展又拍云、七牛云、阿里云OSS、腾讯云COS等后端存储。
+基于Flask的Web自建图床，默认存储在本地，内置支持又拍云、七牛云、阿里云OSS、腾讯云COS等后端存储。
 
 [![Build Status](https://travis-ci.org/staugur/picbed.svg?branch=master)](https://travis-ci.org/staugur/picbed)
 [![codecov](https://codecov.io/gh/staugur/picbed/branch/master/graph/badge.svg)](https://codecov.io/gh/staugur/picbed)
@@ -79,10 +79,10 @@ http://picbed.demo.saintic.com
 
 | 名称 | 作用 | GitHub |
 | ---- | ----- | ----- |
-| up2upyun | 将图片保存到又拍云USS中 | 内置 |
-| up2qiniu | 将图片保存到七牛云KODO中 | 内置 |
-| up2oss | 将图片保存到阿里云OSS中 | 内置 |
-| up2cos | 将图片保存到腾讯云COS中 | 内置 |
+| up2upyun | 将图片保存到又拍云USS中 | 已内置 |
+| up2qiniu | 将图片保存到七牛云KODO中 | 已内置 |
+| up2oss | 将图片保存到阿里云OSS中 | 已内置 |
+| up2cos | 将图片保存到腾讯云COS中 | 已内置 |
 | up2smms | 将图片保存到sm.ms中 | [staugur/picbed-up2smms](https://github.com/staugur/picbed-up2smms) |
 | up2superbed | 将图片保存到聚合图床`superbed.cn` | [staugur/picbed-up2superbed](https://github.com/staugur/picbed-up2superbed) |
 

@@ -11,7 +11,7 @@ layui.define(["layer", "util", "element"], function (exports) {
     }
     //阻止IE访问
     if (device.ie) {
-        layer.alert('不支持IE浏览器访问，推荐使用Firefox、Chrome。', {title:false});
+        layer.alert('系统对IE浏览器的支持有限，推荐使用Firefox、Chrome等现代化浏览器访问！', {title:'温馨提示'});
     }
     //右下角工具
     util.fixbar({
@@ -183,7 +183,9 @@ layui.define(["layer", "util", "element"], function (exports) {
             return $("<div>").html(str).text();
         },
         isMobile: (navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone|Opera Mini)/i)) ? true : false,
-        str2star: function (str, start = 4, end = -4) {
+        str2star: function (str, start, end) {
+            if (!start) start = 4;
+            if (!end) end = -4;
             return str.length > (start + Math.abs(end)) ? str.substr(0, start) + '****' + str.substr(end) : str;
         },
         getHash: function (str, caseSensitive) {
@@ -214,7 +216,7 @@ layui.define(["layer", "util", "element"], function (exports) {
             }
             return false;
         },
-        versionStringCompare: function(srcVersion='', destVersion='') {
+        versionStringCompare: function(srcVersion, destVersion) {
             /** 语义化版本号比较，前者与后者比较
              * @param srcVersion: 比较版本
              * @param destVersion: 被比较的版本

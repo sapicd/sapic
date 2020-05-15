@@ -51,7 +51,7 @@
         <div class="layui-upload-area">
             <div class="layui-upload-drag" id="upload">
                 <i class="layui-icon layui-icon-upload"></i>
-                <p>点击、粘贴或拖拽到此处上传<br>允许图片{{ (g.site.upload_exts or 'jpg|png|gif|bmp|jpeg|webp').split('|')|join(',') }}</p>
+                <p>点击、粘贴或拖拽到此处上传<br>允许{{ (g.site.upload_exts or 'jpg|png|gif|bmp|jpeg|webp').split('|')|join(',') }}图片</p>
             </div>
             <div class="layui-upload-list">
                 <button type="button" class="layui-btn layui-btn-xs layui-hide" id="action">开始上传</button>
@@ -88,9 +88,10 @@
             size = parseFloat("{{ g.site.upload_size or 10 }}"), //MB
             number = parseInt("{{ g.site.upload_number or 10 }}"),
             field = "{{ g.cfg.upload_field or 'picbed' }}",
-            upviewDom = $('#previewList');
+            upviewDom = $('#previewList'),
+            imgUrlRe = new RegExp("^(http[s]?://.*.(?:" + exts + "))$", "i");
 
-        var showUploadCopy = function(res) {
+        var showUploadCopy = function (res) {
             laytpl(upload_show_tpl.innerHTML).render(res, function (html) {
                 layer.open({
                     type: 1,
@@ -113,12 +114,99 @@
             });
         };
 
+        var getBase64Size = function (base64url) {
+            //获取base64图片大小，返回KB数字
+            var str = base64url.replace(/data:image\/(png|jpg|jpeg|bmp|gif|webp);base64,/, '');
+            var equalIndex = str.indexOf('=');
+            if (str.indexOf('=') > 0) {
+                str = str.substring(0, equalIndex);
+            }
+            var strLength = str.length;
+            var fileLength = parseInt(strLength - (strLength / 8) * 2);
+            // 由字节转换为KB
+            var size = "";
+            size = (fileLength / 1024).toFixed(2);
+            var sizeStr = size + ""; //转成字符串
+            var index = sizeStr.indexOf("."); //获取小数点处的索引
+            var dou = sizeStr.substr(index + 1, 2) //获取小数点后两位的值
+            if (dou == "00") { //判断后两位是否为00，如果是则删除00
+                return sizeStr.substring(0, index) + sizeStr.substr(index + 3, 2)
+            }
+            return parseInt(size);
+        };
+
+        var getBase64Image = function(img) {
+            var canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+            var ext = img.src.substring(img.src.lastIndexOf(".") + 1).toLowerCase();
+            var dataURL = canvas.toDataURL("image/" + ext);
+            return dataURL;
+        };
+
+        var ajaxUpload = function (dataform) {
+            dataform.append("album", "{{ request.args.album }}");
+            dataform.append("origin", "homepage/{{ Version }}");
+
+            /* 如果需要预览，可以执行下面代码
+            var reader = new FileReader()
+            reader.onload = function (event) {
+                preview.innerHTML = '<img src="' + event.target.result + '" class="upload-image">';
+            }
+            reader.readAsDataURL(file);
+            */
+
+            // 不预览直接上传
+            let index = layer.msg('上传中', {icon: 16,time: 5000});
+            let xhr = new XMLHttpRequest();
+
+            /* 上传进度
+            if (xhr.upload) {
+                xhr.upload.addEventListener('progress', function (event) {
+                    let percent = Math.round(100 * event.loaded / event.total) / 100 + '%';
+                }, false);
+            }
+            */
+
+            // 上传结束
+            xhr.onload = function () {
+                layer.close(index);
+                let res = JSON.parse(xhr.responseText);
+                if (res.code === 0) {
+                    layer.msg("上传成功", {
+                        icon: 1,
+                        time: 1000
+                    }, function () {
+                        showUploadCopy(res);
+                    });
+                } else {
+                    layer.msg("上传失败：" + res.msg, {icon: 2});
+                }
+            };
+            xhr.onerror = function () {
+                layer.msg("网络异常，上传失败", {
+                    icon: 2
+                });
+            };
+            xhr.open('POST', '{{ url_for("api.upload") }}', true);
+            try {
+                xhr.send(dataform);
+            } catch (e) {
+                layer.msg(e.message, {icon: 2});
+            };
+        }
+
         //点击与拖拽上传
         var uploadListIns = upload.render({
             elem: '#upload',
             url: '{{ url_for("api.upload") }}',
             method: 'POST',
-            data: {album: "{{ request.args.album }}", origin: "homepage/{{ Version }}"},
+            data: {
+                album: "{{ request.args.album }}",
+                origin: "homepage/{{ Version }}"
+            },
             accept: 'images',
             exts: exts,
             multiple: true,
@@ -168,7 +256,9 @@
             },
             before: function (obj) {
                 if (Object.keys(this.files).length === 0) {
-                    layer.msg("暂无图片等待上传！", {icon: 1});
+                    layer.msg("暂无图片等待上传！", {
+                        icon: 1
+                    });
                 }
             },
             progress: function (index, v) {
@@ -202,11 +292,13 @@
         });
         //粘贴上传
         document.addEventListener('paste', function (event) {
-            let items = (event.clipboardData || window.clipboardData).items;
+            let clipdata = event.clipboardData || window.clipboardData;
+            let items = clipdata.items;
             let file = null;
             if (items && items.length) {
                 // 搜索剪切板items
                 for (let i = 0; i < items.length; i++) {
+                    console.log(items[i]);
                     if (items[i].type.indexOf('image') !== -1) {
                         file = items[i].getAsFile();
                         break;
@@ -216,73 +308,102 @@
                 layer.msg("当前浏览器不支持", {icon: 2});
                 return;
             }
-            if (!file) {
-                layer.msg("粘贴内容非图片", {icon: 0});
-                return;
-            }
-            // 此时file就是我们的剪切板中的图片File对象
-            //判断上传图片大小
-            if (size > 0) {
-                if ((file.size / 1024) > (size * 1024)) {
-                    layer.msg("上传图片超过限制大小【" + size + "KB】", {icon: 0});
-                    return;
+            if (file) {
+                // 此时file就是我们的剪切板中的图片File对象
+                //判断上传图片大小
+                if (size > 0) {
+                    if ((file.size / 1024) > (size * 1024)) {
+                        layer.msg("粘贴图片超过限制大小【" + size + "KB】", {
+                            icon: 0
+                        });
+                        return;
+                    }
                 }
-            }
-            //判断上传图片后缀
-            if (exts) {
-                let EXTRE = new RegExp("(" + exts + "$)", "i");
-                let _ext = file.name.split(".");
-                _ext = _ext[_ext.length - 1];
-                if (!EXTRE.test(_ext)) {
-                    layer.msg("不支持的图片格式【" + _ext + "】", {icon: 0});
-                    return;
+                //判断上传图片后缀
+                if (exts) {
+                    let EXTRE = new RegExp("(" + exts + "$)", "i");
+                    let _ext = file.name.split(".");
+                    _ext = _ext[_ext.length - 1];
+                    if (!EXTRE.test(_ext)) {
+                        layer.msg("不支持的图片格式【" + _ext + "】", {
+                            icon: 0
+                        });
+                        return;
+                    }
                 }
-            }
 
-            /* 如果需要预览，可以执行下面代码
-            var reader = new FileReader()
-            reader.onload = function (event) {
-                preview.innerHTML = '<img src="' + event.target.result + '" class="upload-image">';
-            }
-            reader.readAsDataURL(file);
-            */
+                let data = new FormData();
+                data.append(field, file, file.name);
+                ajaxUpload(data);
+            } else {
+                //简单判断是否是图片URL，并尝试加载
+                let textCotnet = (clipdata.getData('text/plain') || '').trim();
+                if (imgUrlRe.test(textCotnet)) {
+                    console.debug("粘贴了图片URL")
+                    //
+                    let xhr = new XMLHttpRequest();
+                    xhr.onload = function () {
+                        let url = URL.createObjectURL(this.response);
+                        console.log(url);
+                        let img = new Image();
+                        img.onload = function () {
+                            let base64url = getBase64Image(img),
+                                base64size = getBase64Size(base64url);
+                            console.log(base64url)
+                            console.log(base64size)
+                            //判断上传图片大小
+                            if (size > 0) {
+                                if (base64size > (size * 1024)) {
+                                    layer.msg("粘贴图片超过限制大小【" + size + "KB】", {icon: 0});
+                                    return;
+                                }
+                            }
+                            let data = new FormData();
+                            data.append(field, base64url);
+                            ajaxUpload(data);
+                            // 图片用完后记得释放内存
+                            URL.revokeObjectURL(url);
+                        };
+                        img.onerror = function() {
+                            layer.msg("粘贴的图片链接无法加载", {icon: 0});
+                        };
+                        img.src = url;
+                    };
+                    xhr.onerror = function () {
+                        layer.msg("粘贴的图片链接无法加载", {icon: 2});
+                    };
+                    xhr.open('GET', textCotnet, true);
+                    xhr.responseType = 'blob';
+                    xhr.send();
 
-            // 不预览直接上传
-            let index = layer.msg('上传中', {icon: 16, time: 5000});
-            let data = new FormData();
-            data.append(field, file, file.name);
-            data.append("album", "{{ request.args.album }}");
-            let xhr = new XMLHttpRequest();
-
-            /* 上传进度
-            if (xhr.upload) {
-                xhr.upload.addEventListener('progress', function (event) {
-                    let percent = Math.round(100 * event.loaded / event.total) / 100 + '%';
-                }, false);
-            }
-            */
-
-            // 上传结束
-            xhr.onload = function () {
-                layer.close(index);
-                let res = JSON.parse(xhr.responseText);
-                if (res.code === 0) {
-                    layer.msg("上传成功", {icon: 1, time: 1000}, function() {
-                        showUploadCopy(res);
-                    });
+                    /* 默认加载方式
+                    let image = new Image();
+                    image.onload = function() {
+                        let base64url = getBase64Image(image),
+                            base64size = getBase64Size(base64url);
+                        console.log(base64url)
+                        console.log(base64size)
+                        //判断上传图片大小
+                        if (size > 0) {
+                            if (base64size > (size * 1024)) {
+                                layer.msg("粘贴图片超过限制大小【" + size + "KB】", {icon: 0});
+                                return;
+                            }
+                        }
+                        let data = new FormData();
+                        data.append(field, base64url);
+                        ajaxUpload(data);
+                    }
+                    image.onerror = function() {
+                        layer.msg("粘贴的图片链接无法加载", {icon: 0});
+                    }
+                    image.crossOrigin = '';
+                    image.src = textCotnet;
+                    */
                 } else {
-                    layer.msg("上传失败：" + res.msg, {icon: 2});
+                    layer.msg("粘贴内容非图片", {icon: 0});
                 }
-            };
-            xhr.onerror = function () {
-                layer.msg("网络异常，上传失败", {icon: 2});
-            };
-            xhr.open('POST', '{{ url_for("api.upload") }}', true);
-            try {
-                xhr.send(data);
-            } catch (e) {
-                layer.msg(e.message, {icon: 2});
-            };
+            }
         });
     });
 </script>
