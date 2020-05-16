@@ -46,6 +46,7 @@ data_uri_pat = re.compile(r'^{}$'.format((
 er_pat = re.compile(r'^(and|or|not|\s|ip|ep|origin|method|\(|\))+$')
 ir_pat = re.compile(r'^(in|not in|\s|ip|ep|origin|method|,|:)+$')
 ALLOWED_RULES = ("ip", "ep", "method", "origin")
+ALLOWED_EXTS = ('png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp')
 
 
 def rsp(*args):
@@ -108,7 +109,7 @@ def get_today(fmt="%Y/%m/%d"):
 
 
 def allowed_file(filename, suffix=None):
-    suffix = set(suffix or ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'])
+    suffix = set(suffix or ALLOWED_EXTS)
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in suffix
 

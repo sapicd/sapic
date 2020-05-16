@@ -114,38 +114,6 @@
             });
         };
 
-        var getBase64Size = function (base64url) {
-            //获取base64图片大小，返回KB数字
-            var str = base64url.replace(/data:image\/(png|jpg|jpeg|bmp|gif|webp);base64,/, '');
-            var equalIndex = str.indexOf('=');
-            if (str.indexOf('=') > 0) {
-                str = str.substring(0, equalIndex);
-            }
-            var strLength = str.length;
-            var fileLength = parseInt(strLength - (strLength / 8) * 2);
-            // 由字节转换为KB
-            var size = "";
-            size = (fileLength / 1024).toFixed(2);
-            var sizeStr = size + ""; //转成字符串
-            var index = sizeStr.indexOf("."); //获取小数点处的索引
-            var dou = sizeStr.substr(index + 1, 2) //获取小数点后两位的值
-            if (dou == "00") { //判断后两位是否为00，如果是则删除00
-                return sizeStr.substring(0, index) + sizeStr.substr(index + 3, 2)
-            }
-            return parseInt(size);
-        };
-
-        var getBase64Image = function(img) {
-            var canvas = document.createElement("canvas");
-            canvas.width = img.width;
-            canvas.height = img.height;
-            var ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0, img.width, img.height);
-            var ext = img.src.substring(img.src.lastIndexOf(".") + 1).toLowerCase();
-            var dataURL = canvas.toDataURL("image/" + ext);
-            return dataURL;
-        };
-
         var ajaxUpload = function (dataform) {
             dataform.append("album", "{{ request.args.album }}");
             dataform.append("origin", "homepage/{{ Version }}");
@@ -298,7 +266,6 @@
             if (items && items.length) {
                 // 搜索剪切板items
                 for (let i = 0; i < items.length; i++) {
-                    console.log(items[i]);
                     if (items[i].type.indexOf('image') !== -1) {
                         file = items[i].getAsFile();
                         break;
@@ -337,69 +304,11 @@
                 ajaxUpload(data);
             } else {
                 //简单判断是否是图片URL，并尝试加载
-                let textCotnet = (clipdata.getData('text/plain') || '').trim();
-                if (imgUrlRe.test(textCotnet)) {
-                    console.debug("粘贴了图片URL")
-                    //
-                    let xhr = new XMLHttpRequest();
-                    xhr.onload = function () {
-                        let url = URL.createObjectURL(this.response);
-                        console.log(url);
-                        let img = new Image();
-                        img.onload = function () {
-                            let base64url = getBase64Image(img),
-                                base64size = getBase64Size(base64url);
-                            console.log(base64url)
-                            console.log(base64size)
-                            //判断上传图片大小
-                            if (size > 0) {
-                                if (base64size > (size * 1024)) {
-                                    layer.msg("粘贴图片超过限制大小【" + size + "KB】", {icon: 0});
-                                    return;
-                                }
-                            }
-                            let data = new FormData();
-                            data.append(field, base64url);
-                            ajaxUpload(data);
-                            // 图片用完后记得释放内存
-                            URL.revokeObjectURL(url);
-                        };
-                        img.onerror = function() {
-                            layer.msg("粘贴的图片链接无法加载", {icon: 0});
-                        };
-                        img.src = url;
-                    };
-                    xhr.onerror = function () {
-                        layer.msg("粘贴的图片链接无法加载", {icon: 2});
-                    };
-                    xhr.open('GET', textCotnet, true);
-                    xhr.responseType = 'blob';
-                    xhr.send();
-
-                    /* 默认加载方式
-                    let image = new Image();
-                    image.onload = function() {
-                        let base64url = getBase64Image(image),
-                            base64size = getBase64Size(base64url);
-                        console.log(base64url)
-                        console.log(base64size)
-                        //判断上传图片大小
-                        if (size > 0) {
-                            if (base64size > (size * 1024)) {
-                                layer.msg("粘贴图片超过限制大小【" + size + "KB】", {icon: 0});
-                                return;
-                            }
-                        }
-                        let data = new FormData();
-                        data.append(field, base64url);
-                        ajaxUpload(data);
-                    }
-                    image.onerror = function() {
-                        layer.msg("粘贴的图片链接无法加载", {icon: 0});
-                    }
-                    image.crossOrigin = '';
-                    image.src = textCotnet;
-                    */
+                let maybeImgurl = (clipdata.getData('text/plain') || '').trim();
+                if (imgUrlRe.test(maybeImgurl)) {
+                    let data = new FormData();
+                    data.append(field, maybeImgurl);
+                    ajaxUpload(data);
                 } else {
                     layer.msg("粘贴内容非图片", {icon: 0});
                 }

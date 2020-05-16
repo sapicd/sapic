@@ -26,7 +26,8 @@ from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
     check_ir, username_pat
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
-    set_site_config, check_username, Base64FileStorage, change_res_format
+    set_site_config, check_username, Base64FileStorage, change_res_format, \
+    ImgUrlFileStorage
 from utils._compat import iteritems
 
 bp = Blueprint("api", "api")
@@ -540,9 +541,11 @@ def upload():
     """上传逻辑：
     0. 判断是否登录，如果未登录则判断是否允许匿名上传
     1. 获取上传的文件，判断允许格式
-        - 拦截下判断文件，如果为空，尝试获取body中提交提交的base64
-        - 如果base64合法，那么会返回Base64FileStorage类，否则为空
-        - PS: 允许DATA URI形式, eg: data:image/png;base64,the base64 of image
+        - 拦截下判断文件，如果为空，尝试获取body中提交的picbed
+        - 如果picbed是合法base64，那么会返回Base64FileStorage类；
+          如果picbed是合法url[图片]，那么服务端会自动下载，返回ImgUrlFileStorage类；
+          否则为空。
+          PS: 允许DATA URI形式, eg: data:image/png;base64,the base64 of image
     2. 生成文件名、唯一sha值、上传目录等，选择图片存储的后端钩子（单一）
         - 存储图片的钩子目前版本仅一个，默认是up2local（如果禁用则保存失败）
         - 如果提交album参数会自动创建相册，否则归档到默认相册
@@ -559,18 +562,6 @@ def upload():
     if not is_true(g.cfg.anonymous) and not g.signin:
         res.update(code=403, msg="Anonymous user is not sign in")
         return res
-    fp = request.files.get(FIELD_NAME)
-    #: 当fp无效时尝试读取base64
-    if not fp:
-        pic64str = request.form.get(FIELD_NAME)
-        filename = request.form.get("filename")
-        if pic64str:
-            try:
-                #: base64在部分场景发起http请求时，+可能会换成空格导致异常
-                fp = Base64FileStorage(pic64str, filename)
-            except ValueError as e:
-                logger.debug(e, exc_info=True)
-                fp = None
     #: 相册名称，可以是任意字符串
     album = (
         request.form.get("album") or getattr(g, "up_album", "")
@@ -580,6 +571,20 @@ def upload():
         allowed_file,
         suffix=parse_valid_verticaline(g.cfg.upload_exts)
     )
+    #: 尝试读取上传数据
+    fp = request.files.get(FIELD_NAME)
+    #: 当fp无效时尝试读取base64或url
+    if not fp:
+        pic64str_or_url = request.form.get(FIELD_NAME)
+        filename = request.form.get("filename")
+        if pic64str_or_url:
+            try:
+                #: base64在部分场景发起http请求时，+可能会换成空格导致异常
+                fp = Base64FileStorage(pic64str_or_url, filename)
+            except ValueError as e:
+                logger.debug(e)
+                logger.debug("try to get picbed with url")
+                fp = ImgUrlFileStorage(pic64str_or_url, filename).getObj
     if fp and allowed_suffix(fp.filename):
         try:
             g.rc.ping()

@@ -232,7 +232,7 @@ class HookManager(object):
         if not self.__hooks:
             self.__init_load_hooks()
         hooks = []
-        for h in self.__hooks.values():
+        for h in list(self.__hooks.values()):
             h['state'] = self.__get_state(h)
             hooks.append(h)
         return hooks
