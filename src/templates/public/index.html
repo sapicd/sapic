@@ -303,7 +303,7 @@
                 data.append(field, file, file.name);
                 ajaxUpload(data);
             } else {
-                //简单判断是否是图片URL，并尝试加载
+                //简单判断是否是图片URL
                 let maybeImgurl = (clipdata.getData('text/plain') || '').trim();
                 if (imgUrlRe.test(maybeImgurl)) {
                     let data = new FormData();

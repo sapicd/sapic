@@ -575,16 +575,18 @@ def upload():
     fp = request.files.get(FIELD_NAME)
     #: 当fp无效时尝试读取base64或url
     if not fp:
-        pic64str_or_url = request.form.get(FIELD_NAME)
+        picstrurl = request.form.get(FIELD_NAME)
         filename = request.form.get("filename")
-        if pic64str_or_url:
-            try:
-                #: base64在部分场景发起http请求时，+可能会换成空格导致异常
-                fp = Base64FileStorage(pic64str_or_url, filename)
-            except ValueError as e:
-                logger.debug(e)
-                logger.debug("try to get picbed with url")
-                fp = ImgUrlFileStorage(pic64str_or_url, filename).getObj
+        if picstrurl:
+            if picstrurl.startswith("http://") or \
+                    picstrurl.startswith("https://"):
+                fp = ImgUrlFileStorage(picstrurl, filename).getObj
+            else:
+                try:
+                    #: base64在部分场景发起http请求时，+可能会换成空格导致异常
+                    fp = Base64FileStorage(picstrurl, filename)
+                except ValueError as e:
+                    logger.debug(e)
     if fp and allowed_suffix(fp.filename):
         try:
             g.rc.ping()

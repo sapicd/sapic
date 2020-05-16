@@ -368,7 +368,8 @@ class ImgUrlFileStorage(object):
             except requests.exceptions.RequestException as e:
                 logger.debug(e, exc_info=True)
             else:
-                return resp
+                if resp.headers["Content-Type"].split("/")[0] == "image":
+                    return resp
 
     @property
     def filename(self):
