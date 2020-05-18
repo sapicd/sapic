@@ -444,6 +444,10 @@
                                     var copyId = $(this).data('copyid');
                                     picbed.Clipboard.copy($(copyId).text());
                                 });
+                                //album set datalist
+                                $("#list_user_albums").html(res.albums.map(function(a) {
+                                    return '<option value="' + a + '">';
+                                }).join(""));
                             },
                             yes: function(index, layero){
                                 //按钮【删除】的回调

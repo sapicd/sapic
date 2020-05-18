@@ -8,7 +8,8 @@
     <p>所属用户：{{ d.user }}</p>
     <p>
         <div class="layui-form" action="">
-            所属相册：<input type="text" name="album" autocomplete="off" value="{{ d.album || '' }}">
+            所属相册：<input type="text" name="album" autocomplete="off" value="{{ d.album || '' }}" list="list_user_albums">
+            <datalist id="list_user_albums"></datalist>
             <input type="hidden" name="sha" autocomplete="off" value="{{ d.sha }}">
             <button type="button" title="更新相册名" class="layui-btn layui-btn-xs layui-btn-radius" lay-submit lay-filter="updateAlbumSubmit"><i class="layui-icon layui-icon-ok"></i></button>
         </div>
