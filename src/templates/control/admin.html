@@ -73,7 +73,7 @@
                             <div class="layui-form-item">
                                 <label class="layui-form-label">背景图</label>
                                 <div class="layui-input-block">
-                                    <input type="text" name="bg_mg" value="{{ g.site.bg_mg }}" placeholder="站点背景图地址，下拉可选择默认提供的背景图"
+                                    <input type="text" name="bg_mg" value="{{ g.site.bg_mg }}" placeholder="站点PC端背景图地址，下拉可选择默认提供的背景图"
                                         autocomplete="off" class="layui-input" list="bg_mg_defaults">
                                     <datalist id="bg_mg_defaults">
                                         <option value="https://open.saintic.com/api/bingPic">
@@ -82,6 +82,20 @@
                                         <option value="{{ url_for('static', filename='img/bg3.jpg') }}">
                                         <option value="{{ url_for('static', filename='img/bg4.jpg') }}">
                                         <option value="{{ url_for('static', filename='img/bg5.jpg') }}">
+                                    </datalist>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">移动端背景图</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="bg_mobile" value="{{ g.site.bg_mobile }}" placeholder="站点移动端背景图地址，下拉可选择默认提供的背景图"
+                                        autocomplete="off" class="layui-input" list="bg_mobile_defaults">
+                                    <datalist id="bg_mobile_defaults">
+                                        <option value="{{ url_for('static', filename='img/mbg1.jpg') }}">
+                                        <option value="{{ url_for('static', filename='img/mbg2.jpg') }}">
+                                        <option value="{{ url_for('static', filename='img/mbg3.jpg') }}">
+                                        <option value="{{ url_for('static', filename='img/mbg4.jpg') }}">
+                                        <option value="{{ url_for('static', filename='img/mbg5.jpg') }}">
                                     </datalist>
                                 </div>
                             </div>

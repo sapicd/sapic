@@ -163,7 +163,15 @@
                         <label class="layui-form-label">移动端背景</label>
                         <div class="layui-input-block">
                             <input type="text" name="ucfg_bg_mobile" value="{{ g.userinfo.ucfg_bg_mobile }}"
-                                placeholder="移动端背景图地址，若无设置默认采用上述背景图" autocomplete="off" class="layui-input">
+                                placeholder="移动端背景图地址，若无设置默认采用上述背景图" autocomplete="off" class="layui-input"
+                                list="bg_mobile_defaults">
+                            <datalist id="bg_mobile_defaults">
+                                <option value="{{ url_for('static', filename='img/mbg1.jpg') }}">
+                                <option value="{{ url_for('static', filename='img/mbg2.jpg') }}">
+                                <option value="{{ url_for('static', filename='img/mbg3.jpg') }}">
+                                <option value="{{ url_for('static', filename='img/mbg4.jpg') }}">
+                                <option value="{{ url_for('static', filename='img/mbg5.jpg') }}">
+                            </datalist>
                         </div>
                     </div>
                     <div class="layui-form-item">
