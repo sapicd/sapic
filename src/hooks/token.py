@@ -9,7 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __author__ = 'staugur'
 __description__ = '使用Token验证Api'
 
@@ -17,7 +17,7 @@ import json
 from flask import request, g
 from base64 import urlsafe_b64decode as b64decode
 from utils.tool import rsp, hmac_sha256, logger, get_current_timestamp, \
-    parse_valid_comma, Attribution, ALLOWED_RULES
+    parse_valid_comma, Attribution, ALLOWED_RULES, is_true
 from utils._compat import PY2, text_type
 
 intpl_profile = """
@@ -104,7 +104,7 @@ def verify_rule(Ld):
         )),
         ep=Attribution(dict(
             access=request.endpoint,
-            secure=parse_valid_comma(Ld["allow_ep"]) or []
+            secure=parse_valid_comma(Ld["allow_ep"]) + ["api.index"]
         )),
         method=Attribution(dict(
             access=request.method,
@@ -163,6 +163,9 @@ def before_request():
                 usr = Ld.get("user")
                 secret = Ld.get("LinkSecret")
                 status = int(Ld.get("status", 1))
+                userinfo = g.rc.hmget(
+                    rsp("account", usr), "token", "ucfg_report_linktoken"
+                )
                 if status == 1 and hmac_sha256(LinkId, secret) == LinkSig:
                     authentication = "ok"
                     #: 权限校验规则
@@ -170,7 +173,7 @@ def before_request():
                         authorization = "ok"
                         logger.info("LinkToken ok and permission pass")
                         g.up_album = Ld.get("album")
-                        token = g.rc.hget(rsp("account", usr), "token")
+                        token = userinfo[0]
                     else:
                         authorization = "fail"
                         logger.info("LinkToken ok and permission deny")
@@ -178,18 +181,19 @@ def before_request():
                     authentication = "fail"
                     authorization = "fail"
                 #: 统计入库
-                g.rc.lpush(rsp("report", "linktokens"), json.dumps(dict(
-                    LinkId=LinkId,
-                    user=usr,
-                    ctime=get_current_timestamp(),
-                    ip=get_ip(),
-                    agent=request.headers.get('User-Agent', ''),
-                    referer=request.headers.get('Referer', ''),
-                    origin=get_origin(),
-                    ep=request.endpoint,
-                    authentication=authentication,
-                    authorization=authorization,
-                )))
+                if is_true(userinfo[1]):
+                    g.rc.lpush(rsp("report", "linktokens"), json.dumps(dict(
+                        LinkId=LinkId,
+                        user=usr,
+                        ctime=get_current_timestamp(),
+                        ip=get_ip(),
+                        agent=request.headers.get('User-Agent', ''),
+                        referer=request.headers.get('Referer', ''),
+                        origin=get_origin(),
+                        ep=request.endpoint,
+                        authentication=authentication,
+                        authorization=authorization,
+                    )))
     if token:
         try:
             oldToken = token

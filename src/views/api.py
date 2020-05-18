@@ -830,7 +830,7 @@ def link():
         #: 定义权限项及默认值，检测参数时不包含默认值
         allow_origin = request.form.get("allow_origin") or ""
         allow_ip = request.form.get("allow_ip") or ""
-        allow_ep = request.form.get("allow_ep") or "api.index,api.upload"
+        allow_ep = request.form.get("allow_ep") or "api.upload"
         allow_method = request.form.get("allow_method") or "post"
         #: 判断用户是否有token
         ak = rsp("account", username)
@@ -910,7 +910,7 @@ def link():
             ir = request.form.get("interior_relation", "").strip()
             allow_origin = request.form.get("allow_origin") or ""
             allow_ip = request.form.get("allow_ip") or ""
-            allow_ep = request.form.get("allow_ep") or "api.index,api.upload"
+            allow_ep = request.form.get("allow_ep") or "api.upload"
             allow_method = request.form.get("allow_method") or "post"
             cv = check_body()
             if cv:

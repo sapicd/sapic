@@ -204,6 +204,12 @@
                                 autocomplete="off" class="layui-input">
                         </div>
                     </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">统计开关</label>
+                        <div class="layui-input-block">
+                            <input type="checkbox" name="ucfg_report_linktoken" title="LinkToken" {% if is_true(g.userinfo.ucfg_report_linktoken) %}checked{% endif %}>
+                        </div>
+                    </div>
                     {{ intpl("usersetting") }}
                     <div class="layui-form-item">
                         <button class="layui-btn" lay-submit lay-filter="*">立即提交</button>
@@ -614,6 +620,9 @@
                 document.forms['control'].reportValidity();
                 return false;
             }
+            if (!data.field.hasOwnProperty("ucfg_report_linktoken")) {
+                data.field["ucfg_report_linktoken"] = 0;
+            }
             picbed.ajax("{{ url_for('api.my', Action='updateUserCfg') }}", function(res) {
                 if (res.code === 0) {
                     layer.msg("已修用户改配置", {icon:1});
@@ -675,7 +684,7 @@
         }
         function renderEpSelect(selectd_ep) {
             /*渲染ep的select下拉多选*/
-            let eps = ["api.index", "api.upload", "api.waterfall", "api.login", "api.register", "api.link"];
+            let eps = ["api.upload", "api.waterfall", "api.login", "api.register", "api.link"];
             let data = eps.map(function(e) {
                 return {
                     hash: picbed.getHash(e),
