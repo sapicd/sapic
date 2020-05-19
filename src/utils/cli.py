@@ -25,6 +25,7 @@ def echo(msg, color=None):
 def exec_createuser(username, password, **kwargs):
     """创建账号"""
     ak = rsp("accounts")
+    username = username.lower()
     if check_username(username):
         if not password or len(password) < 6:
             echo("密码最少6位", "yellow")

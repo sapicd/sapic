@@ -47,7 +47,7 @@ class AppTest(unittest.TestCase):
         self.assertEqual(404, rv.status_code)
 
     def test_comment_login_logout(self):
-        user = "test_" + generate_random()
+        user = ("test_" + generate_random()).lower()
         pwd = "pwd123"
         rv = self.login(user, pwd)
         self.assertEqual(200, rv.status_code)

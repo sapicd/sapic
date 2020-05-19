@@ -159,6 +159,8 @@ def register():
             res.update(
                 msg="The username is invalid or registration is not allowed"
             )
+    else:
+        res.update(msg="Parameter error")
     return res
 
 

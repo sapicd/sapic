@@ -15,7 +15,7 @@ import hashlib
 from uuid import uuid4
 from time import time
 from datetime import datetime
-from random import randrange, sample
+from random import randrange, sample, randint, choice
 from redis import from_url
 from .log import Logger
 from ._compat import string_types, text_type, PY2, urlparse
@@ -280,3 +280,29 @@ def parse_data_uri(datauri):
         is_base64=is_base64,
         data=data,
     ))
+
+
+def gen_ua():
+    first_num = randint(55, 62)
+    third_num = randint(0, 3200)
+    fourth_num = randint(0, 140)
+    os_type = [
+        '(Windows NT 6.1; WOW64)',
+        '(Windows NT 10.0; WOW64)',
+        '(X11; Linux x86_64)',
+        '(Macintosh; Intel Mac OS X 10_12_6)'
+    ]
+    chrome_version = 'Chrome/{}.0.{}.{}'.format(
+        first_num, third_num, fourth_num
+    )
+    ua = ' '.join(
+        [
+            'Mozilla/5.0',
+            choice(os_type),
+            'AppleWebKit/537.36',
+            '(KHTML, like Gecko)',
+            chrome_version,
+            'Safari/537.36'
+        ]
+    )
+    return ua
