@@ -146,7 +146,7 @@
                     <div class="layui-form-item">
                         <div class="layui-inline">
                             <label class="layui-form-label">背景图</label>
-                            <div class="layui-input-inline" style="width: 150px;">
+                            <div class="layui-input-inline" style="width: 200px;">
                                 <input type="text" name="ucfg_bg_mg" value="{{ g.userinfo.ucfg_bg_mg }}"
                                     placeholder="PC端背景图地址" autocomplete="off" class="layui-input" list="bg_mg_defaults">
                                 <datalist id="bg_mg_defaults">
@@ -202,9 +202,9 @@
                         </div>
                         <div class="layui-inline">
                             <label class="layui-form-label">图片加载数</label>
-                            <div class="layui-input-inline" style="width: 200px;">
+                            <div class="layui-input-inline" style="width: 150px;">
                                 <input type="number" step=1 min=1 max=100 name="ucfg_mypic_limit"
-                                value="{{ g.userinfo.ucfg_mypic_limit }}" placeholder="加载图片的数量，默认10"
+                                value="{{ g.userinfo.ucfg_mypic_limit }}" placeholder="加载图片的数量"
                                 autocomplete="off" class="layui-input">
                             </div>
                         </div>
@@ -298,7 +298,7 @@
             <input type="text" class="layui-input" name="allow_ip" placeholder="ip: 允许调用的安全来源IP，留空则不限制" autocomplete="off">
         </div>
         <div class="layui-form-item">
-            <input type="text" class="layui-input" name="allow_ep" id="render_multi_ep" placeholder="ep: 允许访问的路由端点，留空默认api.index,api.upload" autocomplete="off">
+            <input type="text" class="layui-input" name="allow_ep" id="render_multi_ep" placeholder="ep: 允许访问的路由端点，留空默认api.upload" autocomplete="off">
         </div>        
         <div class="layui-form-item">
             <input type="text" class="layui-input" name="allow_method" id="render_multi_method" placeholder="method: 允许访问的HTTP方法，留空默认post" autocomplete="off">
@@ -376,13 +376,13 @@
         //URL后缀提示
         $("#urlprocesstip").hover(function () {
             let tip = [
-                "URL后缀是在复制URL时向链接追加的部分，实现图片处理：",
-                "在后缀中设置分隔符与样式等，结合图片后端的对象存储，实现对图片实时裁剪、缩略等处理。",
-                "依据对象存储参考以下文档：",
-                "<a href='https://help.upyun.com/knowledge-base/image/' target='_blank' style='color:#009688'>又拍云图片处理</a>",
-                "<a href='https://developer.qiniu.com/dora/api/3683/img-directions-for-use' target='_blank' style='color:#009688'>七牛云图片处理</a>",
-                "<a href='https://help.aliyun.com/document_detail/99372.html' target='_blank' style='color:#009688'>阿里云OSS数据处理</a>",
-                "<a href='https://cloud.tencent.com/document/product/436/42214' target='_blank' style='color:#009688'>腾讯云COS数据处理</a>",
+                "URL后缀是在复制URL等应用场景时向链接追加的部分，实现图片裁剪、缩略等处理：",
+                "依据对象存储参考以下文档：<a href='https://help.upyun.com/knowledge-base/image/' target='_blank' style='color:#009688'>又拍云图片处理</a>，<a href='https://developer.qiniu.com/dora/api/3683/img-directions-for-use' target='_blank' style='color:#009688'>七牛云图片处理</a>，<a href='https://help.aliyun.com/document_detail/99372.html' target='_blank' style='color:#009688'>阿里云OSS数据处理</a>，<a href='https://cloud.tencent.com/document/product/436/42214' target='_blank' style='color:#009688'>腾讯云COS数据处理</a>",
+                "",
+                "URL后缀设置格式如下：<scan style='color:red'>图片保存者(钩子名称):处理图片的分隔符与指令或样式</scan>，注意冒号，允许以逗号分隔多条！",
+                "举例 => <scan style='color:#1E9FFF'>up2local:?v=1, up2upyun:!small</scan>，表示使用up2local保存的图片在场景中URL后缀增加<scan style='color:#1E9FFF'>?v=1</scan>，使用up2upyun保存的图片在场景中URL后缀增加<scan style='color:#1E9FFF'>!small</scan>",
+                "",
+                "更多请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#url-process' target='_blank' style='color:#009688'>URL后缀</a>",
             ].join("<br>");
             layer.tips(tip, this, {tips: 3, time: 0});
         }, closeTip);
