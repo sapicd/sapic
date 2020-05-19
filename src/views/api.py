@@ -76,6 +76,7 @@ def login():
         logger.warning(e, exc_info=True)
     if usr and username_pat.match(usr) and pwd and len(pwd) >= 6:
         ak = rsp("accounts")
+        usr = usr.lower()
         if g.rc.sismember(ak, usr):
             userinfo = g.rc.hgetall(rsp("account", usr))
             if is_true(g.cfg.disable_login) and \
@@ -126,6 +127,7 @@ def register():
     username = request.form.get("username")
     password = request.form.get("password")
     if username and password:
+        username = username.lower()
         if check_username(username):
             if len(password) < 6:
                 res.update(msg="Password must be at least 6 characters")
@@ -450,16 +452,29 @@ def shamgr(sha):
     ik = rsp("image", sha)
     dk = rsp("index", "deleted")
     if request.method == "GET":
+        def get_url_with_suffix(d, _type):
+            """根据type返回src"""
+            if is_true(g.userinfo.parsed_ucfg_url_rule_switch.get(_type)):
+                return "%s%s" % (
+                    d["src"],
+                    g.userinfo.parsed_ucfg_url_rule.get(d["sender"], "")
+                )
+            return d["src"]
         if g.rc.sismember(gk, sha):
             data = g.rc.hgetall(ik)
-            u, n = data["src"], data["filename"]
+            n = data["filename"]
             data.update(
                 senders=json.loads(data["senders"]) if g.is_admin else None,
                 ctime=int(data["ctime"]),
                 tpl=dict(
-                    HTML="<img src='%s' alt='%s'>" % (u, n),
-                    rST=".. image:: %s" % u,
-                    Markdown="![%s](%s)" % (n, u)
+                    URL="%s" % get_url_with_suffix(data, "url"),
+                    HTML="<img src='%s' alt='%s'>" % (
+                        get_url_with_suffix(data, "html"), n
+                    ),
+                    rST=".. image:: %s" % get_url_with_suffix(data, "rst"),
+                    Markdown="![%s](%s)" % (
+                        n, get_url_with_suffix(data, "markdown")
+                    )
                 )
             )
             res.update(code=0, data=data)

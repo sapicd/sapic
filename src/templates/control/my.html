@@ -142,72 +142,95 @@
             <div class="layui-tab-item">
                 {{ intpl("before_usersetting") }}
                 <blockquote class="layui-elem-quote">以下是您在站点中的个性化设置，仅在个人登录后有效，不会影响到其他人！</blockquote>
-                <form class="layui-form layui-form-pane" id="control" lay-filter="setting" autocomplete="off">
+                <form class="layui-form" id="control" lay-filter="setting" autocomplete="off">
                     <div class="layui-form-item">
-                        <label class="layui-form-label">背景图</label>
-                        <div class="layui-input-block">
-                            <input type="text" name="ucfg_bg_mg" value="{{ g.userinfo.ucfg_bg_mg }}"
-                                placeholder="背景图地址，下拉可选择默认提供的背景图" autocomplete="off" class="layui-input"
-                                list="bg_mg_defaults">
-                            <datalist id="bg_mg_defaults">
-                                <option value="https://open.saintic.com/api/bingPic">
-                                <option value="{{ url_for('static', filename='img/bg1.jpg') }}">
-                                <option value="{{ url_for('static', filename='img/bg2.jpg') }}">
-                                <option value="{{ url_for('static', filename='img/bg3.jpg') }}">
-                                <option value="{{ url_for('static', filename='img/bg4.jpg') }}">
-                                <option value="{{ url_for('static', filename='img/bg5.jpg') }}">
-                            </datalist>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">背景图</label>
+                            <div class="layui-input-inline" style="width: 150px;">
+                                <input type="text" name="ucfg_bg_mg" value="{{ g.userinfo.ucfg_bg_mg }}"
+                                    placeholder="PC端背景图地址" autocomplete="off" class="layui-input" list="bg_mg_defaults">
+                                <datalist id="bg_mg_defaults">
+                                    <option value="https://open.saintic.com/api/bingPic">
+                                    <option value="{{ url_for('static', filename='img/bg1.jpg') }}">
+                                    <option value="{{ url_for('static', filename='img/bg2.jpg') }}">
+                                    <option value="{{ url_for('static', filename='img/bg3.jpg') }}">
+                                    <option value="{{ url_for('static', filename='img/bg4.jpg') }}">
+                                    <option value="{{ url_for('static', filename='img/bg5.jpg') }}">
+                                </datalist>
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">移动端背景</label>
+                            <div class="layui-input-inline" style="width: 150px;">
+                                <input type="text" name="ucfg_bg_mobile" value="{{ g.userinfo.ucfg_bg_mobile }}"
+                                    placeholder="移动端背景图地址" autocomplete="off" class="layui-input"
+                                    list="bg_mobile_defaults">
+                                <datalist id="bg_mobile_defaults">
+                                    <option value="{{ url_for('static', filename='img/mbg1.jpg') }}">
+                                    <option value="{{ url_for('static', filename='img/mbg2.jpg') }}">
+                                    <option value="{{ url_for('static', filename='img/mbg3.jpg') }}">
+                                    <option value="{{ url_for('static', filename='img/mbg4.jpg') }}">
+                                    <option value="{{ url_for('static', filename='img/mbg5.jpg') }}">
+                                </datalist>
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">背景透明度</label>
+                            <div class="layui-input-inline" style="width: 150px;">
+                                <input type="number" step=0.1 min=0 max=1 name="ucfg_bg_ransparency"
+                                    value="{{ g.userinfo.ucfg_bg_ransparency }}" placeholder="背景图透明度" autocomplete="off"
+                                    class="layui-input">
+                            </div>
                         </div>
                     </div>
                     <div class="layui-form-item">
-                        <label class="layui-form-label">移动端背景</label>
-                        <div class="layui-input-block">
-                            <input type="text" name="ucfg_bg_mobile" value="{{ g.userinfo.ucfg_bg_mobile }}"
-                                placeholder="移动端背景图地址，若无设置默认采用上述背景图" autocomplete="off" class="layui-input"
-                                list="bg_mobile_defaults">
-                            <datalist id="bg_mobile_defaults">
-                                <option value="{{ url_for('static', filename='img/mbg1.jpg') }}">
-                                <option value="{{ url_for('static', filename='img/mbg2.jpg') }}">
-                                <option value="{{ url_for('static', filename='img/mbg3.jpg') }}">
-                                <option value="{{ url_for('static', filename='img/mbg4.jpg') }}">
-                                <option value="{{ url_for('static', filename='img/mbg5.jpg') }}">
-                            </datalist>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">默认相册</label>
+                            <div class="layui-input-inline" style="width: 200px;">
+                                <input type="text" class="layui-input" name="ucfg_default_album" id="render_default_album" placeholder="图片页面默认加载的相册" value="{{ g.userinfo.ucfg_default_album }}" autocomplete="off">
+                            </div>
                         </div>
                     </div>
                     <div class="layui-form-item">
-                        <label class="layui-form-label">背景透明度</label>
-                        <div class="layui-input-block">
-                            <input type="number" step=0.1 min=0 max=1 name="ucfg_bg_ransparency"
-                                value="{{ g.userinfo.ucfg_bg_ransparency }}" placeholder="背景透明度，0-1之间（值越大越透明），默认是：0.5，目前仅首页有效"
+                        <div class="layui-inline">
+                            <label class="layui-form-label">图片放大度</label>
+                            <div class="layui-input-inline" style="width: 200px;">
+                                <input type="number" step=0.1 min=1 max=2 name="ucfg_mypic_scale"
+                                value="{{ g.userinfo.ucfg_mypic_scale }}" placeholder="图片悬浮时放大的倍数"
                                 autocomplete="off" class="layui-input">
+                            </div>
                         </div>
-                    </div>
-                    <div class="layui-form-item">
-                        <label class="layui-form-label">默认相册</label>
-                        <div class="layui-input-block">
-                            <input type="text" class="layui-input" name="ucfg_default_album" id="render_default_album" placeholder="定义我的图片页面默认加载的相册" value="{{ g.userinfo.ucfg_default_album }}" autocomplete="off">
-                        </div>
-                    </div>
-                    <div class="layui-form-item">
-                        <label class="layui-form-label">图片放大度</label>
-                        <div class="layui-input-block">
-                            <input type="number" step=0.1 min=1 max=2 name="ucfg_mypic_scale"
-                                value="{{ g.userinfo.ucfg_mypic_scale }}" placeholder="定义我的图片页面鼠标悬浮图片时放大的倍数，1-2之间，默认是1不放大"
+                        <div class="layui-inline">
+                            <label class="layui-form-label">图片加载数</label>
+                            <div class="layui-input-inline" style="width: 200px;">
+                                <input type="number" step=1 min=1 max=100 name="ucfg_mypic_limit"
+                                value="{{ g.userinfo.ucfg_mypic_limit }}" placeholder="加载图片的数量，默认10"
                                 autocomplete="off" class="layui-input">
+                            </div>
                         </div>
                     </div>
                     <div class="layui-form-item">
-                        <label class="layui-form-label">图片加载数</label>
-                        <div class="layui-input-block">
-                            <input type="number" step=1 min=1 max=100 name="ucfg_mypic_limit"
-                                value="{{ g.userinfo.ucfg_mypic_limit }}" placeholder="定义我的图片页面每次查询图床的数量，默认10"
-                                autocomplete="off" class="layui-input">
+                        <div class="layui-inline">
+                            <label class="layui-form-label"><i class="layui-icon layui-icon-about" id="urlprocesstip"></i> URL后缀</label>
+                            <div class="layui-input-inline" style="width: 200px;">
+                                <input type="text" name="ucfg_url_rule" placeholder="自定义复制URL的后缀规则" autocomplete="off" class="layui-input" value="{{ g.userinfo.ucfg_url_rule }}">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label"><i class="layui-icon layui-icon-about" id="urlsensetip"></i> 应用场景</label>
+                            <div class="layui-input-inline" style="width: auto;">
+                                <input type="checkbox" name="ucfg_urlrule_inloadmypic" title="图片加载时" lay-skin="primary" {% if is_true(g.userinfo.ucfg_urlrule_inloadmypic) %}checked{% endif %} value="1">
+                                <input type="checkbox" name="ucfg_urlrule_incopyurl" title="URL" lay-skin="primary" {% if is_true(g.userinfo.ucfg_urlrule_incopyurl) %}checked{% endif %} value="1">
+                                <input type="checkbox" name="ucfg_urlrule_incopyhtml" title="HTML" lay-skin="primary" {% if is_true(g.userinfo.ucfg_urlrule_incopyhtml) %}checked{% endif %} value="1">
+                                <input type="checkbox" name="ucfg_urlrule_incopyrst" title="rST" lay-skin="primary" {% if is_true(g.userinfo.ucfg_urlrule_incopyrst) %}checked{% endif %} value="1">
+                                <input type="checkbox" name="ucfg_urlrule_incopymd" title="Markdown" lay-skin="primary" {% if is_true(g.userinfo.ucfg_urlrule_incopymd) %}checked{% endif %} value="1">
+                            </div>
                         </div>
                     </div>
                     <div class="layui-form-item">
                         <label class="layui-form-label">统计开关</label>
                         <div class="layui-input-block">
-                            <input type="checkbox" name="ucfg_report_linktoken" title="LinkToken" {% if is_true(g.userinfo.ucfg_report_linktoken) %}checked{% endif %}>
+                            <input type="checkbox" name="ucfg_report_linktoken" title="LinkToken" {% if is_true(g.userinfo.ucfg_report_linktoken) %}checked{% endif %} value="1">
                         </div>
                     </div>
                     {{ intpl("usersetting") }}
@@ -245,7 +268,7 @@
 <script type="text/html" id="toolbar">
     <div>
         <i class="layui-icon layui-icon-about" id="linktokentip"></i>
-        Token分权引用表(LinkToken)：基于Token的最小权限分发，<a href="javascript:;" lay-event="newLink" style="color:#009688;font-weight:bold">添加一个</a>试试吧！
+        <a href="javascript:;" lay-event="newLink" style="color:#009688;font-weight:bold">添加Token分权引用</a>
     </div>
 </script>
 <script type="text/html" id="show_editor_area">
@@ -336,15 +359,44 @@
         });
         var curr = location.hash.replace('#!picbed=', ''),
             limit = parseInt("{{ request.args.limit or g.userinfo.ucfg_mypic_limit or 10 }}");
+        var closeTip = function () {
+            setTimeout(function() {
+                layer.closeAll('tips');
+            }, 1500);
+        }
         //Token提示
-        $("#tokentip").on("mouseover", function() {
+        $("#tokentip").hover(function () {
             let tip = [
                 "Token是目前唯一一种能在API请求中认证用户的方法，它具备API所有权，一旦泄露风险极大！",
                 "所以建议您使用基于Token的分权引用LinkToken（用户设置）。",
                 "更多请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#token' target='_blank' style='color:#009688'>Token</a>",
             ].join("<br>");
-            layer.tips(tip, this, {tips:3, time:3000});
-        });
+            layer.tips(tip, this, {tips: 3, time: 0});
+        }, closeTip);
+        //URL后缀提示
+        $("#urlprocesstip").hover(function () {
+            let tip = [
+                "URL后缀是在复制URL时向链接追加的部分，实现图片处理：",
+                "在后缀中设置分隔符与样式等，结合图片后端的对象存储，实现对图片实时裁剪、缩略等处理。",
+                "依据对象存储参考以下文档：",
+                "<a href='https://help.upyun.com/knowledge-base/image/' target='_blank' style='color:#009688'>又拍云图片处理</a>",
+                "<a href='https://developer.qiniu.com/dora/api/3683/img-directions-for-use' target='_blank' style='color:#009688'>七牛云图片处理</a>",
+                "<a href='https://help.aliyun.com/document_detail/99372.html' target='_blank' style='color:#009688'>阿里云OSS数据处理</a>",
+                "<a href='https://cloud.tencent.com/document/product/436/42214' target='_blank' style='color:#009688'>腾讯云COS数据处理</a>",
+            ].join("<br>");
+            layer.tips(tip, this, {tips: 3, time: 0});
+        }, closeTip);
+        $("#urlsensetip").hover(function () {
+            let tip = [
+                "即允许URL后缀使用的场景：",
+                "我的图片页面加载图片时；",
+                "图片详情复制URL时；",
+                "图片详情复制HTML时；",
+                "图片详情复制rST时；",
+                "图片详情复制Markdown时。",
+            ].join("<br>");
+            layer.tips(tip, this, {tips: 3, time: 0});
+        }, closeTip);
         //渲染默认加载相册的select下拉多选
         function renderDefaultAlbumSelect() {
             let selectd_album = "{{ g.userinfo.ucfg_default_album or '' }}";
@@ -407,20 +459,29 @@
         var shaDatas = {};
         //获取我的图片流方法
         function get_pics(page, success) {
-            var url = "{{ url_for('api.waterfall', sort='desc', is_mgr=request.args.is_mgr, album=load_album)|safe }}&limit=" + limit + "&page=" + page;
+            var url_rules = JSON.parse('{{ g.userinfo.parsed_ucfg_url_rule|tojson }}'),
+                url_rule_switch = JSON.parse('{{ g.userinfo.parsed_ucfg_url_rule_switch|tojson }}'),
+                url = "{{ url_for('api.waterfall', sort='desc', is_mgr=request.args.is_mgr, album=load_album)|safe }}&limit=" + limit + "&page=" + page;
             picbed.ajax(url, function (res) {
                 var html = res.data.map(function (img) {
                     img["ctime"] = util.toDateString(img.ctime * 1000);
                     img["is_control"] = true;
+                    img["get_src"] = function(_type) {
+                        //根据type返回src
+                        var typeSwitch = url_rule_switch[_type];
+                        if (typeSwitch === true) {
+                            return img.src + (url_rules[img.sender] || "");
+                        }
+                        return img.src;
+                    };
                     shaDatas[img.sha] = img;
-                    return '<div class="pin"><img lay-src="' + img.src +'" data-sha="' + img.sha + '"></div>';
+                    return '<div class="pin"><img lay-src="' + img.get_src("loadmypic") + '" data-sha="' + img.sha + '"></div>';
                 }).join("");
                 $("#waterfall").html(html);
                 flow.lazyimg(); 
                 typeof success === "function" && success(res);
                 $("#waterfall").find(".pin img").on("click", function() {
-                    var sha = $(this).data("sha"),
-                        src = this.src;
+                    var sha = $(this).data("sha");
                     laytpl(upload_show_tpl.innerHTML).render(shaDatas[sha], function(html){
                         layer.open({
                             type: 1,
@@ -474,7 +535,7 @@
                                 var id = "jump-" + sha,
                                     a = document.createElement("a");
                                 a.style.display='none';
-                                a.setAttribute("href", src);
+                                a.setAttribute("href", shaDatas[sha].src);
                                 a.setAttribute("target", "_blank");
                                 a.setAttribute("id", id);
                                 if(!document.getElementById(id)) {
@@ -626,6 +687,21 @@
             }
             if (!data.field.hasOwnProperty("ucfg_report_linktoken")) {
                 data.field["ucfg_report_linktoken"] = 0;
+            }
+            if (!data.field.hasOwnProperty("ucfg_urlrule_inloadmypic")) {
+                data.field["ucfg_urlrule_inloadmypic"] = 0;
+            }
+            if (!data.field.hasOwnProperty("ucfg_urlrule_incopyurl")) {
+                data.field["ucfg_urlrule_incopyurl"] = 0;
+            }
+            if (!data.field.hasOwnProperty("ucfg_urlrule_incopyhtml")) {
+                data.field["ucfg_urlrule_incopyhtml"] = 0;
+            }
+            if (!data.field.hasOwnProperty("ucfg_urlrule_incopyrst")) {
+                data.field["ucfg_urlrule_incopyrst"] = 0;
+            }
+            if (!data.field.hasOwnProperty("ucfg_urlrule_incopymd")) {
+                data.field["ucfg_urlrule_incopymd"] = 0;
             }
             picbed.ajax("{{ url_for('api.my', Action='updateUserCfg') }}", function(res) {
                 if (res.code === 0) {
@@ -924,15 +1000,15 @@
                 icon: 'layui-icon-refresh' //图标类名
             }, 'filter', 'print', 'exports'],
             done: function() {
-                $("#linktokentip").on("mouseover", function() {
+                $("#linktokentip").hover(function () {
                     let tip = [
                         "&nbsp;&nbsp;&nbsp;&nbsp;Token分权引用(LinkToken)是将Token的映射，Token最小权限与安全限定下的调用方式。",
                         "用户可以创建分权引用，定义调用此引用的安全来源主机地址、IP，并限定访问某个路由或某个路径，提交后会得到一个最小权限的LinkToken！",
                         "然后就可以在其他网站跨域调用，比如上传图片，即便丢失也不会影响其他，禁用或删除即可，不会泄露Token。",
                         "更多请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#linktoken' target='_blank' style='color:#009688'>LinkToken</a>",
                     ].join("<br>&nbsp;&nbsp;&nbsp;&nbsp;");
-                    layer.tips(tip, "#linktokentip", {tips:3, time:3000});
-                });
+                    layer.tips(tip, this, {tips: 3, time: 0});
+                }, closeTip);
             }
         });
         //监听工具条

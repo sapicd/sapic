@@ -92,6 +92,9 @@
             imgUrlRe = new RegExp("^(http[s]?://.*.(?:" + exts + "))$", "i");
 
         var showUploadCopy = function (res) {
+            res["get_src"] = function() {
+                return res.src;
+            };
             laytpl(upload_show_tpl.innerHTML).render(res, function (html) {
                 layer.open({
                     type: 1,

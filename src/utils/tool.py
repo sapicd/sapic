@@ -124,6 +124,11 @@ def parse_valid_verticaline(s):
         return [i for i in verticaline_pat.split(s) if i]
 
 
+def parse_valid_colon(s):
+    if s:
+        return dict([i.split(":") for i in comma_pat.split(s) if i])
+
+
 def is_true(value):
     if value and value in (True, "True", "true", "on", 1, "1", "yes"):
         return True

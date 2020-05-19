@@ -3,5 +3,5 @@
 <meta name="author" content="SaintIC">
 <meta name="keywords" content="{{ g.site.seo_keywords or 'SaintIC,picbed,图床' }}">
 <meta name="description" content="{{ g.site.seo_description or Doc }}">
-<link href="{{ g.site.favicon or 'https://static.saintic.com/cdn/images/favicon-32.png' }}" rel="icon" type="image/x-icon" />
-<link href="{{ g.site.favicon or 'https://static.saintic.com/cdn/images/favicon-32.png' }}" rel="shortcut icon" type="image/x-icon" />
+<link href="{{ g.site.favicon or url_for('static', filename='img/favicon.png') }}" rel="icon" type="image/x-icon" />
+<link href="{{ g.site.favicon or url_for('static', filename='img/favicon.png') }}" rel="shortcut icon" type="image/x-icon" />

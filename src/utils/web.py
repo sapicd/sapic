@@ -23,7 +23,7 @@ from flask import g, redirect, request, url_for, abort, Response, jsonify,\
 from libs.storage import get_storage
 from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
-    parse_valid_verticaline
+    parse_valid_verticaline, parse_valid_colon, is_true
 from ._compat import PY2, text_type, urlsplit
 
 
@@ -232,6 +232,22 @@ def change_res_format(res):
         mn = request.form.get("msg_name", request.args.get("msg_name"))
         return format_apires(res, sn, oc, mn)
     return res
+
+
+def change_userinfo(userinfo):
+    """解析用户信息userinfo部分字段数据"""
+    if userinfo and isinstance(userinfo, dict):
+        urlrule = userinfo.get("ucfg_url_rule")
+        if urlrule:
+            userinfo["parsed_ucfg_url_rule"] = parse_valid_colon(urlrule) or {}
+            userinfo["parsed_ucfg_url_rule_switch"] = dict(
+                loadmypic=is_true(g.userinfo.get("ucfg_urlrule_inloadmypic")),
+                url=is_true(g.userinfo.get("ucfg_urlrule_incopyurl")),
+                html=is_true(g.userinfo.get("ucfg_urlrule_incopyhtml")),
+                rst=is_true(g.userinfo.get("ucfg_urlrule_incopyrst")),
+                markdown=is_true(g.userinfo.get("ucfg_urlrule_incopymd")),
+            )
+    return userinfo
 
 
 def get_site_config():

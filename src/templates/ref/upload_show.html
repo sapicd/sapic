@@ -26,7 +26,7 @@
     {{# } }}
     <div class="layui-row layui-col-space2">
         <div class="layui-col-xs12 layui-col-sm2 layui-col-md2">
-            <a href="{{ d.src }}" target="_blank"><img src="{{ d.src }}" style="max-width:80px;padding-top:61px;"></a>
+            <a href="{{ d.src }}" target="_blank"><img src="{{ d.get_src('url') }}" style="max-width:80px;padding-top:61px;"></a>
         </div>
         <div class="layui-col-xs12 layui-col-sm10 layui-col-md10">
             <div class="layui-tab layui-tab-brief">
@@ -38,24 +38,24 @@
                 </ul>
                 <div class="layui-tab-content">
                     <div class="layui-tab-item layui-show">
-                        <textarea class="layui-textarea" readonly id="url">{{ d.src }}</textarea>
+                        <textarea class="layui-textarea" readonly id="url">{{ d.get_src('url') }}</textarea>
                         <button type="button" class="layui-btn layui-btn-sm layui-btn-fluid upload_show_copy"
                             data-copyid="#url">复制</button>
                     </div>
                     <div class="layui-tab-item">
                         <textarea class="layui-textarea" readonly
-                            id="html"><img src="{{ d.src }}" alt="{{ d.filename }}"></textarea>
+                            id="html"><img src="{{ d.get_src('html') }}" alt="{{ d.filename }}"></textarea>
                         <button type="button" class="layui-btn layui-btn-sm layui-btn-fluid upload_show_copy"
                             data-copyid="#html">复制</button>
                     </div>
                     <div class="layui-tab-item">
-                        <textarea class="layui-textarea" readonly id="rst">.. image:: {{ d.src }}</textarea>
+                        <textarea class="layui-textarea" readonly id="rst">.. image:: {{ d.get_src('rst') }}</textarea>
                         <button type="button" class="layui-btn layui-btn-sm layui-btn-fluid upload_show_copy"
                             data-copyid="#rst">复制</button>
                     </div>
                     <div class="layui-tab-item">
                         <textarea class="layui-textarea" readonly
-                            id="markdown">![{{ d.filename }}]({{ d.src }})</textarea>
+                            id="markdown">![{{ d.filename }}]({{ d.get_src('markdown') }})</textarea>
                         <button type="button" class="layui-btn layui-btn-sm layui-btn-fluid upload_show_copy"
                             data-copyid="#markdown">复制</button>
                     </div>
