@@ -11,7 +11,7 @@
 
 import json
 from random import choice, randint
-from os.path import join, splitext
+from posixpath import join, splitext
 from base64 import urlsafe_b64encode as b64encode
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -456,7 +456,8 @@ def shamgr(sha):
     if request.method == "GET":
         def get_url_with_suffix(d, _type):
             """根据type返回src"""
-            if is_true(g.userinfo.parsed_ucfg_url_rule_switch.get(_type)):
+            if g.userinfo and "parsed_ucfg_url_rule_switch" in g.userinfo and \
+                    is_true(g.userinfo.parsed_ucfg_url_rule_switch.get(_type)):
                 return "%s%s" % (
                     d["src"],
                     g.userinfo.parsed_ucfg_url_rule.get(d["sender"], "")

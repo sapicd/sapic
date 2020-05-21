@@ -32,6 +32,9 @@
         <div class="layui-tab-content">
             <div class="layui-tab-item layui-show">
                 <form class="layui-form" id="control" lay-filter="setting" autocomplete="off">
+                    
+                  <div class="layui-row">
+                   <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
                     <fieldset class="layui-elem-field layui-field-title">
                         <legend>站点</legend>
                         <div class="layui-field-box">
@@ -103,7 +106,7 @@
                                 <label class="layui-form-label">背景透明度</label>
                                 <div class="layui-input-block">
                                     <input type="number" step=0.1 min=0 max=1 name="bg_ransparency" value="{{ g.site.bg_ransparency }}"
-                                        placeholder="站点背景透明度，0-1之间（值越大越透明），默认是：0.5，目前仅首页有效" autocomplete="off" class="layui-input">
+                                        placeholder="站点背景透明度，0-1之间（值越大越透明），默认是0.5" autocomplete="off" class="layui-input">
                                 </div>
                             </div>
                             <div class="layui-form-item">
@@ -138,7 +141,7 @@
                             <div class="layui-form-item">
                                 <label class="layui-form-label">禁止注册用户</label>
                                 <div class="layui-input-block">
-                                    <input type="text" name="forbidden_username" value="{{ g.site.forbidden_username }}" placeholder="注册时禁止使用的用户名，以逗号分割多个，默认包含anonymous"
+                                    <input type="text" name="forbidden_username" value="{{ g.site.forbidden_username }}" placeholder="禁止注册的用户名，逗号分割多个，默认包含anonymous"
                                         autocomplete="off" class="layui-input">
                                 </div>
                             </div>
@@ -161,6 +164,8 @@
                             {{ intpl("sitesetting") }}
                         </div>
                     </fieldset>
+                   </div>
+                   <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
                     <fieldset class="layui-elem-field layui-field-title">
                         <legend>上传</legend>
                         <div class="layui-field-box">
@@ -183,7 +188,7 @@
                                 <label class="layui-form-label">图片后缀限制</label>
                                 <div class="layui-input-block">
                                     <input type="text" name="upload_exts" value="{{ g.site.upload_exts }}"
-                                        placeholder="上传允许的扩展名，以竖线（|）分隔，默认是：jpg|png|gif|bmp|jpeg|webp" autocomplete="off"
+                                        placeholder="竖线分隔上传允许的后缀，默认是jpg|jpeg|png|gif|webp|bmp" autocomplete="off"
                                         class="layui-input">
                                 </div>
                             </div>
@@ -191,21 +196,21 @@
                                 <label class="layui-form-label">大小限制</label>
                                 <div class="layui-input-block">
                                     <input type="number" step=1 name="upload_size" max=10 min=1 value="{{ g.site.upload_size }}"
-                                        placeholder="上传允许的大小，最大10，单位MB，默认是：10" autocomplete="off" class="layui-input">
+                                        placeholder="上传允许的大小，最大10，单位MB，默认是10" autocomplete="off" class="layui-input">
                                 </div>
                             </div>
                             <div class="layui-form-item">
                                 <label class="layui-form-label">数量限制</label>
                                 <div class="layui-input-block">
                                     <input type="number" step=1 min=0 max=10 name="upload_number" value="{{ g.site.upload_number }}"
-                                        placeholder="上传允许的数量，最大10，默认是：10" autocomplete="off" class="layui-input">
+                                        placeholder="上传允许的数量，最大10，默认是10" autocomplete="off" class="layui-input">
                                 </div>
                             </div>
                             <div class="layui-form-item">
                                 <label class="layui-form-label" style="color:red">上传字段</label>
                                 <div class="layui-input-block">
                                     <input type="text" name="upload_field" value="{{ g.site.upload_field }}"
-                                        placeholder="Api上传接口获取文件或base64数据的字段名，默认picbed，谨慎修改！" autocomplete="off" class="layui-input">
+                                        placeholder="上传接口获取文件字段名，默认picbed，谨慎修改！" autocomplete="off" class="layui-input">
                                 </div>
                             </div>
                             {% set bes = get_call_list("upimg_save", _type="func") %}
@@ -221,9 +226,9 @@
                                 </div>
                             </div>
                             <div class="layui-form-item">
-                                <label class="layui-form-label">图片路径前缀规则</label>
+                                <label class="layui-form-label">图片路径前缀规则(user/)</label>
                                 <div class="layui-input-block">
-                                    <input type="radio" name="upload_path_rule" value="default" title="默认(无子目录)"
+                                    <input type="radio" name="upload_path_rule" value="default" title="默认(用户名)"
                                         {% if g.site.upload_path_rule|d("default") == "default" %}checked="checked" {% endif %}
                                         autocomplete="off">
                                     <input type="radio" name="upload_path_rule" value="date1" title="年/月/日"
@@ -248,6 +253,11 @@
                             </div>
                         </div>
                     </fieldset>
+                   </div>
+                  </div>
+
+                  <div class="layui-row">
+                   <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
                     <fieldset class="layui-elem-field layui-field-title">
                         <legend>钩子</legend>
                         <div class="layui-field-box">
@@ -266,12 +276,19 @@
                             {{ intpl("hooksetting") }}
                         </div>
                     </fieldset>
+                   </div>
+                  </div>
+                
+                  <div class="layui-row">
+                   <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
                     <div class="layui-form-item">
                         <div class="layui-input-block">
                             <button class="layui-btn" lay-submit lay-filter="*">立即提交</button>
                             <button type="reset" class="layui-btn layui-btn-primary">重置</button>
                         </div>
                     </div>
+                   </div>
+                  </div>
                 </form>
             </div>
             <div class="layui-tab-item">
@@ -287,9 +304,9 @@
 {% raw %}
 <script type="text/html" id="hook_action">
     {{#  if(d.state === 'enabled'){ }}
-    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal" lay-event="disable">禁用</a>
+    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-warm" lay-event="disable">禁用</a>
     {{# } else { }}
-    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-warm" lay-event="enable">启用</a>
+    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal" lay-event="enable">启用</a>
     {{#  } }}
     {{#  if(d.family !== 'local'){ }}
     <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-danger" lay-event="remove">删除</a>
@@ -437,6 +454,7 @@
                         field: 'state',
                         title: '状态',
                         width: 80,
+                        sort: true,
                         templet: function (d) {
                             if (d.state === 'enabled') {
                                 return '<scan style="color:#5FB878">enabled</scan>';
@@ -463,11 +481,12 @@
             var data = obj.data; //获得当前行数据
             var layEvent = obj.event; //获得 lay-event 对应的值
             var tr = obj.tr; //获得当前行 tr 的 DOM 对象（如果有的话）
+            var delhtml = ' <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-danger" lay-event="remove">删除</a></div>';
             if (layEvent === 'disable') { //禁用钩子
                 picbed.ajax("{{ url_for('api.hook', Action='disable') }}", function(res) {
                     layer.msg("已禁用钩子：" + data.name, {icon:1});
                     obj.update({state:'disabled'});
-                    tr[0].lastChild.innerHTML='<div class="layui-table-cell laytable-cell-1-0-9"><a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-warm" lay-event="enable">启用</a> <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-danger" lay-event="remove">删除</a></div>';
+                    tr[0].lastChild.innerHTML='<div class="layui-table-cell laytable-cell-1-0-9"><a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-warm" lay-event="enable">启用</a>' + (data.family === "local" ? '' : delhtml);
                 }, {
                     data: {name:data.name}
                 });
@@ -475,7 +494,7 @@
                 picbed.ajax("{{ url_for('api.hook', Action='enable') }}", function(res) {
                     layer.msg("已启用钩子：" + data.name, {icon:1});
                     obj.update({state:'enabled'});
-                    tr[0].lastChild.innerHTML='<div class="layui-table-cell laytable-cell-1-0-9"><a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal" lay-event="disable">禁用</a> <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-danger" lay-event="remove">删除</a></div>';
+                    tr[0].lastChild.innerHTML='<div class="layui-table-cell laytable-cell-1-0-9"><a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal" lay-event="disable">禁用</a>' + (data.family === "local" ? '' : delhtml);
                 }, {
                     data: {name:data.name}
                 });
