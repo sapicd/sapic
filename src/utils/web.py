@@ -338,6 +338,7 @@ class ImgUrlFileStorage(object):
     """上传接口中接受远程图片地址。"""
 
     def __init__(self, imgurl, filename=None, allowed_exts=[]):
+        self._imgurl = imgurl
         self._filename = filename
         self._allowed_exts = [
             ".{}".format(e)
@@ -347,18 +348,19 @@ class ImgUrlFileStorage(object):
                 ALLOWED_EXTS
             )
         ]
-        self._imgobj = self.__download(imgurl)
+        self._imgobj = self.__download()
 
     @property
     def Headers(self):
         return {"User-Agent": gen_ua()}
 
-    def __download(self, imgurl):
-        if imgurl and url_pat.match(imgurl) and \
-                (splitext(imgurl)[-1] in self._allowed_exts or self._filename):
+    def __download(self):
+        if self._imgurl and url_pat.match(self._imgurl):
             try:
                 import requests
-                resp = requests.get(imgurl, headers=self.Headers, timeout=5)
+                resp = requests.get(
+                    self._imgurl, headers=self.Headers, timeout=10
+                )
                 resp.raise_for_status()
             except ImportError:
                 logger.error("Please install the requests module")
@@ -390,4 +392,6 @@ class ImgUrlFileStorage(object):
 
     @property
     def getObj(self):
-        return self if self._imgobj else None
+        f = self.filename
+        if f and splitext(f)[-1] in self._allowed_exts:
+            return self if self._imgobj else None
