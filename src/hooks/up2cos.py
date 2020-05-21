@@ -14,6 +14,7 @@ __author__ = 'staugur <staugur@saintic.com>'
 __hookname__ = 'up2cos'
 __description__ = '将图片保存到腾讯云'
 __state__ = 'disabled'
+__catalog__ = 'upload'
 
 from os.path import join
 from flask import g

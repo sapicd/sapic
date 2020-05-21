@@ -12,6 +12,7 @@
 __version__ = '0.3.1'
 __author__ = 'staugur'
 __description__ = '使用Token验证Api'
+__catalog__ = 'auth'
 
 import json
 from flask import request, g

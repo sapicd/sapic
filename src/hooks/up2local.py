@@ -12,6 +12,7 @@
 __version__ = '0.2.1'
 __author__ = 'staugur'
 __description__ = '将图片保存到本地'
+__catalog__ = 'upload'
 
 from os import makedirs, remove
 from os.path import exists, join, isfile

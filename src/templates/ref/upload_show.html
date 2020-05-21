@@ -21,10 +21,10 @@
         <scan style="color:red">{{ d.status }}</scan>
         {{# } }}
     </p>
-    <p>图片保存者：{{ d.sender }}</p>
     {{# } else { }}
     <p>文件名：<a href="{{ d.api }}" target="_blank">{{ d.filename }}</a></p>
     {{# } }}
+    <p>图片保存者：{{ d.sender }}</p>
     <div class="layui-row layui-col-space2">
         <div class="layui-col-xs12 layui-col-sm2 layui-col-md2">
             <a href="{{ d.src }}" target="_blank"><img src="{{ d.get_src('url') }}" style="max-width:80px;padding-top:61px;"></a>
