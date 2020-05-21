@@ -3,3 +3,4 @@
 -r up2qiniu.txt
 -r up2oss.txt
 -r up2cos.txt
+-r procname.txt

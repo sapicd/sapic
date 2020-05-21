@@ -5,7 +5,7 @@
 [![Build Status](https://travis-ci.org/staugur/picbed.svg?branch=master)](https://travis-ci.org/staugur/picbed)
 [![codecov](https://codecov.io/gh/staugur/picbed/branch/master/graph/badge.svg)](https://codecov.io/gh/staugur/picbed)
 
-## 部署
+## 手动部署
 
 1. 要求： Python2.7、Python3.5+（含PyPy）和Redis
 
@@ -58,6 +58,22 @@
         }
     }
     ```
+
+## 使用Docker部署
+
+源码中已经编写了Dockerfile文件，可以藉此构建picbed镜像。
+
+```
+$ git clone https://github.com/staugur/picbed && cd picbed
+$ docker build -t picbed .
+$ docker run -tdi --name my-picbed --restart=always --net=host \
+    -e picbed_redis_url="Your Redis URL" -e other_config_key=value \
+    picbed
+$ docker exec -i picbed flask sa create -u 管理员账号 -p 密码 --isAdmin
+```
+
+使用 *docker run* 启动镜像的命令可以自行修改，picbed所用配置可以使用-e设置
+环境变量，必需项picbed_redis_url，其他请参考文档。
 
 ## 文档
 
