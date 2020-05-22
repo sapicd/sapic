@@ -138,10 +138,10 @@ var up2picbed = (function () {
                 }
             };
             try {
-                xhr.send(data)
+                xhr.send(data);
             } catch (e) {
                 self._alert(e.message);
-            };
+            }
         }
 
         _alert(msg) {
@@ -167,12 +167,7 @@ var up2picbed = (function () {
         }
     }
     let hasElem = function (id_or_class) {
-        var element = document.querySelector(id_or_class);
-        if (element) {
-            return true
-        } else {
-            return false
-        }
+        return document.querySelector(id_or_class) ? true : false;
     };
     //获取js本身
     let getSelf = function () {
@@ -189,7 +184,7 @@ var up2picbed = (function () {
                 }
             }
             return jsSelf;
-        };
+        }
     }();
     /* opt选项用于构造Uploader类，无值时读取dataset自身的初始化参数，支持如下：
      * @param url: [必需]picbed上传接口地址
