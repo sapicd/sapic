@@ -110,7 +110,7 @@ layui.define(["cropper", "layer"], function(exports) {
                 success: function(res) {
                     console.log('ok');
                     if (res.code === 0) {
-                        layer.msg("头像上传成功", {icon:1}, function() {
+                        layer.msg("头像上传成功", {icon:1,time:1000}, function() {
                             $(".tailoring-container").toggle();
                         });
                         $("input[name='avatar']").val(res.src);
@@ -119,8 +119,6 @@ layui.define(["cropper", "layer"], function(exports) {
                     }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    console.log('error');
-                    console.log(jqXHR);
                     layer.msg(textStatus, {icon:2});
                 }
             });
