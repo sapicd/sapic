@@ -114,7 +114,6 @@
                         <div class="layui-form-mid layui-word-aux">
                             <a href="javascript:;" style="color: #393D49" id="uploadAvatar"><i class="layui-icon layui-icon-upload-drag"></i>上传头像</a>
                         </div>
-
                     </div>
                     {{ intpl("profile") }}
                     <div class="layui-form-item">
@@ -122,35 +121,6 @@
                         <button type="reset" class="layui-btn layui-btn-primary">重置</button>
                     </div>
                 </form>
-                <!--图片裁剪框 start-->
-                <div style="display: none" class="tailoring-container">
-                            <div class="tailoring-content">
-                                <div class="tailoring-content-one">
-                                    <label title="上传图片" for="chooseImg" class="l-btn choose-btn">
-                                        <input type="file" accept="image/jpg,image/jpeg,image/png" name="file" id="chooseImg" class="hidden">
-                                        选择图片
-                                    </label>
-                                    <div class="close-tailoring">×</div>
-                                </div>
-                                <div class="tailoring-content-two">
-                                    <div class="tailoring-box-parcel">
-                                        <img id="tailoringImg">
-                                    </div>
-                                    <div class="preview-box-parcel">
-                                        <p>图片预览：</p>
-                                        <div class="square previewImg"></div>
-                                        <div class="circular previewImg"></div>
-                                    </div>
-                                </div>
-                                <div class="tailoring-content-three">
-                                    <button class="l-btn cropper-reset-btn">复位</button>
-                                    <button class="l-btn cropper-rotate-btn">旋转</button>
-                                    <button class="l-btn cropper-scaleX-btn">换向</button>
-                                    <button class="l-btn sureCut" id="sureCut">确定剪裁并上传头像</button>
-                                </div>
-                            </div>
-                </div>
-                <!--图片裁剪框 end-->
             </div>
             <div class="layui-tab-item">
                 <form class="layui-form layui-form-pane">
@@ -367,7 +337,7 @@
 {% set load_album = request.args.album or g.userinfo.ucfg_default_album %}
 {% endif %}
 <script>
-    layui.use(['picbed', 'laypage', 'flow', 'form', 'element', 'layer', 'laytpl', 'util', 'table', 'tableSelect', 'avater'], function () {
+    layui.use(['picbed', 'laypage', 'flow', 'form', 'element', 'layer', 'laytpl', 'util', 'table', 'tableSelect', 'avatar'], function () {
         var $ = layui.jquery,
             picbed = layui.picbed,
             util = layui.util,
@@ -378,6 +348,7 @@
             laytpl = layui.laytpl,
             element = layui.element,
             laypage = layui.laypage,
+            avatar = layui.avatar,
             tableSelect = layui.tableSelect;
 
         //显示当前tab
@@ -632,6 +603,17 @@
                 }
             }
         }
+        //渲染上传头像
+        avatar.render({
+            success: function(base64url, base64size) {
+                picbed.ajax("{{ url_for('api.upload') }}", function(res) {
+                    layer.msg("头像上传成功，请保存资料！", {icon:1});
+                    $("input[name='avatar']").val(res.src);
+                }, {
+                    data: {picbed: base64url, album: 'avatar'}
+                });
+            }
+        });
         //监听资料修改
         form.on('submit(profile)', function(data){
             var post = data.field;

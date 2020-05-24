@@ -202,7 +202,7 @@ var up2picbed = (function () {
      */
     let init = (opt) => {
         if (!opt) opt = {};
-        if (!Object.prototype.toString.call(opt) === '[Object Object]') {
+        if (!(Object.prototype.toString.call(opt) === '[object Object]')) {
             console.error("up2picbed配置项错误");
             return false;
         }
