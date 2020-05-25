@@ -146,19 +146,21 @@
                                 </div>
                             </div>
                             <div class="layui-form-item">
-                                <label class="layui-form-label">开放注册</label>
-                                <div class="layui-input-block">
-                                    <input type="checkbox" name="register" lay-skin="switch" lay-text="ON|OFF"
+                                <div class="layui-inline">
+                                    <label class="layui-form-label">开放注册</label>
+                                    <div class="layui-input-inline" style="width: 50px;">
+                                        <input type="checkbox" name="register" lay-skin="switch" lay-text="ON|OFF"
                                         {% if is_true(g.site.register) %}checked="checked" {% endif %} autocomplete="off"
                                         value="1">
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">禁止普通用户登录</label>
-                                <div class="layui-input-block">
-                                    <input type="checkbox" name="disable_login" lay-skin="switch" lay-text="ON|OFF"
+                                <div class="layui-inline">
+                                    <label class="layui-form-label" style="width: auto">禁止普通用户登录</label>
+                                    <div class="layui-input-inline" style="width: 50px;">
+                                        <input type="checkbox" name="disable_login" lay-skin="switch" lay-text="ON|OFF"
                                         {% if is_true(g.site.disable_login) %}checked="checked" {% endif %} autocomplete="off"
                                         value="1">
+                                    </div>
                                 </div>
                             </div>
                             {{ intpl("sitesetting") }}
@@ -178,7 +180,7 @@
                                 </div>
                             </div>
                             <div class="layui-form-item layui-form-text">
-                                <label class="layui-form-label">首页上传区域提示</label>
+                                <label class="layui-form-label">首页上传提示(支持HTML)</label>
                                 <div class="layui-input-block">
                                     <textarea name="upload_beforehtml" placeholder="首页上传区域上方文字提示"
                                         value="" class="layui-textarea"></textarea>
@@ -226,9 +228,9 @@
                                 </div>
                             </div>
                             <div class="layui-form-item">
-                                <label class="layui-form-label">图片路径前缀规则(user/)</label>
+                                <label class="layui-form-label">图片路径前缀规则: user/&lt;&gt;</label>
                                 <div class="layui-input-block">
-                                    <input type="radio" name="upload_path_rule" value="default" title="默认(用户名)"
+                                    <input type="radio" name="upload_path_rule" value="default" title="默认(无目录)"
                                         {% if g.site.upload_path_rule|d("default") == "default" %}checked="checked" {% endif %}
                                         autocomplete="off">
                                     <input type="radio" name="upload_path_rule" value="date1" title="年/月/日"
@@ -238,7 +240,7 @@
                                 </div>
                             </div>
                             <div class="layui-form-item">
-                                <label class="layui-form-label">图片文件命名规则</label>
+                                <label class="layui-form-label">图片文件命名规则: /&lt;name&gt;</label>
                                 <div class="layui-input-block">
                                     <input type="radio" name="upload_file_rule" value="default" title="默认(原名)"
                                         {% if g.site.upload_file_rule|d("default") == "default" %}checked="checked" {% endif %}
@@ -249,6 +251,14 @@
                                         {% if g.site.upload_file_rule == "time2" %}checked="checked" {% endif %} autocomplete="off">
                                     <input type="radio" name="upload_file_rule" value="time3" title="年月日时分秒+随机数"
                                         {% if g.site.upload_file_rule == "time3" %}checked="checked" {% endif %} autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label" style="width: auto;">上述两条规则允许用户覆盖</label>
+                                <div class="layui-input-block" style="width: auto;">
+                                    <input type="checkbox" name="upload_rule_overridden" lay-skin="switch" lay-text="ON|OFF"
+                                        {% if is_true(g.site.upload_rule_overridden) %}checked="checked" {% endif %} autocomplete="off"
+                                        value="1">
                                 </div>
                             </div>
                         </div>
@@ -374,6 +384,9 @@
             }
             if (!data.field.hasOwnProperty("register")) {
                 data.field["register"] = 0;
+            }
+            if (!data.field.hasOwnProperty("upload_rule_overridden")) {
+                data.field["upload_rule_overridden"] = 0;
             }
             if (data.field.cors && data.field.cors !== "*") {
                 let cors = data.field.cors.split(/\s*,\s*/).join(",");

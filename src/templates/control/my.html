@@ -239,6 +239,38 @@
                             <input type="checkbox" name="ucfg_report_linktoken" title="LinkToken" {% if is_true(g.userinfo.ucfg_report_linktoken) %}checked{% endif %} value="1">
                         </div>
                     </div>
+                    {% if is_true(g.site.upload_rule_overridden) %}
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">图片路径前缀规则</label>
+                        <div class="layui-input-block">
+                            <input type="radio" name="ucfg_upload_path_rule" value="default" title="默认(无目录)"
+                                {% if g.userinfo.ucfg_upload_path_rule|d("default") == "default" %}checked="checked" {% endif %}
+                                autocomplete="off">
+                            <input type="radio" name="ucfg_upload_path_rule" value="date1" title="年/月/日"
+                                {% if g.userinfo.ucfg_upload_path_rule == "date1" %}checked="checked" {% endif %} autocomplete="off">
+                            <input type="radio" name="ucfg_upload_path_rule" value="date2" title="年月日"
+                                {% if g.userinfo.ucfg_upload_path_rule == "date2" %}checked="checked" {% endif %} autocomplete="off">
+                            <input type="radio" name="ucfg_upload_path_rule" value="" title="取消(站点默认)"
+                                {% if not g.userinfo.ucfg_upload_path_rule %}checked="checked" {% endif %} autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">图片文件命名规则</label>
+                        <div class="layui-input-block">
+                            <input type="radio" name="ucfg_upload_file_rule" value="default" title="默认(原名)"
+                                {% if g.userinfo.ucfg_upload_file_rule|d("default") == "default" %}checked="checked" {% endif %}
+                                autocomplete="off">
+                            <input type="radio" name="ucfg_upload_file_rule" value="time1" title="时间戳(毫秒)"
+                                {% if g.userinfo.ucfg_upload_file_rule == "time1" %}checked="checked" {% endif %} autocomplete="off">
+                            <input type="radio" name="ucfg_upload_file_rule" value="time2" title="时间戳+随机数"
+                                {% if g.userinfo.ucfg_upload_file_rule == "time2" %}checked="checked" {% endif %} autocomplete="off">
+                            <input type="radio" name="ucfg_upload_file_rule" value="time3" title="年月日时分秒+随机数"
+                                {% if g.userinfo.ucfg_upload_file_rule == "time3" %}checked="checked" {% endif %} autocomplete="off">
+                            <input type="radio" name="ucfg_upload_file_rule" value="" title="取消(站点默认)"
+                                {% if not g.userinfo.ucfg_upload_file_rule %}checked="checked" {% endif %} autocomplete="off">
+                        </div>
+                    </div>
+                    {% endif %}
                     {{ intpl("usersetting") }}
                     <div class="layui-form-item">
                         <button class="layui-btn" lay-submit lay-filter="*">立即提交</button>

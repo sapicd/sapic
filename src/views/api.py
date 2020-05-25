@@ -618,14 +618,18 @@ def upload():
         if "." not in filename:
             filename = "%s%s" % (generate_random(8), suffix)
         #: 根据文件名规则重定义图片名
-        upload_file_rule = g.cfg.upload_file_rule
+        upload_file_rule = (
+            g.userinfo.ucfg_upload_file_rule or g.cfg.upload_file_rule
+        ) if is_true(g.cfg.upload_rule_overridden) else g.cfg.upload_file_rule
         if upload_file_rule in ("time1", "time2", "time3"):
             filename = "%s%s" % (
                 gen_rnd_filename(upload_file_rule),
                 suffix
             )
         #: 上传文件位置前缀规则
-        upload_path_rule = g.cfg.upload_path_rule
+        upload_path_rule = (
+            g.userinfo.ucfg_upload_path_rule or g.cfg.upload_path_rule
+        ) if is_true(g.cfg.upload_rule_overridden) else g.cfg.upload_path_rule
         if upload_path_rule == 'date1':
             upload_path = get_today("%Y/%m/%d")
         elif upload_path_rule == 'date2':
@@ -671,9 +675,7 @@ def upload():
         if not data:
             res.update(code=1, msg="No valid backend storage service")
             return res
-        if len(data) == len(
-            [i for i in data if i.get("code") != 0]
-        ):
+        if len(data) == len([i for i in data if i.get("code") != 0]):
             res.update(
                 code=1,
                 msg="All backend storage services failed to save pictures"
