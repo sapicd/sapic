@@ -30,7 +30,7 @@ after_success:
 - codecov
 deploy:
   provider: script
-  script: bash misc/docker_push.sh
+  script: travis_wait 30 bash misc/docker_push.sh
   on:
     python: 2.7
     condition: "$FLASK_VERSION = 1.0"

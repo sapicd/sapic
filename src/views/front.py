@@ -36,6 +36,7 @@ def login():
 
 
 @bp.route("/logout")
+@login_required
 def logout():
     if g.cfg.site_auth:
         so = current_app.extensions["hookmanager"].proxy(g.cfg.site_auth)

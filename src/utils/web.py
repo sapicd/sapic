@@ -92,7 +92,13 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not g.signin:
-            return redirect(url_for('front.login'))
+            nu = request.args.get("next")
+            if nu and (
+                nu.startswith("/") or nu.startswith(request.url_root)
+            ):
+                return redirect(url_for('front.login', next=nu))
+            else:
+                return redirect(url_for('front.login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -101,6 +107,11 @@ def anonymous_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if g.signin:
+            nu = request.args.get("next")
+            if nu and (
+                nu.startswith("/") or nu.startswith(request.url_root)
+            ):
+                return redirect(nu)
             return redirect(url_for('front.index'))
         return f(*args, **kwargs)
     return decorated_function
