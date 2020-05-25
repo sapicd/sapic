@@ -1,0 +1,7 @@
+logs/
+__pycache__/
+**/*.pyo
+**/*.pyc
+**/*.log
+**/*.cfg
+**/*.qiniu_pythonsdk_hostscache.json
