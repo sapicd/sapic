@@ -2,7 +2,7 @@
 
 var up2picbed = (function () {
 
-    let version = '1.1.0';
+    let version = '1.1.1';
 
     /* 上传类，options配置项如下
      * @param url {String}:  [必需]上传接口

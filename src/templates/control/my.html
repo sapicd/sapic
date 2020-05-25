@@ -250,7 +250,7 @@
                                 {% if g.userinfo.ucfg_upload_path_rule == "date1" %}checked="checked" {% endif %} autocomplete="off">
                             <input type="radio" name="ucfg_upload_path_rule" value="date2" title="年月日"
                                 {% if g.userinfo.ucfg_upload_path_rule == "date2" %}checked="checked" {% endif %} autocomplete="off">
-                            <input type="radio" name="ucfg_upload_path_rule" value="" title="取消(站点默认)"
+                            <input type="radio" name="ucfg_upload_path_rule" value="" title="跟随全局设置"
                                 {% if not g.userinfo.ucfg_upload_path_rule %}checked="checked" {% endif %} autocomplete="off">
                         </div>
                     </div>
@@ -266,7 +266,7 @@
                                 {% if g.userinfo.ucfg_upload_file_rule == "time2" %}checked="checked" {% endif %} autocomplete="off">
                             <input type="radio" name="ucfg_upload_file_rule" value="time3" title="年月日时分秒+随机数"
                                 {% if g.userinfo.ucfg_upload_file_rule == "time3" %}checked="checked" {% endif %} autocomplete="off">
-                            <input type="radio" name="ucfg_upload_file_rule" value="" title="取消(站点默认)"
+                            <input type="radio" name="ucfg_upload_file_rule" value="" title="跟随全局设置"
                                 {% if not g.userinfo.ucfg_upload_file_rule %}checked="checked" {% endif %} autocomplete="off">
                         </div>
                     </div>

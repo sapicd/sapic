@@ -4,7 +4,7 @@ import unittest
 from utils.tool import Attribution, md5, sha1, rsp, get_current_timestamp, \
     allowed_file, parse_valid_comma, parse_valid_verticaline, is_true, \
     hmac_sha256, sha256, check_origin, get_origin, parse_data_uri, \
-    format_upload_src, format_apires, generate_random, check_ip
+    format_upload_src, format_apires, generate_random, check_ip, gen_ua
 
 
 class UtilsTest(unittest.TestCase):
@@ -88,6 +88,7 @@ class UtilsTest(unittest.TestCase):
             {'code': 200, 'errmsg': 'xxx'}
         )
         self.assertEqual(len(generate_random()), 6)
+        self.assertIn("Mozilla/5.0", gen_ua())
 
     def test_checkorigin(self):
         self.assertTrue(check_origin('http://127.0.0.1'))

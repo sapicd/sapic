@@ -61,19 +61,34 @@
 
 ## 使用Docker部署
 
-源码中已经编写了Dockerfile文件，可以藉此构建picbed镜像。
+- 手动构建镜像
 
-```
-$ git clone https://github.com/staugur/picbed && cd picbed
-$ docker build -t picbed .
-$ docker run -tdi --name my-picbed --restart=always --net=host \
-    -e picbed_redis_url="Your Redis URL" -e other_config_key=value \
-    picbed
-$ docker exec -i picbed flask sa create -u 管理员账号 -p 密码 --isAdmin
-```
+  源码中已经编写了Dockerfile文件，可以藉此构建picbed镜像。
 
-使用 *docker run* 启动镜像的命令可以自行修改，picbed所用配置可以使用-e设置
-环境变量，必需项picbed_redis_url，其他请参考文档。
+  ```
+  $ git clone https://github.com/staugur/picbed && cd picbed
+  $ docker build -t picbed .
+  ```
+
+- 使用已上传镜像
+
+  已设置CI实现提交代码自动构建并推送到官方Docker仓库中，直接pull即可：
+
+  ```
+  $ docker pull staugur/picbed  # 或者加上tag拉取某稳定版本的镜像
+  ```
+
+- 启动镜像
+
+  ```
+  $ docker run -tdi --name my-picbed --restart=always --net=host \
+      -e picbed_redis_url="Your Redis URL" -e other_config_key=value \
+      picbed [or: staugur/picbed]
+  $ docker exec -i picbed flask sa create -u 管理员账号 -p 密码 --isAdmin
+  ```
+
+  使用 *docker run* 启动镜像的命令可以自行修改，picbed所用配置可以使用-e设置
+  环境变量，必需项picbed_redis_url，其他请参考文档。
 
 ## 文档
 

@@ -1,7 +1,7 @@
 #!/bin/bash
-tag=$TRAVIS_BRANCH
-if [ "$tag" = "master" ]; then
-    tag=latest
+tag="$TRAVIS_BRANCH"
+if [ -z "$tag" ] || [ "$tag" = "master" ]; then
+    tag="latest"
 fi
 IMGNAME="staugur/picbed:${tag}"
 docker build -t $IMGNAME .
