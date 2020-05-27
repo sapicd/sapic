@@ -27,7 +27,7 @@ from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     check_ir, username_pat
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
-    ImgUrlFileStorage
+    ImgUrlFileStorage, getUploadMethod
 from utils._compat import iteritems
 
 bp = Blueprint("api", "api")
@@ -701,6 +701,7 @@ def upload():
             agent=request.form.get(
                 "origin", request.headers.get('User-Agent', '')
             ),
+            method=getUploadMethod(fp.__class__.__name__),
         ))
         try:
             pipe.execute()

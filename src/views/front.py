@@ -68,3 +68,13 @@ def my():
 @admin_apilogin_required
 def admin():
     return render_template("control/admin.html")
+
+
+@bp.route("/picbed.user.js")
+def userscript():
+    if g.signin and is_true(g.userinfo.ucfg_userscript):
+        resp = make_response(render_template("public/userscript.js"))
+        resp.headers['Content-type'] = 'application/javascript; charset=utf-8'
+        return resp
+    else:
+        return abort(404)

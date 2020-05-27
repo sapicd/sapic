@@ -408,3 +408,14 @@ class ImgUrlFileStorage(object):
         f = self.filename
         if f and splitext(f)[-1] in self._allowed_exts:
             return self if self._imgobj else None
+
+
+def getUploadMethod(class_name):
+    if class_name == "FileStorage":
+        return "file"
+    elif class_name == "ImgUrlFileStorage":
+        return "url"
+    elif class_name == "Base64FileStorage":
+        return "base64"
+    else:
+        return "unknown"
