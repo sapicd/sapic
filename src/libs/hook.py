@@ -345,20 +345,24 @@ class HookManager(object):
                     continue
             func = getattr(h.proxy, _funcname, None)
             if callable(func):
-                if args and kwargs:
-                    result = func(*args, **kwargs)
-                elif kwargs:
-                    result = func(**kwargs)
-                elif args:
-                    result = func(*args)
+                try:
+                    if args and kwargs:
+                        result = func(*args, **kwargs)
+                    elif kwargs:
+                        result = func(**kwargs)
+                    elif args:
+                        result = func(*args)
+                    else:
+                        result = func()
+                except (ValueError, TypeError, Exception) as e:
+                    result = dict(code=1, msg=e, sender=h.name)
                 else:
-                    result = func()
-                if isinstance(result, dict):
-                    result["sender"] = h.name
-                    if "code" not in result:
-                        result["code"] = 0
-                else:
-                    result = dict(code=0, sender=h.name, data=result)
+                    if isinstance(result, dict):
+                        result["sender"] = h.name
+                        if "code" not in result:
+                            result["code"] = 0
+                    else:
+                        result = dict(code=0, sender=h.name, data=result)
                 if callable(_callback):
                     _callback(result)
 

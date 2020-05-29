@@ -9,18 +9,19 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 __author__ = 'staugur <staugur@saintic.com>'
 __hookname__ = 'up2oss'
 __description__ = '将图片保存到阿里云'
 __state__ = 'disabled'
 __catalog__ = 'upload'
 
-from os.path import join
 from flask import g
-from flask._compat import string_types
+from posixpath import join
 from oss2 import Auth, Service, Bucket, BucketIterator
+from utils._compat import string_types
 from utils.web import set_site_config
+from utils.tool import slash_join
 
 
 intpl_hooksetting = '''
@@ -63,20 +64,6 @@ intpl_hooksetting = '''
     </div>
 </fieldset>
 '''
-
-
-def slash_join(*args):
-    stripped_strings = []
-    for a in args:
-        if a[0] == '/':
-            start = 1
-        else:
-            start = 0
-        if a[-1] == '/':
-            stripped_strings.append(a[start:-1])
-        else:
-            stripped_strings.append(a[start:])
-    return '/'.join(stripped_strings)
 
 
 def get_auth():

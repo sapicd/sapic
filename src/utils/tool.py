@@ -12,11 +12,13 @@
 import re
 import hmac
 import hashlib
+import requests
 from uuid import uuid4
 from time import time
 from datetime import datetime
 from random import randrange, sample, randint, choice
 from redis import from_url
+from version import __version__ as PICBED_VERSION
 from .log import Logger
 from ._compat import string_types, text_type, PY2, urlparse
 
@@ -306,3 +308,59 @@ def gen_ua():
         ]
     )
     return ua
+
+
+def slash_join(*args):
+    stripped_strings = []
+    for a in args:
+        if a[0] == '/':
+            start = 1
+        else:
+            start = 0
+        if a[-1] == '/':
+            stripped_strings.append(a[start:-1])
+        else:
+            stripped_strings.append(a[start:])
+    return '/'.join(stripped_strings)
+
+
+def try_request(
+    url,
+    params=None, data=None, headers={}, timeout=5, num_retries=1, method='post'
+):
+    """
+    :param params: dict: 请求查询参数
+    :param data: dict: 提交表单数据
+    :param timeout: int: 超时时间，单位秒
+    :param num_retries: int: 超时重试次数
+    """
+    headers["User-Agent"] = "picbed/v%s" % PICBED_VERSION
+    method = method.lower()
+    if method == 'get':
+        method_func = requests.get
+    elif method == 'post':
+        method_func = requests.post
+    elif method == 'put':
+        method_func = requests.put
+    elif method == 'delete':
+        method_func = requests.delete
+    else:
+        method_func = requests.post
+    try:
+        resp = method_func(
+            url,
+            params=params, headers=headers, timeout=timeout, data=data
+        )
+    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
+        if num_retries > 0:
+            return try_request(
+                url,
+                params=params,
+                data=data,
+                timeout=timeout,
+                num_retries=num_retries-1
+            )
+    except (requests.exceptions.RequestException, Exception):
+        raise
+    else:
+        return resp

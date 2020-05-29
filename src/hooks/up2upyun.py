@@ -18,7 +18,8 @@ __catalog__ = 'upload'
 
 from os.path import join
 from flask import g
-from flask._compat import string_types
+from utils._compat import string_types
+from utils.tool import slash_join
 
 intpl_hooksetting = '''
 <fieldset class="layui-elem-field">
@@ -64,20 +65,6 @@ intpl_hooksetting = '''
 '''
 
 
-def slash_join(*args):
-    stripped_strings = []
-    for a in args:
-        if a[0] == '/':
-            start = 1
-        else:
-            start = 0
-        if a[-1] == '/':
-            stripped_strings.append(a[start:-1])
-        else:
-            stripped_strings.append(a[start:])
-    return '/'.join(stripped_strings)
-
-
 def upimg_save(**kwargs):
     res = dict(code=1)
     try:
@@ -109,7 +96,7 @@ def upimg_save(**kwargs):
                 upyun_basedir = "/%s" % upyun_basedir
             saveto = join(upyun_basedir, upload_path)
             filepath = join(saveto, filename)
-            up = UpYun(bucket, user, passwd, timeout=5, endpoint=ED_AUTO)
+            up = UpYun(bucket, user, passwd, timeout=30, endpoint=ED_AUTO)
             res.update(up.put(filepath, stream))
             res.update(
                 code=0,
@@ -133,6 +120,6 @@ def upimg_delete(sha, upload_path, filename, basedir, save_result):
         upyun_basedir = g.cfg.upyun_basedir or '/'
         if not upyun_basedir.startswith("/"):
             upyun_basedir = "/%s" % upyun_basedir
-        up = UpYun(bucket, user, passwd, timeout=5, endpoint=ED_AUTO)
+        up = UpYun(bucket, user, passwd, timeout=10, endpoint=ED_AUTO)
         filepath = join(basedir or upyun_basedir, upload_path, filename)
         up.delete(filepath)

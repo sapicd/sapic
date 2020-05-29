@@ -678,7 +678,12 @@ def upload():
         if len(data) == len([i for i in data if i.get("code") != 0]):
             res.update(
                 code=1,
-                msg="All backend storage services failed to save pictures"
+                msg="All backend storage services failed to save pictures",
+                errors={
+                    i["sender"]: i["msg"]
+                    for i in data
+                    if i.get("code") != 0
+                },
             )
             return res
         #: 存储数据
