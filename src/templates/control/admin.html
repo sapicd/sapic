@@ -267,10 +267,10 @@
                   </div>
 
                   <div class="layui-row">
-                   <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
                     <fieldset class="layui-elem-field layui-field-title">
                         <legend>钩子</legend>
                         <div class="layui-field-box">
+                            <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
                             <div class="layui-form-item">
                                 <label class="layui-form-label" id="tip-sa"><b style="color: red;">?</b> 第三方认证</label>
                                 <div class="layui-input-block">
@@ -283,10 +283,12 @@
                                     </select>
                                 </div>
                             </div>
-                            {{ intpl("hooksetting") }}
+                            </div>
+                            <div class="layui-row layui-col-space10">
+                                {{ intpl("hooksetting") }}
+                            </div>
                         </div>
                     </fieldset>
-                   </div>
                   </div>
                 
                   <div class="layui-row">
@@ -514,7 +516,7 @@
                 picbed.ajax("{{ url_for('api.hook', Action='disable') }}", function(res) {
                     layer.msg("已禁用钩子：" + data.name, {icon:1});
                     obj.update({state:'disabled'});
-                    tr[0].lastChild.innerHTML='<div class="layui-table-cell laytable-cell-1-0-9"><a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-warm" lay-event="enable">启用</a>' + (data.family === "local" ? '' : delhtml);
+                    tr[0].lastChild.innerHTML='<div class="layui-table-cell laytable-cell-1-0-9"><a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal" lay-event="enable">启用</a>' + (data.family === "local" ? '' : delhtml);
                 }, {
                     data: {name:data.name}
                 });
@@ -522,7 +524,7 @@
                 picbed.ajax("{{ url_for('api.hook', Action='enable') }}", function(res) {
                     layer.msg("已启用钩子：" + data.name, {icon:1});
                     obj.update({state:'enabled'});
-                    tr[0].lastChild.innerHTML='<div class="layui-table-cell laytable-cell-1-0-9"><a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal" lay-event="disable">禁用</a>' + (data.family === "local" ? '' : delhtml);
+                    tr[0].lastChild.innerHTML='<div class="layui-table-cell laytable-cell-1-0-9"><a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-warm" lay-event="disable">禁用</a>' + (data.family === "local" ? '' : delhtml);
                 }, {
                     data: {name:data.name}
                 });

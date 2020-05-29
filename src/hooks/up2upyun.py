@@ -22,6 +22,7 @@ from utils._compat import string_types
 from utils.tool import slash_join
 
 intpl_hooksetting = '''
+<div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
 <fieldset class="layui-elem-field">
     <legend>又拍云存储（{% if "up2upyun" in g.site.upload_includes %}使用中{% else %}未使用{% endif %}）</legend>
     <div class="layui-field-box">
@@ -62,6 +63,7 @@ intpl_hooksetting = '''
         </div>
     </div>
 </fieldset>
+</div>
 '''
 
 

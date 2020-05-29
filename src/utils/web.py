@@ -191,6 +191,7 @@ def dfr(res, default='en-US'):
             "The tencent parameter error": "腾讯云cos相关参数错误",
             "The sm.ms parameter error": "sm.ms相关参数错误",
             "The github parameter error": "GitHub相关参数错误",
+            "The gitee parameter error": "Gitee相关参数错误",
             "An unknown error occurred in the program": "程序发生未知错误",
             "Program data storage service error": "程序数据存储服务异常",
             "Anonymous user is not sign in": "匿名用户未登录",

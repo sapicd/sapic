@@ -25,6 +25,7 @@ from qcloud_cos import CosConfig, CosS3Client
 
 
 intpl_hooksetting = '''
+<div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
 <fieldset class="layui-elem-field">
     <legend>腾讯云对象存储COS（{% if "up2cos" in g.site.upload_includes %}使用中{% else %}未使用{% endif %}）</legend>
     <div class="layui-field-box">
@@ -65,6 +66,7 @@ intpl_hooksetting = '''
         </div>
     </div>
 </fieldset>
+</div>
 '''
 
 
