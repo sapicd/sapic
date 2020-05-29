@@ -48,7 +48,7 @@ def api_after_handler(res):
 @bp.route("/index", methods=["GET", "POST"])
 def index():
     return jsonify(
-        "Hello %s." % (g.userinfo.username if g.signin else "picbed")
+        "Hello %s" % (g.userinfo.username if g.signin else "picbed")
     )
 
 

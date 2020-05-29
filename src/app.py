@@ -49,13 +49,12 @@ def GlobalTemplateVariables():
 @app.before_request
 def before_request():
     g.rc = rc
+    g.site = get_site_config()
+    g.cfg = Attribute(g.site)
     g.signin, g.userinfo = default_login_auth()
     #: Trigger hook, you can modify flask.g
     hm.call("before_request")
-    #: No Required field
-    g.site = get_site_config()
-    g.cfg = Attribute(g.site)
-    #: Required field: username, is_admin
+    #: (Logged-on state)required field: username, is_admin
     g.userinfo = Attribute(change_userinfo(g.userinfo))
     g.is_admin = is_true(g.userinfo.is_admin)
     g.next = get_redirect_url()

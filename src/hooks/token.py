@@ -9,7 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 __author__ = 'staugur'
 __description__ = '使用Token验证Api'
 __catalog__ = 'auth'
@@ -221,6 +221,11 @@ def before_request():
                             (tkey and hmac_sha256(tkey, usr) == sig):
                         g.signin = True
                         g.userinfo = userinfo
+                        #: token验证通过，判断是否禁止普通用户登录
+                        if is_true(g.cfg.disable_login) and \
+                                not is_true(userinfo.get("is_admin")):
+                            g.signin = False
+                            g.userinfo = {}
 
 
 def after_request(res):
