@@ -2,7 +2,7 @@
 
 基于Flask的Web自建图床，默认存储在本地，内置支持存储到又拍云、七牛云、阿里云OSS、腾讯云COS、GitHub、Gitee(码云)。
 
-[![Build Status](https://travis-ci.org/staugur/picbed.svg?branch=master)](https://travis-ci.org/staugur/picbed)
+[![Build Status](https://travis-ci.org/staugur/picbed.svg?branch=1.5.0)](https://travis-ci.org/staugur/picbed)
 [![codecov](https://codecov.io/gh/staugur/picbed/branch/master/graph/badge.svg)](https://codecov.io/gh/staugur/picbed)
 
 ## 手动部署
@@ -75,7 +75,7 @@
   已设置CI实现提交代码自动构建并推送到官方Docker仓库中，直接pull即可：
 
   ```
-  $ docker pull staugur/picbed  # 或者加上tag拉取某稳定版本的镜像
+  $ docker pull staugur/picbed  # 或者加上tag拉取某稳定版本的镜像(1.4.0开始)
   ```
 
 - 启动镜像

@@ -273,7 +273,7 @@
                     {% endif %}
                     <div class="layui-form-item">
                         <div class="layui-inline">
-                            <label class="layui-form-label" style="width: auto;">开启用户脚本</label>
+                            <label class="layui-form-label" style="width: auto;"><i class="layui-icon layui-icon-about" id="userscripttip"></i> 开启用户脚本</label>
                             <div class="layui-input-inline" style="width: 50px;">
                                 <input type="checkbox" name="ucfg_userscript" lay-skin="switch" lay-text="ON|OFF"
                                 {% if is_true(g.userinfo.ucfg_userscript) %}checked="checked" {% endif %} autocomplete="off"
@@ -432,7 +432,7 @@
         };
         //Token提示
         $("#tokentip").hover(function () {
-            let tip = [
+            var tip = [
                 "Token是目前唯一一种能在API请求中认证用户的方法，它具备API所有权，一旦泄露风险极大！",
                 "所以建议您使用基于Token的分权引用LinkToken（用户设置）。",
                 "更多请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#token' target='_blank' style='color:#009688'>Token</a>",
@@ -453,7 +453,7 @@
             layer.tips(tip, this, {tips: 3, time: 0});
         }, closeTip);
         $("#urlsensetip").hover(function () {
-            let tip = [
+            var tip = [
                 "即允许URL后缀使用的场景：",
                 "我的图片页面加载图片时；",
                 "图片详情复制URL时；",
@@ -462,6 +462,16 @@
                 "图片详情复制Markdown时。",
             ].join("<br>");
             layer.tips(tip, this, {tips: 3, time: 0});
+        }, closeTip);
+        //用户脚本提示
+        $("#userscripttip").hover(function () {
+            var url = "{{ url_for('front.userscript', _external=True) }}";
+            var tip = [
+                "温馨提示",
+                '开启用户脚本并保存配置后，可以<a href="' + url + '" target="_blank" style="color:red">点击此链接</a>安装或更新用户脚本，记得填写LinkToken！',
+                "更多请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#userscript' target='_blank' style='color:#009688'>UserScript</a>",
+            ].join("<br>");
+            layer.tips(tip, this, {time: 0});
         }, closeTip);
         //渲染默认加载相册的select下拉多选
         function renderDefaultAlbumSelect() {

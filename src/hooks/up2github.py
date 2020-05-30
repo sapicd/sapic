@@ -66,10 +66,9 @@ intpl_hooksetting = '''
                         autocomplete="off" class="layui-input" {% if is_true(g.site.github_jsdelivr) %}disabled="disabled" class="layui-disabled"{% endif %}>
                 </div>
             </div>
-            <div class="layui-inline" style="margin-bottom:0px">
-                <label class="layui-form-label">使用JsDelivr</label>
-                <div class="layui-input-inline" style="width: 50px;">
-                    <input type="checkbox" name="github_jsdelivr" lay-skin="switch" lay-text="ON|OFF" lay-filter="jsdelivr"
+            <div class="layui-inline">
+                <div class="layui-input-inline" style="width:auto">
+                    <input type="checkbox" name="github_jsdelivr" title="JsDelivr" lay-filter="jsdelivr"
                         {% if is_true(g.site.github_jsdelivr) %}checked="checked" {% endif %} autocomplete="off"
                         value="1">
                 </div>

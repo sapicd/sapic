@@ -9,7 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.3.2'
+__version__ = '0.3.3'
 __author__ = 'staugur'
 __description__ = '使用Token验证Api'
 __catalog__ = 'auth'
@@ -139,7 +139,9 @@ def before_request():
         return
     token = request.form.get("token") or parseAuthorization()
     #: 尝试使用LinkToken映射出token
-    LinkToken = parseAuthorization("LinkToken")
+    LinkToken = request.form.get(
+        "LinkToken", request.args.get("LinkToken")
+    ) or parseAuthorization("LinkToken")
     if not token and LinkToken:
         try:
             if PY2 and isinstance(LinkToken, text_type):

@@ -370,7 +370,7 @@
                 '#tip-sa', {tips: 1}
             );
         });
-        form.on('switch(jsdelivr)', function(data){
+        form.on('checkbox(jsdelivr)', function(data){
             if (data.elem.checked) {
                 $("input[name='github_dn']").attr("disabled","disabled");
                 $("input[name='github_dn']").addClass("layui-disabled");
