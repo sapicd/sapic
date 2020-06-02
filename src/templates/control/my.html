@@ -851,7 +851,7 @@
         }
         function renderEpSelect(selectd_ep) {
             /*渲染ep的select下拉多选*/
-            let eps = ["api.upload", "api.waterfall", "api.login", "api.register", "api.link"];
+            let eps = ["api.upload", "api.waterfall", "api.login", "api.register", "front.userscript"];
             let data = eps.map(function(e) {
                 return {
                     hash: picbed.getHash(e),
@@ -896,7 +896,7 @@
         }
         function renderMethodSelect(selectd_method) {
             /*渲染method的select下拉多选*/
-            let methods = ["get", "post", "put", "delete"];
+            let methods = ["get", "post", "put", "delete", "head"];
             let data = methods.map(function(m) {
                 return {
                     hash: picbed.getHash(m),

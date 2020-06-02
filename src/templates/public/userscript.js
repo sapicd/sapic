@@ -1,18 +1,20 @@
 // ==UserScript==
-// @name        Upload to picbed: {{ g.userinfo.username }}
-// @namespace   https://www.saintic.com/
-// @version     0.1.0
+// @name        Upload to picbed <{{ request.host }}>: {{ g.userinfo.username }}
+// @namespace   {{ request.url_root }}
+// @version     0.1.1
 // @description 上传图片到picbed
 // @author      staugur
 // @match       <all_urls>
 // @include     *
 // @exclude     {{ request.url_root }}*
+// @exclude     https://*.console.aliyun.com/*
 // @run-at      document-start
 // @grant       GM.getValue
 // @grant       GM.info
 // @grant       GM_getValue
 // @grant       GM_info
 // @created     2020-05-27
+// @modified    2020-06-01
 // @github      https://github.com/staugur/picbed
 // @supportURL  https://github.com/staugur/picbed/issues/
 // @icon        {{ g.site.favicon or url_for('static', filename='img/favicon.png', _external=True) }}
