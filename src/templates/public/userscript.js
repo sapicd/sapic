@@ -1,22 +1,21 @@
 // ==UserScript==
-// @name        Upload to picbed <{{ request.host }}>: {{ g.userinfo.username }}
-// @namespace   {{ request.url_root }}
-// @version     0.1.1
+// @name        Upload to picbed <{{ request.host }}@{{ g.userinfo.username }}>
+// @version     0.1.2
 // @description 上传图片到picbed
 // @author      staugur
-// @match       <all_urls>
-// @include     *
+// @namespace   https://www.saintic.com/
+// @include     http://*
+// @include     https://*
 // @exclude     {{ request.url_root }}*
 // @exclude     https://*.console.aliyun.com/*
 // @run-at      document-start
-// @grant       GM.getValue
-// @grant       GM.info
 // @grant       GM_getValue
 // @grant       GM_info
 // @created     2020-05-27
-// @modified    2020-06-01
+// @modified    2020-06-03
 // @github      https://github.com/staugur/picbed
 // @supportURL  https://github.com/staugur/picbed/issues/
+// @updateURL   {{ url_for('front.userscript', LinkToken=g.userinfo.ucfg_userscript_token, _external=True) }}
 // @icon        {{ g.site.favicon or url_for('static', filename='img/favicon.png', _external=True) }}
 // ==/UserScript==
 
@@ -36,7 +35,6 @@ var reader = new FileReader();
 reader.onload = function (file) {
     upload_file(this.result);
 };
-var asyncGMAPI = false;
 
 var i18n = {
     'zh': {
@@ -57,23 +55,15 @@ var i18n = {
 var lang = (navigator.language || navigator.browserLanguage).split('-')[0];
 if (!i18n[lang]) lang = 'en';
 
-var getValue;
-if (typeof GM_getValue === 'undefined' && typeof GM !== 'undefined') {
-    self.GM_getValue = GM.getValue;
-    self.GM_info = GM.info;
-    getValue = GM.getValue;
-    asyncGMAPI = true;
-} else {
-    getValue = function (key, init) {
-        return new Promise(function (resolve, reject) {
-            try {
-                resolve(GM_getValue(key, init));
-            } catch (e) {
-                reject(e);
-            }
-        });
-    };
-}
+var getValue = function (key, init) {
+    return new Promise(function (resolve, reject) {
+        try {
+            resolve(GM_getValue(key, init));
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
 
 function create_panel() {
     //图片右键弹出的"上下文"菜单
@@ -121,7 +111,6 @@ function upload_file(data) {
         }
     };
     xhr.upload.onprogress = function (event) {
-        console.log('hit on progress')
         opt_panel.getElementsByClassName('top_url')[0].style.marginTop = '0px';
         opt_panel.getElementsByClassName('top_url')[0].textContent = i18n[lang]['iu'];
     };
@@ -165,21 +154,11 @@ document.addEventListener('mousedown', function (event) {
             if (opt_panel === null) create_panel();
             // GM 4.x api is async, so we cannot update it in time
             else {
-                if (!asyncGMAPI) {
-                    if (last_update != GM_getValue('timestamp', 0)) {
-                        last_update = GM_getValue('timestamp', 0);
-                        opt_panel.parentElement && opt_panel.parentElement.removeChild(opt_panel);
-                        create_panel();
-                    } else document.body.appendChild(opt_panel);
-                } else {
-                    document.body.appendChild(opt_panel);
-                    GM_getValue('timestamp', 0).then(function (t) {
-                        if (last_update != t) {
-                            last_update = t;
-                            opt_panel.parentElement && opt_panel.parentElement.removeChild(opt_panel);
-                        }
-                    });
-                }
+                if (last_update != GM_getValue('timestamp', 0)) {
+                    last_update = GM_getValue('timestamp', 0);
+                    opt_panel.parentElement && opt_panel.parentElement.removeChild(opt_panel);
+                    create_panel();
+                } else document.body.appendChild(opt_panel);
             }
             opt_panel.style.left = (document.documentElement.offsetWidth + (document.documentElement.scrollLeft || document.body.scrollLeft) - event.pageX >= 200 ? event.pageX : event.pageX >= 200 ? event.pageX - 200 : 0) + 'px';
             opt_panel.style.top = (event.pageY + opt_panel.offsetHeight < (document.documentElement.scrollTop || document.body.scrollTop) + document.documentElement.clientHeight ? event.pageY : event.pageY >= opt_panel.scrollHeight ? event.pageY - opt_panel.offsetHeight : 0) + 'px';

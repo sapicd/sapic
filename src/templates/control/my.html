@@ -273,7 +273,7 @@
                     {% endif %}
                     <div class="layui-form-item">
                         <div class="layui-inline">
-                            <label class="layui-form-label" style="width: auto;"><i class="layui-icon layui-icon-about" id="userscripttip"></i> 开启用户脚本</label>
+                            <label class="layui-form-label" style="width: auto;"><i class="layui-icon layui-icon-about" id="userscripttip"></i> 开启用户脚本 <a href="{{ url_for('front.userscript', _external=True) }}" target="_blank"><i class="layui-icon layui-icon-link" style="font-size: 12px;"></i></a></label>
                             <div class="layui-input-inline" style="width: 50px;">
                                 <input type="checkbox" name="ucfg_userscript" lay-skin="switch" lay-text="ON|OFF"
                                 {% if is_true(g.userinfo.ucfg_userscript) %}checked="checked" {% endif %} autocomplete="off"
@@ -465,13 +465,13 @@
         }, closeTip);
         //用户脚本提示
         $("#userscripttip").hover(function () {
-            var url = "{{ url_for('front.userscript', _external=True) }}";
             var tip = [
-                "温馨提示",
-                '开启用户脚本并保存配置后，可以<a href="' + url + '" target="_blank" style="color:red">点击此链接</a>安装或更新用户脚本，记得填写LinkToken！',
+                "温馨提示：",
+                '开启用户脚本并保存配置后，可以点击开关旁边<i class="layui-icon layui-icon-link"></i>图标进行安装或更新脚本。',
+                '记得填写LinkToken，要求有<b>front.userscript, api.upload</b>端点的get和post权限！',
                 "更多请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#userscript' target='_blank' style='color:#009688'>UserScript</a>",
             ].join("<br>");
-            layer.tips(tip, this, {time: 0});
+            layer.tips(tip, this, {tips:3, time: 0});
         }, closeTip);
         //渲染默认加载相册的select下拉多选
         function renderDefaultAlbumSelect() {
