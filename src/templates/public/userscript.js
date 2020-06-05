@@ -1,18 +1,18 @@
 // ==UserScript==
 // @name        Upload to picbed <{{ request.host }}@{{ g.userinfo.username }}>
-// @version     0.1.2
+// @version     0.1.3
 // @description 上传图片到picbed
 // @author      staugur
 // @namespace   https://www.saintic.com/
 // @include     http://*
 // @include     https://*
 // @exclude     {{ request.url_root }}*
-// @exclude     https://*.console.aliyun.com/*
+// @exclude     https://*.aliyun.com/*
 // @run-at      document-start
 // @grant       GM_getValue
 // @grant       GM_info
 // @created     2020-05-27
-// @modified    2020-06-03
+// @modified     2020-06-05
 // @github      https://github.com/staugur/picbed
 // @supportURL  https://github.com/staugur/picbed/issues/
 // @updateURL   {{ url_for('front.userscript', LinkToken=g.userinfo.ucfg_userscript_token, _external=True) }}
@@ -141,18 +141,14 @@ function upload_blob_url(url) {
 }
 
 document.addEventListener('mousedown', function (event) {
-    //console.log('Search Image >>\nevent.ctrlKey: ' + event.ctrlKey + '\nevent.button: ' + event.button + '\nevent.target:' + event.target + '\nevent.target.tagName: ' + event.target.tagName + '\nevent.target.src: ' + event.target.src + '\nevent.pageX: ' + event.pageX + '\nevent.pageY: ' + event.pageY + '\ndocument.documentElement.clientWidth: ' + document.documentElement.clientWidth + '\ndocument.documentElement.clientHeight: ' + document.documentElement.clientHeight + '\ndocument.documentElement.scrollWidth: ' + document.documentElement.scrollWidth + '\ndocument.documentElement.scrollHeight: ' + document.documentElement.scrollHeight + '\ndocument.documentElement.scrollLeft: ' + document.documentElement.scrollLeft + '\ndocument.documentElement.scrollTop: ' + document.documentElement.scrollTop);
-    //console.log('last_update: ' + last_update + "," + GM_getValue('timestamp', 0) + disable_contextmenu);
     if (disable_contextmenu === true) {
         document.oncontextmenu = null;
         disable_contextmenu = false;
     }
     //event.button: 0是单击，2是右击
     if (event[setting.hot_key] === true && event.button === 2) {
-        //console.debug("触发ctrl+右键");
         if (event.target.tagName.toLowerCase() == 'img' && event.target.src != null) {
             if (opt_panel === null) create_panel();
-            // GM 4.x api is async, so we cannot update it in time
             else {
                 if (last_update != GM_getValue('timestamp', 0)) {
                     last_update = GM_getValue('timestamp', 0);
@@ -172,12 +168,10 @@ document.addEventListener('mousedown', function (event) {
         } else hide_panel();
     } else if (opt_panel != null) {
         //单击、右击页面动作，且打开了panel
-        //console.debug('触发后点击item或右击、任意单击')
         if (event.target.compareDocumentPosition(opt_panel) === 10 || event.target.compareDocumentPosition(opt_panel) === 0) {
             if (event.target.className === 'img-opt-item' && event.button === 0) {
                 //点击了panel内的item
                 if (event.target.getAttribute('img-opt') === "up2picbed") {
-                    //console.log("发送图片" + img_src);
                     if (/^(?:blob:|filesystem:)/.test(img_src)) upload_blob_url(img_src);
                     else upload_file(img_src)
                 }

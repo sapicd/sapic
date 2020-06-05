@@ -152,7 +152,7 @@
                     <div class="layui-form-item">
                         <div class="layui-inline">
                             <label class="layui-form-label">背景图</label>
-                            <div class="layui-input-inline" style="width: 200px;">
+                            <div class="layui-input-inline" style="width: 150px;">
                                 <input type="text" name="ucfg_bg_mg" value="{{ g.userinfo.ucfg_bg_mg }}"
                                     placeholder="PC端背景图地址" autocomplete="off" class="layui-input" list="bg_mg_defaults">
                                 <datalist id="bg_mg_defaults">
@@ -192,17 +192,15 @@
                     <div class="layui-form-item">
                         <div class="layui-inline">
                             <label class="layui-form-label">默认相册</label>
-                            <div class="layui-input-inline" style="width: 200px;">
-                                <input type="text" class="layui-input" name="ucfg_default_album" id="render_default_album" placeholder="图片页面默认加载的相册" value="{{ g.userinfo.ucfg_default_album }}" autocomplete="off">
+                            <div class="layui-input-inline" style="width: 150px;">
+                                <input type="text" class="layui-input" name="ucfg_default_album" id="render_default_album" placeholder="默认加载的相册" value="{{ g.userinfo.ucfg_default_album }}" autocomplete="off">
                             </div>
                         </div>
-                    </div>
-                    <div class="layui-form-item">
                         <div class="layui-inline">
                             <label class="layui-form-label">图片放大度</label>
-                            <div class="layui-input-inline" style="width: 200px;">
+                            <div class="layui-input-inline" style="width: 150px;">
                                 <input type="number" step=0.1 min=1 max=2 name="ucfg_mypic_scale"
-                                value="{{ g.userinfo.ucfg_mypic_scale }}" placeholder="图片悬浮时放大的倍数"
+                                value="{{ g.userinfo.ucfg_mypic_scale }}" placeholder="图片悬浮放大倍数"
                                 autocomplete="off" class="layui-input">
                             </div>
                         </div>
@@ -218,8 +216,8 @@
                     <div class="layui-form-item">
                         <div class="layui-inline">
                             <label class="layui-form-label"><i class="layui-icon layui-icon-about" id="urlprocesstip"></i> URL后缀</label>
-                            <div class="layui-input-inline" style="width: 200px;">
-                                <input type="text" name="ucfg_url_rule" placeholder="自定义复制URL的后缀规则" autocomplete="off" class="layui-input" value="{{ g.userinfo.ucfg_url_rule }}">
+                            <div class="layui-input-inline" style="width: 150px;">
+                                <input type="text" name="ucfg_url_rule" placeholder="图片处理规则" autocomplete="off" class="layui-input" value="{{ g.userinfo.ucfg_url_rule }}">
                             </div>
                         </div>
                         <div class="layui-inline">
@@ -273,9 +271,9 @@
                     {% endif %}
                     <div class="layui-form-item">
                         <div class="layui-inline">
-                            <label class="layui-form-label" style="width: auto;"><i class="layui-icon layui-icon-about" id="userscripttip"></i> 开启用户脚本 <a href="{{ url_for('front.userscript', _external=True) }}" target="_blank"><i class="layui-icon layui-icon-link" style="font-size: 12px;"></i></a></label>
+                            <label class="layui-form-label" style="width: auto;"><i class="layui-icon layui-icon-about" id="userscripttip"></i> 开启用户脚本 <a href="{{ url_for('front.userscript', _external=True) }}" target="_blank" id="userscripturl"><i class="layui-icon layui-icon-link" style="font-size: 12px;"></i></a></label>
                             <div class="layui-input-inline" style="width: 50px;">
-                                <input type="checkbox" name="ucfg_userscript" lay-skin="switch" lay-text="ON|OFF"
+                                <input type="checkbox" name="ucfg_userscript" lay-skin="switch" lay-text="ON|OFF" lay-filter="userscript_btn"
                                 {% if is_true(g.userinfo.ucfg_userscript) %}checked="checked" {% endif %} autocomplete="off"
                                 value="1">
                             </div>
@@ -764,6 +762,12 @@
                 data: {Action: "updateAlbum", album: album}
             });
             return false;
+        });
+        //监听开启用户脚本
+        form.on('switch(userscript_btn)', function(data){
+            if (data.elem.checked === true) {
+                layer.tips('点击<i class="layui-icon layui-icon-link" style="font-size:12px"></i>安装或更新脚本', '#userscripturl', {tips:3});
+            }
         });
         //监听用户设置
         form.on('submit(*)', function(data){
