@@ -295,7 +295,9 @@ class HookManager(object):
             if name in self.get_map_hooks:
                 return self.get_map_hooks[name]["proxy"]
 
-    def get_call_list(self, _callname, _include=[], _exclude=[], _type='all'):
+    def get_call_list(
+        self, _callname, _include=None, _exclude=None, _type='all'
+    ):
         hooks = []
         for h in sorted(self.get_enabled_hooks, key=lambda h: h.name):
             if _include and isinstance(_include, (tuple, list)):
@@ -330,8 +332,8 @@ class HookManager(object):
         self,
         _funcname,
         _callback=None,
-        _include=[],
-        _exclude=[],
+        _include=None,
+        _exclude=None,
         *args,
         **kwargs
     ):
@@ -366,7 +368,7 @@ class HookManager(object):
                 if callable(_callback):
                     _callback(result)
 
-    def call_intpl(self, _tplname, _include=[], _exclude=[], **context):
+    def call_intpl(self, _tplname, _include=None, _exclude=None, **context):
         result = []
         for h in sorted(self.get_enabled_hooks, key=lambda h: h.name):
             if _include and isinstance(_include, (tuple, list)):

@@ -241,7 +241,7 @@
                     <div class="layui-form-item">
                         <label class="layui-form-label">图片路径前缀规则</label>
                         <div class="layui-input-block">
-                            <input type="radio" name="ucfg_upload_path_rule" value="default" title="默认(无目录)"
+                            <input type="radio" name="ucfg_upload_path_rule" value="default" title="无子路径"
                                 {% if g.userinfo.ucfg_upload_path_rule|d("default") == "default" %}checked="checked" {% endif %}
                                 autocomplete="off">
                             <input type="radio" name="ucfg_upload_path_rule" value="date1" title="年/月/日"
@@ -255,7 +255,7 @@
                     <div class="layui-form-item">
                         <label class="layui-form-label">图片文件命名规则</label>
                         <div class="layui-input-block">
-                            <input type="radio" name="ucfg_upload_file_rule" value="default" title="默认(原名)"
+                            <input type="radio" name="ucfg_upload_file_rule" value="default" title="图片原名"
                                 {% if g.userinfo.ucfg_upload_file_rule|d("default") == "default" %}checked="checked" {% endif %}
                                 autocomplete="off">
                             <input type="radio" name="ucfg_upload_file_rule" value="time1" title="时间戳(毫秒)"
@@ -269,10 +269,13 @@
                         </div>
                     </div>
                     {% endif %}
+                    <div class="layui-hide-md layui-hide-lg">
+                        <hr class="layui-bg-green">
+                    </div>
                     <div class="layui-form-item">
                         <div class="layui-inline">
                             <label class="layui-form-label" style="width: auto;"><i class="layui-icon layui-icon-about" id="userscripttip"></i> 开启用户脚本 <a href="{{ url_for('front.userscript', _external=True) }}" target="_blank" id="userscripturl"><i class="layui-icon layui-icon-link" style="font-size: 12px;"></i></a></label>
-                            <div class="layui-input-inline" style="width: 50px;">
+                            <div class="layui-input-inline" style="width: auto;">
                                 <input type="checkbox" name="ucfg_userscript" lay-skin="switch" lay-text="ON|OFF" lay-filter="userscript_btn"
                                 {% if is_true(g.userinfo.ucfg_userscript) %}checked="checked" {% endif %} autocomplete="off"
                                 value="1">
@@ -337,9 +340,7 @@
 <script type="text/html" id="show_editor_area">
     <form class="layui-form" style="padding:10px" lay-filter="linktokenForm">
         {{# if(d.action === "edit") { }}
-        <div class="layui-form-item">
-            <input type="text" class="layui-input layui-disabled" name="LinkId" autocomplete="off" required lay-verify="required" lay-verType="tips" value="{{ d.LinkToken }}" readonly>
-        </div>
+        <input type="hidden" class="layui-input layui-disabled" name="LinkId" autocomplete="off" required lay-verify="required" lay-verType="tips" value="{{ d.LinkToken }}" readonly>
         {{# } }}
         <div class="layui-form-item">
             <input type="text" class="layui-input" name="comment" placeholder="[可选]此引用的备注信息" autocomplete="off">
@@ -347,7 +348,7 @@
         <div class="layui-form-item">
             <input type="text" class="layui-input" name="album" placeholder="[可选]相册名，引用于上传图片接口时设置的默认相册" autocomplete="off">
         </div>
-        <blockquote class="layui-elem-quote">分权引用限定条件，以下参数均可留空，逗号分隔多条</blockquote>
+        <blockquote class="layui-elem-quote">分权引用限定条件，参数均可留空，参考：<a href="https://docs.saintic.com/picbed/linktoken.html#linktoken-secure-item" target="_blank">规则文档</a></blockquote>
         <div class="layui-form-item">
             {{# if (!d.cors) { }}
                 <input type="text" class="layui-input layui-disabled" name="allow_origin" placeholder="请联系管理员设置CORS Origin" autocomplete="off" readonly>
@@ -369,7 +370,7 @@
         <blockquote class="layui-elem-quote">允许访问规则，可使用运算符
             <scan style="color:#FF5722"> in, not in, </scan>
             <scan style="color:#009688">and, or, not, () </scan>
-            定义访问条件，以此规则综合判断是否允许请求。<a href="https://docs.saintic.com/picbed/usage.html#linktoken" target="_blank" title="LinkToken文档"><i class="layui-icon layui-icon-link"></i></a>
+            定义访问条件，以此规则综合判断是否允许请求。<a href="https://docs.saintic.com/picbed/linktoken.html#linktoken-secure-rule" target="_blank" title="LinkToken文档"><i class="layui-icon layui-icon-link"></i></a>
         </blockquote>
         <div class="layui-form-item">
             <input type="text" class="layui-input" name="interior_relation" placeholder="ir: 限定条件内部的规则, 格式: in/not in:opt" autocomplete="off">
@@ -965,27 +966,27 @@
                 skin: 'linktoken-layer',
                 shade: 0.1,
                 shadeClose: true,
-                btn: ['手动引用', '自动引用', 'LinkToken', 'JS'],
+                btn: ['LinkToken', 'JS', '手动引用', '自动引用'],
                 btnAlign: 'c',
                 content: content,
                 yes: function(index, layero){
-                    //按钮【复制手动引用】的回调
-                    picbed.Clipboard.copy(`<script src="${sdk}" data-url="${url}" data-token="${LinkToken}"><\/script>`);
-                    return false;
-                },
-                btn2: function(index, layero){
-                    //按钮【复制自动引用】的回调
-                    picbed.Clipboard.copy(`<script src="${sdk}" data-url="${url}" data-token="${LinkToken}" data-auto="true"><\/script>`);
-                    return false;
-                },
-                btn3: function(index, layero) {
                     //按钮【仅复制LinkToken】的回调
                     picbed.Clipboard.copy(LinkToken);
                     return false;
                 },
-                btn4: function(index, layero) {
+                btn2: function(index, layero){
                     //按钮【仅复制JS】的回调
                     picbed.Clipboard.copy(sdk);
+                    return false;
+                },
+                btn3: function(index, layero) {
+                    //按钮【复制手动引用】的回调
+                    picbed.Clipboard.copy(`<script src="${sdk}" data-url="${url}" data-token="${LinkToken}"><\/script>`);
+                    return false;
+                },
+                btn4: function(index, layero) {
+                    //按钮【复制自动引用】的回调
+                    picbed.Clipboard.copy(`<script src="${sdk}" data-url="${url}" data-token="${LinkToken}" data-auto="true"><\/script>`);
                     return false;
                 },
             });

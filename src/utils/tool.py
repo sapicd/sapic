@@ -48,7 +48,8 @@ data_uri_pat = re.compile(r'^{}$'.format((
 er_pat = re.compile(r'^(and|or|not|\s|ip|ep|origin|method|\(|\))+$')
 ir_pat = re.compile(r'^(in|not in|\s|ip|ep|origin|method|,|:)+$')
 ALLOWED_RULES = ("ip", "ep", "method", "origin")
-ALLOWED_EXTS = ('png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp')
+ALLOWED_EXTS = ("png", "jpg", "jpeg", "gif", "bmp", "webp")
+ALLOWED_HTTP_METHOD = ("GET", "POST", "PUT", "DELETE", "HEAD")
 
 
 def rsp(*args):
@@ -137,7 +138,7 @@ def is_true(value):
     return False
 
 
-def ListEqualSplit(l, n=5):
+def list_equal_split(l, n=5):
     return [l[i:i+n] for i in range(0, len(l), n)]
 
 

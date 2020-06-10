@@ -7,7 +7,7 @@
 
 ## 手动部署
 
-1. 要求： Python2.7、Python3.5+（含PyPy）和Redis
+1. 要求： Python2.7、Python3.5+（或PyPy）和Redis
 
 2. 下载： `git clone https://github.com/staugur/picbed && cd picbed`
 
@@ -102,23 +102,6 @@ http://picbed.demo.saintic.com
 
 对外服务，为防止乱传已关闭匿名上传，随意注册，但不可用于非测试用途，图片保留删除权利！
 
-## 扩展钩子
-
-通过所谓的钩子扩展功能点，目前在图片保存时有一个钩子，可以藉此扩展后端存储。
-
-目前我写的钩子如下：
-
-| 名称 | 作用 | GitHub |
-| ---- | ----- | ----- |
-| up2upyun | 将图片保存到又拍云USS中 | 已内置 |
-| up2qiniu | 将图片保存到七牛云KODO中 | 已内置 |
-| up2oss | 将图片保存到阿里云OSS中 | 已内置 |
-| up2cos | 将图片保存到腾讯云COS中 | 已内置 |
-| up2smms | 将图片保存到sm.ms中 | [staugur/picbed-up2smms](https://github.com/staugur/picbed-up2smms) |
-| up2superbed | 将图片保存到聚合图床`superbed.cn` | [staugur/picbed-up2superbed](https://github.com/staugur/picbed-up2superbed) |
-
-更多钩子可以在我的[github](https://github.com/search?q=user%3Astaugur+picbed)搜索。
-
 ## 客户端上传
 
 #### - 使用PicGo上传到自定义的picbed图床
@@ -186,3 +169,8 @@ URL路径：["src"]
 ![控制台管理员功能](./Snapshot/5.png)
 
 ![管理我的图片](./Snapshot/6.png)
+
+
+## 贡献
+
+感谢您的贡献！关于如何提交issue或pr，请参考 [contributing guidelines](./CONTRIBUTING.md)

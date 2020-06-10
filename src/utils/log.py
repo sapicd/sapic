@@ -18,13 +18,13 @@ from config import GLOBAL
 
 class Logger(object):
 
-    def __init__(self, logName, backupCount=10):
-        self.logName = logName
+    def __init__(self, logname, backup_count=10):
+        self.logname = logname
         self.log_dir = join(
             dirname(dirname(abspath(__file__))), 'logs'
         )
-        self.logFile = join(
-            self.log_dir, '{0}.log'.format(self.logName)
+        self.log_file = join(
+            self.log_dir, '{0}.log'.format(self.logname)
         )
         self._levels = {
             "DEBUG": logging.DEBUG,
@@ -34,13 +34,13 @@ class Logger(object):
             "CRITICAL": logging.CRITICAL
         }
         self._logfmt = '%Y-%m-%d %H:%M:%S'
-        self._logger = logging.getLogger(self.logName)
+        self._logger = logging.getLogger(self.logname)
         if not exists(self.log_dir):
             mkdir(self.log_dir)
 
         handler = logging.handlers.TimedRotatingFileHandler(
-            filename=self.logFile,
-            backupCount=backupCount,
+            filename=self.log_file,
+            backupCount=backup_count,
             when="midnight"
         )
         handler.suffix = "%Y%m%d"

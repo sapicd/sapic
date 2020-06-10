@@ -18,6 +18,9 @@
         font-weight: bold;
         color: #009688;
     }
+    .layui-inline, img {
+        display: inline;
+    }
 </style>
 {% endblock %}
 
@@ -230,7 +233,7 @@
                             <div class="layui-form-item">
                                 <label class="layui-form-label">图片路径前缀规则: user/&lt;&gt;</label>
                                 <div class="layui-input-block">
-                                    <input type="radio" name="upload_path_rule" value="default" title="默认(无目录)"
+                                    <input type="radio" name="upload_path_rule" value="default" title="默认(无路径)"
                                         {% if g.site.upload_path_rule|d("default") == "default" %}checked="checked" {% endif %}
                                         autocomplete="off">
                                     <input type="radio" name="upload_path_rule" value="date1" title="年/月/日"
@@ -270,6 +273,7 @@
                     <fieldset class="layui-elem-field layui-field-title">
                         <legend>钩子</legend>
                         <div class="layui-field-box">
+                            <div class="layui-row layui-col-space10">
                             <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
                             <div class="layui-form-item">
                                 <label class="layui-form-label" id="tip-sa"><b style="color: red;">?</b> 第三方认证</label>
@@ -282,6 +286,7 @@
                                         {% endfor %}
                                     </select>
                                 </div>
+                            </div>
                             </div>
                             </div>
                             <div class="layui-row layui-col-space10">

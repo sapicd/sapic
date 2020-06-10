@@ -139,9 +139,9 @@ def admin_apilogin_required(f):
     return decorated_function
 
 
-def parseAcceptLanguage(acceptLanguage, defaultLanguage="zh-CN"):
+def parse_accept_language(acceptLanguage, default_language="zh-CN"):
     if not acceptLanguage:
-        return defaultLanguage
+        return default_language
     languages = acceptLanguage.split(",")
     locale_q_pairs = []
     for language in languages:
@@ -156,7 +156,7 @@ def parseAcceptLanguage(acceptLanguage, defaultLanguage="zh-CN"):
         locale_q_pairs,
         key=lambda x: x[-1],
         reverse=True
-    )[0][0] or defaultLanguage
+    )[0][0] or default_language
 
 
 def dfr(res, default='en-US'):
@@ -165,7 +165,7 @@ def dfr(res, default='en-US'):
     @param default str: 默认语言
     """
     try:
-        language = parseAcceptLanguage(
+        language = parse_accept_language(
             request.cookies.get(
                 "locale",
                 request.headers.get('Accept-Language', default)
@@ -176,7 +176,7 @@ def dfr(res, default='en-US'):
             language = "zh-CN"
     except (ValueError, TypeError, KeyError, Exception):
         language = default
-    # 翻译转换字典库
+    # 翻译转换字典库 TODO 翻译文本文件，按英文索引
     trans = {
         # 简体中文
         "zh-CN": {
@@ -352,15 +352,15 @@ class Base64FileStorage(object):
 class ImgUrlFileStorage(object):
     """上传接口中接受远程图片地址。"""
 
-    def __init__(self, imgurl, filename=None, allowed_exts=[]):
+    def __init__(self, imgurl, filename=None, allowed_exts=None):
         self._imgurl = imgurl
         self._filename = filename
         self._allowed_exts = [
             ".{}".format(e)
             for e in (
-                allowed_exts or
-                parse_valid_verticaline(g.cfg.upload_exts) or
-                ALLOWED_EXTS
+                allowed_exts or [] or parse_valid_verticaline(
+                    g.cfg.upload_exts
+                ) or ALLOWED_EXTS
             )
         ]
         self._imgobj = self.__download()
@@ -412,7 +412,7 @@ class ImgUrlFileStorage(object):
             return self if self._imgobj else None
 
 
-def getUploadMethod(class_name):
+def get_upload_method(class_name):
     if class_name == "FileStorage":
         return "file"
     elif class_name == "ImgUrlFileStorage":

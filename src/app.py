@@ -42,7 +42,7 @@ app.cli.add_command(sa_cli)
 
 
 @app.context_processor
-def GlobalTemplateVariables():
+def gtv():
     return {"Version": __version__, "Doc": __doc__, "is_true": is_true}
 
 

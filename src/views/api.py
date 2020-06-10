@@ -22,12 +22,12 @@ from redis.exceptions import RedisError
 from collections import Counter
 from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, rsp, \
-    sha256, get_current_timestamp, ListEqualSplit, generate_random, er_pat, \
+    sha256, get_current_timestamp, list_equal_split, generate_random, er_pat, \
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
-    check_ir, username_pat
+    check_ir, username_pat, ALLOWED_HTTP_METHOD
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
-    ImgUrlFileStorage, getUploadMethod
+    ImgUrlFileStorage, get_upload_method
 from utils._compat import iteritems
 
 bp = Blueprint("api", "api")
@@ -429,7 +429,7 @@ def waterfall():
                     reverse=False if sort == "asc" else True
                 )
                 count = len(data)
-                data = ListEqualSplit(data, limit)
+                data = list_equal_split(data, limit)
                 pageCount = len(data)
                 if page < pageCount:
                     res.update(
@@ -706,7 +706,7 @@ def upload():
             agent=request.form.get(
                 "origin", request.headers.get('User-Agent', '')
             ),
-            method=getUploadMethod(fp.__class__.__name__),
+            method=get_upload_method(fp.__class__.__name__),
         ))
         try:
             pipe.execute()
@@ -814,7 +814,7 @@ def link():
             if not methods or not isinstance(methods, (tuple, list)):
                 return "Invalid HTTP method"
             for md in methods:
-                if md and md.upper() not in ["GET", "POST", "PUT", "DELETE"]:
+                if md and md.upper() not in ALLOWED_HTTP_METHOD:
                     return "Invalid HTTP method"
         if er:
             if not er_pat.match(er.strip()):

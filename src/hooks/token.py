@@ -48,7 +48,7 @@ intpl_profile = """
 intpl_before_usersetting = '<table id="linktokenTable" class="layui-table" lay-filter="linktokenTable"></table>'
 
 
-def parseAuthorization(prefix="Token"):
+def parse_authorization(prefix="Token"):
     auth = request.headers.get("Authorization")
     if auth and auth.startswith("%s " % prefix):
         return auth.lstrip("%s " % prefix)
@@ -137,11 +137,11 @@ def verify_rule(Ld):
 def before_request():
     if g.signin:
         return
-    token = request.form.get("token") or parseAuthorization()
+    token = request.form.get("token") or parse_authorization()
     #: 尝试使用LinkToken映射出token
     LinkToken = request.form.get(
         "LinkToken", request.args.get("LinkToken")
-    ) or parseAuthorization("LinkToken")
+    ) or parse_authorization("LinkToken")
     if not token and LinkToken:
         try:
             if PY2 and isinstance(LinkToken, text_type):

@@ -28,6 +28,7 @@ if PY2:  # pragma: nocover
     from urllib import urlencode
     from urllib2 import Request, urlopen
     from urlparse import urlparse, urlsplit
+    import ConfigParser
 
 else:  # pragma: nocover
 
@@ -42,31 +43,32 @@ else:  # pragma: nocover
     integer_types = (int, )
     from urllib.parse import urlencode, urlparse, urlsplit
     from urllib.request import Request, urlopen
+    import configparser as ConfigParser
 
 
 class Properties(object):
 
-    def __init__(self, fileName, from_env=False):
+    def __init__(self, filename, from_env=False):
         #: 读取配置文件
-        self.fileName = fileName
+        self.filename = filename
         #: 使用get方法查询无果时，是否从环境变量读取
         self.from_env = from_env
         self.properties = {}
         self._getProperties()
 
-    def __getDict(self, strName, dictName, value):
+    def __getDict(self, str_name, dict_name, value):
 
-        if(strName.find('.') > 0):
-            k = strName.split('.')[0]
-            dictName.setdefault(k, {})
-            return self.__getDict(strName[len(k)+1:], dictName[k], value)
+        if(str_name.find('.') > 0):
+            k = str_name.split('.')[0]
+            dict_name.setdefault(k, {})
+            return self.__getDict(str_name[len(k)+1:], dict_name[k], value)
         else:
-            dictName[strName] = value
+            dict_name[str_name] = value
             return
 
     def _getProperties(self):
         try:
-            pro_file = open(self.fileName, 'Ur')
+            pro_file = open(self.filename, 'Ur')
             for line in pro_file.readlines():
                 line = line.strip().replace('\n', '')
                 if line.find("#") != -1:
