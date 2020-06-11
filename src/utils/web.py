@@ -92,7 +92,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not g.signin:
-            nu = request.args.get("next")
+            nu = get_redirect_url()
             if nu and (
                 nu.startswith("/") or nu.startswith(request.url_root)
             ):
@@ -107,7 +107,7 @@ def anonymous_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if g.signin:
-            nu = request.args.get("next")
+            nu = get_redirect_url()
             if nu and (
                 nu.startswith("/") or nu.startswith(request.url_root)
             ):

@@ -154,6 +154,25 @@ API地址：http[s]://你的picbed域名/api/upload
 URL路径：["src"]
 ```
 
+#### - 作为自定义命令在使用Typora时上传图片到picbed
+
+Typora是一款跨平台的Markdown编辑器，在编写内容时可以对图片进行特殊处理，
+比如上传图片，有此需求，故写了独立脚本（misc/cli.py）用以上传：
+
+打开Typora，定位到偏好设置-图像，选择插入图片时-上传图片，上传服务设定：
+
+上传服务：Custom Command
+
+自定义命令：python /{picbed repo}/misc/cli.py -u {picbed url} -t {LinkToken} -s typora
+
+- {picbed repo}: 表示仓库，无需检出，只需misc/cli.py一个文件放到本地即可
+
+- {picbed url}: 指定图床的服务地址，比如 ``http://picbed.example.com``
+
+- {LinkToken}: 设置LinkToken认证、授权，拥有api.upload的post权限
+
+- 其他参数：-s指定输出风格（保持typora），-a指定相册名称，-h查看帮助信息
+
 ## 预览图
 
 目前v1版本完成，看几张预览图：
@@ -170,7 +189,8 @@ URL路径：["src"]
 
 ![管理我的图片](./Snapshot/6.png)
 
+## Contributing
 
-## 贡献
+感谢您的贡献！
 
-感谢您的贡献！关于如何提交issue或pr，请参考 [contributing guidelines](./CONTRIBUTING.md)
+关于如何提交issue或pr，请参考 [contributing guidelines](./CONTRIBUTING.md)
