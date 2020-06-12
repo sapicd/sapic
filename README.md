@@ -157,7 +157,10 @@ URL路径：["src"]
 #### - 作为自定义命令在使用Typora时上传图片到picbed
 
 Typora是一款跨平台的Markdown编辑器，在编写内容时可以对图片进行特殊处理，
-比如上传图片，有此需求，故写了独立脚本（misc/cli.py）用以上传：
+比如上传图片。
+
+有此需求故写了独立脚本（misc/cli.py）用以上传，支持Python2.7、3.x，
+可以把[cli.py](misc/cli.py)单独下载到本地，名称随意，无第三方模块依赖。
 
 打开Typora，定位到偏好设置-图像，选择插入图片时-上传图片，上传服务设定：
 
@@ -167,11 +170,13 @@ Typora是一款跨平台的Markdown编辑器，在编写内容时可以对图片
 
 - {picbed repo}: 表示仓库，无需检出，只需misc/cli.py一个文件放到本地即可
 
-- {picbed url}: 指定图床的服务地址，比如 ``http://picbed.example.com``
+- {picbed url}: 指定图床的服务地址，http[s]://你的picbed域名
 
 - {LinkToken}: 设置LinkToken认证、授权，拥有api.upload的post权限
 
 - 其他参数：-s指定输出风格（保持typora），-a指定相册名称，-h查看帮助信息
+
+测试：点击『验证图片上传选项』按钮，验证是否成功。
 
 ## 预览图
 

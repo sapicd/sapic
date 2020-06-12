@@ -150,7 +150,6 @@ def generate_random(length=6):
         code_list.append(chr(i))
     for i in range(97, 123):  # a-z
         code_list.append(chr(i))
-
     myslice = sample(code_list, length)
     return ''.join(myslice)
 

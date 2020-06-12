@@ -46,20 +46,20 @@ intpl_hooksetting = '''
         <div class="layui-form-item">
             <label class="layui-form-label"><b style="color: red;">*</b> AccessKeyID</label>
             <div class="layui-input-block">
-                <input type="text" name="aliyun_ak" value="{{ g.site.aliyun_ak }}" placeholder="阿里云个人密钥的AccessKey ID，可以使用RAM子用户的密钥(创建时勾选编程访问)" autocomplete="off" class="layui-input">
+                <input type="text" name="aliyun_ak" value="{{ g.site.aliyun_ak }}" placeholder="阿里云个人密钥的ID，支持有OSS管理权限的RAM账号" autocomplete="off" class="layui-input">
             </div>
         </div>
         <div class="layui-form-item">
             <label class="layui-form-label"><b style="color: red;">*</b> SecretKey</label>
             <div class="layui-input-block">
-                <input type="password" name="aliyun_sk" value="{{ g.site.aliyun_sk }}" placeholder="阿里云个人密钥的AccessKey Secret，如果使用RAM，请确保有OSS管理权限" autocomplete="off" class="layui-input">
+                <input type="password" name="aliyun_sk" value="{{ g.site.aliyun_sk }}" placeholder="阿里云个人密钥的Secret，RAM需勾选编程访问" autocomplete="off" class="layui-input">
             </div>
         </div>
         <div class="layui-form-item">
             <label class="layui-form-label">存储根目录</label>
             <div class="layui-input-block">
                 <input type="text" name="aliyun_basedir" value="{{ g.site.aliyun_basedir }}"
-                    placeholder="图片存储到阿里云OSS的基础目录，默认是：/（存放到根目录）" autocomplete="off" class="layui-input">
+                    placeholder="图片存储到阿里云OSS的基础目录，默认是根目录" autocomplete="off" class="layui-input">
             </div>
         </div>
     </div>

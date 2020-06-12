@@ -33,7 +33,7 @@ intpl_hooksetting = '''
         <div class="layui-form-item">
             <label class="layui-form-label"><b style="color: red;">*</b> Token</label>
             <div class="layui-input-block">
-                <input type="text" name="github_token" value="{{ g.site.github_token }}" placeholder="GitHub personal access tokens"
+                <input type="text" name="github_token" value="{{ g.site.github_token }}" placeholder="GitHub personal access tokens(repo scopes)"
                     autocomplete="off" class="layui-input">
             </div>
         </div>
@@ -55,7 +55,7 @@ intpl_hooksetting = '''
             <label class="layui-form-label">存储根目录</label>
             <div class="layui-input-block">
                 <input type="text" name="github_basedir" value="{{ g.site.github_basedir }}"
-                    placeholder="图片存储到仓库的基础目录，默认是：/（存放到根目录）" autocomplete="off" class="layui-input">
+                    placeholder="图片存储到仓库的基础目录，默认是根目录" autocomplete="off" class="layui-input">
             </div>
         </div>
         <div class="layui-form-item">

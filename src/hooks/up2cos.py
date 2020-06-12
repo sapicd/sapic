@@ -26,7 +26,7 @@ from qcloud_cos import CosConfig, CosS3Client
 
 intpl_hooksetting = '''
 <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
-<fieldset class="layui-elem-field">
+<fieldset class="layui-elem-field" style="margin-bottom: auto;">
     <legend>腾讯云对象存储COS（{% if "up2cos" in g.site.upload_includes %}使用中{% else %}未使用{% endif %}）</legend>
     <div class="layui-field-box">
         <div class="layui-form-item">
@@ -46,22 +46,21 @@ intpl_hooksetting = '''
         <div class="layui-form-item">
             <label class="layui-form-label"><b style="color: red;">*</b> SecretId</label>
             <div class="layui-input-block">
-                <input type="text" name="tencent_sid" value="{{ g.site.tencent_sid }}" placeholder="腾讯云个API密钥的SecretId，可以使用RAM用户的密钥"
+                <input type="text" name="tencent_sid" value="{{ g.site.tencent_sid }}" placeholder="腾讯云API密钥的SecretId，支持有COS管理权限的RAM账号"
                     autocomplete="off" class="layui-input">
             </div>
         </div>
         <div class="layui-form-item">
             <label class="layui-form-label"><b style="color: red;">*</b> SecretKey</label>
             <div class="layui-input-block">
-                <input type="password" name="tencent_skey" value="{{ g.site.tencent_skey }}" placeholder="腾讯云API密钥的SecretKey，如果使用RAM请确保有COS管理权限"
-                    autocomplete="off" class="layui-input">
+                <input type="password" name="tencent_skey" value="{{ g.site.tencent_skey }}" placeholder="腾讯云API密钥的SecretKey，RAM需勾选编程访问" autocomplete="off" class="layui-input">
             </div>
         </div>
         <div class="layui-form-item">
             <label class="layui-form-label">存储根目录</label>
             <div class="layui-input-block">
                 <input type="text" name="tencent_basedir" value="{{ g.site.tencent_basedir }}"
-                    placeholder="图片存储到腾讯云COS的基础目录，默认是：/（存放到根目录）" autocomplete="off" class="layui-input">
+                    placeholder="图片存储到腾讯云COS的基础目录，默认是根目录" autocomplete="off" class="layui-input xxx">
             </div>
         </div>
     </div>

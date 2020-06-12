@@ -58,7 +58,7 @@ intpl_hooksetting = '''
             <label class="layui-form-label">存储根目录</label>
             <div class="layui-input-block">
                 <input type="text" name="upyun_basedir" value="{{ g.site.upyun_basedir }}"
-                    placeholder="图片存储到又拍云的基础目录，默认是：/（存放到根目录）" autocomplete="off" class="layui-input">
+                    placeholder="图片存储到又拍云的基础目录，默认是根目录" autocomplete="off" class="layui-input">
             </div>
         </div>
     </div>
