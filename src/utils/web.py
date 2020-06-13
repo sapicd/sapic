@@ -31,7 +31,8 @@ def get_referrer_url():
     """获取上一页地址"""
     if request.method == "GET" and request.referrer and \
             request.referrer.startswith(request.host_url) and \
-            request.endpoint and "api." not in request.endpoint:
+            request.endpoint and "api." not in request.endpoint and \
+            request.endpoint != "front.register":
         url = request.referrer
     else:
         url = None
