@@ -235,6 +235,14 @@ def check_origin(addr):
     return False
 
 
+def check_url(addr):
+    """Check whether UrlAddr is in a valid format"""
+    if addr and isinstance(addr, string_types):
+        if url_pat.match(addr):
+            return True
+    return False
+
+
 def check_ip(ip_str):
     sep = ip_str.split('.')
     if len(sep) != 4:

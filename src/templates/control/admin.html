@@ -274,23 +274,23 @@
                         <legend>钩子</legend>
                         <div class="layui-field-box">
                             <div class="layui-row layui-col-space10">
-                            <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
-                            <div class="layui-form-item">
-                                <label class="layui-form-label" id="tip-sa"><b style="color: red;">?</b> 第三方认证</label>
-                                <div class="layui-input-block">
-                                    <select name="site_auth">
-                                        <option value="">默认（取消选择）</option>
-                                        {% for h in get_call_list("site_auth", _type="bool") %}
-                                        <option value="{{ h.name }}" {% if h.name == g.site.site_auth %}selected="selected"
-                                            {% endif %}>{{ h.name }}{% if h.description %}（{{ h.description }}）{% endif %}</option>
-                                        {% endfor %}
-                                    </select>
+                                <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label" id="tip-sa"><b style="color: red;">?</b> 第三方认证</label>
+                                        <div class="layui-input-block">
+                                            <select name="site_auth">
+                                                <option value="">默认（取消选择）</option>
+                                                {% for h in get_call_list("site_auth", _type="bool") %}
+                                                    <option value="{{ h.name }}" {% if h.name == g.site.site_auth %}selected="selected" {% endif %}>{{ h.name }}{% if h.description %}（{{ h.description }}）{% endif %}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            </div>
+                                {{ intpl("hooksetting") }}
                             </div>
                             <div class="layui-row layui-col-space10">
-                                {{ intpl("hooksetting") }}
+                                {{ intpl("localhooksetting") }}
                             </div>
                         </div>
                     </fieldset>
@@ -332,6 +332,7 @@
 <script type="text/html" id="toolbar">
     <div class="layui-btn-group">
         <button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="reloadHookManager">重载钩子管理器</button>
+        <button class="layui-btn layui-btn-sm layui-btn-warm" lay-event="installPackage">安装第三方包</button>
         <button class="layui-btn layui-btn-sm" lay-event="addHookName">添加第三方钩子</button>
     </div>
 </script>
@@ -567,6 +568,22 @@
                             tableIns.reload();
                         }, {
                             data: {name:value}
+                        });
+                    }
+                });
+            } else if (layEvent === "installPackage") {
+                layer.prompt({
+                    formType: 0,
+                    title: '使用pip安装第三方包',
+                    placeholder: 'The pypi package name or VCS url',
+                    shade: 0
+                }, function(value, index, elem){
+                    if (value) {
+                        layer.close(index);
+                        picbed.ajax("{{ url_for('api.pip_install') }}", function(res) {
+                            layer.msg("已接收请求，后台安装中...", {icon:1});
+                        }, {
+                            data: {package:value}
                         });
                     }
                 });

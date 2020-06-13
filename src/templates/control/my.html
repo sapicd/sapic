@@ -659,7 +659,7 @@
         });
         //监听图片键盘
         document.onkeydown = function(e) {
-            if (location.hash.startsWith("#!picbed")) {
+            if (location.hash.startsWith("#!picbed") || location.hash.startsWith("#%21picbed")) {
                 var keynum = window.event ? e.keyCode : e.which;
                 switch(keynum){
                     case 37: //左键

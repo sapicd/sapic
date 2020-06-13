@@ -24,7 +24,7 @@ from utils.web import set_site_config
 from utils.tool import slash_join
 
 
-intpl_hooksetting = '''
+intpl_localhooksetting = '''
 <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
 <fieldset class="layui-elem-field">
     <legend>阿里云对象存储OSS（{% if "up2oss" in g.site.upload_includes %}使用中{% else %}未使用{% endif %}）</legend>

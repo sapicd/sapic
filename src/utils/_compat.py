@@ -29,6 +29,7 @@ if PY2:  # pragma: nocover
     from urllib2 import Request, urlopen
     from urlparse import urlparse, urlsplit
     import ConfigParser
+    import thread
 
 else:  # pragma: nocover
 
@@ -44,6 +45,7 @@ else:  # pragma: nocover
     from urllib.parse import urlencode, urlparse, urlsplit
     from urllib.request import Request, urlopen
     import configparser as ConfigParser
+    import _thread as thread
 
 
 class Properties(object):

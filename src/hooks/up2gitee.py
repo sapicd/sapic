@@ -24,7 +24,7 @@ from utils.tool import slash_join, try_request
 from utils._compat import string_types
 
 
-intpl_hooksetting = '''
+intpl_localhooksetting = '''
 <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
 <fieldset class="layui-elem-field">
     <legend>Gitee版本库（{% if "up2gitee" in g.site.upload_includes %}使用中{% else %}未使用{% endif %}）</legend>

@@ -24,7 +24,7 @@ from utils.tool import slash_join
 from qcloud_cos import CosConfig, CosS3Client
 
 
-intpl_hooksetting = '''
+intpl_localhooksetting = '''
 <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
 <fieldset class="layui-elem-field" style="margin-bottom: auto;">
     <legend>腾讯云对象存储COS（{% if "up2cos" in g.site.upload_includes %}使用中{% else %}未使用{% endif %}）</legend>

@@ -27,8 +27,8 @@ from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     check_ir, username_pat, ALLOWED_HTTP_METHOD
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
-    ImgUrlFileStorage, get_upload_method
-from utils._compat import iteritems
+    ImgUrlFileStorage, get_upload_method, _pip_install
+from utils._compat import iteritems, thread
 
 bp = Blueprint("api", "api")
 #: 定义本地上传的钩子在保存图片时的基础目录前缀（在static子目录下）
@@ -242,6 +242,25 @@ def hook():
         else:
             res.update(code=0)
     return res
+
+
+@bp.route("/pip/install", methods=["POST"])
+@admin_apilogin_required
+def pip_install():
+    """Use the pip command to install third-party modules.
+
+    .. versionadded:: 1.6.0
+    """
+    res = dict(code=1, msg=None)
+    pkg = request.form.get("package")
+    index = request.form.get("index")
+    if pkg and not pkg.startswith(".") and not pkg.startswith("-"):
+        thread.start_new_thread(_pip_install, (pkg, index))
+        res.update(code=0, msg="accepted")
+        return jsonify(res), 201
+    else:
+        res.update(msg="Parameter error")
+        return res
 
 
 @bp.route("/token", methods=["POST"])

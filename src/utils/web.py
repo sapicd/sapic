@@ -18,6 +18,8 @@ from binascii import Error as BaseDecodeError
 from redis.exceptions import RedisError
 from flask import g, redirect, request, url_for, abort, Response, jsonify,\
     current_app
+from sys import executable
+from subprocess import call
 from libs.storage import get_storage
 from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
@@ -220,6 +222,7 @@ def dfr(res, default='en-US'):
             "Invalid exterior_relation": "无效的exterior_relation平行规则",
             "Invalid interior_relation": "无效的interior_relation内联规则",
             "Wrong query range parameter": "查询范围错误",
+            "accepted": "已接受",
         },
     }
     if isinstance(res, dict) and "en" not in language:
@@ -421,3 +424,12 @@ def get_upload_method(class_name):
         return "base64"
     else:
         return "unknown"
+
+
+def _pip_install(pkg, index=None):
+    cmd = [executable, "-m", "pip", "install", "-q"]
+    if index:
+        cmd.extend(["-i", index])
+    cmd.append(pkg)
+    retcode = call(cmd)
+    logger.info("pip install {}, retcode: {}".format(pkg, retcode))

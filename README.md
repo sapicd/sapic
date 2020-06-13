@@ -156,8 +156,8 @@ URL路径：["src"]
 
 #### - 作为自定义命令在使用Typora时上传图片到picbed
 
-Typora是一款跨平台的Markdown编辑器，在编写内容时可以对图片进行特殊处理，
-比如上传图片。
+[Typora](https://typora.io)是一款跨平台的Markdown编辑器，
+在编写内容时可以对图片进行特殊处理，比如上传图片。
 
 有此需求故写了独立脚本（misc/cli.py）用以上传，支持Python2.7、3.x，
 可以把[cli.py](misc/cli.py)单独下载到本地，名称随意，无第三方模块依赖。
