@@ -62,8 +62,8 @@ sa_cli = AppGroup('sa', help='Administrator commands')
 
 
 @sa_cli.command()
-@click.option('--username', '-u', type=str, help=u'用户名')
-@click.option('--password', '-p', type=str, help=u'用户密码')
+@click.option('--username', '-u', type=str, required=True, help=u'用户名')
+@click.option('--password', '-p', type=str, required=True, help=u'用户密码')
 @click.option('--isAdmin/--no-isAdmin', default=False,
               help=u'是否为管理员', show_default=True)
 @click.option('--avatar', '-a', type=str, default='', help=u'头像地址')
