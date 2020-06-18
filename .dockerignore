@@ -5,3 +5,4 @@ __pycache__/
 **/*.log
 **/*.cfg
 **/*.qiniu_pythonsdk_hostscache.json
+Snapshot/

@@ -90,6 +90,19 @@
   使用 *docker run* 启动镜像的命令可以自行修改，picbed所用配置可以使用-e设置
   环境变量，必需项picbed_redis_url，其他请参考文档。
 
+------
+
+如果有docker-compose的使用经验，可以使用命令``docker-compose up -d``在后台启动项目，
+它会启动一个redis、并构建启动picbed应用，redis开启AOF，宿主机映射9514端口以供外部访问。
+
+使用前，创建用户：
+
+```
+  $ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmin
+```
+
+ps: docker-compose.yml仅为简单定义，可以自行修改，比如加上nginx、redis挂载数据(/data)。
+
 ## 文档
 
 详细文档请访问：[Picbed Docs](https://docs.saintic.com/picbed)
