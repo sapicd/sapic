@@ -428,7 +428,8 @@ def get_upload_method(class_name):
 
 
 def _pip_install(pkg, index=None):
-    cmd = [executable, "-m", "pip", "install", "-q"]
+    """使用pip安装模块到用户目录$HOME/.local"""
+    cmd = [executable, "-m", "pip", "install", "-q", "--user"]
     if index:
         cmd.extend(["-i", index])
     cmd.append(pkg)

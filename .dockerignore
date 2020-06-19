@@ -6,3 +6,4 @@ __pycache__/
 **/*.cfg
 **/*.qiniu_pythonsdk_hostscache.json
 Snapshot/
+.git/
