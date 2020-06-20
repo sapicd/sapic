@@ -7,3 +7,4 @@ __pycache__/
 **/*.qiniu_pythonsdk_hostscache.json
 Snapshot/
 .git/
+static/upload/
