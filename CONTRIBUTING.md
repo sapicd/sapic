@@ -32,6 +32,8 @@ Pull Request
 
   如果您不是最新fork，需先同步picbed最新代码，参考官方文档：[Syncing a fork](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork)
 
+  请在dev分支编写代码。
+
 - 基础环境与安装过程参照 [picbed文档](https://docs.saintic.com/picbed/install.html)
 
 **接着是编码**
@@ -46,4 +48,4 @@ Pull Request
 
 - 提交代码
 
-- 在GitHub上发起 ``pull request``
+- 在GitHub上发起合并到dev分支的``pull request``

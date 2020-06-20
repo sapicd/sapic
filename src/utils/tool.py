@@ -89,8 +89,34 @@ def get_current_timestamp(is_float=False):
 
 
 def create_redis_engine(redis_url=None):
+    """创建redis连接的入口
+
+    .. versionchanged:: 1.6.0
+        支持rediscluster
+    """
     from config import REDIS
-    return from_url(redis_url or REDIS, decode_responses=True)
+    url = redis_url or REDIS
+    if url and url.startswith("rediscluster://"):
+        try:
+            from rediscluster import RedisCluster
+        except ImportError:
+            raise ImportError(
+                "Please install module with `pip install redis-py-cluster`"
+            )
+        else:
+            startup_nodes = [
+                dict(host=hp.split(":")[0], port=hp.split(":")[1])
+                for hp in comma_pat.split(url.split("://")[-1])
+                if hp and len(hp.split(":")) == 2
+            ]
+            if startup_nodes:
+                return RedisCluster(
+                    startup_nodes=startup_nodes,
+                    decode_responses=True
+                )
+            else:
+                raise ValueError("Invalid redis url")
+    return from_url(url, decode_responses=True)
 
 
 def gen_rnd_filename(fmt):

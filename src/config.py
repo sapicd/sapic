@@ -43,13 +43,16 @@ REDIS = envs.get("picbed_redis_url")
 # Redis数据库连接信息，格式:
 # redis://[:password]@host:port/db
 # host,port必填项,如有密码,记得密码前加冒号
+#
+# v1.6.0支持redis cluster集群连接，格式：
+# rediscluster://host:port,host:port...
 
 
 #: 存储一些非核心数据的相关设置
 STORAGE = {
 
     "Method": envs.get("picbed_storage_method", "redis"),
-    #: 存储方法，目前支持: local, redis
+    #: 存储方法，目前支持: local, redis(rediscluster)
 
     "LocalPath": envs.get("picbed_storage_local_path"),
     #: 当存储方法为local时此值有效，格式: path

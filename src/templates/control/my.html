@@ -79,7 +79,8 @@
         <ul class="layui-tab-title">
             <li class="layui-this" lay-id="profile">个人资料</li>
             <li lay-id="password">修改密码</li>
-            <li lay-id="setting">用户设置<span class="layui-badge-dot"></span>
+            <li lay-id="setting">用户设置</span>
+            <li lay-id="chart">统计图表<span class="layui-badge-dot"></span>
             </li>
             <li lay-id="picbed">我的图片</li>
         </ul>
@@ -305,6 +306,9 @@
                         <button type="reset" class="layui-btn layui-btn-primary">重置</button>
                     </div>
                 </form>
+            </div>
+            <div class="layui-tab-item">
+                <table id="report_linktoken" class="layui-table"></table>
             </div>
             <div class="layui-tab-item">
                 <div id="albums"></div>
@@ -1214,6 +1218,75 @@
                 data: data.field
             });
             return false;
+        });
+        //统计图表
+        table.render({
+            elem: '#report_linktoken',
+            url: '{{ url_for("api.report", classify="linktokens") }}',
+            page: true,
+            size: 'sm',
+            cols: [[{
+                        field: 'LinkId',
+                        title: 'ID',
+                        hide: true,
+                    },
+                    {
+                        field: 'user',
+                        title: '用户',
+                        hide: true
+                    },
+                    {
+                        field: 'ctime',
+                        title: '调用时间',
+                        width: 150,
+                        templet: function (d) {
+                            return util.toDateString(d.ctime * 1000);
+                        }
+                    },
+                    {
+                        field: 'authentication',
+                        title: '认证',
+                        width: 60,
+                        templet: function (d) {
+                            return d.authentication == 'ok' ? '<scan style="color:#009688">成功</scan>' : '<scan style="color:#FF5722">失败</scan>';
+                        }
+                    },
+                    {
+                        field: 'authorization',
+                        title: '授权',
+                        width: 60,
+                        templet: function (d) {
+                            return d.authorization == 'ok' ? '<scan style="color:#009688">通过</scan>' : '<scan style="color:#FF5722">拒绝</scan>';
+                        }
+                    },
+                    {
+                        field: 'ep',
+                        title: '访问端点',
+                        width: 100
+                    },
+                    {
+                        field: 'ip',
+                        title: '请求IP',
+                        width: 120,
+                    },
+                    {
+                        field: 'agent',
+                        title: '用户代理',
+                        width: 200
+                    },
+                    {
+                        field: 'origin',
+                        title: '<abbr title="HTTP Origin" style="border-bottom:1px dashed #0081EF">请求源站</abbr>',
+                    },
+                    {
+                        field: 'referer',
+                        title: '<abbr title="HTTP Referer" style="border-bottom:1px dashed #0081EF">引用来源</abbr>',
+                    },
+                ]
+            ],
+            limit: 10,
+            toolbar: '<div><span style="color:#2F4056">LinkToken请求报表</span></div>',
+            title: "LinkToken"
         });
     });
 </script>

@@ -1,0 +1,15 @@
+version: '3'
+services:
+  webapp:
+    build: .
+    restart: always
+    ports:
+      - "9514:9514"
+    environment:
+      - picbed_host=0.0.0.0
+      - picbed_redis_url=redis://@redis:6379
+    depends_on:
+      - "redis"
+  redis:
+    image: "redis:alpine"
+    command: ["redis-server", "--appendonly", "yes"]

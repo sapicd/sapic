@@ -250,9 +250,9 @@
                     });
                     return;
                 } else {
-                    var tip = Object.keys(res.errors).map(function(key) {
+                    var tip = res.errors ? Object.keys(res.errors).map(function(key) {
                         return key + ": " + res.errors[key];
-                    }).join("&#10;");
+                    }).join("&#10;") : "";
                     this.error(index, upload, tip ? (res.msg + "&#10;" + tip) : res.msg);
                 }
             },
