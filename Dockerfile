@@ -15,9 +15,9 @@ WORKDIR /picbed
 
 # -- build dependencies with debian --
 FROM python:3.7-slim AS build
-ARG DEBIANMIRROR=https://mirrors.tuna.tsinghua.edu.cn
+ARG DEBIANMIRROR=mirrors.tuna.tsinghua.edu.cn
 ARG PIPMIRROR=https://pypi.tuna.tsinghua.edu.cn/simple
-RUN sed -i "s@http://deb.debian.org@${DEBIANMIRROR}@g" /etc/apt/sources.list && \
+RUN sed -i "s@deb.debian.org@${DEBIANMIRROR}@g" /etc/apt/sources.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends build-essential && \
     apt-get clean && rm -rf /var/lib/apt/lists/*

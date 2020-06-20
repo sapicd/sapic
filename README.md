@@ -101,7 +101,11 @@
   $ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmin
 ```
 
-ps: docker-compose.yml仅为简单定义，可以自行修改，比如加上nginx、redis挂载数据(/data)。
+ps:
+
+  - Dockerfile采用分阶段构建，推送到Docker hub，目前压缩尺寸47MB，拉取到本地145MB左右。
+
+  - docker-compose.yml仅为简单定义，可以自行修改，比如加上nginx、redis挂载数据(/data)。
 
 ## 文档
 
