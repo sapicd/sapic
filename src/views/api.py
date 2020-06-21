@@ -1039,10 +1039,14 @@ def report(classify):
         if isinstance(start, int) and isinstance(end, int):
             key = rsp("report", classify)
             try:
-                data = g.rc.lrange(key, start, end)
+                pipe = g.rc.pipeline()
+                pipe.llen(key)
+                pipe.lrange(key, start, end)
+                result = pipe.execute()
             except RedisError:
                 res.update(msg="Program data storage service error")
             else:
+                count, data = result
                 if sort == "DESC":
                     data.reverse()
                 new = []
@@ -1053,7 +1057,7 @@ def report(classify):
                     else:
                         if r.get("user") == g.userinfo.username:
                             new.append(r)
-                res.update(code=0, data=new, count=len(new))
+                res.update(code=0, data=new, count=count)
         else:
             res.update(msg="Wrong query range parameter")
     else:
