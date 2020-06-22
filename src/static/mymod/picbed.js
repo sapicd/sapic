@@ -263,6 +263,27 @@ layui.define(["layer", "util", "element"], function (exports) {
             var dateStr = year + '-' + mon + '-' + day + ' ' + hour + ':' + min;
             return dateStr;
         },
+        getUrlQuery: function(key, acq) {
+            /*
+                获取URL中?之后的查询参数，不包含锚部分，比如url为http://passport.saintic.com/user/message/?status=1&Action=getCount
+                若无查询的key，则返回整个查询参数对象，即返回{status: "1", Action: "getCount"}；
+                若有查询的key，则返回对象值，返回值可以指定默认值acq：如key=status, 返回1；key=test返回acq
+            */
+            var str = location.search;
+            var obj = {};
+            if (str) {
+                str = str.substring(1, str.length);
+                // 以&分隔字符串，获得类似name=xiaoli这样的元素数组
+                var arr = str.split("&");
+                //var obj = new Object();
+                // 将每一个数组元素以=分隔并赋给obj对象
+                for (var i = 0; i < arr.length; i++) {
+                    var tmp_arr = arr[i].split("=");
+                    obj[decodeURIComponent(tmp_arr[0])] = decodeURIComponent(tmp_arr[1]);
+                }
+            }
+            return key ? obj[key] || acq : obj;
+        },
     };
     //输出接口
     exports('picbed', api);

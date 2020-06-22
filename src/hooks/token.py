@@ -185,18 +185,21 @@ def before_request():
                     authorization = "fail"
                 #: 统计入库
                 if is_true(userinfo[1]):
-                    g.rc.lpush(rsp("report", "linktokens"), json.dumps(dict(
-                        LinkId=LinkId,
-                        user=usr,
-                        ctime=get_current_timestamp(),
-                        ip=get_ip(),
-                        agent=request.headers.get('User-Agent', ''),
-                        referer=request.headers.get('Referer', ''),
-                        origin=get_origin(),
-                        ep=request.endpoint,
-                        authentication=authentication,
-                        authorization=authorization,
-                    )))
+                    g.rc.lpush(
+                        rsp("report", "linktokens", usr),
+                        json.dumps(dict(
+                            LinkId=LinkId,
+                            user=usr,
+                            ctime=get_current_timestamp(),
+                            ip=get_ip(),
+                            agent=request.headers.get('User-Agent', ''),
+                            referer=request.headers.get('Referer', ''),
+                            origin=get_origin(),
+                            ep=request.endpoint,
+                            authentication=authentication,
+                            authorization=authorization,
+                        ))
+                    )
     if token:
         try:
             oldToken = token

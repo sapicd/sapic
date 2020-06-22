@@ -1037,7 +1037,7 @@ def report(classify):
                 start = (page-1) * limit
                 end = start + limit - 1
         if isinstance(start, int) and isinstance(end, int):
-            key = rsp("report", classify)
+            key = rsp("report", classify, g.userinfo.username)
             try:
                 pipe = g.rc.pipeline()
                 pipe.llen(key)
@@ -1049,15 +1049,11 @@ def report(classify):
                 count, data = result
                 if sort == "DESC":
                     data.reverse()
-                new = []
-                for r in data:
-                    r = json.loads(r)
-                    if is_mgr and g.is_admin:
-                        new.append(r)
-                    else:
-                        if r.get("user") == g.userinfo.username:
-                            new.append(r)
-                res.update(code=0, data=new, count=count)
+                res.update(
+                    code=0,
+                    data=[json.loads(r) for r in data if r],
+                    count=count,
+                )
         else:
             res.update(msg="Wrong query range parameter")
     else:

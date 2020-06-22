@@ -32,7 +32,9 @@ def get_referrer_url():
     if request.method == "GET" and request.referrer and \
             request.referrer.startswith(request.host_url) and \
             request.endpoint and "api." not in request.endpoint and \
-            request.endpoint != "front.register":
+            request.endpoint not in (
+                "front.register", "front.login", "front.logout"
+            ):
         url = request.referrer
     else:
         url = None
@@ -46,7 +48,11 @@ def get_redirect_url(endpoint="front.index"):
         if endpoint != "front.index":
             url = url_for(endpoint)
         else:
-            url = get_referrer_url() or url_for(endpoint)
+            url = get_referrer_url() or (
+                request.full_path if request.endpoint not in (
+                    "front.login", "front.logout"
+                ) else None
+            ) or url_for(endpoint)
     return url
 
 

@@ -398,6 +398,7 @@
 {% else %}
 {% set load_album = request.args.album or g.userinfo.ucfg_default_album %}
 {% endif %}
+<script src="{{ url_for('static', filename='js/ua-parse.min.js') }}"></script>
 <script>
     layui.use(['picbed', 'laypage', 'flow', 'form', 'element', 'layer', 'laytpl', 'util', 'table', 'tableSelect', 'avatar'], function () {
         var $ = layui.jquery,
@@ -1000,12 +1001,15 @@
             url: '{{ url_for("api.link") }}',
             page: false,
             size: 'sm',
-            cols: [
-                [{
+            cols: [[{
+                        type: "checkbox",
+                        fixed: "left",
+                        width: 50
+                    },
+                    {
                         field: 'LinkId',
                         title: 'ID',
-                        width: 60,
-                        fixed: 'left'
+                        hide: true
                     },
                     {
                         field: 'LinkToken',
@@ -1095,7 +1099,7 @@
                 layEvent: 'LAYTABLE_RELOAD', //事件名，用于 toolbar 事件中使用
                 icon: 'layui-icon-refresh' //图标类名
             }, 'filter', 'print', 'exports'],
-            done: function() {
+            done: function(res,) {
                 $("#linktokentip").hover(function () {
                     let tip = [
                         "&nbsp;&nbsp;&nbsp;&nbsp;Token分权引用(LinkToken)是将Token的映射，Token最小权限与安全限定下的调用方式。",
@@ -1105,6 +1109,18 @@
                     ].join("<br>&nbsp;&nbsp;&nbsp;&nbsp;");
                     layer.tips(tip, this, {tips: 3, time: 0});
                 }, closeTip);
+                //勾选checkbox
+                var LinkId = picbed.getUrlQuery("LinkId");
+                if (LinkId) {
+                    for (var i = 0; i < res.data.length; i++) {
+                        if (res.data[i].LinkId === LinkId) {
+                            res.data[i]["LAY_CHECKED"] = true;
+                            var index = res.data[i]['LAY_TABLE_INDEX'];
+                            $('.layui-table-fixed-l tr[data-index=' + index + '] input[type="checkbox"]').prop('checked', true);
+                            $('.layui-table-fixed-l tr[data-index=' + index + '] input[type="checkbox"]').next().addClass('layui-form-checked');
+                        }
+                    }
+                }
             }
         });
         //监听工具条
@@ -1228,7 +1244,11 @@
             cols: [[{
                         field: 'LinkId',
                         title: 'ID',
-                        hide: true,
+                        width: 100,
+                        templet: function(d) {
+                            var LinkId = picbed.getUrlQuery("LinkId");
+                            return LinkId === d.LinkId ? d.LinkId : ('<a href="/control/myself?LinkId='+ d.LinkId + '#!setting">' + d.LinkId + '</a>');
+                        }
                     },
                     {
                         field: 'user',
@@ -1272,17 +1292,21 @@
                     {
                         field: 'agent',
                         title: '用户代理',
-                        width: 200
+                        width: 200,
+                        templet: function(d) {
+                            var r = UAParser(d.agent),
+                                p1 = r.os.name ? (r.os.name + (r.os.version || '')) : '',
+                                p2 = r.browser.name ? (r.browser.name  + (r.browser.major || r.browser.version)) : '';
+                            return  (p1 && p2) ? ('<scan title="' + d.agent + '" style="border-bottom:1px dashed #0081EF">' + p1 + ' / ' + p2 + '</scan>') : d.agent;
+                        }
                     },
                     {
                         field: 'origin',
                         title: '请求源站',
-                        //title: '<abbr title="HTTP Origin" style="border-bottom:1px dashed #0081EF">请求源站</abbr>',
                     },
                     {
                         field: 'referer',
                         title: '引用来源',
-                        //title: '<abbr title="HTTP Referer" style="border-bottom:1px dashed #0081EF">引用来源</abbr>',
                     },
                 ]
             ],
