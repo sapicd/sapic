@@ -244,6 +244,87 @@ def hook():
     return res
 
 
+@bp.route("/user", methods=["GET", "DELETE"])
+@admin_apilogin_required
+def user():
+    """Manage users.
+
+    .. versionadded:: 1.6.0
+    """
+    res = dict(code=1, msg=None)
+    ak = rsp("accounts")
+    if request.method == "GET":
+        #: 查询用户
+        sort = request.args.get("sort") or "desc"
+        page = request.args.get("page") or 1
+        limit = request.args.get("limit") or 10
+        try:
+            page = int(page) - 1
+            limit = int(limit)
+            if page < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            res.update(code=2, msg="Parameter error")
+        else:
+            fds = (
+                "username", "nickname", "avatar", "ctime", "mtime", "is_admin"
+            )
+            pipe = g.rc.pipeline()
+            for u in g.rc.smembers(ak):
+                pipe.hmget(rsp("account", u), *fds)
+            try:
+                data = pipe.execute()
+            except RedisError:
+                res.update(msg="Program data storage service error")
+            else:
+                def fmt(d):
+                    d = dict(zip(fds, d))
+                    d.update(
+                        is_admin=is_true(d["is_admin"]),
+                        ctime=int(d["ctime"]),
+                    )
+                    if d.get("mtime"):
+                        d["mtime"] = int(d["mtime"])
+                    return d
+                data = [fmt(d) for d in data]
+                data = sorted(
+                    data,
+                    key=lambda k: k.get('ctime', 0),
+                    reverse=False if sort == "asc" else True
+                )
+                count = len(data)
+                data = list_equal_split(data, limit)
+                pageCount = len(data)
+                if page < pageCount:
+                    res.update(
+                        code=0,
+                        count=count,
+                        data=data[page],
+                        pageCount=pageCount,
+                    )
+                else:
+                    res.update(code=3, msg="No data")
+    elif request.method == "DELETE":
+        #: 删除用户
+        username = request.form.get("username")
+        if username:
+            if g.rc.sismember(ak, username):
+                pipe = g.rc.pipeline()
+                pipe.srem(ak, username)
+                pipe.delete(rsp("account", username))
+                try:
+                    pipe.execute()
+                except RedisError:
+                    res.update(msg="Program data storage service error")
+                else:
+                    res.update(code=0)
+            else:
+                res.update(code=3, msg="No valid username found")
+        else:
+            res.update(code=2, msg="No valid username found")
+    return res
+
+
 @bp.route("/pip/install", methods=["POST"])
 @admin_apilogin_required
 def pip_install():

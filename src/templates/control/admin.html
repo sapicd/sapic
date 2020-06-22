@@ -30,6 +30,7 @@
         <ul class="layui-tab-title">
             <li class="layui-this" lay-id="setting">网站设置</li>
             <li lay-id="hook">钩子扩展</li>
+            <li lay-id="user">用户管理<span class="layui-badge-dot"></span></li>
             <li lay-id="picbed">全站图片管理</li>
         </ul>
         <div class="layui-tab-content">
@@ -311,6 +312,9 @@
             <div class="layui-tab-item">
                 <table id="hook" lay-filter="hook" class="layui-table"></table>
             </div>
+            <div class="layui-tab-item">
+                <table id="usermanager" lay-filter="usermanager" class="layui-table"></table>
+            </div>
             <div class="layui-tab-item"></div>
         </div>
     </div>
@@ -336,15 +340,19 @@
         <button class="layui-btn layui-btn-sm" lay-event="addHookName">添加第三方钩子</button>
     </div>
 </script>
+<script type="text/html" id="usermanager_action">
+    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-danger" lay-event="remove">删除</a>
+</script>
 {% endraw %}
 <script>
-    layui.use(['picbed', 'layer', 'form', 'table', 'element', 'util'], function () {
+    layui.use(['picbed', 'layer', 'form', 'table', 'element', 'util', 'flow'], function () {
         var $ = layui.$,
             picbed = layui.picbed,
             util = layui.util,
             form = layui.form,
             layer = layui.layer,
             table = layui.table,
+            flow = layui.flow,
             element = layui.element;
         //显示当前tab
         if (location.hash) {
@@ -601,6 +609,95 @@
                         layer.tips("发布于" + picbed.convertUTCTimeToLocalTime(res.published_at), "#verTip", {tips:3});
                     }
                 }
+            }
+        });
+        //用户管理
+        table.render({
+            elem: "#usermanager",
+            url: "{{ url_for('api.user') }}",
+            method: "GET",
+            cols: [
+                [{
+                        field: 'avatar',
+                        title: '头像',
+                        width: 70,
+                        templet: function(d) {
+                            return d.avatar ? ('<a href="' + d.avatar + '" target="_blank"><img lay-src="' + d.avatar + '" height="100%" /></a>') : "";
+                        }
+                    },
+                    {
+                        field: 'username',
+                        title: '用户名',
+                    },
+                    {
+                        field: 'nickname',
+                        title: '昵称',
+                    },
+                    {
+                        field: 'is_admin',
+                        title: '管理员',
+                        templet: function(d) {
+                            return d.is_admin === true ? "<b style='color:#FFB800'>是</b>" : "<scan style='color:#01AAED'>否</scan>";
+                        }
+                    },
+                    {
+                        field: 'ctime',
+                        title: '注册时间',
+                        templet: function (d) {
+                            var ctime = util.toDateString(d.ctime * 1000),
+                                mtime = util.toDateString(d.mtime * 1000);
+                            return d.mtime ? ('<scan title="资料修改于' + mtime + '" style="border-bottom:1px dashed #0081EF">' + ctime + '</scan>') : ctime;
+                        }
+                    },
+                    /*
+                    {
+                        field: 'state',
+                        title: '状态',
+                        width: 80,
+                        sort: true,
+                        templet: function (d) {
+                            if (d.state === 'enabled') {
+                                return '<scan style="color:#5FB878">enabled</scan>';
+                            } else {
+                                return '<scan style="color:#FF5722">disabled</scan>';
+                            }
+                        }
+                    },
+                    */
+                    {
+                        fixed: 'right',
+                        minWidth: 50,
+                        align: 'left',
+                        toolbar: '#usermanager_action'
+                    }
+                ]
+            ],
+            //toolbar: '#toolbar',
+            //title: '钩子扩展列表',
+            size: 'sm',
+            skin: 'line',
+            page: true,
+            done: function() {
+                flow.lazyimg();
+            }
+        });
+        //用户管理监听表格工具条
+        table.on('tool(usermanager)', function (obj) {
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值
+            var tr = obj.tr; //获得当前行 tr 的 DOM 对象（如果有的话）
+            if (layEvent === 'remove') { //删除第三方钩子
+                layer.confirm('真的删除用户 ' + data.username + ' 么？', {icon:3,title:"请确认"}, function (index) {
+                    layer.close(index);
+                    //向服务端发送删除指令
+                    picbed.ajax("{{ url_for('api.user') }}", function(res) {
+                        layer.msg("已删除用户", {icon:1});
+                        obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                    }, {
+                        method: "DELETE",
+                        data: {username: data.username}
+                    });
+                });
             }
         });
     });

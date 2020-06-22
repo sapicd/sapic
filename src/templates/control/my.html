@@ -1244,7 +1244,7 @@
             cols: [[{
                         field: 'LinkId',
                         title: 'ID',
-                        width: 100,
+                        width: 80,
                         templet: function(d) {
                             var LinkId = picbed.getUrlQuery("LinkId");
                             return LinkId === d.LinkId ? d.LinkId : ('<a href="/control/myself?LinkId='+ d.LinkId + '#!setting">' + d.LinkId + '</a>');
@@ -1302,11 +1302,10 @@
                     },
                     {
                         field: 'origin',
-                        title: '请求源站',
-                    },
-                    {
-                        field: 'referer',
-                        title: '引用来源',
+                        title: '来源',
+                        templet: function(d) {
+                            return d.origin ? '<scan title="' + d.referer + '" style="border-bottom:1px dashed #0081EF">' + d.origin + '</scan>' : d.referer;
+                        }
                     },
                 ]
             ],
