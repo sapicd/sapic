@@ -265,7 +265,7 @@ layui.define(["layer", "util", "element"], function (exports) {
         },
         getUrlQuery: function(key, acq) {
             /*
-                获取URL中?之后的查询参数，不包含锚部分，比如url为http://passport.saintic.com/user/message/?status=1&Action=getCount
+                获取URL中?之后的查询参数，不包含锚部分，比如url为http://example.com/user/message/?status=1&Action=getCount
                 若无查询的key，则返回整个查询参数对象，即返回{status: "1", Action: "getCount"}；
                 若有查询的key，则返回对象值，返回值可以指定默认值acq：如key=status, 返回1；key=test返回acq
             */

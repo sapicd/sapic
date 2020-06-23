@@ -1,6 +1,6 @@
 页面采用layui2.5.6构建，修改部分源码和编译，具体如下：
 
-## upload.js
+## upload.js源码修改
 
 #### 1. updateData
 
@@ -25,7 +25,7 @@ options.progress(percent, options.item[0], e);
 options.progress(index, percent, options.item[0], e);
 ```
 
-## layer.js
+## layer.js源码修改
 
 layer.prompt增加placeholder选项
 

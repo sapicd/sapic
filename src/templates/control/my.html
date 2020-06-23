@@ -960,7 +960,7 @@
                 '您可以使用以下按钮完成快捷复制，并<a href="https://docs.saintic.com/picbed/usage.html#linktoken" target="_blank" title="LinkToken文档" style="color:#009688">查阅文档</a>！',
                 '</div>',
             ].join("<br>");
-            let sdk = "{{ url_for('static', filename='sdk/uploader.js', _external=True) }}",
+            let sdk = "{{ url_for('static', filename='sdk/uploader.min.js', _external=True) }}",
                 url = "{{ url_for('api.upload', _external=True) }}";
             layer.open({
                 type: 1,
@@ -1295,8 +1295,8 @@
                         width: 200,
                         templet: function(d) {
                             var r = UAParser(d.agent),
-                                p1 = r.os.name ? (r.os.name + (r.os.version || '')) : '',
-                                p2 = r.browser.name ? (r.browser.name  + (r.browser.major || r.browser.version)) : '';
+                                p1 = r.os.name ? (r.os.name + ' ' + (r.os.version || '')) : '',
+                                p2 = r.browser.name ? (r.browser.name + ' ' + (r.browser.major || r.browser.version)) : '';
                             return  (p1 && p2) ? ('<scan title="' + d.agent + '" style="border-bottom:1px dashed #0081EF">' + p1 + ' / ' + p2 + '</scan>') : d.agent;
                         }
                     },
@@ -1304,7 +1304,7 @@
                         field: 'origin',
                         title: '来源',
                         templet: function(d) {
-                            return d.origin ? '<scan title="' + d.referer + '" style="border-bottom:1px dashed #0081EF">' + d.origin + '</scan>' : d.referer;
+                            return d.origin ? '<a href="' + (d.referer || d.origin) + '" target="_blank" ref="nofollow"><scan title="' + d.referer + '" style="border-bottom:1px dashed #0081EF">' + d.origin + '</scan></a>' : d.referer;
                         }
                     },
                 ]
