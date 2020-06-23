@@ -1,3 +1,12 @@
+/*
+ * uploader.js for picbed
+ *
+ * https://github.com/staugur/picbed
+ *
+ * picbed外部上传封装
+ *
+ * PS：ES6模块，使用 babel-minify 仅压缩源文件
+ */
 'use strict';
 
 var up2picbed = (function () {

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>测试 - 跨越上传图片到pibced</title>
+    <style>
+        .btn {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 9px 15px;
+            font-size: 12px;
+            background-color: #fff;
+            color: #409eff;
+            border: 1px #409eff solid;
+            border-radius: 3px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn:hover {
+            background-color: #409eff;
+            color: white;
+        }
+
+        .primary {
+            color: #fff;
+            background-color: #409eff;
+            border: 0;
+        }
+
+        .danger {
+            color: #fff;
+            background-color: #f56c6c;
+            border: 0;
+        }
+
+        .danger:hover {
+            background-color: #f56c6c;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="up2picbed" class="btn">上传图片</button>
+    <p id="msg"></p>
+</body>
+
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://www.layuicdn.com/layer/layer.js"></script>
+
+<!--自动方式，上传成功触发onSuccess函数-->
+<script>
+    function onSuccess(res) {
+        console.log(res);
+        layer.alert(JSON.stringify(res));
+        $("#msg").text(res.src);
+    }
+</script>
+<script src="http://127.0.0.1:9514/static/sdk/uploader.min.js" data-url="http://127.0.0.1:9514/api/upload"
+    data-token="MTU5MTc4MTc1NjoxNTMyNzRkZDdkYzQ0YTNiOTE2MWQ2ZWE5YmZjMTViODozYWVhYTRiNjZjMThkMGYwNzlhMTI2OGI5ODNhMDY4ODUxNThiZmM5MGMwYmRmOTYzNzUzYmI3MDI2YTRiMDY0"
+    data-auto="true" data-success="onSuccess" data-style="false">
+</script>
+
+<!--手动方式-->
+<!--
+<script src="http://127.0.0.1:9514/static/sdk/uploader.min.js" data-url="http://127.0.0.1:9514/api/upload"
+    data-style="false"></script>
+<script>
+    let up = up2picbed({
+        token: "MTU5MTc4MTc1NjoxNTMyNzRkZDdkYzQ0YTNiOTE2MWQ2ZWE5YmZjMTViODozYWVhYTRiNjZjMThkMGYwNzlhMTI2OGI5ODNhMDY4ODUxNThiZmM5MGMwYmRmOTYzNzUzYmI3MDI2YTRiMDY0",
+        success: onSuccess,
+        progress: v => console.log(v)
+    });
+    console.log(up);
+</script>
+-->
+
+</html>
