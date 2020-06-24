@@ -26,15 +26,15 @@ from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_verticaline, parse_valid_colon, is_true, gen_ua
 from ._compat import PY2, text_type, urlsplit
 
+no_jump_ep = ("front.login", "front.logout", "front.register")
+
 
 def get_referrer_url():
     """获取上一页地址"""
     if request.method == "GET" and request.referrer and \
             request.referrer.startswith(request.host_url) and \
             request.endpoint and "api." not in request.endpoint and \
-            request.endpoint not in (
-                "front.register", "front.login", "front.logout"
-            ):
+            request.endpoint not in no_jump_ep:
         url = request.referrer
     else:
         url = None
@@ -49,9 +49,8 @@ def get_redirect_url(endpoint="front.index"):
             url = url_for(endpoint)
         else:
             url = get_referrer_url() or (
-                request.full_path if request.endpoint not in (
-                    "front.login", "front.logout"
-                ) else None
+                request.full_path if request.endpoint not in no_jump_ep
+                else None
             ) or url_for(endpoint)
     return url
 
