@@ -5,11 +5,7 @@
 <ul class="layui-nav layui-layout-right">
     <li class="layui-nav-item" id="verTip"></li>
     <li class="layui-nav-item {% if request.endpoint == 'front.index' %}layui-this{% endif %}">
-        {% if request.endpoint == 'front.index' %}
-        <a>首页</a>
-        {% else %}
-        <a href="{{ url_for('front.index') }}">首页</a>
-        {% endif %}
+        <a {% if request.endpoint != 'front.index' %} href="{{ url_for('front.index') }}" {% endif %}><i class="saintic-icon saintic-icon-home"></i> 首页</a>
     </li>
     {% if g.signin %}
     <li class="layui-nav-item">
@@ -18,37 +14,23 @@
             <cite id="nickname">{{ g.userinfo.nickname or g.userinfo.username }}</cite>
         </a>
         <dl class="layui-nav-child">
-            {% if request.endpoint == "front.my" %}
-            <dd><a>个人资料</a></dd>
-            <dd><a>用户设置</a></dd>
-            <dd><a>我的图片</a></dd>
-            {% else %}
-            <dd><a href="{{ url_for('front.my', _anchor='!profile') }}">个人资料</a></dd>
-            <dd><a href="{{ url_for('front.my', _anchor='!setting') }}">用户设置</a></dd>
-            <dd><a href="{{ url_for('front.my', _anchor='!picbed') }}">我的图片</a></dd>
-            {% endif %}
+            <dd><a {% if request.endpoint != "front.my" %} href="{{ url_for('front.my', _anchor='!profile') }}" {% endif %}><i class="saintic-icon saintic-icon-user"></i> 个人资料</a></dd>
+            <dd><a {% if request.endpoint != "front.my" %} href="{{ url_for('front.my', _anchor='!setting') }}" {% endif %}><i class="saintic-icon saintic-icon-setting"></i> 用户设置</a></dd>
+            <dd><a {% if request.endpoint != "front.my" %} href="{{ url_for('front.my', _anchor='!picbed') }}" {% endif %}><i class="saintic-icon saintic-icon-user-album"></i> 我的图片</a></dd>
             {% if g.is_admin %}
-            <dd><a href="{{ url_for('front.admin') }}">站点管理</a></dd>
+            <dd><a href="{{ url_for('front.admin') }}"><i class="saintic-icon saintic-icon-site-manager"></i> 站点管理</a></dd>
             {% endif %}
             <hr class="navbar-divider">
-            <dd><a href="{{ url_for('front.logout') }}">登出</a></dd>
+            <dd><a href="{{ url_for('front.logout') }}"><i class="saintic-icon saintic-icon-logoff"></i> 登出</a></dd>
         </dl>
     </li>
     {% else %}
     <li class="layui-nav-item {% if request.endpoint == 'front.login' %}layui-this{% endif %}">
-        {% if request.endpoint == 'front.login' %}
-        <a>登录</a>
-        {% else %}
-        <a href="{{ url_for('front.login') }}">登录</a>
-        {% endif %}
+        <a {% if request.endpoint != 'front.login' %} href="{{ url_for('front.login') }}" {% endif %}><i class="saintic-icon saintic-icon-login"></i> 登录</a>
     </li>
     {% if is_true(g.site.register) %}
     <li class="layui-nav-item {% if request.endpoint == 'front.register' %}layui-this{% endif %}">
-        {% if request.endpoint == 'front.register' %}
-        <a>注册</a>
-        {% else %}
-        <a href="{{ url_for('front.register') }}">注册</a>
-        {% endif %}
+        <a {% if request.endpoint != 'front.register' %} href="{{ url_for('front.register') }}" {% endif %}><i class="saintic-icon saintic-icon-register"></i> 注册</a>
     </li>
     {% endif %}
     {% endif %}

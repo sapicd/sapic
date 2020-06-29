@@ -9,7 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 __author__ = 'staugur'
 __description__ = '使用Token验证Api'
 __catalog__ = 'auth'
@@ -18,7 +18,7 @@ import json
 from flask import request, g
 from base64 import urlsafe_b64decode as b64decode
 from utils.tool import rsp, hmac_sha256, logger, get_current_timestamp, \
-    parse_valid_comma, Attribution, ALLOWED_RULES, is_true
+    parse_valid_comma, Attribution, ALLOWED_RULES, is_true, parse_ua
 from utils._compat import PY2, text_type
 
 intpl_profile = """
@@ -60,6 +60,10 @@ def get_origin():
 
 def get_ip():
     return request.headers.get('X-Real-Ip', request.remote_addr)
+
+
+def get_ua():
+    return request.headers.get('User-Agent', '')
 
 
 def _parse_ir(ir):
@@ -192,7 +196,8 @@ def before_request():
                             user=usr,
                             ctime=get_current_timestamp(),
                             ip=get_ip(),
-                            agent=request.headers.get('User-Agent', ''),
+                            agent=get_ua(),
+                            uap=parse_ua(get_ua()),
                             referer=request.headers.get('Referer', ''),
                             origin=get_origin(),
                             ep=request.endpoint,

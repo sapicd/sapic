@@ -23,7 +23,7 @@ from subprocess import call
 from libs.storage import get_storage
 from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
-    parse_valid_verticaline, parse_valid_colon, is_true, gen_ua
+    parse_valid_verticaline, parse_valid_colon, is_true, is_venv
 from ._compat import PY2, text_type, urlsplit
 
 no_jump_ep = ("front.login", "front.logout", "front.register")
@@ -434,7 +434,9 @@ def get_upload_method(class_name):
 
 def _pip_install(pkg, index=None):
     """使用pip安装模块到用户目录$HOME/.local"""
-    cmd = [executable, "-m", "pip", "install", "-q", "--user"]
+    cmd = [executable, "-m", "pip", "install", "-q"]
+    if not is_venv():
+        cmd.append("--user")
     if index:
         cmd.extend(["-i", index])
     cmd.append(pkg)

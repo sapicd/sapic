@@ -284,6 +284,44 @@ layui.define(["layer", "util", "element"], function (exports) {
             }
             return key ? obj[key] || acq : obj;
         },
+        ITChangeMapping: function(item, type) {
+            //将操作系统、浏览器、设备转换为字体图标
+            var im, browserMap = {
+                edge: '<i class="saintic-icon saintic-icon-edge-browser"></i>',
+                safari: '<i class="saintic-icon saintic-icon-safari-browser"></i>',
+                chrome: '<i class="saintic-icon saintic-icon-chrome-browser"></i>',
+                firefox: '<i class="saintic-icon saintic-icon-firefox"></i>',
+                ie: '<i class="saintic-icon saintic-icon-ie-browser"></i>',
+                opera: '<i class="saintic-icon saintic-icon-opera-browser"></i>',
+                qq: '<i class="saintic-icon saintic-icon-qq-browser"></i>',
+                sogou: '<i class="saintic-icon saintic-icon-sogou-browser"></i>',
+                uc: '<i class="saintic-icon saintic-icon-uc-browser"></i>',
+                baidu: '<i class="saintic-icon saintic-icon-baidu-browser"></i>'
+            },
+            systemMap = {
+                windows: '<i class="saintic-icon saintic-icon-windows"></i>',
+                linux: '<i class="saintic-icon saintic-icon-linux"></i>',
+                apple: '<i class="saintic-icon saintic-icon-apple"></i>',
+                android: '<i class="saintic-icon saintic-icon-andriod"></i>'
+            },
+            deviceMap = {
+                pc: '<i class="saintic-icon saintic-icon-pc"></i>',
+                mobile: '<i class="saintic-icon saintic-icon-mobilephone"></i>',
+                tablet: '<i class="saintic-icon saintic-icon-tablet"></i>'
+            };
+            if (type == "browser") {
+                im = browserMap[item];
+            } else if (type == "system") {
+                im = systemMap[item];
+            } else if (type == "device") {
+                im = deviceMap[item]
+            }
+            return im || '<i class="saintic-icon saintic-icon-unknown"></i>'
+        },
+        isContains: function(str, substr) {
+            /* 判断str中是否包含substr */
+            return str.indexOf(substr) >= 0;
+        },
     };
     //输出接口
     exports('picbed', api);

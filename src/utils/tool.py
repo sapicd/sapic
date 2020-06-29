@@ -10,6 +10,7 @@
 """
 
 import re
+import sys
 import hmac
 import hashlib
 import requests
@@ -344,6 +345,23 @@ def gen_ua():
     return ua
 
 
+def parse_ua(user_agent):
+    from user_agents import parse as user_agents_parse
+    uap = user_agents_parse(user_agent)
+    device, ua_os, family = str(uap).split(' / ')
+    if uap.is_mobile:
+        platform = "mobile"
+    elif uap.is_pc:
+        platform = "pc"
+    elif uap.is_tablet:
+        platform = "tablet"
+    elif uap.is_bot:
+        platform = "bot"
+    else:
+        platform = "other"
+    return dict(platform=platform, device=device, os=ua_os, family=family)
+
+
 def slash_join(*args):
     stripped_strings = []
     for a in args:
@@ -398,3 +416,8 @@ def try_request(
         raise
     else:
         return resp
+
+
+def is_venv():
+    return (hasattr(sys, 'real_prefix') or
+            (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix))

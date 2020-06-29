@@ -77,12 +77,11 @@
 <div class="layui-container">
     <div class="layui-tab layui-tab-brief" lay-filter="tab">
         <ul class="layui-tab-title">
-            <li class="layui-this" lay-id="profile">个人资料</li>
-            <li lay-id="password">修改密码</li>
-            <li lay-id="setting">用户设置</span>
-            <li lay-id="chart">统计图表<span class="layui-badge-dot"></span>
-            </li>
-            <li lay-id="picbed">我的图片</li>
+            <li class="layui-this" lay-id="profile"><i class="saintic-icon saintic-icon-user"></i> 个人资料</li>
+            <li lay-id="password"><i class="saintic-icon saintic-icon-password"></i> 修改密码</li>
+            <li lay-id="setting"><i class="saintic-icon saintic-icon-setting"></i> 用户设置</span>
+            <li lay-id="chart"><i class="saintic-icon saintic-icon-chart"></i> 统计图表</li>
+            <li lay-id="picbed"><i class="saintic-icon saintic-icon-picture"></i> 我的图片</li>
         </ul>
         <div class="layui-tab-content">
             <div class="layui-tab-item layui-show">
@@ -398,7 +397,6 @@
 {% else %}
 {% set load_album = request.args.album or g.userinfo.ucfg_default_album %}
 {% endif %}
-<script src="{{ url_for('static', filename='js/ua-parse.min.js') }}"></script>
 <script>
     layui.use(['picbed', 'laypage', 'flow', 'form', 'element', 'layer', 'laytpl', 'util', 'table', 'tableSelect', 'avatar'], function () {
         var $ = layui.jquery,
@@ -1241,74 +1239,123 @@
             url: '{{ url_for("api.report", classify="linktokens") }}',
             page: true,
             size: 'sm',
-            cols: [[{
-                        field: 'LinkId',
-                        title: 'ID',
-                        width: 80,
-                        templet: function(d) {
-                            var LinkId = picbed.getUrlQuery("LinkId");
-                            return LinkId === d.LinkId ? d.LinkId : ('<a href="/control/myself?LinkId='+ d.LinkId + '#!setting">' + d.LinkId + '</a>');
+            cols: [[
+                {
+                    field: 'LinkId',
+                    title: 'ID',
+                    width: 80,
+                    templet: function(d) {
+                        var LinkId = picbed.getUrlQuery("LinkId");
+                        return LinkId === d.LinkId ? d.LinkId : ('<a href="/control/myself?LinkId='+ d.LinkId + '#!setting">' + d.LinkId + '</a>');
+                    }
+                },
+                {
+                    field: 'user',
+                    title: '用户',
+                    hide: true
+                },
+                {
+                    field: 'ctime',
+                    title: '调用时间',
+                    width: 150,
+                    templet: function (d) {
+                        return util.toDateString(d.ctime * 1000);
+                    }
+                },
+                {
+                    field: 'authentication',
+                    title: '认证',
+                    width: 60,
+                    templet: function (d) {
+                        return d.authentication == 'ok' ? '<scan style="color:#009688">成功</scan>' : '<scan style="color:#FF5722">失败</scan>';
+                    }
+                },
+                {
+                    field: 'authorization',
+                    title: '授权',
+                    width: 60,
+                    templet: function (d) {
+                        return d.authorization == 'ok' ? '<scan style="color:#009688">通过</scan>' : '<scan style="color:#FF5722">拒绝</scan>';
+                    }
+                },
+                {
+                    field: 'ep',
+                    title: '访问端点',
+                    width: 100
+                },
+                {
+                    field: 'ip',
+                    title: '请求IP',
+                    width: 120,
+                },
+                {
+                    field: 'uap',
+                    title: '设备',
+                    width: 60,
+                    align: "center",
+                    templet: function(d) {
+                        var icon = picbed.ITChangeMapping(d.uap.platform.toLowerCase(), "device")
+                        return "<attr title='" + d.uap.device + "'>" + icon + "</attr>";
+                    }
+                }, {
+                    field: 'uap',
+                    title: '浏览器',
+                    width: 70,
+                    align: "center",
+                    templet: function(d) {
+                        var item, browser = d.uap.family.toLowerCase();
+                        if (picbed.isContains(browser, "chrome") === true) {
+                            item = "chrome";
+                        } else if (picbed.isContains(browser, "firefox") === true) {
+                            item = "firefox";
+                        } else if (picbed.isContains(browser, "safari") === true) {
+                            item = "safari";
+                        } else if (picbed.isContains(browser, "edge") === true) {
+                            item = "edge";
+                        } else if (picbed.isContains(browser, "ie") === true) {
+                            item = "ie";
+                        } else if (picbed.isContains(browser, "opera") === true) {
+                            item = "opera";
+                        } else if (picbed.isContains(browser, "qq") === true) {
+                            item = "qq"
+                        } else if (picbed.isContains(browser, "sogou") === true) {
+                            item = "sogou"
+                        } else if (picbed.isContains(browser, "uc") === true) {
+                            item = "uc"
+                        } else if (picbed.isContains(browser, "bidu") === true) {
+                            item = "baidu"
                         }
-                    },
-                    {
-                        field: 'user',
-                        title: '用户',
-                        hide: true
-                    },
-                    {
-                        field: 'ctime',
-                        title: '调用时间',
-                        width: 150,
-                        templet: function (d) {
-                            return util.toDateString(d.ctime * 1000);
+                        var icon = picbed.ITChangeMapping(item, "browser")
+                        return "<attr title='" + d.uap.family + '&#10;' + d.agent + "'>" + icon + "</attr>";
+                    }
+                }, {
+                    field: 'uap',
+                    title: '系统',
+                    width: 60,
+                    align: "center",
+                    templet: function(d) {
+                        var item, system = d.uap.os.toLowerCase();
+                        if (picbed.isContains(system, "windows")) {
+                            item = "windows";
+                        } else if (picbed.isContains(system, "linux") || picbed.isContains(system, "centos") || picbed.isContains(system, "ubuntu") || picbed.isContains(system, "unix")) {
+                            item = "linux";
+                        } else if (picbed.isContains(system, "ios") || picbed.isContains(system, "mac")) {
+                            item = "apple";
+                        } else if (picbed.isContains(system, "android")) {
+                            item = "android";
                         }
-                    },
-                    {
-                        field: 'authentication',
-                        title: '认证',
-                        width: 60,
-                        templet: function (d) {
-                            return d.authentication == 'ok' ? '<scan style="color:#009688">成功</scan>' : '<scan style="color:#FF5722">失败</scan>';
-                        }
-                    },
-                    {
-                        field: 'authorization',
-                        title: '授权',
-                        width: 60,
-                        templet: function (d) {
-                            return d.authorization == 'ok' ? '<scan style="color:#009688">通过</scan>' : '<scan style="color:#FF5722">拒绝</scan>';
-                        }
-                    },
-                    {
-                        field: 'ep',
-                        title: '访问端点',
-                        width: 100
-                    },
-                    {
-                        field: 'ip',
-                        title: '请求IP',
-                        width: 120,
-                    },
-                    {
-                        field: 'agent',
-                        title: '用户代理',
-                        width: 200,
-                        templet: function(d) {
-                            var r = UAParser(d.agent),
-                                p1 = r.os.name ? (r.os.name + ' ' + (r.os.version || '')) : '',
-                                p2 = r.browser.name ? (r.browser.name + ' ' + (r.browser.major || r.browser.version)) : '';
-                            return  (p1 && p2) ? ('<scan title="' + d.agent + '" style="border-bottom:1px dashed #0081EF">' + p1 + ' / ' + p2 + '</scan>') : d.agent;
-                        }
-                    },
-                    {
-                        field: 'origin',
-                        title: '来源',
-                        templet: function(d) {
-                            return d.origin ? '<a href="' + (d.referer || d.origin) + '" target="_blank" ref="nofollow"><scan title="' + d.referer + '" style="border-bottom:1px dashed #0081EF">' + d.origin + '</scan></a>' : d.referer;
-                        }
-                    },
-                ]
-            ],
+                        var icon = picbed.ITChangeMapping(item, "system")
+                        return "<center title='" + d.uap.os + "'>" + icon + "</center>";
+                    }
+                },
+                {
+                    field: 'origin',
+                    title: '来源',
+                    templet: function(d) {
+                        return d.origin ? '<a href="' + (d.referer || d.origin) + '" target="_blank" ref="nofollow"><scan title="' + d.referer + '" style="border-bottom:1px dashed #0081EF">' + d.origin + '</scan></a>' : d.referer;
+                    }
+                },
+            ]],
             limit: 10,
             toolbar: '<div><span style="color:#2F4056">LinkToken请求报表</span></div>',
             title: "LinkToken"

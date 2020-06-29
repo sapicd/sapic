@@ -9,13 +9,15 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
+import json
 import click
 from flask.cli import AppGroup
 from redis.exceptions import RedisError
 from werkzeug.security import generate_password_hash
 from libs.storage import get_storage
-from .tool import rsp, get_current_timestamp, create_redis_engine, is_true
-from .web import check_username
+from .tool import rsp, get_current_timestamp, create_redis_engine, is_true, \
+    parse_ua
+from .web import check_username, _pip_install
 
 
 def echo(msg, color=None):
@@ -58,7 +60,8 @@ def exec_createuser(username, password, **kwargs):
         echo("用户名不合法或不允许注册", "yellow")
 
 
-sa_cli = AppGroup('sa', help='Administrator commands')
+sa_cli = AppGroup('sa', help='Administrator commands', context_settings={
+                  'help_option_names': ['-h', '--help']})
 
 
 @sa_cli.command()
@@ -92,3 +95,32 @@ def clean(hookloadtime, hookthirds):
     if hookthirds:
         s = get_storage()
         del s['hookthirds']
+
+
+@sa_cli.command()
+@click.confirmation_option(prompt=u'确定要升级更新吗？')
+@click.argument('v2v', type=click.Choice(['1.6.0-1.7.0', ]))
+def upgrade(v2v):
+    """版本升级助手"""
+    #: 处理更新版本时数据迁移、数据结构变更、其他修改
+    if v2v == "1.6.0-1.7.0":
+        #: 安装模块
+        _pip_install("user_agents>=2.0")
+        #: 更新数据
+        rc = create_redis_engine()
+        rls = rc.keys(rsp("report", "linktokens", "*"))
+        pipe = rc.pipeline()
+        for k in rls:
+            data = rc.lrange(k, 0, -1)
+            new = []
+            is_update = False
+            for d in data:
+                d = json.loads(d)
+                if "uap" not in d:
+                    is_update = True
+                    d["uap"] = parse_ua(d["agent"])
+                new.append(json.dumps(d))
+            if is_update:
+                pipe.delete(k)
+                pipe.rpush(k, *new)
+        pipe.execute()

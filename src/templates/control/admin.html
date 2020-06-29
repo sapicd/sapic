@@ -28,10 +28,10 @@
 <div class="layui-container">
     <div class="layui-tab layui-tab-brief" lay-filter="tab">
         <ul class="layui-tab-title">
-            <li class="layui-this" lay-id="setting">网站设置</li>
-            <li lay-id="hook">钩子扩展</li>
-            <li lay-id="user">用户管理<span class="layui-badge-dot"></span></li>
-            <li lay-id="picbed">全站图片管理</li>
+            <li class="layui-this" lay-id="setting"><i class="saintic-icon saintic-icon-system-setting"></i> 网站设置</li>
+            <li lay-id="hook"><i class="saintic-icon saintic-icon-plugin"></i> 钩子扩展</li>
+            <li lay-id="user"><i class="saintic-icon saintic-icon-user-manager"></i> 用户管理</li>
+            <li lay-id="picbed"><i class="saintic-icon saintic-icon-jump"></i> 全站图片管理</li>
         </ul>
         <div class="layui-tab-content">
             <div class="layui-tab-item layui-show">
@@ -213,7 +213,7 @@
                                 </div>
                             </div>
                             <div class="layui-form-item">
-                                <label class="layui-form-label" style="color:red">上传字段</label>
+                                <label class="layui-form-label" style="color:red"><i class="saintic-icon saintic-icon-warn"></i> 上传字段</label>
                                 <div class="layui-input-block">
                                     <input type="text" name="upload_field" value="{{ g.site.upload_field }}"
                                         placeholder="上传接口获取文件字段名，默认picbed，谨慎修改！" autocomplete="off" class="layui-input">
@@ -221,7 +221,7 @@
                             </div>
                             {% set bes = get_call_list("upimg_save", _type="func") %}
                             <div class="layui-form-item">
-                                <label class="layui-form-label" id="tip-be"><b style="color: red;">?</b> 存储后端</label>
+                                <label class="layui-form-label" id="tip-be"><i class="saintic-icon saintic-icon-storage-cloud"></i> 存储后端</label>
                                 <div class="layui-input-block">
                                     <select name="upload_includes" lay-verify="required">
                                         {% for h in bes %}
