@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Upload to picbed <{{ request.host }}@{{ g.userinfo.username }}>
-// @version     0.1.3
+// @version     0.1.4
 // @description 上传图片到picbed
 // @author      staugur
 // @namespace   https://www.saintic.com/
@@ -12,7 +12,7 @@
 // @grant       GM_getValue
 // @grant       GM_info
 // @created     2020-05-27
-// @modified     2020-06-05
+// @modified    2020-06-30
 // @github      https://github.com/staugur/picbed
 // @supportURL  https://github.com/staugur/picbed/issues/
 // @updateURL   {{ url_for('front.userscript', LinkToken=g.userinfo.ucfg_userscript_token, _external=True) }}
@@ -54,16 +54,6 @@ var i18n = {
 };
 var lang = (navigator.language || navigator.browserLanguage).split('-')[0];
 if (!i18n[lang]) lang = 'en';
-
-var getValue = function (key, init) {
-    return new Promise(function (resolve, reject) {
-        try {
-            resolve(GM_getValue(key, init));
-        } catch (e) {
-            reject(e);
-        }
-    });
-};
 
 function create_panel() {
     //图片右键弹出的"上下文"菜单
@@ -167,7 +157,7 @@ document.addEventListener('mousedown', function (event) {
             img_src = event.target.src;
         } else hide_panel();
     } else if (opt_panel != null) {
-        //单击、右击页面动作，且打开了panel
+        //打开panel后的单击、右击页面动作处理
         if (event.target.compareDocumentPosition(opt_panel) === 10 || event.target.compareDocumentPosition(opt_panel) === 0) {
             if (event.target.className === 'img-opt-item' && event.button === 0) {
                 //点击了panel内的item

@@ -284,7 +284,7 @@
                         <div class="layui-inline">
                             <label class="layui-form-label">LinkToken</label>
                             <div class="layui-input-inline" style="width: auto;">
-                                <input type="text" name="ucfg_userscript_token"
+                                <input type="text" name="ucfg_userscript_token" id="render_single_uslinktoken"
                                 value="{{ g.userinfo.ucfg_userscript_token }}" placeholder="用户脚本认证上传"
                                 autocomplete="off" class="layui-input">
                             </div>
@@ -337,7 +337,7 @@
 <script type="text/html" id="toolbar">
     <div>
         <i class="layui-icon layui-icon-about" id="linktokentip"></i>
-        <a href="javascript:;" lay-event="newLink" style="color:#009688;font-weight:bold">添加Token分权引用</a>
+        LinkToken管理 <i class="layui-icon layui-icon-right" style="font-size:0.8em"></i> <a href="javascript:;" lay-event="newLink" style="color:#009688;font-weight:bold;font-size:0.7em;">添加</a>
     </div>
 </script>
 <script type="text/html" id="show_editor_area">
@@ -947,6 +947,55 @@
                 }
             });
         }
+        function renderUserscriptLinktokenSelect(linktoken_res) {
+            /*渲染用户脚本LinkToken的select下拉多选*/
+            let selectd_token = "{{ g.userinfo.ucfg_userscript_token }}";
+            if (selectd_token) {
+                $("#render_single_uslinktoken").attr("ts-selected", selectd_token);
+            }
+            tableSelect.render({
+                elem: '#render_single_uslinktoken', //定义输入框input对象 必填
+                checkedKey: 'LinkToken', //表格的唯一建值，非常重要，影响到选中状态 必填
+                selectText: '确认选择',
+                table: { //定义表格参数，与LAYUI的TABLE模块一致，只是无需再定义表格elem
+                    data: linktoken_res.data,
+                    page: false,
+                    size: 'sm',
+                    width: 380,
+                    cols: [
+                        [{
+                            type: 'radio'
+                        }, {
+                            field: "LinkToken",
+                            title: "唯一标识",
+                            hide: true
+                        }, {
+                            field: "comment",
+                            title: "<attr title='红色禁用、绿色在用'>说明</attr>",
+                            width: 100,
+                            templet: function (d) {
+                                var s = (d.status === 1 || d.status === "1") ? ('<scan style="color:#5FB878">' + (d.comment || '(在用)') + '</scan>') : ('<scan style="color:#FF5722">' + (d.comment || '(禁用)') + '</scan>');
+                                return s;
+                                return d.comment ? ("(" + s + ")" + d.comment) : s;
+                            }
+                        }, {
+                            field: "ep",
+                            title: "权限",
+                            templet: function (d) {
+                                return d.allow_method + " -> " + d.allow_ep;
+                            }
+                        }]
+                    ]
+                },
+                done: function (elem, data) {
+                    var NEWJSON = [];
+                    layui.each(data.data, function (index, item) {
+                        NEWJSON.push(item.LinkToken);
+                    });
+                    $("#render_single_uslinktoken").val(NEWJSON.join(","));
+                }
+            });
+        }
         function showCopyLinkToken(LinkToken) {
             /*显示LinkToken复制弹框*/
             let content = [
@@ -1020,13 +1069,13 @@
                         hide: true,
                     },
                     {
+                        field: 'comment',
+                        title: '备注',
+                    },
+                    {
                         field: 'album',
                         title: '相册',
                         width: 90,
-                    },
-                    {
-                        field: 'comment',
-                        title: '备注',
                     },
                     {
                         field: 'allow_origin',
@@ -1098,9 +1147,10 @@
                 icon: 'layui-icon-refresh' //图标类名
             }, 'filter', 'print', 'exports'],
             done: function(res,) {
+                //显示提示
                 $("#linktokentip").hover(function () {
                     let tip = [
-                        "&nbsp;&nbsp;&nbsp;&nbsp;Token分权引用(LinkToken)是将Token的映射，Token最小权限与安全限定下的调用方式。",
+                        "&nbsp;&nbsp;&nbsp;&nbsp;LinkToken(Token分权引用)是将Token的映射，Token最小权限与安全限定下的调用方式。",
                         "用户可以创建分权引用，定义调用此引用的安全来源主机地址、IP，并限定访问某个路由或某个路径，提交后会得到一个最小权限的LinkToken！",
                         "然后就可以在其他网站跨域调用，比如上传图片，即便丢失也不会影响其他，禁用或删除即可，不会泄露Token。",
                         "更多请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#linktoken' target='_blank' style='color:#009688'>LinkToken</a>",
@@ -1119,6 +1169,8 @@
                         }
                     }
                 }
+                //渲染用户脚本token选择
+                renderUserscriptLinktokenSelect(res);
             }
         });
         //监听工具条
@@ -1286,7 +1338,7 @@
                 {
                     field: 'ip',
                     title: '请求IP',
-                    width: 120,
+                    width: 130,
                 },
                 {
                     field: 'uap',

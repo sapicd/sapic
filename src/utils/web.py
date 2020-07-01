@@ -23,7 +23,7 @@ from subprocess import call
 from libs.storage import get_storage
 from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
-    parse_valid_verticaline, parse_valid_colon, is_true, is_venv
+    parse_valid_verticaline, parse_valid_colon, is_true, is_venv, gen_ua
 from ._compat import PY2, text_type, urlsplit
 
 no_jump_ep = ("front.login", "front.logout", "front.register")
