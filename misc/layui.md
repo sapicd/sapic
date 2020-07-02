@@ -27,7 +27,7 @@ options.progress(index, percent, options.item[0], e);
 
 ## layer.js源码修改
 
-layer.prompt增加placeholder选项
+layer.prompt增加placeholder选项，支持三种type
 
 https://github.com/sentsin/layui/blob/master/src/lay/modules/layer.js#L973
 

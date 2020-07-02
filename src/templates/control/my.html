@@ -85,7 +85,7 @@
         </ul>
         <div class="layui-tab-content">
             <div class="layui-tab-item layui-show">
-                <form lay-filter="profileForm" class="layui-form layui-form-pane">
+                <form lay-filter="profileForm" id="userprofile" class="layui-form layui-form-pane">
                     <div class="layui-form-item">
                         <label class="layui-form-label">用户名</label>
                         <div class="layui-input-inline">
@@ -96,7 +96,7 @@
                             {% if g.is_admin %}
                             <scan style="color: #5FB878;font-weight: bold;">你好，管理员！</scan>
                             {% elif g.userinfo.status == -1 %}
-                            <scan style="color: #FFB800;font-weight: lighter;">请等待审核通过！</scan>
+                            <scan style="color: #FFB800;font-weight: lighter;">请等待审核通过！<a href="javascript:;" id="LeaveMessage" style="color: #01AAED;font-size: 85%;">(留言)</a></scan>
                             {% endif %}
                         </div>
                     </div>
@@ -105,6 +105,13 @@
                         <div class="layui-input-inline">
                             <input type="text" name="nickname" autocomplete="off" value="{{ g.userinfo.nickname }}"
                                 placeholder="个性化的别名" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">邮箱</label>
+                        <div class="layui-input-inline">
+                            <input type="email" name="email" autocomplete="off" value="{{ g.userinfo.email }}"
+                                placeholder="个人邮箱" class="layui-input">
                         </div>
                     </div>
                     <div class="layui-form-item">
@@ -689,6 +696,10 @@
         });
         //监听资料修改
         form.on('submit(profile)', function(data){
+            if (document.forms['userprofile'].checkValidity() === false) {
+                document.forms['userprofile'].reportValidity();
+                return false;
+            }
             var post = data.field;
             delete post.token;
             picbed.ajax("{{ url_for('api.my', Action='updateProfile') }}", function(res) {
@@ -754,6 +765,25 @@
         });
         $("#copyToken").on("click", function() {
             picbed.Clipboard.copy($("#token").val());
+        });
+        //监听审核用户留言
+        $("#LeaveMessage").on("click", function() {
+            layer.prompt({
+                formType: 2,
+                title: '给管理员留言',
+                placeholder: '良好的图床使用目的说明，真实的个人资料，都有助于管理员通过审核！',
+                value: '{{ g.userinfo.message }}',
+                shade: 0
+            }, function(value, index, elem){
+                if (value) {
+                    layer.close(index);
+                    picbed.ajax("{{ url_for('api.my', Action='leaveMessage') }}", function(res) {
+                        layer.msg("已留言", {icon:1});
+                    }, {
+                        data: {message: value}
+                    });
+                }
+            });
         });
         //监听相册修改
         form.on('submit(updateAlbumSubmit)', function(data){

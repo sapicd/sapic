@@ -280,7 +280,7 @@ def user():
         else:
             fds = (
                 "username", "nickname", "avatar", "ctime", "mtime",
-                "is_admin", "status"
+                "is_admin", "status", "message"
             )
             pipe = g.rc.pipeline()
             for u in g.rc.smembers(ak):
@@ -469,7 +469,7 @@ def my():
     ak = rsp("account", g.userinfo.username)
     Action = request.args.get("Action")
     if Action == "updateProfile":
-        allowed_fields = ["nickname", "avatar"]
+        allowed_fields = ["nickname", "avatar", "email"]
         data = {
             k: v
             for k, v in iteritems(request.form.to_dict())
@@ -516,6 +516,15 @@ def my():
                     return res
             try:
                 g.rc.hmset(ak, cfgs)
+            except RedisError:
+                res.update(msg="Program data storage service error")
+            else:
+                res.update(code=0)
+    elif Action == "leaveMessage":
+        message = request.form.get("message")
+        if message:
+            try:
+                g.rc.hset(ak, "message", message)
             except RedisError:
                 res.update(msg="Program data storage service error")
             else:
