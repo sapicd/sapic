@@ -224,7 +224,8 @@ def before_request():
             if token2usr and token2usr == usr:
                 ak = rsp("account", usr)
                 userinfo = g.rc.hgetall(ak)
-                if userinfo and isinstance(userinfo, dict):
+                userstatus = int(userinfo.get("status", 1))
+                if userinfo and isinstance(userinfo, dict) and userstatus != 0:
                     pwd = userinfo.pop("password", None)
                     tkey = userinfo.pop("token_key", None)
                     if hmac_sha256(pwd, usr) == sig or \

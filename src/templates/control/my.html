@@ -95,6 +95,8 @@
                         <div class="layui-form-mid layui-word-aux">
                             {% if g.is_admin %}
                             <scan style="color: #5FB878;font-weight: bold;">你好，管理员！</scan>
+                            {% elif g.userinfo.status == -1 %}
+                            <scan style="color: #FFB800;font-weight: lighter;">请等待审核通过！</scan>
                             {% endif %}
                         </div>
                     </div>
@@ -974,9 +976,7 @@
                             title: "<attr title='红色禁用、绿色在用'>说明</attr>",
                             width: 100,
                             templet: function (d) {
-                                var s = (d.status === 1 || d.status === "1") ? ('<scan style="color:#5FB878">' + (d.comment || '(在用)') + '</scan>') : ('<scan style="color:#FF5722">' + (d.comment || '(禁用)') + '</scan>');
-                                return s;
-                                return d.comment ? ("(" + s + ")" + d.comment) : s;
+                                return (d.status === 1 || d.status === "1") ? ('<scan style="color:#5FB878">' + (d.comment || '(在用)') + '</scan>') : ('<scan style="color:#FF5722">' + (d.comment || '(禁用)') + '</scan>');
                             }
                         }, {
                             field: "ep",

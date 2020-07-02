@@ -17,7 +17,7 @@ from base64 import urlsafe_b64decode as b64decode, b64decode as pic64decode
 from binascii import Error as BaseDecodeError
 from redis.exceptions import RedisError
 from flask import g, redirect, request, url_for, abort, Response, jsonify,\
-    current_app
+    current_app, make_response
 from sys import executable
 from subprocess import call
 from libs.storage import get_storage
@@ -130,6 +130,11 @@ def apilogin_required(f):
     def decorated_function(*args, **kwargs):
         if not g.signin:
             return abort(403)
+        if g.signin and g.userinfo.status == 0:
+            return abort(make_response(jsonify(
+                msg="The user is disabled, no operation",
+                code=403
+            ), 403))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -138,7 +143,7 @@ def admin_apilogin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if g.signin:
-            if g.is_admin:
+            if g.is_admin and g.userinfo.status == 1:
                 return f(*args, **kwargs)
             else:
                 return abort(403)
@@ -229,6 +234,8 @@ def dfr(res, default='en-US'):
             "Invalid interior_relation": "无效的interior_relation内联规则",
             "Wrong query range parameter": "查询范围错误",
             "accepted": "已接受",
+            "Pending review, cannot upload pictures": "审核中，不能上传图片",
+            "The user is disabled, no operation": "用户被禁用，无权操作",
         },
     }
     if isinstance(res, dict) and "en" not in language:
@@ -267,7 +274,9 @@ def change_userinfo(userinfo):
                 html=is_true(g.userinfo.get("ucfg_urlrule_incopyhtml")),
                 rst=is_true(g.userinfo.get("ucfg_urlrule_incopyrst")),
                 markdown=is_true(g.userinfo.get("ucfg_urlrule_incopymd")),
-            )
+            ),
+            #: 用户状态默认是1启用，-1待审核仅无法上传，0禁用无任何权限
+            status=int(userinfo.get("status", 1)),
         )
     return userinfo
 

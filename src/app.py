@@ -80,6 +80,7 @@ def after_request(res):
 @app.errorhandler(404)
 @app.errorhandler(403)
 @app.errorhandler(413)
+@app.errorhandler(400)
 def page_error(e):
     if getattr(e, "code", None) == 500:
         err_logger.error(e, exc_info=True)

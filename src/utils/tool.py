@@ -27,7 +27,7 @@ logger = Logger("sys").getLogger
 err_logger = Logger("error").getLogger
 comma_pat = re.compile(r"\s*,\s*")
 verticaline_pat = re.compile(r"\s*\|\s*")
-username_pat = re.compile(r'^[a-zA-Z][0-9a-zA-Z\_]{0,31}$')
+username_pat = re.compile(r'^[a-zA-Z][0-9a-zA-Z\_]{3,31}$')
 point_pat = re.compile(r'^\w{1,9}\.?\w{1,9}$')
 url_pat = re.compile(
     r'^(?:http)s?://'

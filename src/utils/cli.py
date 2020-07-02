@@ -46,7 +46,8 @@ def exec_createuser(username, password, **kwargs):
                     username=username,
                     password=generate_password_hash(password),
                     is_admin=1 if is_true(is_admin) else 0,
-                    ctime=get_current_timestamp()
+                    ctime=get_current_timestamp(),
+                    status=1,
                 ))
                 try:
                     pipe.execute()

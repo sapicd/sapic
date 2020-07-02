@@ -79,6 +79,12 @@ def login():
         usr = usr.lower()
         if g.rc.sismember(ak, usr):
             userinfo = g.rc.hgetall(rsp("account", usr))
+            userstatus = int(userinfo.get("status", 1))
+            #: 已禁用用户不允许登录
+            if userstatus == 0:
+                res.update(code=403, msg="The user is disabled, no operation")
+                return res
+            #: 不允许普通用户登录
             if is_true(g.cfg.disable_login) and \
                     not is_true(userinfo.get("is_admin")):
                 res.update(msg="Normal user login has been disabled")
@@ -136,6 +142,11 @@ def register():
                 if g.rc.sismember(ak, username):
                     res.update(msg="The username already exists")
                 else:
+                    #: 用户状态 -1待审核 0禁用 1启用
+                    #: 后台开启审核时默认是-1，否则是1
+                    #: 禁用时无认证权限（无法登陆，无API权限）
+                    # ；待审核仅无法上传，允许登录和API调用
+                    status = -1 if is_true(g.cfg.review) else 1
                     #: 参数校验通过，执行注册
                     options = dict(
                         username=username,
@@ -144,6 +155,7 @@ def register():
                         avatar=request.form.get("avatar") or "",
                         nickname=request.form.get("nickname") or "",
                         ctime=get_current_timestamp(),
+                        status=status,
                     )
                     uk = rsp("account", username)
                     pipe = g.rc.pipeline()
@@ -244,7 +256,7 @@ def hook():
     return res
 
 
-@bp.route("/user", methods=["GET", "DELETE"])
+@bp.route("/user", methods=["GET", "DELETE", "PUT"])
 @admin_apilogin_required
 def user():
     """Manage users.
@@ -267,7 +279,8 @@ def user():
             res.update(code=2, msg="Parameter error")
         else:
             fds = (
-                "username", "nickname", "avatar", "ctime", "mtime", "is_admin"
+                "username", "nickname", "avatar", "ctime", "mtime",
+                "is_admin", "status"
             )
             pipe = g.rc.pipeline()
             for u in g.rc.smembers(ak):
@@ -279,9 +292,12 @@ def user():
             else:
                 def fmt(d):
                     d = dict(zip(fds, d))
+                    if d.get("status") is None:
+                        d["status"] = 1
                     d.update(
                         is_admin=is_true(d["is_admin"]),
                         ctime=int(d["ctime"]),
+                        status=int(d.get("status", 1)),
                     )
                     if d.get("mtime"):
                         d["mtime"] = int(d["mtime"])
@@ -322,6 +338,42 @@ def user():
                 res.update(code=3, msg="No valid username found")
         else:
             res.update(code=2, msg="No valid username found")
+    elif request.method == "PUT":
+        Action = request.args.get("Action")
+        username = request.form.get("username")
+        if Action in ("review", "disable", "enable"):
+            if username:
+                if g.rc.sismember(ak, username):
+                    if Action == "review":
+                        s = 1
+                    elif Action == "disable":
+                        s = 0
+                    else:
+                        s = 1
+                    try:
+                        g.rc.hset(rsp("account", username), "status", s)
+                    except RedisError:
+                        res.update(msg="Program data storage service error")
+                    else:
+                        res.update(code=0)
+                else:
+                    res.update(code=3, msg="No valid username found")
+            else:
+                res.update(code=2, msg="No valid username found")
+        elif Action == "admin":
+            adm = 1 if is_true(request.form.get("is_admin")) else 0
+            if username:
+                if g.rc.sismember(ak, username):
+                    try:
+                        g.rc.hset(rsp("account", username), "is_admin", adm)
+                    except RedisError:
+                        res.update(msg="Program data storage service error")
+                    else:
+                        res.update(code=0)
+                else:
+                    res.update(code=3, msg="No valid username found")
+            else:
+                res.update(code=2, msg="No valid username found")
     return res
 
 
@@ -679,6 +731,13 @@ def upload():
     #: 匿名上传开关检测
     if not is_true(g.cfg.anonymous) and not g.signin:
         res.update(code=403, msg="Anonymous user is not sign in")
+        return res
+    #: 判断已登录用户是否待审核
+    if g.signin and g.userinfo.status in (-1, 0):
+        msg = ("Pending review, cannot upload pictures" if
+               g.userinfo.status == -1 else
+               "The user is disabled, no operation")
+        res.update(code=403, msg=msg)
         return res
     #: 相册名称，可以是任意字符串
     album = (

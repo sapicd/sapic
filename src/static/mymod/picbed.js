@@ -126,10 +126,15 @@ layui.define(["layer", "util", "element"], function (exports) {
                         options.fail && options.fail(res);
                     }
                 },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    layer.msg("系统异常，请稍后再试，状态码：" + XMLHttpRequest.status + "，" + textStatus, {
-                        icon: 2
-                    });
+                error: function (xhr, textStatus, err) {
+                    try {
+                        var res = JSON.parse(xhr.responseText),
+                            msg = "请求错误：" + xhr.status + "，" + res.msg;
+                    } catch(e) {
+                        console.error(e);
+                        var msg = "请求错误：" + xhr.status + "，" + xhr.responseText;
+                    }
+                    layer.msg(msg, {icon: 2});
                 },
                 complete: options.complete ? options.complete : function () {}
             });

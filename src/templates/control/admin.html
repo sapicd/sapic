@@ -43,7 +43,7 @@
                         <legend>站点</legend>
                         <div class="layui-field-box">
                             <div class="layui-form-item">
-                                <label class="layui-form-label">标题后缀</label>
+                                <label class="layui-form-label">站点标题后缀</label>
                                 <div class="layui-input-block">
                                     <input type="text" name="title_suffix" value="{{ g.site.title_suffix }}"
                                         placeholder="站点标题后缀，默认是：| Hello picbed" autocomplete="off" class="layui-input">
@@ -53,14 +53,29 @@
                                 <label class="layui-form-label">站点关键词</label>
                                 <div class="layui-input-block">
                                     <input type="text" name="seo_keywords" value="{{ g.site.seo_keywords }}"
-                                        placeholder="指定站点的关键词：keywords" autocomplete="off" class="layui-input">
+                                        placeholder="指定站点的SEO关键词" autocomplete="off" class="layui-input">
                                 </div>
                             </div>
                             <div class="layui-form-item">
                                 <label class="layui-form-label">站点描述</label>
                                 <div class="layui-input-block">
                                     <input type="text" name="seo_description" value="{{ g.site.seo_description }}"
-                                        placeholder="指定站点的内容描述：description" autocomplete="off" class="layui-input">
+                                        placeholder="指定站点的SEO内容描述" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">站点图标</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="favicon" value="{{ g.site.favicon }}" placeholder="站点图标地址"
+                                        autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">Logo</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="logo" value="{{ g.site.logo }}"
+                                        placeholder="站点Logo地址，默认是：{{ url_for('static', filename='img/logo.png') }}"
+                                        autocomplete="off" class="layui-input">
                                 </div>
                             </div>
                             <div class="layui-form-item">
@@ -68,13 +83,6 @@
                                 <div class="layui-input-block">
                                     <input type="text" name="login_title" value="{{ g.site.login_title }}"
                                         placeholder="登录页面的标题文字，默认是：登录你的Picbed" autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">图标</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="favicon" value="{{ g.site.favicon }}" placeholder="站点图标地址"
-                                        autocomplete="off" class="layui-input">
                                 </div>
                             </div>
                             <div class="layui-form-item">
@@ -114,14 +122,6 @@
                                 </div>
                             </div>
                             <div class="layui-form-item">
-                                <label class="layui-form-label">Logo</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="logo" value="{{ g.site.logo }}"
-                                        placeholder="站点Logo地址，默认是：{{ url_for('static', filename='img/logo.png') }}"
-                                        autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
                                 <label class="layui-form-label">备案号</label>
                                 <div class="layui-input-block">
                                     <input type="text" name="beian" value="{{ g.site.beian }}" placeholder="ICP备案号，若有公网安备请加逗号再填写公安备案号"
@@ -150,21 +150,17 @@
                                 </div>
                             </div>
                             <div class="layui-form-item">
-                                <div class="layui-inline">
-                                    <label class="layui-form-label">开放注册</label>
-                                    <div class="layui-input-inline" style="width: 50px;">
-                                        <input type="checkbox" name="register" lay-skin="switch" lay-text="ON|OFF"
+                                <label class="layui-form-label"><i class="saintic-icon saintic-icon-info" title="禁止普通用户登录"></i> 注册选项</label>
+                                <div class="layui-input-block">
+                                    <input type="checkbox" name="register" title="开放注册" lay-skin="primary"
                                         {% if is_true(g.site.register) %}checked="checked" {% endif %} autocomplete="off"
                                         value="1">
-                                    </div>
-                                </div>
-                                <div class="layui-inline">
-                                    <label class="layui-form-label" style="width: auto">禁止普通用户登录</label>
-                                    <div class="layui-input-inline" style="width: auto;">
-                                        <input type="checkbox" name="disable_login" lay-skin="switch" lay-text="ON|OFF"
+                                    <input type="checkbox" name="review" title="注册审核" lay-skin="primary"
+                                        {% if is_true(g.site.review) %}checked="checked" {% endif %} autocomplete="off"
+                                        value="1">
+                                    <input type="checkbox" name="disable_login" title="禁止登录" lay-skin="primary"
                                         {% if is_true(g.site.disable_login) %}checked="checked" {% endif %} autocomplete="off"
                                         value="1">
-                                    </div>
                                 </div>
                             </div>
                             {{ intpl("sitesetting") }}
@@ -341,7 +337,20 @@
     </div>
 </script>
 <script type="text/html" id="usermanager_action">
+    {{#  if(d.status !== 0){ }}
+    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-warm" lay-event="disable">禁用</a>
+    {{#  } }}
+    {{#  if(d.status === 0){ }}
+    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal" lay-event="enable">启用</a>
+    {{#  } }}
     <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-danger" lay-event="remove">删除</a>
+    {{#  if(d.status === -1){ }}
+    <a class="layui-btn layui-btn-xs layui-btn-radius" lay-event="review">审核</a>
+    {{#  } }}
+</script>
+<script type="text/html" id="is_admin_tpl">
+    <input type="checkbox" data-username="{{ d.username }}" value="1" lay-skin="primary" lay-filter="set_admin"
+    {{ d.is_admin === true ? 'checked' : '' }}>
 </script>
 {% endraw %}
 <script>
@@ -393,7 +402,7 @@
                 $("input[name='github_dn']").removeClass("layui-disabled");
             }
         });
-        //表单赋值
+        //设置表单赋值
         form.val("setting", {
             upload_beforehtml: picbed.escape2Html("{{ g.site.upload_beforehtml }}"),
         });
@@ -409,6 +418,9 @@
             }
             if (!data.field.hasOwnProperty("register")) {
                 data.field["register"] = 0;
+            }
+            if (!data.field.hasOwnProperty("review")) {
+                data.field["review"] = 0;
             }
             if (!data.field.hasOwnProperty("disable_login")) {
                 data.field["disable_login"] = 0;
@@ -636,38 +648,38 @@
                     {
                         field: 'is_admin',
                         title: '管理员',
-                        templet: function(d) {
-                            return d.is_admin === true ? "<b style='color:#FFB800'>是</b>" : "<scan style='color:#01AAED'>否</scan>";
-                        }
+                        width: 70,
+                        align: "center",
+                        templet: '#is_admin_tpl'
                     },
                     {
                         field: 'ctime',
                         title: '注册时间',
+                        width: 150,
                         templet: function (d) {
                             var ctime = util.toDateString(d.ctime * 1000),
                                 mtime = util.toDateString(d.mtime * 1000);
                             return d.mtime ? ('<scan title="资料修改于' + mtime + '" style="border-bottom:1px dashed #0081EF">' + ctime + '</scan>') : ctime;
                         }
                     },
-                    /*
                     {
-                        field: 'state',
+                        field: 'status',
                         title: '状态',
                         width: 80,
-                        sort: true,
                         templet: function (d) {
-                            if (d.state === 'enabled') {
-                                return '<scan style="color:#5FB878">enabled</scan>';
+                            if (d.status === 0) {
+                                return '<scan style="color:#FF5722">已禁用</scan>';
+                            } else if (d.status === -1) {
+                                return '<scan style="color:#01AAED">待审核</scan>';
                             } else {
-                                return '<scan style="color:#FF5722">disabled</scan>';
+                                return '<scan style="color:#5FB878">启用中</scan>';
                             }
                         }
                     },
-                    */
                     {
                         fixed: 'right',
-                        minWidth: 50,
                         align: 'left',
+                        width: 160,
                         toolbar: '#usermanager_action'
                     }
                 ]
@@ -680,6 +692,17 @@
             done: function() {
                 flow.lazyimg();
             }
+        });
+        //监听设置管理员操作
+        form.on('checkbox(set_admin)', function (obj) {
+            var username = this.dataset.username,
+                v = obj.elem.checked ? 1 : 0;
+            picbed.ajax("{{ url_for('api.user', Action='admin') }}", function(res) {
+                layer.msg(v === 1 ? "已设置为管理员" : "已取消管理员", {icon:1});
+            }, {
+                method: "PUT",
+                data: {username: username, is_admin: v}
+            })
         });
         //用户管理监听表格工具条
         table.on('tool(usermanager)', function (obj) {
@@ -698,6 +721,30 @@
                         data: {username: data.username}
                     });
                 });
+            } else if (layEvent === "review") {
+                picbed.ajax("{{ url_for('api.user', Action='review') }}", function(res) {
+                    layer.msg("已审核通过，允许用户上传图片！", {icon:1});
+                    obj.update({status:1});
+                }, {
+                    method: "PUT",
+                    data: {username: data.username}
+                })
+            } else if (layEvent === "disable") {
+                picbed.ajax("{{ url_for('api.user', Action='disable') }}", function(res) {
+                    layer.msg("已禁用！", {icon:1});
+                    obj.update({status:0});
+                }, {
+                    method: "PUT",
+                    data: {username: data.username}
+                })
+            } else if (layEvent === "enable") {
+                picbed.ajax("{{ url_for('api.user', Action='enable') }}", function(res) {
+                    layer.msg("已启用！", {icon:1});
+                    obj.update({status:1});
+                }, {
+                    method: "PUT",
+                    data: {username: data.username}
+                })
             }
         });
     });
