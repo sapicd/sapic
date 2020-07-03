@@ -12,7 +12,7 @@
 // @grant       GM_getValue
 // @grant       GM_info
 // @created     2020-05-27
-// @modified    2020-06-30
+// @modified    2020-07-03
 // @github      https://github.com/staugur/picbed
 // @supportURL  https://github.com/staugur/picbed/issues/
 // @updateURL   {{ url_for('front.userscript', LinkToken=g.userinfo.ucfg_userscript_token, _external=True) }}
@@ -24,7 +24,8 @@
 var setting = {
     "hot_key": "{{ g.userinfo.ucfg_userscript_hotkey or 'ctrlKey' }}",
     "server_url": "{{ url_for('api.upload', _external=True) }}",
-    "link_token": "{{ g.userinfo.ucfg_userscript_token }}"
+    "link_token": "{{ g.userinfo.ucfg_userscript_token }}",
+    "upload_name": "{{ g.site.upload_field or 'picbed' }}",
 };
 var opt_panel = null;
 var disable_contextmenu = false;
@@ -110,7 +111,7 @@ function upload_file(data) {
     var form = new FormData();
     xhr.open('POST', setting.server_url);
     xhr.setRequestHeader('Authorization', 'LinkToken ' + setting.link_token);
-    form.append('picbed', data);
+    form.append(setting.upload_name, data);
     form.append('origin', 'userscript/' + GM_info.script.version);
     xhr.send(form);
     opt_panel.getElementsByClassName('top_url')[0].style.marginTop = '-48px';

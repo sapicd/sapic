@@ -363,7 +363,8 @@ def user():
         elif Action == "admin":
             adm = 1 if is_true(request.form.get("is_admin")) else 0
             if username:
-                if g.rc.sismember(ak, username):
+                if username != g.userinfo.username and \
+                        g.rc.sismember(ak, username):
                     try:
                         g.rc.hset(rsp("account", username), "is_admin", adm)
                     except RedisError:

@@ -39,5 +39,5 @@ https://github.com/sentsin/layui/blob/master/src/lay/modules/layer.js#L973
 //模块
 ,mods = 'laytpl,laypage,laydate,jquery,layer,element,upload,slider,colorpicker,form,tree,transfer,table,carousel,rate,util,flow,layedit,code'
 改为
-,mods = 'laytpl,laypage,jquery,layer,element,upload,form,table,carousel,util,flow,code'
+,mods = 'laytpl,laypage,jquery,layer,element,upload,form,table,util,flow'
 ```
