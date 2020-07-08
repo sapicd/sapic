@@ -94,11 +94,11 @@ class AppTest(unittest.TestCase):
         self.client.post("/api/hook?Action=disable", data=dict(
             name='up2local'
         ))
-        self.assertEqual(1, len(hm.get_enabled_hooks))
+        self.assertEqual(2, len(hm.get_enabled_hooks))
         self.client.post("/api/hook?Action=enable", data=dict(
             name='up2local'
         ))
-        self.assertEqual(2, len(hm.get_enabled_hooks))
+        self.assertEqual(3, len(hm.get_enabled_hooks))
 
 
 if __name__ == '__main__':

@@ -794,12 +794,17 @@
             });
         });
         //监听邮箱验证
+        var has_send_mail = false;
         $("#VerifyEmail").on("click", function() {
+            if (has_send_mail === true) {
+                return false;
+            }
             var that = this;
             picbed.ajax("{{ url_for('api.my', Action='VerifyEmail') }}", function(res) {
+                has_send_mail = true;
                 layer.msg("已发送验证邮件，请注意查收！", {icon:1});
                 $(that).text("等待验证...");
-                $(that).removeAttr("id");
+                $(that).removeAttr("href");
             });
         });
         //监听相册修改

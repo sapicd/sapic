@@ -14,6 +14,7 @@ from flask import Blueprint, render_template, make_response, redirect, \
 from utils.web import admin_apilogin_required, anonymous_required, \
     login_required, check_activate_token, dfr
 from utils.tool import is_true, rsp
+from utils._compat import PY2, text_type
 
 bp = Blueprint("front", "front")
 
@@ -87,9 +88,7 @@ def activate(token):
     if res["code"] == 0:
         data = res["data"]
         Action = data["Action"]
-        ActionMsg = None
         if Action == "VerifyEmail":
-            ActionMsg = "邮箱"
             username = data["username"]
             checkmail = data["email"]
             uk = rsp("account", username)
@@ -97,22 +96,11 @@ def activate(token):
             if checkmail == usermail:
                 g.rc.hset(uk, "email_verified", 1)
         url = url_for("front.my") if g.signin else url_for("front.login")
-        return render_template_string(
-            '''
-            <!doctype html>
-            <html>
-            <head>
-                <title>{{ g.site.title_name or "picbed" }}</title>
-                <meta http-equiv="refresh" content="2; url='{{ url }}'">
-            </head>
-            <body>
-                <h3 style="color:#009688">Hi %s, %s验证通过！</h3>
-            </body>
-            </html>
-            ''' % (username, ActionMsg),
-            url=url,
-        )
+        return render_template("public/go.html", url=url, user=username)
     else:
+        name = res["msg"]
+        if PY2 and not isinstance(name, text_type):
+            name = name.decode("utf-8")
         return render_template(
-            "public/error.html", code=res["code"], name=res["msg"]
+            "public/error.html", code=res["code"], name=name
         )

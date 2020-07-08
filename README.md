@@ -30,6 +30,8 @@
     // 首先创建一个管理员账号 -h/--help显示帮助
     $ flask sa create -u USER -p PASSWORD --isAdmin
 
+    // 如果更新了版本，注意执行命令迁移数据，详见文档部署-更新
+
     // 开发环境启动
     $ make dev
 
