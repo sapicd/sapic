@@ -498,7 +498,7 @@ def sendmail(subject, message, to):
             _args=(subject, message, to),
         )
         if is_all_fail(data):
-            res.update(msg="Email send failed")
+            res.update(msg="Email send failed", errors=data)
             return res
         else:
             res.update(code=0)

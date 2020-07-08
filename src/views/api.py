@@ -409,6 +409,24 @@ def pip_install():
         return res
 
 
+@bp.route("/test", methods=["POST"])
+@admin_apilogin_required
+def test():
+    res = dict(code=1, msg=None)
+    Action = request.args.get("Action")
+    if Action == "sendmail":
+        to = request.form.get("to")
+        if to:
+            res = sendmail(
+                subject="邮件功能测试",
+                message="恭喜！邮件发送成功！",
+                to=to,
+            )
+        else:
+            res.update(msg="Parameter error")
+    return res
+
+
 @bp.route("/token", methods=["POST"])
 @apilogin_required
 def token():
@@ -546,7 +564,7 @@ def my():
                 res.update(msg="Program data storage service error")
             else:
                 res.update(code=0)
-    elif Action == "VerifyEmail":
+    elif Action == "verifyEmail":
         html = make_email_tpl("activate_email.html", activate_url=url_for(
             "front.activate",
             token=generate_activate_token(dict(

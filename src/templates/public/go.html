@@ -5,6 +5,10 @@
     <meta http-equiv="refresh" content="2; url='{{ url }}'">
 </head>
 <body>
-    <h3 style="color:#009688">Hi, {{ user }}, 验证通过！</h3>
+    {% if is_true(success) %}
+    <h3 style="color:green">验证通过！</h3>
+    {% else %}
+    <h3 style="color:red">验证失败，请检查当前状态。</h3>
+    {% endif %}
 </body>
 </html>

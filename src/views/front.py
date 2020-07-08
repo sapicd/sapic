@@ -84,19 +84,20 @@ def userscript():
 @bp.route("/activate/<token>")
 def activate(token):
     res = dfr(check_activate_token(token))
-    print(res)
     if res["code"] == 0:
         data = res["data"]
         Action = data["Action"]
-        if Action == "VerifyEmail":
+        success = False
+        if Action == "verifyEmail":
             username = data["username"]
             checkmail = data["email"]
             uk = rsp("account", username)
             usermail = g.rc.hget(uk, "email")
             if checkmail == usermail:
                 g.rc.hset(uk, "email_verified", 1)
+                success = True
         url = url_for("front.my") if g.signin else url_for("front.login")
-        return render_template("public/go.html", url=url, user=username)
+        return render_template("public/go.html", url=url, success=success)
     else:
         name = res["msg"]
         if PY2 and not isinstance(name, text_type):

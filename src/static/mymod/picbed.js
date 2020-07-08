@@ -327,6 +327,10 @@ layui.define(["layer", "util", "element"], function (exports) {
             /* 判断str中是否包含substr */
             return str.indexOf(substr) >= 0;
         },
+        hasId: function(id) {
+            //有此id返回true，否则返回false
+            return document.getElementById(id) ? true : false;
+        },
     };
     //输出接口
     exports('picbed', api);

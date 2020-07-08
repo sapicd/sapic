@@ -288,7 +288,7 @@
                             </div>
                             <div class="layui-row layui-col-space10">
                                 <fieldset class="layui-elem-field">
-                                    <legend style="font-size: 13px;">邮件服务设置</legend>
+                                    <legend style="font-size: 13px;">邮件服务设置 <sub><a href="javascript:;" style="font-size:10px" id="SendTestMail">{ 发送测试邮件 }</a></sub></legend>
                                     <div class="layui-field-box">
                                         <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
                                             <div class="layui-form-item">
@@ -296,7 +296,7 @@
                                                     <label class="layui-form-label" style="width: auto;">发件人名称</label>
                                                     <div class="layui-input-inline">
                                                         <input type="text" name="email_from_name"
-                                                            value="{{ g.site.email_from_name }}" placeholder="统一发件人别名，默认picbed"
+                                                            value="{{ g.site.email_from_name }}" placeholder="统一发件人别名，默认站点名"
                                                             autocomplete="off" class="layui-input">
                                                     </div>
                                                 </div>
@@ -413,6 +413,22 @@
             layer.tips('<a href="https://sendcloud.sohu.com/" target="_blank" style="color:red">SendCloud</a>是搜狐旗下云端邮件发送平台，请参考其文档设置发信域名的API USER及对应的KEY',
                 this, {tips: 1}
             );
+        });
+        $('#SendTestMail').on("click", function() {
+            layer.prompt({
+                    formType: 0,
+                    title: '请输入测试邮箱',
+                    shade: 0
+            }, function(value, index, elem){
+                if (value) {
+                    layer.close(index);
+                    picbed.ajax("{{ url_for('api.test', Action='sendmail') }}", function(res) {
+                        layer.msg("已发送测试邮件，请注意查收！", {icon:1});
+                    }, {
+                        data: {to:value}
+                    });
+                }
+            });
         });
         form.on('checkbox(jsdelivr)', function(data){
             if (data.elem.checked) {

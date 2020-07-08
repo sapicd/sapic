@@ -113,11 +113,11 @@
                             <input type="email" name="email" autocomplete="off" value="{{ g.userinfo.email }}"
                                 placeholder="个人邮箱" class="layui-input">
                         </div>
-                        <div class="layui-form-mid layui-word-aux">
+                        <div class="layui-form-mid layui-word-aux" id="EmailArea">
                             {% if is_true(g.userinfo.email_verified) %}
-                            <scan style="color: #5FB878;font-weight: bold;">已验证</scan>
+                            <scan style="color: #5FB878;font-weight: bold;" id="has_email_verified">已验证</scan>
                             {% elif g.userinfo.email %}
-                            <a href="javascript:;" id="VerifyEmail" style="color: #01AAED;font-size: 85%;">验证</a>
+                            <a href="javascript:;" id="verifyEmail" style="color: #01AAED;font-size: 85%;">验证</a>
                             {% endif %}
                         </div>
                     </div>
@@ -701,6 +701,7 @@
             }
         });
         //监听资料修改
+        var old_usermail = "{{ g.userinfo.email }}";
         form.on('submit(profile)', function(data){
             if (document.forms['userprofile'].checkValidity() === false) {
                 document.forms['userprofile'].reportValidity();
@@ -715,6 +716,15 @@
                 }
                 if (post.nickname) {
                     $("#nickname").text(post.nickname);
+                }
+                if (post.email) {
+                    //当邮箱有值时，如果邮箱没有验证且没有显示验证字样显示验证字样
+                    //如果填写的邮箱与旧邮箱不一致，直接显示验证字样
+                    if ((!picbed.hasId("has_email_verified") && !picbed.hasId("verifyEmail")) || (old_usermail !== post.email)) {
+                        $("#EmailArea").html('<a href="javascript:;" id="verifyEmail" style="color: #01AAED;font-size: 85%;">验证</a>');
+                    }
+                } else {
+                    $("#EmailArea").html("");
                 }
             }, {
                 method: 'PUT',
@@ -795,15 +805,17 @@
         });
         //监听邮箱验证
         var has_send_mail = false;
-        $("#VerifyEmail").on("click", function() {
+        $("#EmailArea").delegate("#verifyEmail", "click", function() {
+            var that = this;
             if (has_send_mail === true) {
+                $(that).text("已发送一次验证，如需多次，请刷新页面！");
+                $(that).removeAttr("href");
                 return false;
             }
-            var that = this;
-            picbed.ajax("{{ url_for('api.my', Action='VerifyEmail') }}", function(res) {
+            picbed.ajax("{{ url_for('api.my', Action='verifyEmail') }}", function(res) {
                 has_send_mail = true;
                 layer.msg("已发送验证邮件，请注意查收！", {icon:1});
-                $(that).text("等待验证...");
+                $(that).text("请去邮箱验证...");
                 $(that).removeAttr("href");
             });
         });
