@@ -63,7 +63,7 @@ def before_request():
 @app.after_request
 def after_request(res):
     #: Trigger hook, you can modify the response
-    hm.call("after_request", res=res)
+    hm.call("after_request", _kwargs=dict(res=res))
     if g.cfg.cors:
         if g.cfg.cors == "*":
             res.headers.add("Access-Control-Allow-Origin", "*")
@@ -84,9 +84,8 @@ def after_request(res):
 def page_error(e):
     if getattr(e, "code", None) == 500:
         err_logger.error(e, exc_info=True)
+    code = e.code
+    name = e.name
     if request.path.startswith("/api/"):
-        return jsonify(dict(
-            msg=e.name,
-            code=e.code
-        )), e.code
-    return render_template("public/error.html", e=e), e.code
+        return jsonify(dict(msg=name, code=code)), code
+    return render_template("public/error.html", code=code, name=name), code

@@ -1,0 +1,30 @@
+<table style="width: 600px; border: 1px solid #ddd; border-radius: 3px; color: #555; font-size: 12px; height: auto; margin: auto; overflow: hidden; text-align: left; word-break: break-all; word-wrap: break-word;" cellspacing="0" cellpadding="0" border="0">
+    <tbody style="margin: 0; padding: 0;">
+        <tr style="background-color: #393D49; height: 60px; margin: 0; padding: 0;">
+            <td style="margin: 0; padding: 0;">
+                <div style="color: #5EB576; margin: 0; margin-left: 30px; padding: 0;">
+                    <a style="font-size: 14px; margin: 0; padding: 0; color: #5EB576; text-decoration: none;"
+                        href="{{ url_root }}" target="_blank" rel="noopener">
+                        {{ site_name }}
+                    </a>
+                </div>
+            </td>
+        </tr>
+        <tr style="margin: 0; padding: 0;">
+            <td style="margin: 0; padding: 30px;">
+                <p style="line-height: 20px; margin: 0; margin-bottom: 10px; padding: 0;">
+                    Hi，<em style="font-weight: 700;">{{ username }}</em>，请完成以下操作：
+                </p>
+                <div>
+                    {% block action %}{% endblock %}
+                </div>
+                <p style="line-height: 20px; margin-top: 20px; padding: 10px; background-color: #f2f2f2; font-size: 12px;">
+                    点击无效？{% block action_fail %}{% endblock %}
+                </p>
+            </td>
+        </tr>
+        <tr style="background-color: #fafafa; color: #999; height: 35px; margin: 0; padding: 0; text-align: center;">
+            <td style="margin: 0; padding: 0;">如非本人，请勿操作！系统邮件，请勿回复！</td>
+        </tr>
+    </tbody>
+</table>

@@ -38,7 +38,7 @@ GLOBAL = {
 }
 
 
-#: 存储上传图片的数据，使用redis单实例，请开启AOF持久化!
+#: 存储核心数据，使用redis单实例，请开启AOF持久化!
 REDIS = envs.get("picbed_redis_url")
 # Redis数据库连接信息，格式:
 # redis://[:password]@host:port/db

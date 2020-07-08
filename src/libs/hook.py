@@ -334,10 +334,28 @@ class HookManager(object):
         _callback=None,
         _include=None,
         _exclude=None,
+        _mode=None,
+        _args=None,
+        _kwargs=None,
         *args,
         **kwargs
     ):
-        """Try to execute the func method in all enabled hooks"""
+        """Try to execute the func method in all enabled hooks.
+
+        .. versionchanged:: 1.7.0
+            add param `_mode`
+
+        .. deprecated:: 1.7.0
+            - *args: replaced by `_args`
+            - **kwargs: replaced by `_kwargs`
+        """
+        if args or kwargs:
+            logger.warn(
+                "The args/kwargs is deprecated. Use _args/_kwargs instead."
+            )
+        args = _args or args
+        kwargs = _kwargs or kwargs
+        response = []
         for h in sorted(self.get_enabled_hooks, key=lambda h: h.name):
             if _include and isinstance(_include, (tuple, list)):
                 if h.name not in _include:
@@ -357,7 +375,7 @@ class HookManager(object):
                     else:
                         result = func()
                 except (ValueError, TypeError, Exception) as e:
-                    result = dict(code=1, msg=e, sender=h.name)
+                    result = dict(code=1, msg=str(e), sender=h.name)
                 else:
                     if isinstance(result, dict):
                         result["sender"] = h.name
@@ -365,8 +383,13 @@ class HookManager(object):
                             result["code"] = 0
                     else:
                         result = dict(code=0, sender=h.name, data=result)
+                response.append(result)
                 if callable(_callback):
                     _callback(result)
+                if _mode == "any_true":
+                    if result.get("code") == 0:
+                        break
+        return response
 
     def call_intpl(self, _tplname, _include=None, _exclude=None, **context):
         result = []

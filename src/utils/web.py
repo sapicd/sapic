@@ -11,6 +11,7 @@
 
 import imghdr
 from posixpath import basename, splitext
+from os.path import join as pathjoin
 from io import BytesIO
 from functools import wraps
 from base64 import urlsafe_b64decode as b64decode, b64decode as pic64decode
@@ -18,12 +19,16 @@ from binascii import Error as BaseDecodeError
 from redis.exceptions import RedisError
 from flask import g, redirect, request, url_for, abort, Response, jsonify,\
     current_app, make_response
+from jinja2 import Environment, FileSystemLoader
 from sys import executable
 from subprocess import call
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, \
+    SignatureExpired, BadSignature
 from libs.storage import get_storage
 from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
-    parse_valid_verticaline, parse_valid_colon, is_true, is_venv, gen_ua
+    parse_valid_verticaline, parse_valid_colon, is_true, is_venv, gen_ua, \
+    check_to_addr, is_all_fail
 from ._compat import PY2, text_type, urlsplit
 
 no_jump_ep = ("front.login", "front.logout", "front.register")
@@ -214,6 +219,7 @@ def dfr(res, default='en-US'):
             "No file or image format error": "未获取到文件或不允许的图片格式",
             "All backend storage services failed to save pictures": "后端存储服务图片保存全部失败",
             "No valid backend storage service": "无有效后端存储服务",
+            "No valid backend hook": "无有效后端钩子",
             "The third module not found": "第三方模块未发现",
             "Password verification failed": "密码验证失败",
             "Password must be at least 6 characters": "密码最少6位",
@@ -236,6 +242,9 @@ def dfr(res, default='en-US'):
             "accepted": "已接受",
             "Pending review, cannot upload pictures": "审核中，不能上传图片",
             "The user is disabled, no operation": "用户被禁用，无权操作",
+            "Email send failed": "邮件发送失败",
+            "expired token": "token过期",
+            "useless": "无用token",
         },
     }
     if isinstance(res, dict) and "en" not in language:
@@ -275,6 +284,7 @@ def change_userinfo(userinfo):
                 rst=is_true(g.userinfo.get("ucfg_urlrule_incopyrst")),
                 markdown=is_true(g.userinfo.get("ucfg_urlrule_incopymd")),
             ),
+            #: ..versionadded:: 1.7.0
             #: 用户状态默认是1启用，-1待审核仅无法上传，0禁用无任何权限
             status=int(userinfo.get("status", 1)),
         )
@@ -451,3 +461,66 @@ def _pip_install(pkg, index=None):
     cmd.append(pkg)
     retcode = call(cmd)
     logger.info("pip install {}, retcode: {}".format(pkg, retcode))
+
+
+def generate_activate_token(dump_data, max_age=600):
+    if dump_data and isinstance(dump_data, dict):
+        s = Serializer(current_app.config['SECRET_KEY'], expires_in=max_age)
+        data = s.dumps(dump_data)
+        return data.decode()
+
+
+def check_activate_token(token):
+    res = dict(code=400)
+    if token:
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except SignatureExpired:
+            res.update(code=403, msg='expired token')
+        except BadSignature:
+            res.update(code=404, msg='useless token')
+        else:
+            res.update(code=0, data=data)
+    else:
+        res.update(msg='Parameter error')
+    return res
+
+
+def sendmail(subject, message, to):
+    """调用钩子中发送邮件函数（任意钩子发送成功即停止）"""
+    res = dict(code=1)
+    if subject and message and to and check_to_addr(to):
+        to = ",".join(parse_valid_comma(to))
+        data = current_app.extensions["hookmanager"].call(
+            _funcname="sendmail",
+            _mode="any_true",
+            _args=(subject, message, to),
+        )
+        if is_all_fail(data):
+            res.update(msg="Email send failed")
+            return res
+        else:
+            res.update(code=0)
+    else:
+        res.update(msg="Parameter error")
+    return res
+
+
+def make_email_tpl(tpl, **data):
+    """制作邮件模板
+
+    :param tpl: 模板文件（位于templates/email/）
+    """
+    je = Environment(
+        loader=FileSystemLoader(pathjoin(
+            current_app.root_path, current_app.template_folder, "email"
+        ))
+    )
+    if "site_name" not in data:
+        data["site_name"] = g.cfg.title_name or "picbed"
+    if "url_root" not in data:
+        data["url_root"] = request.url_root
+    if "username" not in data:
+        data["username"] = g.userinfo.nickname or g.userinfo.username
+    return je.get_template(tpl).render(data)

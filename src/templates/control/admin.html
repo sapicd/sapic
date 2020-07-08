@@ -4,19 +4,16 @@
 
 {% block head %}
 <style>
-    .layui-elem-field legend {
-        font-size: 13px;
-    }
     .layui-elem-field {
         font-size: 12px;
     }
-    .layui-elem-field .layui-elem-field legend {
-        font-size: 10px;
-    }
     .layui-elem-field legend {
-        font-size: 13px;
+        font-size: 14px;
         font-weight: bold;
         color: #009688;
+    }
+    .layui-elem-field .layui-elem-field legend {
+        font-size: 10px;
     }
     .layui-inline, img {
         display: inline;
@@ -43,10 +40,10 @@
                         <legend>站点</legend>
                         <div class="layui-field-box">
                             <div class="layui-form-item">
-                                <label class="layui-form-label">站点标题后缀</label>
+                                <label class="layui-form-label">站点名称</label>
                                 <div class="layui-input-block">
-                                    <input type="text" name="title_suffix" value="{{ g.site.title_suffix }}"
-                                        placeholder="站点标题后缀，默认是：| Hello picbed" autocomplete="off" class="layui-input">
+                                    <input type="text" name="title_name" value="{{ g.site.title_name }}"
+                                        placeholder="站点名称，统一标题后缀，默认picbed" autocomplete="off" class="layui-input">
                                 </div>
                             </div>
                             <div class="layui-form-item">
@@ -289,10 +286,29 @@
                             <div class="layui-row layui-col-space10">
                                 {{ intpl("localhooksetting") }}
                             </div>
+                            <div class="layui-row layui-col-space10">
+                                <fieldset class="layui-elem-field">
+                                    <legend style="font-size: 13px;">邮件服务设置</legend>
+                                    <div class="layui-field-box">
+                                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
+                                            <div class="layui-form-item">
+                                                <div class="layui-inline">
+                                                    <label class="layui-form-label" style="width: auto;">发件人名称</label>
+                                                    <div class="layui-input-inline">
+                                                        <input type="text" name="email_from_name"
+                                                            value="{{ g.site.email_from_name }}" placeholder="统一发件人别名，默认picbed"
+                                                            autocomplete="off" class="layui-input">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {{ intpl("emailsetting") }}
+                                    </div>
+                                </fieldset>
+                            </div>
                         </div>
                     </fieldset>
                   </div>
-                
                   <div class="layui-row">
                    <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
                     <div class="layui-form-item">
@@ -385,12 +401,17 @@
         });
         $('#tip-be').on("mouseover click",function() {
             layer.tips('存储后端取决于扩展的钩子方法：upimg_save',
-                '#tip-be', {tips: 1}
+                this, {tips: 1}
             );
         });
         $('#tip-sa').on("mouseover click",function() {
             layer.tips('注意：如不熟悉请勿开启！<br>第三方认证方式取决于扩展的钩子方法：<br>登录路由：login_handler<br>登出路由：logout_handler<br>登录接口：login_api',
-                '#tip-sa', {tips: 1}
+                this, {tips: 1}
+            );
+        });
+        $('#tip-sc').on("mouseover click",function() {
+            layer.tips('<a href="https://sendcloud.sohu.com/" target="_blank" style="color:red">SendCloud</a>是搜狐旗下云端邮件发送平台，请参考其文档设置发信域名的API USER及对应的KEY',
+                this, {tips: 1}
             );
         });
         form.on('checkbox(jsdelivr)', function(data){
@@ -430,6 +451,9 @@
             }
             if (!data.field.hasOwnProperty("github_jsdelivr")) {
                 data.field["github_jsdelivr"] = 0;
+            }
+            if (!data.field.hasOwnProperty("email_nolocal")) {
+                data.field["email_nolocal"] = 0;
             }
             if (data.field.cors && data.field.cors !== "*") {
                 let cors = data.field.cors.split(/\s*,\s*/).join(",");
@@ -647,6 +671,13 @@
                         title: '昵称',
                     },
                     {
+                        field: 'email',
+                        title: '邮件',
+                        templet: function (d) {
+                            return d.email ? (d.email_verified === 1 ? ('<scan style="color:#009688">' + d.email + '</scan>') : d.email) : "";
+                        }
+                    },
+                    {
                         field: 'is_admin',
                         title: '管理员',
                         width: 70,
@@ -671,7 +702,7 @@
                             if (d.status === 0) {
                                 return '<scan style="color:#FF5722">已禁用</scan>';
                             } else if (d.status === -1) {
-                                return '<scan style="color:#01AAED;border-bottom:1px dashed #0081EF" title="' + (d.message||"") + '">待审核</scan>';
+                                return '<scan style="color:#01AAED;border-bottom:1px dashed #0081EF" title="' + (d.message||"(无)") + '">待审核</scan>';
                             } else {
                                 return '<scan style="color:#5FB878">启用中</scan>';
                             }

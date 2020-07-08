@@ -100,17 +100,29 @@ def clean(hookloadtime, hookthirds):
 
 @sa_cli.command()
 @click.confirmation_option(prompt=u'确定要升级更新吗？')
-@click.argument('v2v', type=click.Choice(['1.6.0-1.7.0', ]))
+@click.argument('v2v', type=click.Choice(['1.6-1.7', ]))
 def upgrade(v2v):
     """版本升级助手"""
     #: 处理更新版本时数据迁移、数据结构变更、其他修改
-    if v2v == "1.6.0-1.7.0":
+    if v2v == "1.6-1.7":
         #: 安装模块
-        _pip_install("user_agents>=2.0")
+        try:
+            from user_agents import parse
+        except ImportError:
+            _pip_install("user_agents>=2.0")
         #: 更新数据
         rc = create_redis_engine()
-        rls = rc.keys(rsp("report", "linktokens", "*"))
         pipe = rc.pipeline()
+        #: 添加用户status
+        for u in rc.smembers(rsp("accounts")):
+            pipe.hmget(rsp("account", u), "username", "status")
+        usrdat = pipe.execute()
+        for i in usrdat:
+            if i[1] is None:
+                pipe.hset(rsp("account", i[0]), "status", 1)
+        pipe.execute()
+        #: 调整linktoken字段
+        rls = rc.keys(rsp("report", "linktokens", "*"))
         for k in rls:
             data = rc.lrange(k, 0, -1)
             new = []
@@ -124,4 +136,19 @@ def upgrade(v2v):
             if is_update:
                 pipe.delete(k)
                 pipe.rpush(k, *new)
+        pipe.execute()
+        #: 调整img详情字段
+        uporigins = ("homepage", "cli", "userscript", "uploader.js")
+        for sha in rc.smembers(rsp("index", "global")):
+            pipe.hmget(rsp("image", sha), "sha", "agent")
+        ukdat = pipe.execute()
+        for i in ukdat:
+            agent = i[1]
+            if agent:
+                if agent.split("/")[0] in uporigins:
+                    o = agent
+                else:
+                    o = "UA: %s" % agent
+                pipe.hdel(rsp("image", i[0]), "agent")
+                pipe.hset(rsp("image", i[0]), "origin", o)
         pipe.execute()

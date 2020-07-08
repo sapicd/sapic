@@ -14,14 +14,20 @@ import sys
 import hmac
 import hashlib
 import requests
+import smtplib
 from uuid import uuid4
 from time import time
 from datetime import datetime
 from random import randrange, sample, randint, choice
 from redis import from_url
+from email.header import Header
+from email.mime.text import MIMEText
+from email.utils import parseaddr, formataddr
 from version import __version__ as PICBED_VERSION
 from .log import Logger
 from ._compat import string_types, text_type, PY2, urlparse
+if PY2:
+    from socket import error as ConnectionRefusedError
 
 logger = Logger("sys").getLogger
 err_logger = Logger("error").getLogger
@@ -29,6 +35,9 @@ comma_pat = re.compile(r"\s*,\s*")
 verticaline_pat = re.compile(r"\s*\|\s*")
 username_pat = re.compile(r'^[a-zA-Z][0-9a-zA-Z\_]{3,31}$')
 point_pat = re.compile(r'^\w{1,9}\.?\w{1,9}$')
+mail_pat = re.compile(
+    r'([0-9a-zA-Z\_*\.*\-*]+)@([a-zA-Z0-9\-*\_*\.*]+)\.([a-zA-Z]+$)'
+)
 url_pat = re.compile(
     r'^(?:http)s?://'
     r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+'
@@ -378,7 +387,12 @@ def slash_join(*args):
 
 def try_request(
     url,
-    params=None, data=None, headers={}, timeout=5, num_retries=1, method='post'
+    params=None,
+    data=None,
+    headers=None,
+    timeout=5,
+    num_retries=1,
+    method='post'
 ):
     """
     :param params: dict: 请求查询参数
@@ -386,6 +400,7 @@ def try_request(
     :param timeout: int: 超时时间，单位秒
     :param num_retries: int: 超时重试次数
     """
+    headers = headers or {}
     headers["User-Agent"] = "picbed/v%s" % PICBED_VERSION
     method = method.lower()
     if method == 'get':
@@ -421,3 +436,85 @@ def try_request(
 def is_venv():
     return (hasattr(sys, 'real_prefix') or
             (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix))
+
+
+def is_all_fail(l):
+    """从list下的dict拿出code!=0的(执行失败)数量"""
+    return len(l) == len(list(filter(lambda x: x.get('code') != 0, l)))
+
+
+def check_to_addr(to):
+    to_addrs = parse_valid_comma(to)
+    if to_addrs:
+        for to in to_addrs:
+            if not mail_pat.match(to):
+                return False
+        return True
+
+
+class Mailbox(object):
+    """通过自有邮箱账户发送邮件"""
+
+    def __init__(self, user, passwd, smtp_server, smtp_port=25):
+        """初始化邮箱客户端配置。
+        :param user: 邮箱地址
+        :param passwd: 邮箱密码或可登录的授权码
+        :param smtp_server: 邮箱的SMTP服务器地址
+        """
+        self._user = user
+        self._passwd = passwd
+        self._server = smtp_server
+        self._port = smtp_port
+        self._ssl = False if self._port == 25 else True
+        self._debug = False
+
+    @property
+    def ssl(self):
+        return self._ssl
+
+    @ssl.setter
+    def ssl(self, smtp_ssl):
+        self._ssl = is_true(smtp_ssl)
+
+    @property
+    def debug(self):
+        return self._debug
+
+    @debug.setter
+    def debug(self, level):
+        if isinstance(level, int) or level is False:
+            self._debug = level
+
+    def _format_addr(self, s):
+        name, addr = parseaddr(s)
+        return formataddr((Header(name, 'utf-8').encode(), addr))
+
+    def send(self, subject, message, to_addrs, from_name=None):
+        res = dict(code=1)
+        if subject and message and to_addrs:
+            if not isinstance(to_addrs, (list, tuple)):
+                to_addrs = (to_addrs, )
+            msg = MIMEText(message, "html", "utf-8")
+            msg['from'] = self._format_addr('{0} <{1}>'.format(
+                from_name or self._user.split('@')[0], self._user
+            ))
+            msg['to'] = ";".join(to_addrs)
+            msg['subject'] = Header(subject, 'utf-8').encode()
+            try:
+                if self._ssl is True:
+                    server = smtplib.SMTP_SSL(self._server, self._port)
+                else:
+                    server = smtplib.SMTP(self._server, self._port)
+                if self._debug:  # not False, > 0
+                    server.set_debuglevel(self._debug)
+                if self._user and self._passwd:
+                    server.login(self._user, self._passwd)
+                server.sendmail(self._user, to_addrs, msg.as_string())
+                server.quit()
+            except (smtplib.SMTPException, ConnectionRefusedError) as e:
+                res.update(msg=str(e))
+            else:
+                res.update(code=0)
+        else:
+            res.update(msg="Bad mailbox params")
+        return res

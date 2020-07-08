@@ -24,10 +24,11 @@ from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, rsp, \
     sha256, get_current_timestamp, list_equal_split, generate_random, er_pat, \
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
-    check_ir, username_pat, ALLOWED_HTTP_METHOD
+    check_ir, username_pat, ALLOWED_HTTP_METHOD, is_all_fail
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
-    ImgUrlFileStorage, get_upload_method, _pip_install
+    ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
+    sendmail, generate_activate_token
 from utils._compat import iteritems, thread
 
 bp = Blueprint("api", "api")
@@ -78,7 +79,11 @@ def login():
         ak = rsp("accounts")
         usr = usr.lower()
         if g.rc.sismember(ak, usr):
-            userinfo = g.rc.hgetall(rsp("account", usr))
+            field = ("status", "password", "is_admin")
+            userinfo = g.rc.hmget(
+                rsp("account", usr), *field
+            )
+            userinfo = dict(zip(field, userinfo))
             userstatus = int(userinfo.get("status", 1))
             #: 已禁用用户不允许登录
             if userstatus == 0:
@@ -91,6 +96,10 @@ def login():
                 return res
             password = userinfo.get("password")
             if password and check_password_hash(password, pwd):
+                #: 登录成功
+                g.rc.hset(
+                    rsp("account", usr), "login_at", get_current_timestamp()
+                )
                 expire = get_current_timestamp() + max_age
                 sid = "%s.%s.%s" % (
                     usr,
@@ -280,7 +289,7 @@ def user():
         else:
             fds = (
                 "username", "nickname", "avatar", "ctime", "mtime",
-                "is_admin", "status", "message"
+                "is_admin", "status", "message", "email", "email_verified"
             )
             pipe = g.rc.pipeline()
             for u in g.rc.smembers(ak):
@@ -294,10 +303,13 @@ def user():
                     d = dict(zip(fds, d))
                     if d.get("status") is None:
                         d["status"] = 1
+                    if d.get("email_verified") is None:
+                        d["email_verified"] = 0
                     d.update(
                         is_admin=is_true(d["is_admin"]),
                         ctime=int(d["ctime"]),
                         status=int(d.get("status", 1)),
+                        email_verified=int(d.get("email_verified", 1)),
                     )
                     if d.get("mtime"):
                         d["mtime"] = int(d["mtime"])
@@ -470,14 +482,18 @@ def my():
     ak = rsp("account", g.userinfo.username)
     Action = request.args.get("Action")
     if Action == "updateProfile":
+        #: 基于资料本身进行的统一更新
         allowed_fields = ["nickname", "avatar", "email"]
         data = {
             k: v
             for k, v in iteritems(request.form.to_dict())
             if k in allowed_fields
         }
+        data.update(mtime=get_current_timestamp())
+        if is_true(g.userinfo.email_verified) and \
+                data.get("email") != g.userinfo.email:
+            data["email_verified"] = 0
         try:
-            data.update(mtime=get_current_timestamp())
             g.rc.hmset(ak, data)
         except RedisError:
             res.update(msg="Program data storage service error")
@@ -485,7 +501,7 @@ def my():
             res.update(code=0)
             #: 更新资料触发一次钩子
             current_app.extensions["hookmanager"].call(
-                "profile_update", **data
+                "profile_update", _kwargs=data
             )
     elif Action == "updatePassword":
         passwd = request.form.get("passwd")
@@ -530,6 +546,21 @@ def my():
                 res.update(msg="Program data storage service error")
             else:
                 res.update(code=0)
+    elif Action == "VerifyEmail":
+        html = make_email_tpl("activate_email.html", activate_url=url_for(
+            "front.activate",
+            token=generate_activate_token(dict(
+                Action=Action,
+                username=g.userinfo.username,
+                email=g.userinfo.email,
+            )),
+            _external=True,
+        ))
+        res = sendmail(
+            subject="{}邮箱验证".format(g.cfg.title_name or "picbed图床"),
+            message=html,
+            to=g.userinfo.email,
+        )
     return res
 
 
@@ -814,37 +845,36 @@ def upload():
         if len(includes) > 1:
             includes = [choice(includes)]
         #: TODO 定义保存图片时排除某些钩子，如: up2local, up2other
-        # excludes = parse_valid_comma(g.cfg.upload_excludes or '')
-        #: 钩子返回结果（目前版本最终结果中应该最多只有1条数据）
-        data = []
-        #: 保存图片的钩子回调
-
-        def callback(result):
-            logger.info(result)
+        #: excludes = parse_valid_comma(g.cfg.upload_excludes or '')
+        #: 调用钩子中upimg_save方法（目前版本最终结果中应该最多只有1条数据）
+        data = current_app.extensions["hookmanager"].call(
+            _funcname="upimg_save",
+            _include=includes,
+            _kwargs=dict(
+                filename=filename,
+                stream=stream,
+                upload_path=upload_path,
+                local_basedir=join(
+                    current_app.root_path,
+                    current_app.static_folder,
+                    UPLOAD_FOLDER
+                )
+            )
+        )
+        for i, result in enumerate(data):
             if result["sender"] == "up2local":
+                data.pop(i)
                 result["src"] = url_for(
                     "static",
                     filename=join(UPLOAD_FOLDER, upload_path, filename),
                     _external=True
                 )
-            data.append(dfr(result))
-        #: 调用钩子中upimg_save方法
-        current_app.extensions["hookmanager"].call(
-            _funcname="upimg_save",
-            _callback=callback,
-            _include=includes,
-            filename=filename,
-            stream=stream,
-            upload_path=upload_path,
-            local_basedir=join(
-                current_app.root_path, current_app.static_folder, UPLOAD_FOLDER
-            )
-        )
+                data.insert(i, result)
         #: 判定后端存储全部失败时，上传失败
         if not data:
             res.update(code=1, msg="No valid backend storage service")
             return res
-        if len(data) == len([i for i in data if i.get("code") != 0]):
+        if is_all_fail(data):
             res.update(
                 code=1,
                 msg="All backend storage services failed to save pictures",
@@ -872,8 +902,8 @@ def upload():
             src=defaultSrc,
             sender=data[0]["sender"],
             senders=json.dumps(data),
-            agent=request.form.get(
-                "origin", request.headers.get('User-Agent', '')
+            origin=request.form.get(
+                "origin", "UA: %s" % request.headers.get('User-Agent', '')
             ),
             method=get_upload_method(fp.__class__.__name__),
         ))

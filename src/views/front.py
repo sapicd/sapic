@@ -10,10 +10,10 @@
 """
 
 from flask import Blueprint, render_template, make_response, redirect, \
-    url_for, current_app, Response, g, abort
+    url_for, current_app, Response, g, abort, render_template_string
 from utils.web import admin_apilogin_required, anonymous_required, \
-    login_required
-from utils.tool import is_true
+    login_required, check_activate_token, dfr
+from utils.tool import is_true, rsp
 
 bp = Blueprint("front", "front")
 
@@ -78,3 +78,41 @@ def userscript():
         return resp
     else:
         return abort(404)
+
+
+@bp.route("/activate/<token>")
+def activate(token):
+    res = dfr(check_activate_token(token))
+    print(res)
+    if res["code"] == 0:
+        data = res["data"]
+        Action = data["Action"]
+        ActionMsg = None
+        if Action == "VerifyEmail":
+            ActionMsg = "邮箱"
+            username = data["username"]
+            checkmail = data["email"]
+            uk = rsp("account", username)
+            usermail = g.rc.hget(uk, "email")
+            if checkmail == usermail:
+                g.rc.hset(uk, "email_verified", 1)
+        url = url_for("front.my") if g.signin else url_for("front.login")
+        return render_template_string(
+            '''
+            <!doctype html>
+            <html>
+            <head>
+                <title>{{ g.site.title_name or "picbed" }}</title>
+                <meta http-equiv="refresh" content="2; url='{{ url }}'">
+            </head>
+            <body>
+                <h3 style="color:#009688">Hi %s, %s验证通过！</h3>
+            </body>
+            </html>
+            ''' % (username, ActionMsg),
+            url=url,
+        )
+    else:
+        return render_template(
+            "public/error.html", code=res["code"], name=res["msg"]
+        )

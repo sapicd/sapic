@@ -113,6 +113,13 @@
                             <input type="email" name="email" autocomplete="off" value="{{ g.userinfo.email }}"
                                 placeholder="个人邮箱" class="layui-input">
                         </div>
+                        <div class="layui-form-mid layui-word-aux">
+                            {% if is_true(g.userinfo.email_verified) %}
+                            <scan style="color: #5FB878;font-weight: bold;">已验证</scan>
+                            {% elif g.userinfo.email %}
+                            <a href="javascript:;" id="VerifyEmail" style="color: #01AAED;font-size: 85%;">验证</a>
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="layui-form-item">
                         <label class="layui-form-label">头像</label>
@@ -766,15 +773,17 @@
             picbed.Clipboard.copy($("#token").val());
         });
         //监听审核用户留言
+        var default_user_leave_message = '{{ g.userinfo.message }}';
         $("#LeaveMessage").on("click", function() {
             layer.prompt({
                 formType: 2,
                 title: '给管理员留言',
                 placeholder: '良好的图床使用目的说明，真实的个人资料，都有助于管理员通过审核！',
-                value: '{{ g.userinfo.message }}',
+                value: default_user_leave_message,
                 shade: 0
             }, function(value, index, elem){
                 if (value) {
+                    default_user_leave_message = value;
                     layer.close(index);
                     picbed.ajax("{{ url_for('api.my', Action='leaveMessage') }}", function(res) {
                         layer.msg("已留言", {icon:1});
@@ -782,6 +791,15 @@
                         data: {message: value}
                     });
                 }
+            });
+        });
+        //监听邮箱验证
+        $("#VerifyEmail").on("click", function() {
+            var that = this;
+            picbed.ajax("{{ url_for('api.my', Action='VerifyEmail') }}", function(res) {
+                layer.msg("已发送验证邮件，请注意查收！", {icon:1});
+                $(that).text("等待验证...");
+                $(that).removeAttr("id");
             });
         });
         //监听相册修改
