@@ -63,7 +63,7 @@ def before_request():
 @app.after_request
 def after_request(res):
     #: Trigger hook, you can modify the response
-    hm.call("after_request", _kwargs=dict(res=res))
+    hm.call("after_request", _args=(res,))
     if g.cfg.cors:
         if g.cfg.cors == "*":
             res.headers.add("Access-Control-Allow-Origin", "*")

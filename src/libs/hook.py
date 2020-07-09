@@ -334,6 +334,7 @@ class HookManager(object):
         _callback=None,
         _include=None,
         _exclude=None,
+        _every=None,
         _mode=None,
         _args=None,
         _kwargs=None,
@@ -343,9 +344,10 @@ class HookManager(object):
         """Try to execute the func method in all enabled hooks.
 
         .. versionchanged:: 1.7.0
-            add param `_mode`
+            add param `_mode` and `_every`
 
         .. deprecated:: 1.7.0
+            - _callback: replaced by `_every`
             - *args: replaced by `_args`
             - **kwargs: replaced by `_kwargs`
         """
@@ -383,6 +385,12 @@ class HookManager(object):
                             result["code"] = 0
                     else:
                         result = dict(code=0, sender=h.name, data=result)
+                #: Use `_every` to change the hook execution result
+                if callable(_every):
+                    _er = _every(result)
+                    if _er and isinstance(_er, dict) and "code" in _er and \
+                            "sender" in _er:
+                        result = _er
                 response.append(result)
                 if callable(_callback):
                     _callback(result)

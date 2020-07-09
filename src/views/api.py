@@ -812,7 +812,7 @@ def upload():
     #: 当fp无效时尝试读取base64或url
     if not fp:
         picstrurl = request.form.get(FIELD_NAME)
-        filename = request.form.get("filename")
+        filename = secure_filename(request.form.get("filename") or "")
         if picstrurl:
             if picstrurl.startswith("http://") or \
                     picstrurl.startswith("https://"):
