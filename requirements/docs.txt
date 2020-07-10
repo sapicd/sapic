@@ -1,0 +1,5 @@
+sphinx
+pygments
+sphinx_materialdesign_theme
+sphinxcontrib-httpdomain
+sphinxcontrib-httpexample
