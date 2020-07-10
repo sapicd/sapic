@@ -16,7 +16,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'SaintIC picbed'
+project = 'SaintIC Picbed'
 copyright = '2020, staugur'
 author = 'staugur'
 
@@ -74,7 +74,7 @@ html_theme_options = {
     # https://material.io/icons/
     'header_links': [
         ("Home", 'index', False, 'home'),
-        ("Demo", "https://demo.picbed.pro", True, 'launch'),
+        ("Demo", "https://demo.picbed.pro", True, 'image'),
         ("GitHub", "https://github.com/staugur/picbed", True, 'link')
     ],
 
@@ -92,7 +92,7 @@ html_theme_options = {
     # Customize layout.
     # For details see link.
     # https://getmdl.io/components/index.html#layout-section
-    'fixed_drawer': True,  # 侧边栏
+    'fixed_drawer': False,  # 侧边栏
     'fixed_header': False,
     'header_waterfall': True,   # header导航部分随滚动时隐藏
     'header_scroll': False,  # 貌似是侧栏和header滚动

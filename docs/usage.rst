@@ -107,7 +107,7 @@ Token的使用也很简单，有两种方法：
 
 当然，也会有泄露风险，但是设定访问权限控制，能将成本大大降低。
 
-关于LinkToken的原理、如何配置、外部上传插件等参考专题页： :doc:`/picbed/linktoken`
+关于LinkToken的原理、如何配置、外部上传插件等参考专题页： :doc:`/linktoken`
 
 .. _url-process:
 
@@ -424,12 +424,12 @@ Web中只有首页可以上传，同时最多选择10张，默认支持jpg、jpe
 4. 钩子
 --------
 
-请转到 :doc:`/picbed/hook`
+请转到 :doc:`/hook`
 
 5. API
 --------
 
-请转到 :doc:`/picbed/api`
+请转到 :doc:`/api`
 
 6. 数据备份
 -------------
