@@ -367,7 +367,7 @@
         <div class="layui-form-item">
             <input type="text" class="layui-input" name="album" placeholder="[可选]相册名，引用于上传图片接口时设置的默认相册" autocomplete="off">
         </div>
-        <blockquote class="layui-elem-quote">分权引用限定条件，参数均可留空，参考：<a href="https://docs.saintic.com/picbed/linktoken.html#linktoken-secure-item" target="_blank">规则文档</a></blockquote>
+        <blockquote class="layui-elem-quote">分权引用限定条件，参数均可留空，参考：<a href="{{ config.DOCS_BASE_URL }}/linktoken.html#linktoken-secure-item" target="_blank">规则文档</a></blockquote>
         <div class="layui-form-item">
             {{# if (!d.cors) { }}
                 <input type="text" class="layui-input layui-disabled" name="allow_origin" placeholder="请联系管理员设置CORS Origin" autocomplete="off" readonly>
@@ -389,7 +389,7 @@
         <blockquote class="layui-elem-quote">允许访问规则，可使用运算符
             <scan style="color:#FF5722"> in, not in, </scan>
             <scan style="color:#009688">and, or, not, () </scan>
-            定义访问条件，以此规则综合判断是否允许请求。<a href="https://docs.saintic.com/picbed/linktoken.html#linktoken-secure-rule" target="_blank" title="LinkToken文档"><i class="layui-icon layui-icon-link"></i></a>
+            定义访问条件，以此规则综合判断是否允许请求。<a href="{{ config.DOCS_BASE_URL }}/linktoken.html#linktoken-secure-rule" target="_blank" title="LinkToken文档"><i class="layui-icon layui-icon-link"></i></a>
         </blockquote>
         <div class="layui-form-item">
             <input type="text" class="layui-input" name="interior_relation" placeholder="ir: 限定条件内部的规则, 格式: in/not in:opt" autocomplete="off">
@@ -453,7 +453,7 @@
             var tip = [
                 "Token是目前唯一一种能在API请求中认证用户的方法，它具备API所有权，一旦泄露风险极大！",
                 "所以建议您使用基于Token的分权引用LinkToken（用户设置）。",
-                "更多请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#token' target='_blank' style='color:#009688'>Token</a>",
+                "更多请参考文档：<a href='{{ config.DOCS_BASE_URL }}/usage.html#token' target='_blank' style='color:#009688'>Token</a>",
             ].join("<br>");
             layer.tips(tip, this, {tips: 3, time: 0});
         }, closeTip);
@@ -466,7 +466,7 @@
                 "URL后缀设置格式如下：<scan style='color:red'>图片保存者(钩子名称):处理图片的分隔符与指令或样式</scan>，注意冒号，允许以逗号分隔多条！",
                 "举例 => <scan style='color:#1E9FFF'>up2local:?v=1, up2upyun:!small</scan>，表示使用up2local保存的图片在场景中URL后缀增加<scan style='color:#1E9FFF'>?v=1</scan>，使用up2upyun保存的图片在场景中URL后缀增加<scan style='color:#1E9FFF'>!small</scan>",
                 "",
-                "更多请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#url-process' target='_blank' style='color:#009688'>URL后缀</a>",
+                "更多请参考文档：<a href='{{ config.DOCS_BASE_URL }}/usage.html#url-process' target='_blank' style='color:#009688'>URL后缀</a>",
             ].join("<br>");
             layer.tips(tip, this, {tips: 3, time: 0});
         }, closeTip);
@@ -487,7 +487,7 @@
                 "温馨提示：",
                 '用户脚本用以在全网直接上传图片。开启用户脚本并保存配置后，可以点击开关旁边<i class="layui-icon layui-icon-link"></i>图标进行安装或更新脚本。',
                 '建议填写LinkToken，要求有<b>front.userscript, api.upload</b>端点的get和post权限！',
-                "更多请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#userscript' target='_blank' style='color:#009688'>UserScript</a>",
+                "更多请参考文档：<a href='{{ config.DOCS_BASE_URL }}/usage.html#userscript' target='_blank' style='color:#009688'>UserScript</a>",
             ].join("<br>");
             layer.tips(tip, this, {tips:3, time: 0});
         }, closeTip);
@@ -1068,7 +1068,7 @@
                 '<scan style="color:green;font-weight:bold">LinkScript:</scan> 在外部网站中使用js自动上传到picbed。',
                 '&nbsp;&nbsp;&nbsp;- 手动方式需要写js，在引用页面调用up2picbed函数初始化，相对复杂，但灵活度高!',
                 '&nbsp;&nbsp;&nbsp;- 自动方式不需要写js，所有选项可通过dataset定义，但有局限，详细使用请参考文档！',
-                '您可以使用以下按钮完成快捷复制，并<a href="https://docs.saintic.com/picbed/usage.html#linktoken" target="_blank" title="LinkToken文档" style="color:#009688">查阅文档</a>！',
+                '您可以使用以下按钮完成快捷复制，并<a href="{{ config.DOCS_BASE_URL }}/usage.html#linktoken" target="_blank" title="LinkToken文档" style="color:#009688">查阅文档</a>！',
                 '</div>',
             ].join("<br>");
             let sdk = "{{ url_for('static', filename='sdk/uploader.min.js', _external=True) }}",
@@ -1217,7 +1217,7 @@
                         "&nbsp;&nbsp;&nbsp;&nbsp;LinkToken(Token分权引用)是将Token的映射，Token最小权限与安全限定下的调用方式。",
                         "用户可以创建分权引用，定义调用此引用的安全来源主机地址、IP，并限定访问某个路由或某个路径，提交后会得到一个最小权限的LinkToken！",
                         "然后就可以在其他网站跨域调用，比如上传图片，即便丢失也不会影响其他，禁用或删除即可，不会泄露Token。",
-                        "更多请参考文档：<a href='https://docs.saintic.com/picbed/usage.html#linktoken' target='_blank' style='color:#009688'>LinkToken</a>",
+                        "更多请参考文档：<a href='{{ config.DOCS_BASE_URL }}/usage.html#linktoken' target='_blank' style='color:#009688'>LinkToken</a>",
                     ].join("<br>&nbsp;&nbsp;&nbsp;&nbsp;");
                     layer.tips(tip, this, {tips: 3, time: 0});
                 }, closeTip);

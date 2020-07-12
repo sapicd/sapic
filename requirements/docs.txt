@@ -1,5 +1,5 @@
 sphinx
 pygments
-sphinx_materialdesign_theme
+git+https://github.com/staugur/sphinx_press_theme.git@master
 sphinxcontrib-httpdomain
 sphinxcontrib-httpexample
