@@ -34,7 +34,7 @@ Pull Request
 
   请在dev分支编写代码。
 
-- 基础环境与安装过程参照 [picbed文档](https://docs.saintic.com/picbed/install.html)
+- 基础环境与安装过程参照 [picbed文档](https://picbed.rtfd.vip/install.html)
 
 **接着是编码**
 
@@ -43,6 +43,8 @@ Pull Request
 - 如果可能，编写测试用例，建议的吆。
 
 - 如果可能，分别使用py2.7、py3.5+运行测试: ``make test``
+
+- 如果可能，请编写文档，位于docs下，构建文档命令: ``make html``
 
 **最后合并请求**
 

@@ -111,7 +111,7 @@ ps:
 
 ## 文档
 
-详细文档请访问：[Picbed Docs](https://docs.saintic.com/picbed)
+详细文档请访问：[Picbed Docs](https://picbed.rtfd.vip)
 
 ## 演示站
 

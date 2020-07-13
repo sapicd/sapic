@@ -19,7 +19,7 @@
 
 .. _picbed-install-no1:
 
-**NO.1 启动Redis**
+NO.1 启动Redis
 -------------------
 
 部署redis很简单，CentOS用户可以\ ``yum install redis``\ ，Ubuntu用户可以\ ``apt-get install redis-server``\ ，都可以编译安装，给一个教程链接：\ http://www.runoob.com/redis/redis-install.html
@@ -37,7 +37,7 @@
 
 .. _picbed-install-no2:
 
-**NO.2 部署程序**
+NO.2 部署程序
 ---------------------
 
 这是一个基于Python Flask框架写的web应用，依赖redis，部署要求python2.7、3.5+
@@ -49,19 +49,29 @@
 2.1. 下载源码
 ^^^^^^^^^^^^^^^
 
-- 开发版
+目前GitHub上保持两个分支：dev、master
 
-    ! 建议，如果你有git，可以：\ ``git clone https://github.com/staugur/picbed``
+dev是开发分支，不建议非开发人员使用；
+dev分支的功能完成后会合并到master分支；
+一阶段功能完成会从master分支发版。
+
+- 开发版（dev）
+
+    ! 建议，如果你有git，可以：\ ``git clone -b dev https://github.com/staugur/picbed``
 
     ! 也可以下载压缩包：
 
     .. code-block:: bash
 
-        $ wget -O picbed.zip https://codeload.github.com/staugur/picbed/zip/master
+        $ wget -O picbed.zip https://codeload.github.com/staugur/picbed/zip/dev
         $ unzip picbed.zip 
-        $ mv picbed-master picbed
+        $ mv picbed-dev picbed
 
-- 正式版
+- 尝鲜版（master）
+
+    ``git clone https://github.com/staugur/picbed``
+
+- 正式版（release）
 
     ! 到 `release <https://github.com/staugur/picbed/releases>`_ 页面下载正式版本的包。
 
@@ -161,7 +171,7 @@ SecretKey         picbed_secretkey             无               App应用秘钥
     使用构建好的 `staugur/docker <https://hub.docker.com/r/staugur/picbed>`_ ，
     详情请看 :ref:`picbed-docker-deploy`
 
-**NO.3 Nginx配置**
+NO.3 Nginx配置
 -------------------
 
 在程序启动后，默认情况下，监听地址是127.0.0.1:9514
@@ -195,7 +205,7 @@ Nginx配置示例如下，您也可以配置使其支持HTTPS:
 
 程序部署好+Nginx配置完成，启动后，这个域名就能对外服务了（温馨提示：您可以使用HTTPS提供服务，并且也建议用HTTPS），即可进入下一篇查看如何注册、使用。
 
-**NO.4 演示站**
+NO.4 演示站
 -------------------
 
 目前在国内部署了一个演示站，使用master最新代码测试新功能，服务地址是：
@@ -209,7 +219,7 @@ Nginx配置示例如下，您也可以配置使其支持HTTPS:
 
 另请勿将其当做永久站，图片不定时删除，仅作测试演示使用。
 
-**NO.5 程序升级**
+NO.5 程序升级
 ------------------
 
 目前git下载可以使用git pull拉取最新代码，重载或重启主程序(make reload/restart)即完成升级。
@@ -242,3 +252,26 @@ Nginx配置示例如下，您也可以配置使其支持HTTPS:
     `picbed:report:linktokens:{username}`
 
     如果需要旧数据，可以将旧版key改名，加上 `:{your username}`
+
+- v1.7.0
+
+    值得一提的是，这个版本命令行增加了upgrade子命令，用来在版本更新时迁移数据、字段等。
+
+    .. code-block:: bash
+
+        $ flask sa upgrade -h
+        Usage: flask sa upgrade [OPTIONS] [1.6-1.7]
+
+        版本升级助手
+
+        Options:
+            --yes       Confirm the action without prompting.
+            -h, --help  Show this message and exit.
+
+    所以，从旧版本（比如1.6）升级代码到1.7，请执行命令（可以多次执行）：
+
+    .. code-block:: bash
+
+        $ cd picbed/src
+        $ flask sa upgrade --yes 1.6-1.7
+

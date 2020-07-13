@@ -20,7 +20,7 @@
 所属本地，不允许删除，只能禁用、启用，目前有两个内置，up2local和token，
 分别是将上传的图片保存到本地、API可以使用Token（LinkToken）认证。
 
-.. versionchanged:: 1.1.0
+.. versionadded:: 1.1.0
 
     内置增加了4个，将我之前写的常用的对象存储内置集成了，不过默认是禁用的。
 
@@ -58,7 +58,7 @@
 
     使用方法：同上，配置加速域名、Bucket、SecretID及Key等（在腾讯云控制台-访问管理-访问密钥-API密钥管理中可以拿到SecretId、SecretKey；允许使用子用户的密钥，要求拥有COS管理权限即可）。
 
-.. versionchanged:: 1.5.0
+.. versionadded:: 1.5.0
 
 - up2github
 
@@ -100,6 +100,12 @@
     开启Gitee钩子并配置，没有JsDelivr支持，其他与github类似。
 
     |picbed_gitee_hook|
+
+.. versionadded:: 1.7.0
+
+- sendmail
+
+    通过3种方式发送邮件
 
 .. _picbed-third-hook:
 

@@ -24,6 +24,7 @@
 
 .. code-block:: bash
 
+    $ cd picbed/src
     $ flask sa --help
     Usage: flask sa [OPTIONS] COMMAND [ARGS]...
 
@@ -35,6 +36,7 @@
     Commands:
         clean   清理系统
         create  创建账号
+        upgrade 版本升级助手
 
     $ flask sa create --help
     Usage: flask sa create [OPTIONS]
@@ -54,7 +56,12 @@
 
 个人中心包含个人资料、修改密码、用户设置、我的图片等。
 
-个人资料只是简单的用户名、昵称、头像等，但除此之外，还有一个Token信息。
+个人资料只是简单的用户名、昵称、头像、邮箱等，但除此之外，还有一个Token信息。
+
+用户填写邮箱保存配置后，会有验证提示，验证后的邮箱后续会支持一些功能。
+
+如果管理员开启注册审核，那么新注册用户的用户名一行会有一个留言提示，可以给管理员留言，写下
+你使用目的有助于审核通过。
 
 .. _picbed-token:
 
