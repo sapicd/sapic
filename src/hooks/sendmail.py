@@ -32,10 +32,10 @@ intpl_emailsetting = '''
     </div>
     <div class="layui-form-item">
         <div class="layui-inline">
-            <label class="layui-form-label" style="width: auto;">SaintIC Open Token</label>
+            <label class="layui-form-label" style="width: auto;">SaintIC Open</label>
             <div class="layui-input-inline">
                 <input type="text" name="email_open_token"
-                    value="{{ g.site.email_open_token }}" placeholder="Open.saintic.com Api Token"
+                    value="{{ g.site.email_open_token }}" placeholder="Api密钥"
                     autocomplete="off" class="layui-input">
             </div>
         </div>

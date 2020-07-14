@@ -337,6 +337,9 @@
 
 {% block script %}
 {% include "ref/upload_show.html" %}
+<script>
+    var DOCS_BASE_URL = "{{ config.DOCS_BASE_URL }}";
+</script>
 {% raw %}
 <script type="text/html" id="linktoken_action">
     <div class="layui-btn-group">
@@ -367,7 +370,7 @@
         <div class="layui-form-item">
             <input type="text" class="layui-input" name="album" placeholder="[可选]相册名，引用于上传图片接口时设置的默认相册" autocomplete="off">
         </div>
-        <blockquote class="layui-elem-quote">分权引用限定条件，参数均可留空，参考：<a href="{{ config.DOCS_BASE_URL }}/linktoken.html#linktoken-secure-item" target="_blank">规则文档</a></blockquote>
+        <blockquote class="layui-elem-quote">分权引用限定条件，参数均可留空，参考：<a href="{{ DOCS_BASE_URL }}/linktoken.html#linktoken-secure-item" target="_blank">规则文档</a></blockquote>
         <div class="layui-form-item">
             {{# if (!d.cors) { }}
                 <input type="text" class="layui-input layui-disabled" name="allow_origin" placeholder="请联系管理员设置CORS Origin" autocomplete="off" readonly>
@@ -389,7 +392,7 @@
         <blockquote class="layui-elem-quote">允许访问规则，可使用运算符
             <scan style="color:#FF5722"> in, not in, </scan>
             <scan style="color:#009688">and, or, not, () </scan>
-            定义访问条件，以此规则综合判断是否允许请求。<a href="{{ config.DOCS_BASE_URL }}/linktoken.html#linktoken-secure-rule" target="_blank" title="LinkToken文档"><i class="layui-icon layui-icon-link"></i></a>
+            定义访问条件，以此规则综合判断是否允许请求。<a href="{{ DOCS_BASE_URL }}/linktoken.html#linktoken-secure-rule" target="_blank" title="LinkToken文档"><i class="layui-icon layui-icon-link"></i></a>
         </blockquote>
         <div class="layui-form-item">
             <input type="text" class="layui-input" name="interior_relation" placeholder="ir: 限定条件内部的规则, 格式: in/not in:opt" autocomplete="off">
@@ -788,7 +791,7 @@
             layer.prompt({
                 formType: 2,
                 title: '给管理员留言',
-                placeholder: '良好的图床使用目的说明，真实的个人资料，都有助于管理员通过审核！',
+                placeholder: '良好的图床使用目的说明，真实的个人资料，完成验证的邮箱，都有助于管理员通过审核！',
                 value: default_user_leave_message,
                 shade: 0
             }, function(value, index, elem){

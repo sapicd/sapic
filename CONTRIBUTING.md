@@ -44,7 +44,13 @@ Pull Request
 
 - 如果可能，分别使用py2.7、py3.5+运行测试: ``make test``
 
-- 如果可能，请编写文档，位于docs下，构建文档命令: ``make html``
+- 如果可能，请编写文档，位于docs下，构建文档(py3)：
+
+  ```
+  $ cd picbed/docs
+  $ python3 -m pip install -r ../requirements/docs.txt
+  $ make html
+  ```
 
 **最后合并请求**
 
