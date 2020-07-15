@@ -719,6 +719,8 @@
                                 return '<scan style="color:#FF5722">已禁用</scan>';
                             } else if (d.status === -1) {
                                 return '<scan style="color:#01AAED;border-bottom:1px dashed #0081EF" title="' + (d.message||"(无)") + '">待审核</scan>';
+                            } else if (d.status === 2) {
+                                return '<scan style="color:red;border-bottom:1px dashed #0081EF" title="' + (d.status_reason||"(无)") + '">审核拒绝</scan>';
                             } else {
                                 return '<scan style="color:#5FB878">启用中</scan>';
                             }
@@ -770,14 +772,31 @@
                     });
                 });
             } else if (layEvent === "review") {
-                layer.confirm('点击确定会直接激活 ' + data.username + ' 用户哦！<br>如果不想激活，请忽略或禁用吧。', {icon:0,title:"请确认"}, function (index) {
-                    picbed.ajax("{{ url_for('api.user', Action='review') }}", function(res) {
+                layer.confirm('点击通过会直接激活 ' + data.username + ' 用户哦！<br>如果不想，可以拒绝或关闭哦。', {icon:0,title:"请确认",btn:["通过","拒绝"]}, function (index) {
+                    picbed.ajax("{{ url_for('api.user', Action='reviewOK') }}", function(res) {
                         layer.msg("已审核通过，允许用户上传图片！", {icon:1});
                         obj.update({status:1});
                     }, {
                         method: "PUT",
                         data: {username: data.username}
-                    })
+                    });
+                }, function (index) {
+                    layer.close(index);
+                    layer.prompt({
+                        formType: 2,
+                        value: '',
+                        title: '可以输入拒绝理由哦',
+                        shade: 0.1,
+                    }, function(value, index, elem){
+                        picbed.ajax("{{ url_for('api.user', Action='reviewFail') }}", function(res) {
+                            layer.close(index);
+                            layer.msg("审核拒绝", {icon:1});
+                            obj.update({status:2});
+                        }, {
+                            method: "PUT",
+                            data: {username: data.username, reason: value}
+                        });
+                    });
                 });
             } else if (layEvent === "disable") {
                 picbed.ajax("{{ url_for('api.user', Action='disable') }}", function(res) {
@@ -786,7 +805,7 @@
                 }, {
                     method: "PUT",
                     data: {username: data.username}
-                })
+                });
             } else if (layEvent === "enable") {
                 picbed.ajax("{{ url_for('api.user', Action='enable') }}", function(res) {
                     layer.msg("已启用！", {icon:1});
@@ -794,7 +813,7 @@
                 }, {
                     method: "PUT",
                     data: {username: data.username}
-                })
+                });
             }
         });
     });
