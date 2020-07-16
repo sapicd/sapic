@@ -66,3 +66,5 @@ html_theme_options = {
         ("GitHub", "https://github.com/staugur/picbed"),
     ],
 }
+#: fix ¶ #
+html_add_permalinks = " "

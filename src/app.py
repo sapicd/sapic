@@ -31,7 +31,7 @@ app.response_class = JsonResponse
 app.config.update(
     SECRET_KEY=GLOBAL.get("SecretKey") or str(uuid4()),
     MAX_CONTENT_LENGTH=10 * 1024 * 1024,
-    DOCS_BASE_URL=GLOBAL.get("DocsBaseURL").rstrip("/"),
+    DOCS_BASE_URL="https://picbed.rtfd.vip",
 )
 
 hm = HookManager(app)

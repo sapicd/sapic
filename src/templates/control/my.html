@@ -96,7 +96,16 @@
                             {% if g.is_admin %}
                             <scan style="color: #5FB878;font-weight: bold;">你好，管理员！</scan>
                             {% elif g.userinfo.status == -1 %}
-                            <scan style="color: #FFB800;font-weight: lighter;">请等待审核通过！<a href="javascript:;" id="LeaveMessage" style="color: #01AAED;font-size: 85%;">(留言)</a></scan>
+                            <scan style="color: #1E9FFF;font-weight: lighter;">
+                                <i class="saintic-icon saintic-icon-auditing-3" style="font-size: 120%;"></i>
+                                <a href="javascript:;" id="LeaveMessage" style="color: #01AAED;font-size: 85%;">(留言)</a>
+                            </scan>
+                            {% elif g.userinfo.status == -2 %}
+                            <scan style="color: red;">
+                                <i class="saintic-icon saintic-icon-audit-reject" style="font-size: 120%;"></i>
+                                审核被拒绝{% if g.userinfo.status_reason %}：{{ g.userinfo.status_reason }}{% endif %}
+                                <a href="javascript:;" id="reviewAgain" style="color: #01AAED;font-size: 85%;">(重新申请)</a>
+                            </scan>
                             {% endif %}
                         </div>
                     </div>
@@ -108,7 +117,7 @@
                         </div>
                     </div>
                     <div class="layui-form-item">
-                        <label class="layui-form-label">邮箱</label>
+                        <label class="layui-form-label"><i class="layui-icon layui-icon-about" id="emailtip"></i> 邮箱</label>
                         <div class="layui-input-inline">
                             <input type="email" name="email" autocomplete="off" value="{{ g.userinfo.email }}"
                                 placeholder="个人邮箱" class="layui-input">
@@ -460,6 +469,10 @@
             ].join("<br>");
             layer.tips(tip, this, {tips: 3, time: 0});
         }, closeTip);
+        //邮箱提示
+        $("#emailtip").hover(function () {
+            layer.tips("如需验证邮箱，请保存后再验证！", this, {tips: 3, time: 0});
+        }, closeTip);
         //URL后缀提示
         $("#urlprocesstip").hover(function () {
             let tip = [
@@ -787,7 +800,7 @@
         });
         //监听审核用户留言
         var default_user_leave_message = `{{ g.userinfo.message }}`;
-        $("#LeaveMessage").on("click", function() {
+        function _send2admin(callback) {
             layer.prompt({
                 formType: 2,
                 title: '给管理员留言',
@@ -798,12 +811,26 @@
                 if (value) {
                     default_user_leave_message = value;
                     layer.close(index);
-                    picbed.ajax("{{ url_for('api.my', Action='leaveMessage') }}", function(res) {
-                        layer.msg("已留言", {icon:1});
-                    }, {
-                        data: {message: value}
-                    });
+                    typeof callback === "function" && callback(value);
                 }
+            });
+        }
+        $("#LeaveMessage").on("click", function() {
+            _send2admin(function(value) {
+                picbed.ajax("{{ url_for('api.my', Action='leaveMessage') }}", function(res) {
+                    layer.msg("已留言", {icon:1});
+                }, {
+                    data: {message: value}
+                });
+            });
+        });
+        $("#reviewAgain").on("click", function() {
+            _send2admin(function(value) {
+                picbed.ajax("{{ url_for('api.my', Action='againMessage') }}", function(res) {
+                    layer.msg("已重新申请，请等待管理员审核！", {icon:1});
+                }, {
+                    data: {message: value}
+                });
             });
         });
         //监听邮箱验证

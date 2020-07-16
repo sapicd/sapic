@@ -151,10 +151,10 @@ def register():
                 if g.rc.sismember(ak, username):
                     res.update(msg="The username already exists")
                 else:
-                    #: 用户状态 -1待审核 0禁用 1启用
+                    #: 用户状态 -1待审核 0禁用 1启用 -2审核拒绝(权限同-1)
                     #: 后台开启审核时默认是-1，否则是1
                     #: 禁用时无认证权限（无法登陆，无API权限）
-                    # ；待审核仅无法上传，允许登录和API调用
+                    #: 待审核仅无法上传，允许登录和API调用
                     status = -1 if is_true(g.cfg.review) else 1
                     #: 参数校验通过，执行注册
                     options = dict(
@@ -289,17 +289,20 @@ def user():
         else:
             fds = (
                 "username", "nickname", "avatar", "ctime", "mtime",
-                "is_admin", "status", "message", "email", "email_verified"
+                "is_admin", "status", "message", "email", "email_verified",
+                "status_reason"
             )
             pipe = g.rc.pipeline()
             for u in g.rc.smembers(ak):
                 pipe.hmget(rsp("account", u), *fds)
+                pipe.scard(rsp("index", "user", u))
             try:
                 data = pipe.execute()
             except RedisError:
                 res.update(msg="Program data storage service error")
             else:
                 def fmt(d):
+                    d, user_pics = d
                     d = dict(zip(fds, d))
                     if d.get("status") is None:
                         d["status"] = 1
@@ -313,8 +316,9 @@ def user():
                     )
                     if d.get("mtime"):
                         d["mtime"] = int(d["mtime"])
+                    d["pics"] = user_pics
                     return d
-                data = [fmt(d) for d in data]
+                data = [fmt(d) for d in list_equal_split(data, 2)]
                 data = sorted(
                     data,
                     key=lambda k: k.get('ctime', 0),
@@ -336,10 +340,28 @@ def user():
         #: 删除用户
         username = request.form.get("username")
         if username:
+            #: 不能自己删除自己
+            if username == g.userinfo.username:
+                res.update(code=4, msg="No valid username found")
+                return res
             if g.rc.sismember(ak, username):
                 pipe = g.rc.pipeline()
                 pipe.srem(ak, username)
                 pipe.delete(rsp("account", username))
+                #: 删除用户相关数据
+                # 删除图片
+                uk = rsp("index", "user", username)
+                for sha in g.rc.smembers(uk):
+                    pipe.delete(rsp("image", sha))
+                pipe.delete(uk)
+                # 删除linktoken
+                lk = rsp("linktokens")
+                for ltid, usr in iteritems(g.rc.hgetall(lk)):
+                    if usr == username:
+                        pipe.hdel(lk, ltid)
+                        pipe.delete(rsp("linktoken", ltid))
+                # 删除统计
+                pipe.delete(rsp("report", "linktokens", username))
                 try:
                     pipe.execute()
                 except RedisError:
@@ -353,17 +375,27 @@ def user():
     elif request.method == "PUT":
         Action = request.args.get("Action")
         username = request.form.get("username")
-        if Action in ("review", "disable", "enable"):
+        if Action in ("reviewOK", "reviewFail", "disable", "enable"):
             if username:
                 if g.rc.sismember(ak, username):
-                    if Action == "review":
+                    #: 目前reviewFail时有用，拒绝理由
+                    reason = ""
+                    if Action == "reviewOK":
                         s = 1
+                    elif Action == "reviewFail":
+                        s = -2
+                        reason = request.form.get("reason")
                     elif Action == "disable":
                         s = 0
                     else:
                         s = 1
+                    uk = rsp("account", username)
+                    pipe = g.rc.pipeline()
+                    pipe.hset(uk, "status", s)
+                    if reason:
+                        pipe.hset(uk, "status_reason", reason)
                     try:
-                        g.rc.hset(rsp("account", username), "status", s)
+                        pipe.execute()
                     except RedisError:
                         res.update(msg="Program data storage service error")
                     else:
@@ -474,7 +506,7 @@ def token():
             else:
                 res.update(code=0)
         else:
-            res.update(msg="No tokens yet")
+            res.update(msg="No token yet")
     elif Action == "reset":
         oldToken = g.rc.hget(ak, "token")
         tkey = generate_random(randint(6, 12))
@@ -555,11 +587,20 @@ def my():
                 res.update(msg="Program data storage service error")
             else:
                 res.update(code=0)
-    elif Action == "leaveMessage":
+    elif Action in ("leaveMessage", "againMessage"):
         message = request.form.get("message")
         if message:
+            pipe = g.rc.pipeline()
+            if Action == "againMessage":
+                if g.userinfo.status != -2:
+                    res.update(
+                        msg="Current state prohibits use of this method"
+                    )
+                    return res
+                pipe.hset(ak, "status", -1)
+            pipe.hset(ak, "message", message)
             try:
-                g.rc.hset(ak, "message", message)
+                pipe.execute()
             except RedisError:
                 res.update(msg="Program data storage service error")
             else:
@@ -792,9 +833,9 @@ def upload():
         res.update(code=403, msg="Anonymous user is not sign in")
         return res
     #: 判断已登录用户是否待审核
-    if g.signin and g.userinfo.status in (-1, 0):
+    if g.signin and g.userinfo.status in (-2, -1, 0):
         msg = ("Pending review, cannot upload pictures" if
-               g.userinfo.status == -1 else
+               g.userinfo.status in (-2, -1) else
                "The user is disabled, no operation")
         res.update(code=403, msg=msg)
         return res
@@ -1078,7 +1119,7 @@ def link():
         #: 判断用户是否有token
         ak = rsp("account", username)
         if not g.rc.hget(ak, "token"):
-            res.update(msg="No tokens yet")
+            res.update(msg="No token yet")
             return res
         cv = check_body()
         if cv:
