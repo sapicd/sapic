@@ -96,7 +96,16 @@
                             {% if g.is_admin %}
                             <scan style="color: #5FB878;font-weight: bold;">你好，管理员！</scan>
                             {% elif g.userinfo.status == -1 %}
-                            <scan style="color: #FFB800;font-weight: lighter;">请等待审核通过！<a href="javascript:;" id="LeaveMessage" style="color: #01AAED;font-size: 85%;">(留言)</a></scan>
+                            <scan style="color: #1E9FFF;font-weight: lighter;">
+                                <i class="saintic-icon saintic-icon-auditing-2"></i>
+                                请等待审核通过！<a href="javascript:;" id="LeaveMessage" style="color: #01AAED;font-size: 85%;">(留言)</a>
+                            </scan>
+                            {% elif g.userinfo.status == 2 %}
+                            <scan style="color: red;">
+                                <i class="saintic-icon saintic-icon-audit-reject"></i>
+                                {% if g.userinfo.status_reason %}{{ status_reason }}{% endif %}
+                                <a href="javascript:;" id="reviewAgain" style="color: #01AAED;font-size: 85%;">申请</a>
+                            </scan>
                             {% endif %}
                         </div>
                     </div>

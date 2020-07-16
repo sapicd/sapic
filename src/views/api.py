@@ -151,10 +151,10 @@ def register():
                 if g.rc.sismember(ak, username):
                     res.update(msg="The username already exists")
                 else:
-                    #: 用户状态 -1待审核 0禁用 1启用
+                    #: 用户状态 -1待审核 0禁用 1启用 2审核拒绝(权限同-1)
                     #: 后台开启审核时默认是-1，否则是1
                     #: 禁用时无认证权限（无法登陆，无API权限）
-                    # ；待审核仅无法上传，允许登录和API调用
+                    #: 待审核仅无法上传，允许登录和API调用
                     status = -1 if is_true(g.cfg.review) else 1
                     #: 参数校验通过，执行注册
                     options = dict(
@@ -289,7 +289,8 @@ def user():
         else:
             fds = (
                 "username", "nickname", "avatar", "ctime", "mtime",
-                "is_admin", "status", "message", "email", "email_verified"
+                "is_admin", "status", "message", "email", "email_verified",
+                "status_reason"
             )
             pipe = g.rc.pipeline()
             for u in g.rc.smembers(ak):
@@ -353,17 +354,27 @@ def user():
     elif request.method == "PUT":
         Action = request.args.get("Action")
         username = request.form.get("username")
-        if Action in ("review", "disable", "enable"):
+        if Action in ("reviewOK", "reviewFail", "disable", "enable"):
             if username:
                 if g.rc.sismember(ak, username):
-                    if Action == "review":
+                    #: 目前reviewFail时有用，拒绝理由
+                    reason = ""
+                    if Action == "reviewOK":
                         s = 1
+                    elif Action == "reviewFail":
+                        s = 2
+                        reason = request.form.get("reason")
                     elif Action == "disable":
                         s = 0
                     else:
                         s = 1
+                    uk = rsp("account", username)
+                    pipe = g.rc.pipeline()
+                    pipe.hset(uk, "status", s)
+                    if reason:
+                        pipe.hset(uk, "status_reason", reason)
                     try:
-                        g.rc.hset(rsp("account", username), "status", s)
+                        pipe.execute()
                     except RedisError:
                         res.update(msg="Program data storage service error")
                     else:
@@ -792,9 +803,9 @@ def upload():
         res.update(code=403, msg="Anonymous user is not sign in")
         return res
     #: 判断已登录用户是否待审核
-    if g.signin and g.userinfo.status in (-1, 0):
+    if g.signin and g.userinfo.status in (-1, 0, 2):
         msg = ("Pending review, cannot upload pictures" if
-               g.userinfo.status == -1 else
+               g.userinfo.status in (-1, 2) else
                "The user is disabled, no operation")
         res.update(code=403, msg=msg)
         return res
