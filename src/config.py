@@ -35,11 +35,6 @@ GLOBAL = {
 
     "SecretKey": envs.get("picbed_secretkey"),
     # Web应用密钥，默认随机。如果设置，那么登录态cookie在重启应用后仍有效。
-
-    "DocsBaseURL": envs.get(
-        "picbed_docs_baseurl", "https://docs.saintic.com/picbed"
-    ),
-    # picbed文档的基础链接
 }
 
 

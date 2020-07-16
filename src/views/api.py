@@ -151,7 +151,7 @@ def register():
                 if g.rc.sismember(ak, username):
                     res.update(msg="The username already exists")
                 else:
-                    #: 用户状态 -1待审核 0禁用 1启用 2审核拒绝(权限同-1)
+                    #: 用户状态 -1待审核 0禁用 1启用 -2审核拒绝(权限同-1)
                     #: 后台开启审核时默认是-1，否则是1
                     #: 禁用时无认证权限（无法登陆，无API权限）
                     #: 待审核仅无法上传，允许登录和API调用
@@ -362,7 +362,7 @@ def user():
                     if Action == "reviewOK":
                         s = 1
                     elif Action == "reviewFail":
-                        s = 2
+                        s = -2
                         reason = request.form.get("reason")
                     elif Action == "disable":
                         s = 0
@@ -566,11 +566,20 @@ def my():
                 res.update(msg="Program data storage service error")
             else:
                 res.update(code=0)
-    elif Action == "leaveMessage":
+    elif Action in ("leaveMessage", "againMessage"):
         message = request.form.get("message")
         if message:
+            pipe = g.rc.pipeline()
+            if Action == "againMessage":
+                if g.userinfo.status != -2:
+                    res.update(
+                        msg="Current state prohibits use of this method"
+                    )
+                    return res
+                pipe.hset(ak, "status", -1)
+            pipe.hset(ak, "message", message)
             try:
-                g.rc.hset(ak, "message", message)
+                pipe.execute()
             except RedisError:
                 res.update(msg="Program data storage service error")
             else:
@@ -803,9 +812,9 @@ def upload():
         res.update(code=403, msg="Anonymous user is not sign in")
         return res
     #: 判断已登录用户是否待审核
-    if g.signin and g.userinfo.status in (-1, 0, 2):
+    if g.signin and g.userinfo.status in (-2, -1, 0):
         msg = ("Pending review, cannot upload pictures" if
-               g.userinfo.status in (-1, 2) else
+               g.userinfo.status in (-2, -1) else
                "The user is disabled, no operation")
         res.update(code=403, msg=msg)
         return res

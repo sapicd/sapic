@@ -353,16 +353,18 @@
     </div>
 </script>
 <script type="text/html" id="usermanager_action">
+    {{#  if(d.status === -1){ }}
+    <a href="javascript:;" style="color:#009688" lay-event="review" title="审核用户"><i class="saintic-icon saintic-icon-auditing-1"></i></a>
+    &nbsp;&nbsp;
+    {{#  } }}
     {{#  if(d.status !== 0){ }}
-    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-warm" lay-event="disable">禁用</a>
+    <a href="javascript:;" style="color:#FFB800" lay-event="disable" title="禁用用户"><i class="saintic-icon saintic-icon-user-disable"></i></a>
     {{#  } }}
     {{#  if(d.status === 0){ }}
-    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal" lay-event="enable">启用</a>
+    <a href="javascript:;" style="color:#1E9FFF" lay-event="enable" title="启用用户"><i class="saintic-icon saintic-icon-user-enable"></i></a>
     {{#  } }}
-    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-danger" lay-event="remove">删除</a>
-    {{#  if(d.status === -1){ }}
-    <a class="layui-btn layui-btn-xs layui-btn-radius" lay-event="review">审核</a>
-    {{#  } }}
+    &nbsp;&nbsp;
+    <a href="javascript:;" style="color:#FF5722" lay-event="remove" title="删除用户"><i class="saintic-icon saintic-icon-user-delete"></i></a>
 </script>
 <script type="text/html" id="is_admin_tpl">
     <input type="checkbox" data-username="{{ d.username }}" value="1" lay-skin="primary" lay-filter="set_admin"
@@ -719,7 +721,7 @@
                                 return '<scan style="color:#FF5722">已禁用</scan>';
                             } else if (d.status === -1) {
                                 return '<scan style="color:#01AAED;border-bottom:1px dashed #0081EF" title="' + (d.message||"(无)") + '">待审核</scan>';
-                            } else if (d.status === 2) {
+                            } else if (d.status === -2) {
                                 return '<scan style="color:red;border-bottom:1px dashed #0081EF" title="' + (d.status_reason||"(无)") + '">审核拒绝</scan>';
                             } else {
                                 return '<scan style="color:#5FB878">启用中</scan>';
@@ -760,7 +762,7 @@
             var layEvent = obj.event; //获得 lay-event 对应的值
             var tr = obj.tr; //获得当前行 tr 的 DOM 对象（如果有的话）
             if (layEvent === 'remove') { //删除第三方钩子
-                layer.confirm('真的删除用户 ' + data.username + ' 么？', {icon:3,title:"请确认"}, function (index) {
+                layer.confirm('真的删除用户 ' + data.username + ' 么？', {icon:3,title:"请确认",shade:0.1}, function (index) {
                     layer.close(index);
                     //向服务端发送删除指令
                     picbed.ajax("{{ url_for('api.user') }}", function(res) {
@@ -772,7 +774,7 @@
                     });
                 });
             } else if (layEvent === "review") {
-                layer.confirm('点击通过会直接激活 ' + data.username + ' 用户哦！<br>如果不想，可以拒绝或关闭哦。', {icon:0,title:"请确认",btn:["通过","拒绝"]}, function (index) {
+                layer.confirm('点击通过会直接激活 ' + data.username + ' 用户哦！<br>如果不想，可以拒绝或关闭哦。', {icon:0,title:"请确认",btn:["通过","拒绝"],shade:0.1}, function (index) {
                     picbed.ajax("{{ url_for('api.user', Action='reviewOK') }}", function(res) {
                         layer.msg("已审核通过，允许用户上传图片！", {icon:1});
                         obj.update({status:1});
@@ -783,9 +785,9 @@
                 }, function (index) {
                     layer.close(index);
                     layer.prompt({
-                        formType: 2,
+                        formType: 0,
                         value: '',
-                        title: '可以输入拒绝理由哦',
+                        title: '请输入拒绝理由哦',
                         shade: 0.1,
                     }, function(value, index, elem){
                         picbed.ajax("{{ url_for('api.user', Action='reviewFail') }}", function(res) {

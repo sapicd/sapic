@@ -245,6 +245,7 @@ def dfr(res, default='en-US'):
             "Email send failed": "邮件发送失败",
             "expired token": "token过期",
             "useless": "无用token",
+            "Current state prohibits use of this method": "当前状态禁止使用此方法",
         },
     }
     if isinstance(res, dict) and "en" not in language:
