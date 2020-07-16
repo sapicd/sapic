@@ -786,7 +786,7 @@
             picbed.Clipboard.copy($("#token").val());
         });
         //监听审核用户留言
-        var default_user_leave_message = '{{ g.userinfo.message }}';
+        var default_user_leave_message = `{{ g.userinfo.message }}`;
         $("#LeaveMessage").on("click", function() {
             layer.prompt({
                 formType: 2,
