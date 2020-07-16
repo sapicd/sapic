@@ -671,18 +671,16 @@
             url: "{{ url_for('api.user') }}",
             method: "GET",
             cols: [
-                [{
-                        field: 'avatar',
-                        title: '头像',
-                        width: 70,
-                        templet: function(d) {
-                            return d.avatar ? ('<a href="' + d.avatar + '" target="_blank"><img lay-src="' + d.avatar + '" height="100%" /></a>') : "";
-                        }
-                    },
+                [
                     {
                         field: 'username',
                         title: '用户名',
                         minWidth: 80,
+                        event: 'usernameClick',
+                        style:'cursor: pointer;',
+                        templet: function(d) {
+                            return d.pics > 0 ? (d.username + '&nbsp;<span class="layui-badge layui-bg-black">' + d.pics + '</span>') : d.username;
+                        }
                     },
                     {
                         field: 'nickname',
@@ -731,7 +729,7 @@
                     {
                         fixed: 'right',
                         align: 'left',
-                        minWidth: 130,
+                        minWidth: 90,
                         toolbar: '#usermanager_action'
                     }
                 ]
@@ -762,7 +760,7 @@
             var layEvent = obj.event; //获得 lay-event 对应的值
             var tr = obj.tr; //获得当前行 tr 的 DOM 对象（如果有的话）
             if (layEvent === 'remove') { //删除第三方钩子
-                layer.confirm('真的删除用户 ' + data.username + ' 么？', {icon:3,title:"请确认",shade:0.1}, function (index) {
+                layer.confirm('真的删除用户 ' + data.username + ' 么？<br><b style="color:red">此操作将会清除用户数据且不可逆转！</b>', {icon:3,title:"请确认",shade:0.1}, function (index) {
                     layer.close(index);
                     //向服务端发送删除指令
                     picbed.ajax("{{ url_for('api.user') }}", function(res) {
@@ -793,7 +791,7 @@
                         picbed.ajax("{{ url_for('api.user', Action='reviewFail') }}", function(res) {
                             layer.close(index);
                             layer.msg("审核拒绝", {icon:1});
-                            obj.update({status:2});
+                            obj.update({status:-2});
                         }, {
                             method: "PUT",
                             data: {username: data.username, reason: value}
@@ -815,6 +813,20 @@
                 }, {
                     method: "PUT",
                     data: {username: data.username}
+                });
+            } else if (layEvent === "usernameClick") {
+                if (!data.avatar) return false;
+                var content = '<a href="' + data.avatar + '" target="_blank"><img src="' + data.avatar + '" width="200px" /></a>';
+                //显示头像
+                layer.open({
+                    type: 1,
+                    title: false,
+                    closeBtn: 0,
+                    area: 'auto',
+                    skin: 'layui-layer-nobg', //没有背景色
+                    shadeClose: true,
+                    shade: 0.1,
+                    content: content
                 });
             }
         });

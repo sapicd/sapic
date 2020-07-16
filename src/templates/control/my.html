@@ -97,7 +97,7 @@
                             <scan style="color: #5FB878;font-weight: bold;">你好，管理员！</scan>
                             {% elif g.userinfo.status == -1 %}
                             <scan style="color: #1E9FFF;font-weight: lighter;">
-                                <i class="saintic-icon saintic-icon-auditing-2" style="font-size: 130%;"></i>
+                                <i class="saintic-icon saintic-icon-auditing-3" style="font-size: 120%;"></i>
                                 <a href="javascript:;" id="LeaveMessage" style="color: #01AAED;font-size: 85%;">(留言)</a>
                             </scan>
                             {% elif g.userinfo.status == -2 %}
@@ -117,7 +117,7 @@
                         </div>
                     </div>
                     <div class="layui-form-item">
-                        <label class="layui-form-label">邮箱</label>
+                        <label class="layui-form-label"><i class="layui-icon layui-icon-about" id="emailtip"></i> 邮箱</label>
                         <div class="layui-input-inline">
                             <input type="email" name="email" autocomplete="off" value="{{ g.userinfo.email }}"
                                 placeholder="个人邮箱" class="layui-input">
@@ -468,6 +468,10 @@
                 "更多请参考文档：<a href='{{ config.DOCS_BASE_URL }}/usage.html#token' target='_blank' style='color:#009688'>Token</a>",
             ].join("<br>");
             layer.tips(tip, this, {tips: 3, time: 0});
+        }, closeTip);
+        //邮箱提示
+        $("#emailtip").hover(function () {
+            layer.tips("如需验证邮箱，请保存后再验证！", this, {tips: 3, time: 0});
         }, closeTip);
         //URL后缀提示
         $("#urlprocesstip").hover(function () {

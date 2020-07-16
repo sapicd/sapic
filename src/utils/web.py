@@ -225,7 +225,7 @@ def dfr(res, default='en-US'):
             "Password must be at least 6 characters": "密码最少6位",
             "Confirm passwords do not match": "确认密码不匹配",
             "Existing token": "已有token",
-            "No tokens yet": "还未有token",
+            "No token yet": "还未有token",
             "The username is invalid or registration is not allowed": "用户名不合法或不允许注册",
             "The username already exists": "用户名已存在",
             "Normal user login has been disabled": "已禁止普通用户登录",

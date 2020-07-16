@@ -295,12 +295,14 @@ def user():
             pipe = g.rc.pipeline()
             for u in g.rc.smembers(ak):
                 pipe.hmget(rsp("account", u), *fds)
+                pipe.scard(rsp("index", "user", u))
             try:
                 data = pipe.execute()
             except RedisError:
                 res.update(msg="Program data storage service error")
             else:
                 def fmt(d):
+                    d, user_pics = d
                     d = dict(zip(fds, d))
                     if d.get("status") is None:
                         d["status"] = 1
@@ -314,8 +316,9 @@ def user():
                     )
                     if d.get("mtime"):
                         d["mtime"] = int(d["mtime"])
+                    d["pics"] = user_pics
                     return d
-                data = [fmt(d) for d in data]
+                data = [fmt(d) for d in list_equal_split(data, 2)]
                 data = sorted(
                     data,
                     key=lambda k: k.get('ctime', 0),
@@ -337,10 +340,28 @@ def user():
         #: 删除用户
         username = request.form.get("username")
         if username:
+            #: 不能自己删除自己
+            if username == g.userinfo.username:
+                res.update(code=4, msg="No valid username found")
+                return res
             if g.rc.sismember(ak, username):
                 pipe = g.rc.pipeline()
                 pipe.srem(ak, username)
                 pipe.delete(rsp("account", username))
+                #: 删除用户相关数据
+                # 删除图片
+                uk = rsp("index", "user", username)
+                for sha in g.rc.smembers(uk):
+                    pipe.delete(rsp("image", sha))
+                pipe.delete(uk)
+                # 删除linktoken
+                lk = rsp("linktokens")
+                for ltid, usr in iteritems(g.rc.hgetall(lk)):
+                    if usr == username:
+                        pipe.hdel(lk, ltid)
+                        pipe.delete(rsp("linktoken", ltid))
+                # 删除统计
+                pipe.delete(rsp("report", "linktokens", username))
                 try:
                     pipe.execute()
                 except RedisError:
@@ -485,7 +506,7 @@ def token():
             else:
                 res.update(code=0)
         else:
-            res.update(msg="No tokens yet")
+            res.update(msg="No token yet")
     elif Action == "reset":
         oldToken = g.rc.hget(ak, "token")
         tkey = generate_random(randint(6, 12))
@@ -1098,7 +1119,7 @@ def link():
         #: 判断用户是否有token
         ak = rsp("account", username)
         if not g.rc.hget(ak, "token"):
-            res.update(msg="No tokens yet")
+            res.update(msg="No token yet")
             return res
         cv = check_body()
         if cv:

@@ -13,7 +13,7 @@
         <tr style="margin: 0; padding: 0;">
             <td style="margin: 0; padding: 30px;">
                 <p style="line-height: 20px; margin: 0; margin-bottom: 10px; padding: 0;">
-                    Hi，<em style="font-weight: 700;">{{ username }}</em>，请完成以下操作：
+                    Hi，<em style="font-weight: 700;">{{ username }}</em>，请完成以下操作（{{ max_time or 10 }}分钟内有效）：
                 </p>
                 <div>
                     {% block action %}{% endblock %}
