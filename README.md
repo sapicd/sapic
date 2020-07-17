@@ -199,19 +199,11 @@ URL路径：["src"]
 
 ## 预览图
 
-目前v1版本完成，看几张预览图：
+![首页上传](./Snapshot/homepage.png)
 
-![未登录首页](./Snapshot/1.png)
+![管理我的图片](./Snapshot/pic.png)
 
-![登录页面](./Snapshot/2.png)
-
-![首页上传效果](./Snapshot/3.png)
-
-![首页上传复制](./Snapshot/4.png)
-
-![控制台管理员功能](./Snapshot/5.png)
-
-![管理我的图片](./Snapshot/6.png)
+![控制台管理员功能](./Snapshot/hook.png)
 
 ## Contributing
 
