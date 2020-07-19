@@ -288,6 +288,10 @@ class HookManager(object):
             self.reload()
 
     def proxy(self, name, is_enabled=True):
+        """代理到钩子中执行方法
+
+        :param is_enabled: 布尔值，True表示仅从已启用钩子中查找方法，否则查找所有
+        """
         if is_enabled:
             if name in self.get_enabled_map_hooks:
                 return self.get_enabled_map_hooks[name]["proxy"]

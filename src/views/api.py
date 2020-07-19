@@ -704,7 +704,6 @@ def shamgr(sha):
     res = dict(code=1, msg=None)
     gk = rsp("index", "global")
     ik = rsp("image", sha)
-    dk = rsp("index", "deleted")
     if request.method == "GET":
         def get_url_with_suffix(d, _type):
             """根据type返回src"""
@@ -747,9 +746,8 @@ def shamgr(sha):
             if g.is_admin or (g.userinfo.username == husr):
                 pipe = g.rc.pipeline()
                 pipe.srem(gk, sha)
-                pipe.sadd(dk, sha)
-                pipe.hset(ik, "status", "deleted")
                 pipe.srem(rsp("index", "user", husr), sha)
+                pipe.delete(ik)
                 try:
                     pipe.execute()
                 except RedisError:

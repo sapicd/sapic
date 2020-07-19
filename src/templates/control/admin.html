@@ -160,6 +160,13 @@
                                         value="1">
                                 </div>
                             </div>
+                            <div class="layui-form-item layui-form-text">
+                                <label class="layui-form-label">全站公告</label>
+                                <div class="layui-input-block">
+                                    <textarea name="bulletin" placeholder="页面顶部公告栏"
+                                        value="" class="layui-textarea"></textarea>
+                                </div>
+                            </div>
                             {{ intpl("sitesetting") }}
                         </div>
                     </fieldset>
@@ -443,6 +450,7 @@
         //设置表单赋值
         form.val("setting", {
             upload_beforehtml: picbed.escape2Html("{{ g.site.upload_beforehtml }}"),
+            bulletin: picbed.escape2Html("{{ g.site.bulletin }}"),
         });
         //提交系统设置
         form.on('submit(*)', function(data){

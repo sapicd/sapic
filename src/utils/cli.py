@@ -100,10 +100,12 @@ def clean(hookloadtime, hookthirds):
 
 @sa_cli.command()
 @click.confirmation_option(prompt=u'确定要升级更新吗？')
-@click.argument('v2v', type=click.Choice(['1.6-1.7', ]))
+@click.argument('v2v', type=click.Choice(['1.6-1.7', '1.7-1.8']))
 def upgrade(v2v):
     """版本升级助手"""
     #: 处理更新版本时数据迁移、数据结构变更、其他修改
+    rc = create_redis_engine()
+
     if v2v == "1.6-1.7":
         #: 安装模块
         try:
@@ -111,7 +113,6 @@ def upgrade(v2v):
         except ImportError:
             _pip_install("user_agents>=2.0")
         #: 更新数据
-        rc = create_redis_engine()
         pipe = rc.pipeline()
         #: 添加用户status
         for u in rc.smembers(rsp("accounts")):
@@ -152,3 +153,13 @@ def upgrade(v2v):
                 pipe.hdel(rsp("image", i[0]), "agent")
                 pipe.hset(rsp("image", i[0]), "origin", o)
         pipe.execute()
+
+    elif v2v == "1.7-1.8":
+        #: 清除已删除的图片key
+        dk = rsp("index", "deleted")
+        if rc.exists(dk):
+            pipe = rc.pipeline()
+            for sha in rc.smembers(dk):
+                pipe.delete(rsp("image", sha))
+            pipe.delete(dk)
+            pipe.execute()
