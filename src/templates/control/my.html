@@ -834,9 +834,11 @@
             });
         });
         //监听邮箱验证
-        var has_send_mail = false;
+        var has_send_mail = false,
+            is_sending_mail = false;
         $("#EmailArea").delegate("#verifyEmail", "click", function() {
             var that = this;
+            if (is_sending_mail === true) return false;
             if (has_send_mail === true) {
                 $(that).text("已发送一次验证，如需多次，请刷新页面！");
                 $(that).removeAttr("href");
@@ -844,9 +846,14 @@
             }
             picbed.ajax("{{ url_for('api.my', Action='verifyEmail') }}", function(res) {
                 has_send_mail = true;
+                is_sending_mail = false;
                 layer.msg("已发送验证邮件，请注意查收！", {icon:1});
                 $(that).text("请去邮箱验证...");
                 $(that).removeAttr("href");
+            }, {
+                beforeSend: function() {
+                    is_sending_mail = true;
+                }
             });
         });
         //监听相册修改
@@ -1508,4 +1515,5 @@
         });
     });
 </script>
+{{ intpl("userscript") }}
 {% endblock %}

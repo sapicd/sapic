@@ -53,6 +53,9 @@
         .layui-layout-admin .layui-logo img {
             height: 80%;
         }
+        .bulletin-board {
+            padding: 10px;
+        }
         @media screen and (max-width: 400px) {
             .layui-layout-admin .layui-logo {
                 width: auto;
@@ -67,6 +70,9 @@
 </head>
 
 <body>
+{% if g.site.bulletin %}
+<div class="layui-bg-cyan bulletin-board">{{ g.site.bulletin|safe }}</div>
+{% endif %}
 {% block LayoutBody %}{% endblock %}
 <script src="{{ url_for('static', filename='layui/layui.all.js', v=Version) }}"></script>
 <script>

@@ -498,6 +498,7 @@ def sendmail(subject, message, to):
             _mode="any_true",
             _args=(subject, message, to),
         )
+        logger.debug(data)
         if is_all_fail(data):
             res.update(msg="Email send failed", errors=data)
             return res

@@ -107,6 +107,10 @@
 
     通过3种方式发送邮件
 
+    ps：可以通过安装 `picbed-smtp <https://github.com/staugur/picbed-smtp>`_
+    扩展钩子发送邮件，它通过邮箱SMTP服务发送，所以例如QQ、腾讯企业邮、网易、
+    新浪、阿里云等邮箱都可作为发送者。
+
 .. _picbed-third-hook:
 
 第三方钩子
@@ -290,6 +294,14 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
 
   管理员控制台钩子设置下，表单内容，格式参考上面。
 
+- emailsetting
+
+  邮件配置，表单内容，格式参考上面
+
+- adminscript
+
+  管理员控制台脚本区域，要求内容是 **<script>** JS脚本
+
 - profile
 
   用户个人资料下，表单内容，格式参考上面。
@@ -301,6 +313,10 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
 - before_usersetting
 
   用户设置的站点个性化设置上面，表单内容，格式参考上面。
+
+- userscript
+
+  用户中心脚本区域，要求内容是 **<script>** JS脚本
 
 .. tip::
 

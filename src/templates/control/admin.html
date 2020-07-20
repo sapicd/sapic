@@ -160,6 +160,13 @@
                                         value="1">
                                 </div>
                             </div>
+                            <div class="layui-form-item layui-form-text">
+                                <label class="layui-form-label">全站公告</label>
+                                <div class="layui-input-block">
+                                    <textarea name="bulletin" placeholder="页面顶部公告栏"
+                                        value="" class="layui-textarea"></textarea>
+                                </div>
+                            </div>
                             {{ intpl("sitesetting") }}
                         </div>
                     </fieldset>
@@ -372,14 +379,13 @@
 </script>
 {% endraw %}
 <script>
-    layui.use(['picbed', 'layer', 'form', 'table', 'element', 'util', 'flow'], function () {
+    layui.use(['picbed', 'layer', 'form', 'table', 'element', 'util'], function () {
         var $ = layui.$,
             picbed = layui.picbed,
             util = layui.util,
             form = layui.form,
             layer = layui.layer,
             table = layui.table,
-            flow = layui.flow,
             element = layui.element;
         //显示当前tab
         if (location.hash) {
@@ -418,9 +424,9 @@
         });
         $('#SendTestMail').on("click", function() {
             layer.prompt({
-                    formType: 0,
-                    title: '请输入测试邮箱',
-                    shade: 0
+                formType: 0,
+                title: '请输入测试邮箱',
+                shade: 0
             }, function(value, index, elem){
                 if (value) {
                     layer.close(index);
@@ -444,9 +450,11 @@
         //设置表单赋值
         form.val("setting", {
             upload_beforehtml: picbed.escape2Html("{{ g.site.upload_beforehtml }}"),
+            bulletin: picbed.escape2Html("{{ g.site.bulletin }}"),
         });
         //提交系统设置
         form.on('submit(*)', function(data){
+            console.log(data.form);
             if (document.forms['control'].checkValidity() === false) {
                 layer.msg("发现部分参数不合法",{icon:0});
                 document.forms['control'].reportValidity();
@@ -679,7 +687,9 @@
                         event: 'usernameClick',
                         style:'cursor: pointer;',
                         templet: function(d) {
-                            return d.pics > 0 ? (d.username + '&nbsp;<span class="layui-badge layui-bg-black">' + d.pics + '</span>') : d.username;
+                            var user = d.avatar ? ('<scan style="color:#5FB878">' + d.username + '</scan>') : d.username;
+                            if (d.username === "{{ g.userinfo.username }}") user += '&nbsp;<span class="layui-badge layui-bg-green">我</span>';
+                            return d.pics > 0 ? (user + '&nbsp;<span class="layui-badge layui-bg-black">' + d.pics + '</span>') : user;
                         }
                     },
                     {
@@ -739,9 +749,6 @@
             size: 'sm',
             skin: 'line',
             page: true,
-            done: function() {
-                flow.lazyimg();
-            }
         });
         //监听设置管理员操作
         form.on('checkbox(set_admin)', function (obj) {
@@ -832,4 +839,5 @@
         });
     });
 </script>
+{{ intpl("adminscript") }}
 {% endblock %}
