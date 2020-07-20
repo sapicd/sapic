@@ -120,11 +120,6 @@ def anonymous_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if g.signin:
-            nu = get_redirect_url()
-            if nu and (
-                nu.startswith("/") or nu.startswith(request.url_root)
-            ):
-                return redirect(nu)
             return redirect(url_for('front.index'))
         return f(*args, **kwargs)
     return decorated_function
@@ -246,6 +241,7 @@ def dfr(res, default='en-US'):
             "expired token": "token过期",
             "useless": "无用token",
             "Current state prohibits use of this method": "当前状态禁止使用此方法",
+            "The user has no authenticated mailbox": "用户没有验证过的邮箱",
         },
     }
     if isinstance(res, dict) and "en" not in language:
@@ -520,7 +516,7 @@ def make_email_tpl(tpl, **data):
         ))
     )
     if "site_name" not in data:
-        data["site_name"] = g.cfg.title_name or "picbed"
+        data["site_name"] = g.site_name
     if "url_root" not in data:
         data["url_root"] = request.url_root
     if "username" not in data:

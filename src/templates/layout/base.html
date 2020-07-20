@@ -3,7 +3,7 @@
 
 <head>
     {% include "ref/header.html" %}
-    <title>{% block LayoutTitle %}{% endblock %} | {{ g.site.title_name or 'picbed' }}</title>
+    <title>{% block LayoutTitle %}{% endblock %} | {{ g.site_name }}</title>
     <link href="{{ url_for('static', filename='layui/css/layui.css', v=Version) }}" rel="stylesheet" media="all">
     <link rel="stylesheet" type="text/css" href="https://static.saintic.com/iconfont/iconfont.min.css">
     <style>
