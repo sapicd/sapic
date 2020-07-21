@@ -210,7 +210,9 @@ def forgot():
                             username=username,
                         )),
                         _external=True,
-                    ))
+                    ),
+                    username=username,
+                )
                 res = sendmail(
                     subject="{}忘记密码".format(g.site_name),
                     message=html,

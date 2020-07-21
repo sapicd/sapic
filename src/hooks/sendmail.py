@@ -104,7 +104,7 @@ def sendmail(subject, message, to_addr):
     """Web环境下发送邮件"""
     #: from_addr建议设置发件人邮箱，否则基本会被拦截或进入垃圾邮箱
     from_addr = "picbed@{}".format(request.host)
-    from_name = g.cfg.email_from_name or g.cfg.title_name or "picbed"
+    from_name = g.cfg.email_from_name or g.site_name
     #: 关闭通过本地服务器发送邮件
     no_local = g.cfg.email_nolocal
     if is_true(no_local):

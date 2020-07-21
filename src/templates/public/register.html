@@ -67,7 +67,7 @@
                 </div>
                 <div class="layui-form-item">
                     <div class="layui-input-block">
-                        <button class="layui-btn layui-btn-fluid" lay-submit lay-filter="register">注册</button>
+                        <button class="layui-btn layui-btn-fluid" lay-submit lay-filter="register" id="submitbtn">注册</button>
                     </div>
                 </div>
             </form>
@@ -145,7 +145,15 @@
                     location.href = "{{ url_for('front.login') }}";
                 });
             }, {
-                data: data.field
+                data: data.field,
+                beforeSend: function() {
+                    $("#submitbtn").attr({disabled: "disabled"});
+                    $('#submitbtn').addClass("layui-disabled");
+                },
+                complete: function() {
+                    $('#submitbtn').removeAttr("disabled");
+                    $('#submitbtn').removeClass("layui-disabled");
+                },
             });
             return false;
         });

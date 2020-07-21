@@ -27,10 +27,10 @@
 {% block content %}
     {% if is_reset %}
         <div class="forgot-area">
-            <h3 class="title">重置密码</h3>
+            <h3 class="title">Hi，{{ user }}，请重置密码</h3>
             <form class="layui-form" action="">
-                <input type="hidden" name="{{ user }}" value="{{ user }}">
-                <input type="hidden" name="{{ token }}" value="{{ token }}">
+                <input type="hidden" name="username" value="{{ user }}">
+                <input type="hidden" name="token" value="{{ token }}">
                 <div class="layui-form-item">
                     <div class="layui-input-block">
                         <input type="password" name="password" required lay-verify="required|pass" lay-verType="tips" placeholder="重置登录密码" autocomplete="off" class="layui-input">
@@ -59,7 +59,7 @@
                 </div>
                 <div class="layui-form-item">
                     <div class="layui-input-block">
-                        <button class="layui-btn layui-btn-fluid" lay-submit lay-filter="sending">提交</button>
+                        <button class="layui-btn layui-btn-fluid" lay-submit lay-filter="sending" id="submitbtn">提交</button>
                     </div>
                 </div>
             </form>
@@ -94,7 +94,17 @@
                     time: 2000
                 });
             }, {
-                data: data.field
+                data: data.field,
+                beforeSend: function() {
+                    $("#submitbtn").innerText = '发送中';
+                    $("#submitbtn").attr({disabled: "disabled"});
+                    $('#submitbtn').addClass("layui-disabled");
+                },
+                complete: function() {
+                    $("#submitbtn").innerText = '提交';
+                    $('#submitbtn').removeAttr("disabled");
+                    $('#submitbtn').removeClass("layui-disabled");
+                },
             });
             return false;
         });

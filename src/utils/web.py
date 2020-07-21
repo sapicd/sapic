@@ -296,7 +296,7 @@ def get_site_config():
 
 def set_site_config(mapping):
     if mapping and isinstance(mapping, dict):
-        ALLOWED_TAGS = ['a', 'abbr', 'b', 'i', 'code', 'p', 'br']
+        ALLOWED_TAGS = ['a', 'abbr', 'b', 'i', 'code', 'p', 'br', 'h3', 'h4']
         ALLOWED_ATTRIBUTES = {
             'a': ['href', 'title', 'target'],
             'abbr': ['title'],
