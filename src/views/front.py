@@ -87,17 +87,25 @@ def activate(token):
     if res["code"] == 0:
         data = res["data"]
         Action = data["Action"]
-        success = False
+
         if Action == "verifyEmail":
             username = data["username"]
             checkmail = data["email"]
             uk = rsp("account", username)
             usermail = g.rc.hget(uk, "email")
+            success = False
+            url = url_for("front.my") if g.signin else url_for("front.login")
             if checkmail == usermail:
                 g.rc.hset(uk, "email_verified", 1)
                 success = True
-        url = url_for("front.my") if g.signin else url_for("front.login")
-        return render_template("public/go.html", url=url, success=success)
+            return render_template("public/go.html", url=url, success=success)
+
+        elif Action == "resetPassword":
+            username = data["username"]
+            return render_template(
+                "public/forgot.html", is_reset=True, token=token, user=username
+            )
+
     else:
         name = res["msg"]
         if PY2 and not isinstance(name, text_type):
@@ -105,3 +113,9 @@ def activate(token):
         return render_template(
             "public/error.html", code=res["code"], name=name
         )
+
+
+@bp.route("/forgot")
+@anonymous_required
+def forgot():
+    return render_template("public/forgot.html")

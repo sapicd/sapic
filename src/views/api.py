@@ -28,7 +28,7 @@ from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
-    sendmail, generate_activate_token
+    sendmail, generate_activate_token, check_activate_token
 from utils._compat import iteritems, thread
 
 bp = Blueprint("api", "api")
@@ -182,6 +182,68 @@ def register():
             )
     else:
         res.update(msg="Parameter error")
+    return res
+
+
+@bp.route("/forgot", methods=["POST"])
+def forgot():
+    res = dict(code=1)
+    Action = request.args.get("Action")
+    username = request.form.get("username")
+    if not username:
+        res.update(msg="Parameter error")
+        return res
+    username = username.lower()
+    ak = rsp("accounts")
+    uk = rsp("account", username)
+
+    #: 发送邮件
+    if Action == "sending":
+        if g.rc.sismember(ak, username):
+            if is_true(int(g.rc.hget(uk, "email_verified") or 0)):
+                html = make_email_tpl(
+                    "activate_forgot.html",
+                    activate_url=url_for(
+                        "front.activate",
+                        token=generate_activate_token(dict(
+                            Action="resetPassword",
+                            username=username,
+                        )),
+                        _external=True,
+                    ))
+                res = sendmail(
+                    subject="{}忘记密码".format(g.site_name),
+                    message=html,
+                    to=g.rc.hget(uk, "email"),
+                )
+            else:
+                res.update(msg="The user has no authenticated mailbox")
+        else:
+            res.update(msg="No valid username found")
+
+    #: 邮件验证通过，重置密码
+    elif Action == "reset":
+        token = request.form.get("token")
+        password = request.form.get("password")
+        if token and password:
+            if len(password) < 6:
+                res.update(msg="Password must be at least 6 characters")
+            else:
+                res = check_activate_token(token)
+                if res["code"] == 0:
+                    try:
+                        g.rc.hset(
+                            uk, "password", generate_password_hash(password)
+                        )
+                    except RedisError:
+                        res.update(
+                            code=1, msg="Program data storage service error"
+                        )
+                    else:
+                        res.update(code=0)
+        else:
+            res.update(msg="Parameter error")
+
     return res
 
 
@@ -616,7 +678,7 @@ def my():
             _external=True,
         ))
         res = sendmail(
-            subject="{}邮箱验证".format(g.cfg.title_name or "picbed图床"),
+            subject="{}邮箱验证".format(g.site_name),
             message=html,
             to=g.userinfo.email,
         )
