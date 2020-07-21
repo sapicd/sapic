@@ -51,7 +51,7 @@ start)
 run)
     #前台运行
     DeleteHookloadtime
-    picbed_nodaemon=true gunicorn app:app -c $cfg
+    picbed_isrun=true gunicorn app:app -c $cfg
     ;;
 
 stop)

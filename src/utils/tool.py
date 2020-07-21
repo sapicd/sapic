@@ -107,7 +107,9 @@ def create_redis_engine(redis_url=None):
     """
     from config import REDIS
     url = redis_url or REDIS
-    if url and url.startswith("rediscluster://"):
+    if not url:
+        raise ValueError("Invalid redis url")
+    if url.startswith("rediscluster://"):
         try:
             from rediscluster import RedisCluster
         except ImportError:
