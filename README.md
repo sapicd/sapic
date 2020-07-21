@@ -16,10 +16,10 @@
 4. 配置：
 
     src目录下的config.py即配置文件，它会加载中 `.cfg` 文件读取配置信息，
-    无法找到时加载环境变量，最后使用默认值，必需的配置项是picbed_redis_url。
+    无法找到时加载环境变量，最后使用默认值，**必需设置picbed_redis_url**
 
     所以可以把配置项写到 `.bash_profile` 或 `.bashrc` 此类文件中在登录时加载，
-    也可以写入到 **.cfg** 文件里，这是推荐的方式，它不会被提交到仓库，
+    也可以写入到 picbed/src/**.cfg** 文件里，这是推荐的方式，它不会被提交到仓库，
     格式是k=v，每行一条，注意：v是所见即所得！
 
     比如：`picbed_redis_url=redis://@localhost`
@@ -27,10 +27,13 @@
 5. 启动： 
 
     ```
+    $ cd picbed/src/
+
     // 首先创建一个管理员账号 -h/--help显示帮助
     $ flask sa create -u USER -p PASSWORD --isAdmin
 
-    // 如果更新了版本，注意执行命令迁移数据，详见文档部署-更新
+    // 如果更新了版本，注意执行命令迁移数据，详见文档：部署安装-升级部分
+    // flask sa upgrade --help
 
     // 开发环境启动
     $ make dev
@@ -78,28 +81,34 @@
 
   ```
   $ docker pull staugur/picbed  # 或者加上tag拉取某稳定版本的镜像(1.4.0开始)
+  $ docker tag staugur/picbed picbed # 重命名，可以不用，方便下面统一名称
   ```
 
 - 启动镜像
 
   ```
-  $ docker run -tdi --name my-picbed --restart=always --net=host \
-      -e picbed_redis_url="Your Redis URL" -e other_config_key=value \
-      picbed [or: staugur/picbed]
+  $ docker run -tdi --name picbed --restart=always --net=host \
+      -e picbed_redis_url="Your Redis URL" \
+      -e 其他配置=值 \
+      picbed
   $ docker exec -i picbed flask sa create -u 管理员账号 -p 密码 --isAdmin
   ```
 
-  使用 *docker run* 启动镜像的命令可以自行修改，picbed所用配置可以使用-e设置
+  使用 *docker run* 启动镜像的命令仅供参考，picbed所用配置可以使用-e设置
   环境变量，必需项picbed_redis_url，其他请参考文档。
+
+  此单一启动镜像方式不包括redis，所以还需要提前安装好redis才行。
 
 ------
 
-如果有docker-compose的使用经验，可以使用命令``docker-compose up -d``在后台启动项目，
-它会启动一个redis、并构建启动picbed应用，redis开启AOF，宿主机映射9514端口以供外部访问。
+如果有docker-compose的使用经验，可以使用命令 ``docker-compose up -d``
+在后台启动项目，它会直接启动一个redis、并构建启动picbed应用，redis开启AOF，
+宿主机映射9514端口以供外部访问。
 
 使用前，创建用户：
 
 ```
+  $ cd picbed # 仓库下，非src子目录，docker-compose.yml文件所在目录
   $ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmin
 ```
 

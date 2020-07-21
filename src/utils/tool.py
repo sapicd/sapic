@@ -29,6 +29,7 @@ from ._compat import string_types, text_type, PY2, urlparse
 if PY2:
     from socket import error as ConnectionRefusedError
 
+
 logger = Logger("sys").getLogger
 err_logger = Logger("error").getLogger
 comma_pat = re.compile(r"\s*,\s*")
@@ -518,3 +519,23 @@ class Mailbox(object):
         else:
             res.update(msg="Bad mailbox params")
         return res
+
+
+def bleach_html(html, tags=None, attrs=None, styles=None):
+    try:
+        from bleach import clean as bleach_clean
+        from bleach.sanitizer import (
+            ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
+        )
+    except ImportError:
+        raise
+    else:
+        tags = tags or ALLOWED_TAGS
+        attrs = attrs or ALLOWED_ATTRIBUTES
+        styles = styles or ALLOWED_STYLES
+        return bleach_clean(
+            html,
+            tags=tags,
+            attributes=attrs,
+            styles=styles,
+        )

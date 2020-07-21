@@ -28,7 +28,7 @@ from libs.storage import get_storage
 from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
     parse_valid_verticaline, parse_valid_colon, is_true, is_venv, gen_ua, \
-    check_to_addr, is_all_fail
+    check_to_addr, is_all_fail, bleach_html
 from ._compat import PY2, text_type, urlsplit
 
 no_jump_ep = ("front.login", "front.logout", "front.register")
@@ -300,6 +300,29 @@ def get_site_config():
 
 def set_site_config(mapping):
     if mapping and isinstance(mapping, dict):
+        ALLOWED_TAGS = ['a', 'abbr', 'b', 'i', 'code', 'p', 'br']
+        ALLOWED_ATTRIBUTES = {
+            'a': ['href', 'title', 'target'],
+            'abbr': ['title'],
+            '*': ['style'],
+        }
+        ALLOWED_STYLES = ['color']
+        upload_beforehtml = mapping.get("upload_beforehtml") or ""
+        bulletin = mapping.get("bulletin") or ""
+        if upload_beforehtml:
+            mapping["upload_beforehtml"] = bleach_html(
+                upload_beforehtml,
+                ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
+            )
+        if bulletin:
+            ALLOWED_TAGS.append("img")
+            ALLOWED_ATTRIBUTES["img"] = [
+                'title', 'alt', 'src', 'width', 'height'
+            ]
+            mapping["bulletin"] = bleach_html(
+                bulletin,
+                ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
+            )
         s = get_storage()
         cfg = s.get("siteconfig") or {}
         cfg.update(mapping)

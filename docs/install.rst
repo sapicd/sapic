@@ -22,9 +22,11 @@
 NO.1 启动Redis
 -------------------
 
-部署redis很简单，CentOS用户可以\ ``yum install redis``\ ，Ubuntu用户可以\ ``apt-get install redis-server``\ ，都可以编译安装，给一个教程链接：\ http://www.runoob.com/redis/redis-install.html
+部署redis很简单，CentOS用户可以\ ``yum install redis``\ ，
+Ubuntu用户可以\ ``apt-get install redis-server``\ ，
+也可以编译安装，给一个教程链接：\ http://www.runoob.com/redis/redis-install.html
 
-也可以docker启动，用官方镜像启动一个docker redis，镜像：\ https://hub.docker.com/_/redis\ 。
+或者可以docker启动，用官方镜像启动一个docker redis，地址：\ https://hub.docker.com/_/redis\ 。
 
 .. warning::
 
@@ -67,7 +69,7 @@ dev分支的功能完成后会合并到master分支；
         $ unzip picbed.zip 
         $ mv picbed-dev picbed
 
-- 尝鲜版（master）
+- 尝鲜版（master）
 
     ``git clone https://github.com/staugur/picbed``
 
@@ -82,7 +84,7 @@ dev分支的功能完成后会合并到master分支；
 
     $ git clone https://github.com/staugur/picbed
     $ cd picbed
-    $ [建议]激活virtualenv、venv，或者直接在全局模式下安装
+    $ [建议]激活virtualenv、venv，当然也可以直接在全局模式下安装
     $ pip install -r requirements/all.txt # all可以换成具体env
 
 .. versionchanged:: 1.1.0
@@ -93,8 +95,9 @@ dev分支的功能完成后会合并到master分支；
 
         $ pip install -r requirements/dev.txt
     
-    在v1.1.0+版本内置了几个对象存储钩子，需要安装的模块在此目录下以 *up2xxx.txt* 命名，
-    你在控制台开启使用了某个钩子就需要安装对应模块，比如开启又拍云上传，请先安装：
+    在v1.1.0+版本内置了几个对象存储钩子（上传），需要安装的模块在此目录下
+    以 *up2xxx.txt* 命名，你在控制台开启使用了某个钩子就需要安装对应模块，
+    比如开启又拍云上传，请先安装：
 
     .. code-block:: bash
 
@@ -107,6 +110,9 @@ dev分支的功能完成后会合并到master分支；
         $ pip install -r requirements/all.txt
 
 requirements目录几个txt文件，up2xxx都是独立的，dev/prod依赖基础的base.txt，
+procname.txt是设置进程名的模块（非必需），docs.txt是构建文档的模块（py3+），
+optional.txt是系统可选功能依赖的模块（可选）。
+
 而终极大法就是all.txt，直接安装了所有依赖。
 
 .. _picbed-config:
@@ -117,9 +123,10 @@ requirements目录几个txt文件，up2xxx都是独立的，dev/prod依赖基础
 配置文件是源码src目录下的config.py，它会加载同级目录 **.cfg** 文件读取配置信息，
 无法找到时再加载环境变量，最后使用默认值，必需的配置项是picbed_redis_url。
 
-所以可以把配置项写到 `.bash_profile` 或 `.bashrc` 此类文件中在登录时加载，
-也可以写入到 `.cfg` 文件里，这是推荐的方式，它不会被提交到仓库，格式是k=v，
-每行一条，注意，v是所见即所得！
+所以可以把配置项写到 `.bash_profile` 或 `.bashrc` 此类文件中在登录时作为环境变量加载，
+也可以写入到 `.cfg` 文件里（picbed/src/目录下），这是推荐的方式，
+它不会被提交到仓库，格式是k=v，每行一条，注意：
+v是所见即所得（不要有多余的引号等，除非真的需要）！
 
 比如: `picbed_redis_url=redis://@localhost`
 
@@ -143,7 +150,7 @@ SecretKey         picbed_secretkey             无               App应用秘钥
 .. code-block:: bash
 
     $ export picbed_redis_url="redis://:password@127.0.0.1:6379/1"
-    或者
+    或者写入文件
     $ cat .cfg
     picbed_redis_url=redis://:password@127.0.0.1:6379/1
 
@@ -155,12 +162,16 @@ SecretKey         picbed_secretkey             无               App应用秘钥
 2.4 启动程序
 ^^^^^^^^^^^^^^
 
-开发环境::
+开发环境
 
+.. code-block:: bash
+
+    $ cd picbed/src
     $ make dev
 
 正式环境::
 
+    $ cd picbed/src
     $ sh online_gunicorn.sh start  #可以用run参数前台启动，status查看状态，stop停止，restart重启，reload重载
 
     或者使用make start等同于上述命令，其他诸如: make stop, make restart, makre load, make status
@@ -219,6 +230,8 @@ NO.4 演示站
 
 另请勿将其当做永久站，图片不定时删除，仅作测试演示使用。
 
+.. _picbed-upgrade:
+
 NO.5 程序升级
 ------------------
 
@@ -259,6 +272,7 @@ NO.5 程序升级
 
     .. code-block:: bash
 
+        $ cd picbed/src
         $ flask sa upgrade -h
         Usage: flask sa upgrade [OPTIONS] [1.6-1.7]
 
@@ -275,3 +289,15 @@ NO.5 程序升级
         $ cd picbed/src
         $ flask sa upgrade --yes 1.6-1.7
 
+- v1.8.0
+
+    - 增加了依赖模块bleach，可以手动安装：``pip install bleach>2.0.0``
+
+    - 更改设计：已删除图片的数据直接删除，故此升级时可以清理历史遗留的key
+
+    以上都可以通过命令行自动完成：
+
+    .. code-block:: bash
+
+        $ cd picbed/src
+        $ flask sa upgrade --yes 1.7-1.8

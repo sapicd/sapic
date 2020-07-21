@@ -147,7 +147,7 @@
                                 </div>
                             </div>
                             <div class="layui-form-item">
-                                <label class="layui-form-label"><i class="saintic-icon saintic-icon-info" title="禁止普通用户登录"></i> 注册选项</label>
+                                <label class="layui-form-label"><i class="saintic-icon saintic-icon-info" id="tip-register-options"></i> 注册选项</label>
                                 <div class="layui-input-block">
                                     <input type="checkbox" name="register" title="开放注册" lay-skin="primary"
                                         {% if is_true(g.site.register) %}checked="checked" {% endif %} autocomplete="off"
@@ -161,7 +161,7 @@
                                 </div>
                             </div>
                             <div class="layui-form-item layui-form-text">
-                                <label class="layui-form-label">全站公告</label>
+                                <label class="layui-form-label"><i class="saintic-icon saintic-icon-bulletin" id="tip-bulletin"></i> 全站公告</label>
                                 <div class="layui-input-block">
                                     <textarea name="bulletin" placeholder="页面顶部公告栏"
                                         value="" class="layui-textarea"></textarea>
@@ -184,7 +184,7 @@
                                 </div>
                             </div>
                             <div class="layui-form-item layui-form-text">
-                                <label class="layui-form-label">首页上传提示(支持HTML)</label>
+                                <label class="layui-form-label"><i class="saintic-icon saintic-icon-tip" id="tip-uploadbeforehtml"></i> 首页上传区域提示</label>
                                 <div class="layui-input-block">
                                     <textarea name="upload_beforehtml" placeholder="首页上传区域上方文字提示"
                                         value="" class="layui-textarea"></textarea>
@@ -407,6 +407,7 @@
                 location.hash = layid;
             }
         });
+        //提示信息
         $('#tip-be').on("mouseover click",function() {
             layer.tips('存储后端取决于扩展的钩子方法：upimg_save',
                 this, {tips: 1}
@@ -422,6 +423,22 @@
                 this, {tips: 1}
             );
         });
+        $('#tip-bulletin').on("mouseover click",function() {
+            layer.tips('公告内容支持有限的HTML标签：<br>a、abbr、b、i、code、p、br、img',
+                this, {tips: 1}
+            );
+        });
+        $('#tip-uploadbeforehtml').on("mouseover click",function() {
+            layer.tips('支持有限的HTML标签：<br>a、abbr、b、i、code、p、br',
+                this, {tips: 1}
+            );
+        });
+        $('#tip-register-options').on("mouseover click",function() {
+            layer.tips('<b>开放注册：</b>允许任何人注册<br><b>注册审核：</b>限制新注册用户需要管理员审核后才能上传<br><b>禁止登录：</b>禁止普通用户登录（任何方式）',
+                this, {tips: 1}
+            );
+        });
+        //发送测试邮件
         $('#SendTestMail').on("click", function() {
             layer.prompt({
                 formType: 0,
@@ -438,6 +455,7 @@
                 }
             });
         });
+        //监听github扩展的jsdelivr域名选择框
         form.on('checkbox(jsdelivr)', function(data){
             if (data.elem.checked) {
                 $("input[name='github_dn']").attr("disabled","disabled");
@@ -447,39 +465,26 @@
                 $("input[name='github_dn']").removeClass("layui-disabled");
             }
         });
-        //设置表单赋值
+        //设置表单赋值（以下值存在html，为特殊情况）
         form.val("setting", {
-            upload_beforehtml: picbed.escape2Html("{{ g.site.upload_beforehtml }}"),
-            bulletin: picbed.escape2Html("{{ g.site.bulletin }}"),
+            upload_beforehtml: picbed.escape2Html(`{{ g.site.upload_beforehtml }}`),
+            bulletin: picbed.escape2Html(`{{ g.site.bulletin }}`),
         });
         //提交系统设置
         form.on('submit(*)', function(data){
-            console.log(data.form);
             if (document.forms['control'].checkValidity() === false) {
                 layer.msg("发现部分参数不合法",{icon:0});
                 document.forms['control'].reportValidity();
                 return false;
             }
-            if (!data.field.hasOwnProperty("anonymous")) {
-                data.field["anonymous"] = 0;
-            }
-            if (!data.field.hasOwnProperty("register")) {
-                data.field["register"] = 0;
-            }
-            if (!data.field.hasOwnProperty("review")) {
-                data.field["review"] = 0;
-            }
-            if (!data.field.hasOwnProperty("disable_login")) {
-                data.field["disable_login"] = 0;
-            }
-            if (!data.field.hasOwnProperty("upload_rule_overridden")) {
-                data.field["upload_rule_overridden"] = 0;
-            }
-            if (!data.field.hasOwnProperty("github_jsdelivr")) {
-                data.field["github_jsdelivr"] = 0;
-            }
-            if (!data.field.hasOwnProperty("email_nolocal")) {
-                data.field["email_nolocal"] = 0;
+            var checkbox = data.form.querySelectorAll('input[type="checkbox"]');
+            for (let i = 0; i < checkbox.length; ++i) {
+                let item = checkbox[i];
+                if (item.checked === true) {
+                    data.field[item.name] = 1;
+                } else {
+                    data.field[item.name] = 0;
+                }
             }
             if (data.field.cors && data.field.cors !== "*") {
                 let cors = data.field.cors.split(/\s*,\s*/).join(",");
@@ -684,10 +689,8 @@
                         field: 'username',
                         title: '用户名',
                         minWidth: 80,
-                        event: 'usernameClick',
-                        style:'cursor: pointer;',
                         templet: function(d) {
-                            var user = d.avatar ? ('<scan style="color:#5FB878">' + d.username + '</scan>') : d.username;
+                            var user = d.avatar ? ('<a href="' + d.avatar + '" class="layui-table-link" target="_blank">' + d.username + '</a>') : d.username;
                             if (d.username === "{{ g.userinfo.username }}") user += '&nbsp;<span class="layui-badge layui-bg-green">我</span>';
                             return d.pics > 0 ? (user + '&nbsp;<span class="layui-badge layui-bg-black">' + d.pics + '</span>') : user;
                         }
@@ -820,20 +823,6 @@
                 }, {
                     method: "PUT",
                     data: {username: data.username}
-                });
-            } else if (layEvent === "usernameClick") {
-                if (!data.avatar) return false;
-                var content = '<a href="' + data.avatar + '" target="_blank"><img src="' + data.avatar + '" width="200px" /></a>';
-                //显示头像
-                layer.open({
-                    type: 1,
-                    title: false,
-                    closeBtn: 0,
-                    area: 'auto',
-                    skin: 'layui-layer-nobg', //没有背景色
-                    shadeClose: true,
-                    shade: 0.1,
-                    content: content
                 });
             }
         });

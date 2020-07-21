@@ -23,18 +23,20 @@ Docker仅包含源码及其依赖的Python模块，不包含redis和nginx环境�
 
   位于Docker官方仓库，可以点击查看公开信息。
 
--  master分支即latest，版本号即标签
+-  master分支即latest，dev分支标签是dev，其他已发布版本其版本号即标签
 
   这是利用了travis-ci在提交代码后自动构建镜像并上传，所以latest总是构建
-  master分支最新代码，而其他tag则是已发布版本的代码（1.4.0+）
+  master分支代码，而其他tag则是已发布版本的代码（1.4.0+）
 
-  拉取最新镜像： `docker pull staugur/picbed`
+  拉取master分支（尝鲜版）镜像： `docker pull staugur/picbed`
+
+  拉取dev分支（开发版）镜像： `docker pull staugur/picbed:dev`
 
   拉取1.4.0镜像： `docker pull staugur/picbed:1.4.0`
 
   拉取1.5.0镜像： `docker pull staugur/picbed:1.5.0`
 
-  其他诸如1.5.1、1.6.0等等，请参考镜像地址中的tag。
+  其他诸如1.5.1、1.6.0、1.7.0等等，请参考镜像地址中的tag。
 
 .. _picbed-self-build:
 
@@ -65,7 +67,10 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
   .. code-block:: bash
 
     $ git clone https://github.com/staugur/picbed && cd picbed
-    $ docker build -t staugur/picbed . --build-arg ALPINEMIRROR=dl-cdn.alpinelinux.org --build-arg PIPMIRROR=https://pypi.org/simple --build-arg DEBIANMIRROR=deb.debian.org
+    $ docker build -t staugur/picbed . \
+        --build-arg ALPINEMIRROR=dl-cdn.alpinelinux.org \
+        --build-arg PIPMIRROR=https://pypi.org/simple \
+        --build-arg DEBIANMIRROR=deb.debian.org
 
 .. tip::
 

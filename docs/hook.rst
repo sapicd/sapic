@@ -294,6 +294,8 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
 
   管理员控制台钩子设置下，表单内容，格式参考上面。
 
+  支持复选框、开关样式（勾选值为1，否则0）
+
 - emailsetting
 
   邮件配置，表单内容，格式参考上面
@@ -316,7 +318,7 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
 
 - userscript
 
-  用户中心脚本区域，要求内容是 **<script>** JS脚本
+  用户中心脚本区域，要求内容是包含 **<script>** 的JS脚本内容
 
 .. tip::
 
