@@ -63,7 +63,7 @@
                             <div class="layui-form-item">
                                 <label class="layui-form-label">站点图标</label>
                                 <div class="layui-input-block">
-                                    <input type="text" name="favicon" value="{{ g.site.favicon }}" placeholder="站点图标地址"
+                                    <input type="text" name="favicon" value="{{ g.site.favicon }}" placeholder="站点图标地址，默认是：{{ url_for('static', filename='img/favicon.png') }}"
                                         autocomplete="off" class="layui-input">
                                 </div>
                             </div>

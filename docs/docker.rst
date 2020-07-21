@@ -103,7 +103,7 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
     CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
     c1426a060a76        7ed9fda0bf40        "sh online_gunicorn.…"   17 hours ago        Up 55 minutes                           picbed
 
-    $ ps aux|grep picbed
+    $ ps aux|grep picbed  # 以下是使用setproctitle模块设置了优雅的进程名的效果
     root     23546  0.0  1.1  25700 20740 pts/0    S+   10:11   0:00 gunicorn: master [picbed]
     root     23548  0.0  2.1  49216 39936 pts/0    Sl+  10:11   0:01 gunicorn: worker [picbed]
 

@@ -8,7 +8,7 @@
 分为内置和第三方。
 
 实现这一功能的核心在于钩子管理器：HookManager类（libs/hook.py），感兴趣可以
-看下源码，是提取Flask-PluginKit部分加上其他东西实现的。
+看下源码，是提取 `Flask-PluginKit <https://github.com/staugur/Flask-PluginKit>`_ 部分加上其他东西实现的。
 
 --------
 
@@ -106,10 +106,6 @@
 - sendmail
 
     通过3种方式发送邮件
-
-    ps：可以通过安装 `picbed-smtp <https://github.com/staugur/picbed-smtp>`_
-    扩展钩子发送邮件，它通过邮箱SMTP服务发送，所以例如QQ、腾讯企业邮、网易、
-    新浪、阿里云等邮箱都可作为发送者。
 
 .. _picbed-third-hook:
 

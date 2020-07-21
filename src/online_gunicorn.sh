@@ -6,27 +6,11 @@
 dir=$(cd $(dirname $0); pwd)
 cd $dir
 
-#定义变量(自定义更改)
-
-#准备环境
-if [ -r online_preboot.sh ]; then
-    source ./online_preboot.sh
-fi
-
-#定义常量(请勿更改)
-host=$(python -c "from config import GLOBAL;print(GLOBAL['Host'])")
-port=$(python -c "from config import GLOBAL;print(GLOBAL['Port'])")
 procname=$(python -c "from config import GLOBAL;print(GLOBAL['ProcessName'])")
-if [ -z $cpu_count ]; then
-    if [ -f /proc/cpuinfo ]; then
-        cpu_count=$(cat /proc/cpuinfo | grep "processor" | wc -l)
-    else
-        cpu_count=1
-    fi
-fi
+
 [ -d ${dir}/logs ] || mkdir -p ${dir}/logs
-logfile=${dir}/logs/gunicorn.log
 pidfile=${dir}/logs/${procname}.pid
+cfg="picbed_cfg.py"
 
 function Monthly2Number() {
     case "$1" in
@@ -56,7 +40,7 @@ start)
     if [ -f $pidfile ]; then
         echo "Has pid($(cat $pidfile)) in $pidfile, please check, exit." ; exit 1
     else
-        gunicorn -w $cpu_count --threads 16 -b ${host}:${port} app:app -k gevent --daemon --pid $pidfile --log-file $logfile --max-requests 250 --name $procname
+        gunicorn app:app -c $cfg
         sleep 1
         pid=$(cat $pidfile)
         [ "$?" != "0" ] && exit 1
@@ -67,7 +51,7 @@ start)
 run)
     #前台运行
     DeleteHookloadtime
-    gunicorn -w $cpu_count --threads 16 -b ${host}:${port} app:app -k gevent --max-requests 250 --name $procname
+    picbed_nodaemon=true gunicorn app:app -c $cfg
     ;;
 
 stop)

@@ -22,20 +22,47 @@
 NO.1 启动Redis
 -------------------
 
-部署redis很简单，CentOS用户可以\ ``yum install redis``\ ，
-Ubuntu用户可以\ ``apt-get install redis-server``\ ，
-也可以编译安装，给一个教程链接：\ http://www.runoob.com/redis/redis-install.html
+部署redis很简单，版本要求2.8+，另外未测试过4.0+版本，不确保其正确性，建议3.x版。
 
-或者可以docker启动，用官方镜像启动一个docker redis，地址：\ https://hub.docker.com/_/redis\ 。
+- CentOS/RHEL
+
+  .. code-block:: bash
+
+    $ sudo yum install -y epel-release
+    $ sudo yum install -y redis
+
+- Ubuntu
+
+  .. code-block:: bash
+
+    $ sudo apt update
+    $ sudo apt-get install redis-server
+
+- 编译安装
+
+  .. code-block:: bash
+
+    $ wget http://download.redis.io/releases/redis-{version}.tar.gz
+    $ tar xzf redis-{version}.tar.gz
+    $ cd redis-{version}
+    $ make
+    $ ./src/redis-server ./redis.conf # 编译成功的话此处正常启动服务了
+
+- 或者可以docker启动，用官方镜像启动一个docker redis，地址：\ https://hub.docker.com/_/redis\ 。
 
 .. warning::
 
-    一定记得修改redis配置文件，开启密码和AOF持久化，否则有被入侵和数据丢失风险。
+    一定记得修改redis配置文件，开启AOF持久化，建议设置密码、只绑定本机，
+    否则有被入侵和数据丢失风险。
+
+    ps：上述内容供参考，若启动失败，请参考官方或其他文档。
 
 .. tip::
 
     v1.6.0及之后版本兼容了redis cluster集群模式，可以将数据存到集群中，
     具体参考配置。
+
+    使用redis集群，需要安装redis-py-cluster模块，它写在了可选模块文件：requirements/optional.txt
 
 .. _picbed-install-no2:
 
@@ -80,9 +107,10 @@ dev分支的功能完成后会合并到master分支；
 2.2 安装依赖
 ^^^^^^^^^^^^^^
 
+目前从最小化安装的CentOS7.8系统中整体部署了下，没有特殊的系统层面的依赖软件。
+
 .. code-block:: bash
 
-    $ git clone https://github.com/staugur/picbed
     $ cd picbed
     $ [建议]激活virtualenv、venv，当然也可以直接在全局模式下安装
     $ pip install -r requirements/all.txt # all可以换成具体env
@@ -94,9 +122,9 @@ dev分支的功能完成后会合并到master分支；
     .. code-block:: bash
 
         $ pip install -r requirements/dev.txt
-    
+
     在v1.1.0+版本内置了几个对象存储钩子（上传），需要安装的模块在此目录下
-    以 *up2xxx.txt* 命名，你在控制台开启使用了某个钩子就需要安装对应模块，
+    以 *up2xxx.txt* 命名，你想使用某个钩子就需要安装对应模块，
     比如开启又拍云上传，请先安装：
 
     .. code-block:: bash
@@ -113,7 +141,38 @@ requirements目录几个txt文件，up2xxx都是独立的，dev/prod依赖基础
 procname.txt是设置进程名的模块（非必需），docs.txt是构建文档的模块（py3+），
 optional.txt是系统可选功能依赖的模块（可选）。
 
-而终极大法就是all.txt，直接安装了所有依赖。
+而终极大法就是all.txt，直接安装了prod.txt和up2xxx.txt。
+
+.. versionchanged:: 1.8.0
+
+    all.txt移除了procname.txt，这个是setproctitle模块，优雅地设置进程名，但是
+    它所依赖gcc和python-dev包，太"重"了，所以不放到all里面了，有需要可以自己
+    单独安装。
+
+    - CentOS/RHEL
+
+        $ sudo yum install -y gcc python-devel # python3-devel
+
+    - Ubuntu
+
+        $ sudo apt install build-essential python-dev # python3-dev
+
+.. tip:: 
+
+    如果pip install时提示命令不存在，那么可以这么安装pip：
+
+    .. code-block:: bash
+
+        $ curl https://bootstrap.pypa.io/get-pip.py | python
+
+    当然，也可以使用操作系统的包管理工具，如yum、apt-get安装。
+
+    在国内，pip可以使用清华源：
+
+    .. code-block:: bash
+
+        $ pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pip -U
+        $ pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 .. _picbed-config:
 
@@ -138,7 +197,7 @@ v是所见即所得（不要有多余的引号等，除非真的需要）！
 HOST              picbed_host                 127.0.0.1         监听地址
 PORT              picbed_port                  9514             监听端口
 LOGLEVEL          picbed_loglevel              DEBUG            日志级别，可选DEBUG, INFO, WARNING, ERROR, CRITICAL
-SecretKey         picbed_secretkey             无               App应用秘钥(默认自动生成)
+SecretKey         picbed_secretkey             无               App应用秘钥(默认有固定值)
 **REDIS**         picbed_redis_url             无               核心数据存储（redis连接串，格式是：redis://[:password]@host:port/db）
 ================  ==========================  ===============   ====================================================================
 
@@ -159,6 +218,10 @@ SecretKey         picbed_secretkey             无               App应用秘钥
     v1.6.0支持redis cluster集群连接，格式：``rediscluster://host:port,host:port...``
     其他地方无需修改，暂不支持密码
 
+.. tip:: 
+
+    SecretKey之前是随机生成，在1.8.0设置为固定默认值，可以设置其他复杂的值！
+
 2.4 启动程序
 ^^^^^^^^^^^^^^
 
@@ -178,9 +241,14 @@ SecretKey         picbed_secretkey             无               App应用秘钥
 
 .. tip::
 
-    部署程序可以使用Docker，源码中已经写好了Dockerfile，您可以藉此构建或者
-    使用构建好的 `staugur/docker <https://hub.docker.com/r/staugur/picbed>`_ ，
-    详情请看 :ref:`picbed-docker-deploy`
+    - 使用 ``picbed_host=0.0.0.0 make dev`` 启动开发环境，监听本机所有IP
+
+    - 部署程序可以使用Docker，源码中已经写好了Dockerfile，您可以藉此构建或者
+      使用构建好的 `picbed @ docker hub <https://hub.docker.com/r/staugur/picbed>`_ ，
+      详情请看 :ref:`picbed-docker-deploy`
+
+    - 刚启动的picbed是没有默认管理员用户的，需要使用命令行手动创建，
+      参考 :ref:`picbed-usgae`
 
 NO.3 Nginx配置
 -------------------
@@ -219,7 +287,7 @@ Nginx配置示例如下，您也可以配置使其支持HTTPS:
 NO.4 演示站
 -------------------
 
-目前在国内部署了一个演示站，使用master最新代码测试新功能，服务地址是：
+目前在国内部署了一个演示站，使用最新代码测试新功能，服务地址是：
 
     http://picbed.demo.saintic.com
 
@@ -243,6 +311,9 @@ NO.5 程序升级
     需要从环境变量重新读取配置，那么只能用restart。
 
 下面提到的版本在升级时需要注意，未提及的直接更新代码和程序即可。
+
+从旧版本跨多个版本更新，在拉取最新代码后，参考下面升级到对应版本的注意事项，
+如果使用upgrade命令行，注意不要跨版本（当然其参数固定，也无法跨多个）。
 
 - v1.2.0
 
