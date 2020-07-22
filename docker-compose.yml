@@ -8,8 +8,14 @@ services:
     environment:
       - picbed_host=0.0.0.0
       - picbed_redis_url=redis://@redis:6379
+    volumes:
+      - static:/picbed/static/
+      - /data/picbed/:/picbed/static/upload/
     depends_on:
       - "redis"
   redis:
     image: "redis:alpine"
     command: ["redis-server", "--appendonly", "yes"]
+
+volumes:
+  static:

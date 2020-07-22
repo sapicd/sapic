@@ -72,7 +72,7 @@
 
   ```
   $ git clone https://github.com/staugur/picbed && cd picbed
-  $ docker build -t picbed .
+  $ docker build -t staugur/picbed .
   ```
 
 - 使用已上传镜像
@@ -81,7 +81,6 @@
 
   ```
   $ docker pull staugur/picbed  # 或者加上tag拉取某稳定版本的镜像(1.4.0开始)
-  $ docker tag staugur/picbed picbed # 重命名，可以不用，方便下面统一名称
   ```
 
 - 启动镜像
@@ -90,7 +89,7 @@
   $ docker run -tdi --name picbed --restart=always --net=host \
       -e picbed_redis_url="Your Redis URL" \
       -e 其他配置=值 \
-      picbed
+      staugur/picbed
   $ docker exec -i picbed flask sa create -u 管理员账号 -p 密码 --isAdmin
   ```
 
@@ -103,7 +102,7 @@
 
 如果有docker-compose的使用经验，可以使用命令 ``docker-compose up -d``
 在后台启动项目，它会直接启动一个redis、并构建启动picbed应用，redis开启AOF，
-宿主机映射9514端口以供外部访问。
+宿主机映射9514端口以供外部访问，且使用数据卷挂载静态资源、挂载上传目录。
 
 使用前，创建用户：
 
@@ -114,7 +113,7 @@
 
 ps:
 
-  - Dockerfile采用分阶段构建，推送到Docker hub，目前压缩尺寸47MB，拉取到本地145MB左右。
+  - Dockerfile采用分阶段构建，推送到Docker hub，目前压缩尺寸47MB，拉取到本地150MB左右。
 
   - docker-compose.yml仅为简单定义，可以自行修改，比如加上nginx、redis挂载数据(/data)。
 

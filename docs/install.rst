@@ -42,6 +42,7 @@ NO.1 启动Redis
 
   .. code-block:: bash
 
+    // {version}需替换为具体版本，如3.2.0
     $ wget http://download.redis.io/releases/redis-{version}.tar.gz
     $ tar xzf redis-{version}.tar.gz
     $ cd redis-{version}
@@ -197,7 +198,7 @@ v是所见即所得（不要有多余的引号等，除非真的需要）！
 HOST              picbed_host                 127.0.0.1         监听地址
 PORT              picbed_port                  9514             监听端口
 LOGLEVEL          picbed_loglevel              DEBUG            日志级别，可选DEBUG, INFO, WARNING, ERROR, CRITICAL
-SecretKey         picbed_secretkey             无               App应用秘钥(默认有固定值)
+SecretKey         picbed_secretkey             (大长串)         App应用秘钥(默认有固定值)
 **REDIS**         picbed_redis_url             无               核心数据存储（redis连接串，格式是：redis://[:password]@host:port/db）
 ================  ==========================  ===============   ====================================================================
 
@@ -249,6 +250,8 @@ SecretKey         picbed_secretkey             无               App应用秘钥
 
     - 刚启动的picbed是没有默认管理员用户的，需要使用命令行手动创建，
       参考 :ref:`picbed-usgae`
+
+.. _picbed-nginx:
 
 NO.3 Nginx配置
 -------------------
@@ -353,7 +356,7 @@ NO.5 程序升级
             --yes       Confirm the action without prompting.
             -h, --help  Show this message and exit.
 
-    所以，从旧版本（比如1.6）升级代码到1.7，请执行命令（可以多次执行）：
+    所以，从1.6升级代码到1.7，请执行命令（可以多次执行）：
 
     .. code-block:: bash
 
