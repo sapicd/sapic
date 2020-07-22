@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block action %}
+<a href="{{ activate_url }}"
+    style="background-color: #009E94; color: #fff; display: inline-block; height: 32px; line-height: 32px; margin: 0 15px 0 0; padding: 0 15px; text-decoration: none;"
+    target="_blank" rel="noopener">
+    点击重置密码
+</a>
+{% endblock %}
+
+{% block action_fail %}
+手动复制链接到浏览器访问：{{ activate_url }}
+{% endblock %}

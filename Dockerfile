@@ -15,19 +15,17 @@ WORKDIR /picbed
 
 # -- build dependencies with debian --
 FROM python:3.7-slim AS build
-ARG DEBIANMIRROR=mirrors.tuna.tsinghua.edu.cn
 ARG PIPMIRROR=https://pypi.tuna.tsinghua.edu.cn/simple
-RUN sed -i "s@deb.debian.org@${DEBIANMIRROR}@g" /etc/apt/sources.list && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends build-essential && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
 COPY requirements /requirements
 RUN pip install --timeout 30 --index $PIPMIRROR --user --no-cache-dir --no-warn-script-location -r /requirements/all.txt
 
 # -- app environment --
 FROM base
 ENV LOCAL_PKG="/root/.local"
+ENV picbed_isrun=true
 COPY --from=build ${LOCAL_PKG} ${LOCAL_PKG}
-RUN ln -sf ${LOCAL_PKG}/bin/flask ${LOCAL_PKG}/bin/gunicorn /usr/local/bin/
+RUN ln -sf ${LOCAL_PKG}/bin/flask ${LOCAL_PKG}/bin/gunicorn /bin/ && \
+    ln -sf $(which python) /bin/python && \
+    sed -i "s#$(which python)#/bin/python#" /bin/gunicorn
 COPY src /picbed
-ENTRYPOINT ["sh", "online_gunicorn.sh", "run"]
+ENTRYPOINT ["gunicorn", "app:app", "-c", "picbed_cfg.py"]

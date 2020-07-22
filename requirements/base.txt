@@ -4,3 +4,4 @@ redis>2.10.0
 requests
 user_agents>=2.0
 itsdangerous>0.22
+bleach>2.0.0

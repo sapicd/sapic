@@ -9,7 +9,6 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-from uuid import uuid4
 from flask import Flask, g, request, render_template, jsonify
 from views import front_bp, api_bp
 from utils.tool import Attribute, is_true, parse_valid_comma, err_logger, \
@@ -29,7 +28,7 @@ __doc__ = 'Flask-based web self-built pictures bed'
 app = Flask(__name__)
 app.response_class = JsonResponse
 app.config.update(
-    SECRET_KEY=GLOBAL.get("SecretKey") or str(uuid4()),
+    SECRET_KEY=GLOBAL["SecretKey"],
     MAX_CONTENT_LENGTH=10 * 1024 * 1024,
     DOCS_BASE_URL="https://picbed.rtfd.vip",
 )
@@ -59,6 +58,7 @@ def before_request():
     g.userinfo = Attribute(change_userinfo(g.userinfo))
     g.is_admin = is_true(g.userinfo.is_admin)
     g.next = get_redirect_url()
+    g.site_name = g.cfg.title_name or "picbed"
 
 
 @app.after_request

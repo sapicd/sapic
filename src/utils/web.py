@@ -28,7 +28,7 @@ from libs.storage import get_storage
 from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
     parse_valid_verticaline, parse_valid_colon, is_true, is_venv, gen_ua, \
-    check_to_addr, is_all_fail
+    check_to_addr, is_all_fail, bleach_html
 from ._compat import PY2, text_type, urlsplit
 
 no_jump_ep = ("front.login", "front.logout", "front.register")
@@ -120,11 +120,6 @@ def anonymous_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if g.signin:
-            nu = get_redirect_url()
-            if nu and (
-                nu.startswith("/") or nu.startswith(request.url_root)
-            ):
-                return redirect(nu)
             return redirect(url_for('front.index'))
         return f(*args, **kwargs)
     return decorated_function
@@ -246,6 +241,7 @@ def dfr(res, default='en-US'):
             "expired token": "token过期",
             "useless": "无用token",
             "Current state prohibits use of this method": "当前状态禁止使用此方法",
+            "The user has no authenticated mailbox": "用户没有验证过的邮箱",
         },
     }
     if isinstance(res, dict) and "en" not in language:
@@ -300,6 +296,29 @@ def get_site_config():
 
 def set_site_config(mapping):
     if mapping and isinstance(mapping, dict):
+        ALLOWED_TAGS = ['a', 'abbr', 'b', 'i', 'code', 'p', 'br', 'h3', 'h4']
+        ALLOWED_ATTRIBUTES = {
+            'a': ['href', 'title', 'target'],
+            'abbr': ['title'],
+            '*': ['style'],
+        }
+        ALLOWED_STYLES = ['color']
+        upload_beforehtml = mapping.get("upload_beforehtml") or ""
+        bulletin = mapping.get("bulletin") or ""
+        if upload_beforehtml:
+            mapping["upload_beforehtml"] = bleach_html(
+                upload_beforehtml,
+                ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
+            )
+        if bulletin:
+            ALLOWED_TAGS.append("img")
+            ALLOWED_ATTRIBUTES["img"] = [
+                'title', 'alt', 'src', 'width', 'height'
+            ]
+            mapping["bulletin"] = bleach_html(
+                bulletin,
+                ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
+            )
         s = get_storage()
         cfg = s.get("siteconfig") or {}
         cfg.update(mapping)
@@ -520,7 +539,7 @@ def make_email_tpl(tpl, **data):
         ))
     )
     if "site_name" not in data:
-        data["site_name"] = g.cfg.title_name or "picbed"
+        data["site_name"] = g.site_name
     if "url_root" not in data:
         data["url_root"] = request.url_root
     if "username" not in data:

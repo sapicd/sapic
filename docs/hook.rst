@@ -8,7 +8,7 @@
 分为内置和第三方。
 
 实现这一功能的核心在于钩子管理器：HookManager类（libs/hook.py），感兴趣可以
-看下源码，是提取Flask-PluginKit部分加上其他东西实现的。
+看下源码，是提取 `Flask-PluginKit <https://github.com/staugur/Flask-PluginKit>`_ 部分加上其他东西实现的。
 
 --------
 
@@ -52,11 +52,17 @@
     使用方法：同上，配置要求的AK及SK可以在阿里云管理控制台-AccessKey密钥管理
     中拿到；允许使用RAM子用户的密钥（允许编程访问），要求拥有OSS管理权限即可。
 
+    .. deprecated:: 1.9.0
+        上传到阿里云OSS的内置钩子计划移除，独立成第三方扩展。
+
 - up2cos
 
     用来将上传的图片保存到腾讯云 `COS对象存储 <https://cloud.tencent.com/product/cos>`_
 
     使用方法：同上，配置加速域名、Bucket、SecretID及Key等（在腾讯云控制台-访问管理-访问密钥-API密钥管理中可以拿到SecretId、SecretKey；允许使用子用户的密钥，要求拥有COS管理权限即可）。
+
+    .. deprecated:: 1.9.0
+        上传到腾讯云COS的内置钩子计划移除，独立成第三方扩展。
 
 .. versionadded:: 1.5.0
 
@@ -106,10 +112,6 @@
 - sendmail
 
     通过3种方式发送邮件
-
-    ps：可以通过安装 `picbed-smtp <https://github.com/staugur/picbed-smtp>`_
-    扩展钩子发送邮件，它通过邮箱SMTP服务发送，所以例如QQ、腾讯企业邮、网易、
-    新浪、阿里云等邮箱都可作为发送者。
 
 .. _picbed-third-hook:
 
@@ -294,6 +296,8 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
 
   管理员控制台钩子设置下，表单内容，格式参考上面。
 
+  支持复选框、开关样式（勾选值为1，否则0）
+
 - emailsetting
 
   邮件配置，表单内容，格式参考上面
@@ -316,7 +320,7 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
 
 - userscript
 
-  用户中心脚本区域，要求内容是 **<script>** JS脚本
+  用户中心脚本区域，要求内容是包含 **<script>** 的JS脚本内容
 
 .. tip::
 

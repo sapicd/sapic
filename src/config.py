@@ -19,7 +19,7 @@ envs = Properties(join(dirname(__file__), ".cfg"), from_env=True)
 GLOBAL = {
 
     "ProcessName": "picbed",
-    # 自定义进程名.
+    # 自定义进程名(setproctitle)
 
     "Host": envs.get("picbed_host", "127.0.0.1"),
     # 监听地址
@@ -33,8 +33,10 @@ GLOBAL = {
     "HookReloadTime": int(envs.get("picbed_hookreloadtime", 600)),
     # 钩子管理器默认重载时间，单位：秒
 
-    "SecretKey": envs.get("picbed_secretkey"),
-    # Web应用密钥，默认随机。如果设置，那么登录态cookie在重启应用后仍有效。
+    "SecretKey": envs.get(
+        "picbed_secretkey", "BD1E2CF7DF9CD6971D641C115EE72871BEDA2806"
+    ),
+    # Web应用固定密钥
 }
 
 

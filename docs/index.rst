@@ -1,5 +1,5 @@
 picbed - 简约不小气的自建图床程序
-===================================
+====================================
 
 .. toctree::
     :maxdepth: 1
@@ -11,6 +11,7 @@ picbed - 简约不小气的自建图床程序
     admin
     hook
     api
+    faq
     更新日志 <https://github.com/staugur/picbed/releases>
 
 .. _picbed-readme:

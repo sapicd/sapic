@@ -43,9 +43,10 @@
                     </div>
                 </div>
                 <div class="layui-form-item">
-                    <div class="layui-input-block remember">
+                    <div class="layui-input-inline remember">
                         <input type="checkbox" name="remember" value="true" checked="checked" title="记住我" autocomplete="off">
                     </div>
+                    <div class="layui-form-mid layui-word-aux"><a href="{{ url_for('front.forgot') }}">忘记密码</a></div>
                 </div>
                 <input type="hidden" name="set_state" value="true">
                 <div class="layui-form-item">

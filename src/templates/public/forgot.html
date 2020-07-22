@@ -1,0 +1,127 @@
+{% extends "layout/public.html" %}
+
+{% block title %}忘记密码{% endblock %}
+
+{% block head %}
+<style>
+    .layui-input-block {
+        margin-left: 0;
+    }
+    .forgot-area {
+        width: 266px;
+        border-radius: 20px;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .forgot-area .title {
+        color: #009688;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    {% if is_reset %}
+        <div class="forgot-area">
+            <h3 class="title">Hi，{{ user }}，请重置密码</h3>
+            <form class="layui-form" action="">
+                <input type="hidden" name="username" value="{{ user }}">
+                <input type="hidden" name="token" value="{{ token }}">
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <input type="password" name="password" required lay-verify="required|pass" lay-verType="tips" placeholder="重置登录密码" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <input type="password" required lay-verify="required|repass" lay-verType="tips" placeholder="确认登录密码" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn layui-btn-fluid" lay-submit lay-filter="reset">提交</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    {% else %}
+        <div class="forgot-area">
+            <h3 class="title">发送验证邮件</h3>
+            <form class="layui-form" action="">
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <input type="text" name="username" required lay-verify="required|username" lay-verType="tips" placeholder="注册用户名" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn layui-btn-fluid" lay-submit lay-filter="sending" id="submitbtn">提交</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block script %}
+<script>
+    layui.use(['picbed', 'form', 'layer'], function () {
+        var picbed = layui.picbed,
+            form = layui.form,
+            $ = layui.jquery;
+        //表单验证
+        form.verify({
+            pass: [
+                /^[\S]{6,12}$/, '密码至少6位，且不能出现空格'
+            ],
+            repass: function(value) {
+                var pwd = $('input[name="password"]').val();
+                if(value !== pwd) {
+                    return '两次输入的密码不一致!';
+                }
+            },
+            username: picbed.checkUsername,
+        });
+        //发送忘记密码验证邮件
+        form.on('submit(sending)', function (data) {
+            picbed.ajax("{{ url_for('api.forgot', Action='sending') }}", function (res) {
+                layer.msg("已发送验证邮件，请查收邮箱...", {
+                    icon: 1,
+                    time: 2000
+                });
+            }, {
+                data: data.field,
+                beforeSend: function() {
+                    $("#submitbtn").innerText = '发送中';
+                    $("#submitbtn").attr({disabled: "disabled"});
+                    $('#submitbtn').addClass("layui-disabled");
+                },
+                complete: function() {
+                    $("#submitbtn").innerText = '提交';
+                    $('#submitbtn').removeAttr("disabled");
+                    $('#submitbtn').removeClass("layui-disabled");
+                },
+            });
+            return false;
+        });
+        //重置密码
+        form.on('submit(reset)', function (data) {
+            picbed.ajax("{{ url_for('api.forgot', Action='reset') }}", function (res) {
+                layer.msg("已重置密码，即将跳转登录...", {
+                    icon: 1,
+                    time: 1000
+                }, function () {
+                    location.href = "{{ url_for('front.login') }}";
+                });
+            }, {
+                data: data.field
+            });
+            return false;
+        });
+    });
+</script>
+{% endblock %}

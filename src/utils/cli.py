@@ -155,6 +155,11 @@ def upgrade(v2v):
         pipe.execute()
 
     elif v2v == "1.7-1.8":
+        #: 安装模块
+        try:
+            from bleach import clean
+        except ImportError:
+            _pip_install("bleach>2.0.0")
         #: 清除已删除的图片key
         dk = rsp("index", "deleted")
         if rc.exists(dk):
