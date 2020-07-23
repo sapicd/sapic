@@ -42,10 +42,11 @@ NO.1 启动Redis
 
   .. code-block:: bash
 
-    // {version}需替换为具体版本，如3.2.0
-    $ wget http://download.redis.io/releases/redis-{version}.tar.gz
-    $ tar xzf redis-{version}.tar.gz
-    $ cd redis-{version}
+    // version可替换为其他版本
+    $ version="3.2.0"
+    $ wget http://download.redis.io/releases/redis-${version}.tar.gz
+    $ tar xzf redis-${version}.tar.gz
+    $ cd redis-${version}
     $ make
     $ ./src/redis-server ./redis.conf # 编译成功的话此处正常启动服务了
 
@@ -292,7 +293,7 @@ NO.4 演示站
 
 目前在国内部署了一个演示站，使用最新代码测试新功能，服务地址是：
 
-    http://picbed.demo.saintic.com
+    http://demo.picbed.pro
 
     测试账号及密码：demo 123456
 
@@ -365,7 +366,11 @@ NO.5 程序升级
 
 - v1.8.0
 
-    - 增加了依赖模块bleach，可以手动安装：``pip install bleach>2.0.0``
+    - 增加了依赖模块bleach和semver，可以手动安装：
+    
+      .. code-block:: bash
+      
+        $ pip install 'bleach>2.0.0' 'semver>=2.9.1,<3'
 
     - 更改设计：已删除图片的数据直接删除，故此升级时可以清理历史遗留的key
 

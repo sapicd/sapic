@@ -62,7 +62,7 @@ html_show_sourcelink = False
 
 html_theme_options = {
     'external_links': [
-        ("Demo", "http://picbed.demo.saintic.com"),
+        ("Demo", "http://demo.picbed.pro"),
         ("GitHub", "https://github.com/staugur/picbed"),
     ],
 }

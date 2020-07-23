@@ -64,3 +64,15 @@ STORAGE = {
     #: 当存储方法为redis时此值有效，格式参考REDIS
     #: -- 仅使用redis单库的一个hash，默认为: picbed:dat
 }
+
+if __name__ == "__main__":
+    #: debug print
+    from json import dumps
+    print(dumps(
+        {
+            "global": GLOBAL,
+            "redis": REDIS,
+            "storage": STORAGE,
+        },
+        indent=4
+    ))

@@ -17,7 +17,7 @@ Dockerfile仅包含源码及其依赖的Python模块，不包含redis和nginx环
 .. _picbed-official-image:
 
 1. 官方镜像
-~~~~~~~~~~~~~~~
+=================
 
 -  镜像地址：`staugur/picbed <https://hub.docker.com/r/staugur/picbed>`_ 
 
@@ -41,7 +41,7 @@ Dockerfile仅包含源码及其依赖的Python模块，不包含redis和nginx环
 .. _picbed-self-build:
 
 2. 自行打包
-~~~~~~~~~~~~~~~~
+=================
 
 v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成大概290M。
 
@@ -75,9 +75,10 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
     不着所有，故可以修改Dockerfile的 `pip install` 部分，仅安装/requirements/prod.txt
 
 3. 启动运行
-~~~~~~~~~~~~~~~
+=================
 
 3.1 单独启动
+~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -133,6 +134,7 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
     root  - {gunicorn} /bin/python /bin/gunicorn app:app -c picbed_cfg.py
 
 3.2 使用docker-compose启动
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. versionadded:: 1.6.0
 
@@ -160,7 +162,7 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
     - 1. 增加了数据卷，把容器内部静态目录（/picbed/static）挂载到数据卷中，
       故此宿主机上nginx可以方便访问容器内静态文件了。
 
-      **注意！** 也直接将upload上传目录（位于static内）挂载到 ``/data/picbed``
+      **注意！** 也将upload上传目录（位于static内）挂载到 ``/data/picbed``
 
     - 2. 更新代码后的操作
 
@@ -177,12 +179,13 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
       的图片（位于宿主机/data/picbed）！
 
 4. nginx
-~~~~~~~~~~~~
+=================
 
 上述不论是单独启动，还是使用docker-compose启动，对外接收请求的是gunicorn，
 遗憾的是，它处理静态资源性能不好，所以一般会加一层nginx。
 
 4.1 如果使用宿主机的nginx服务
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     单独启动请按照上面小技巧中的示例，先创建数据卷再挂载数据。
     
@@ -237,11 +240,12 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
         }
 
 4.2 在Docker中使用nginx服务
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 这就简单了，启动docker版nginx同样挂载数据卷和上传目录，配置参考 :ref:`picbed-nginx`
 
 5. 后续
-~~~~~~~~~~~~
+=================
 
 接下来建议您看下一节使用说明，刚开始需要创建一个管理员账号的，而使用docker
 第一次启动也需要，命令如下：

@@ -275,6 +275,7 @@ def hook():
                 description=h.description,
                 version=h.version,
                 author=h.author,
+                email=h.email,
                 catalog=h.catalog,
                 state=h.state,
                 ltime=h.time,
@@ -1014,7 +1015,7 @@ def upload():
             pipe.sadd(rsp("index", "user", g.userinfo.username), sha)
         pipe.hmset(rsp("image", sha), dict(
             sha=sha,
-            album=album,
+            album=album.strip(),
             filename=filename,
             upload_path=upload_path,
             user=g.userinfo.username if g.signin else 'anonymous',

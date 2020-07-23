@@ -5,3 +5,4 @@ requests
 user_agents>=2.0
 itsdangerous>0.22
 bleach>2.0.0
+semver>=2.9.1,<3

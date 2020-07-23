@@ -4,8 +4,9 @@ import unittest
 from utils.tool import Attribution, md5, sha1, rsp, get_current_timestamp, \
     allowed_file, parse_valid_comma, parse_valid_verticaline, is_true, \
     hmac_sha256, sha256, check_origin, get_origin, parse_data_uri, \
-    format_upload_src, format_apires, generate_random, check_ip, gen_ua
-
+    format_upload_src, format_apires, generate_random, check_ip, gen_ua, \
+    is_valid_verion, is_match_appversion, bleach_html, parse_author_mail
+from version import __version__ as VER
 
 class UtilsTest(unittest.TestCase):
 
@@ -15,6 +16,21 @@ class UtilsTest(unittest.TestCase):
             d.d
         self.assertEqual(d.a, 1)
         self.assertIsInstance(d, dict)
+
+    def test_semver(self):
+        self.assertTrue(is_valid_verion("0.0.1"))
+        self.assertTrue(is_valid_verion("1.1.1-beta"))
+        self.assertTrue(is_valid_verion("1.1.1-beta+compile10"))
+        self.assertFalse(is_valid_verion("1.0.1.0"))
+        self.assertFalse(is_valid_verion("v2.19.10"))
+        self.assertTrue(is_match_appversion())
+        self.assertTrue(is_match_appversion(VER))
+        self.assertFalse(is_match_appversion("<{}".format(VER)))
+        self.assertFalse(is_match_appversion(">{}".format(VER)))
+        self.assertTrue(is_match_appversion(">={}".format(VER)))
+        self.assertTrue(is_match_appversion("<={}".format(VER)))
+        self.assertTrue(is_match_appversion("=={}".format(VER)))
+        self.assertFalse(is_match_appversion("!={}".format(VER)))
 
     def test_utils(self):
         self.assertEqual("900150983cd24fb0d6963f7d28e17f72", md5("abc"))
@@ -89,6 +105,14 @@ class UtilsTest(unittest.TestCase):
         )
         self.assertEqual(len(generate_random()), 6)
         self.assertIn("Mozilla/5.0", gen_ua())
+        # bleach
+        self.assertEqual(bleach_html("<i>abc</i>"), '<i>abc</i>')
+        self.assertEqual(bleach_html('<script>var abc</script>'), '&lt;script&gt;var abc&lt;/script&gt;')
+        # re
+        self.assertEqual(parse_author_mail("staugur"), ('staugur', None))
+        self.assertEqual(
+            parse_author_mail("staugur <mail>"), ('staugur', 'mail')
+        )
 
     def test_checkorigin(self):
         self.assertTrue(check_origin('http://127.0.0.1'))

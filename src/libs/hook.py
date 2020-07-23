@@ -9,6 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
+import warnings
 from time import time
 from sys import modules
 from os import listdir, getpid
@@ -16,7 +17,8 @@ from os.path import join, dirname, abspath, isdir, isfile, splitext, basename,\
     getmtime
 from jinja2 import ChoiceLoader, FileSystemLoader, PackageLoader
 from flask import render_template, render_template_string, Markup
-from utils.tool import Attribution, logger
+from utils.tool import Attribution, is_valid_verion, is_match_appversion, \
+    logger, parse_author_mail
 from utils._compat import string_types, integer_types, iteritems, text_type, \
     PY2
 from config import GLOBAL
@@ -30,7 +32,7 @@ class HookManager(object):
         app=None,
         hooks_dir="hooks",
         reload_time=600,
-        third_hooks=[]
+        third_hooks=None,
     ):
         """Receive initialization parameters and
         pass options to :meth:`init_app` method.
@@ -191,12 +193,22 @@ class HookManager(object):
                 except ImportError as e:
                     logger.error(e, exc_info=True)
                     continue
-                else:
-                    if hasattr(ho, "__version__") and \
-                            hasattr(ho, "__author__"):
-                        ho.__mtime__ = getmtime(self.__get_fileorparent(ho))
-                        ho.__family__ = "third"
-                        self.__hooks[hn] = self.__get_meta(ho)
+                if hasattr(ho, "__version__") and hasattr(ho, "__author__"):
+                    #: 语义化版本号
+                    if not is_valid_verion(ho.__version__):
+                        warnings.warn("%s: irregular version number" % hn)
+                        continue
+                    #: 匹配扩展要求的应用版本
+                    appversion = getattr(ho, "__appversion__", None)
+                    if not is_match_appversion(appversion):
+                        warnings.warn(
+                            "%s: app version number does not match for %s"
+                            % (hn, appversion)
+                        )
+                        continue
+                    ho.__mtime__ = getmtime(self.__get_fileorparent(ho))
+                    ho.__family__ = "third"
+                    self.__hooks[hn] = self.__get_meta(ho)
 
     def __get_meta(self, f_obj):
         name = getattr(
@@ -205,9 +217,12 @@ class HookManager(object):
         state = self.__get_state_storage(name)
         if state is None:
             state = getattr(f_obj, "__state__", "enabled")
+        (author, mail) = parse_author_mail(f_obj.__author__)
         return Attribution({
-            "author": f_obj.__author__,
+            "author": author,
+            "email": mail,
             "version": f_obj.__version__,
+            "appversion": getattr(f_obj, "__appversion__", None),
             "description": getattr(f_obj, "__description__", None),
             "state": state,
             "name": name,

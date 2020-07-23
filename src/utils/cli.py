@@ -160,6 +160,10 @@ def upgrade(v2v):
             from bleach import clean
         except ImportError:
             _pip_install("bleach>2.0.0")
+        try:
+            import semver
+        except ImportError:
+            _pip_install("semver>=2.9.1,<3")
         #: 清除已删除的图片key
         dk = rsp("index", "deleted")
         if rc.exists(dk):

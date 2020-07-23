@@ -39,6 +39,7 @@ point_pat = re.compile(r'^\w{1,9}\.?\w{1,9}$')
 mail_pat = re.compile(
     r'([0-9a-zA-Z\_*\.*\-*]+)@([a-zA-Z0-9\-*\_*\.*]+)\.([a-zA-Z]+$)'
 )
+author_mail_re = re.compile(r'(.*)\s<(.*)>')
 url_pat = re.compile(
     r'^(?:http)s?://'
     r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+'
@@ -541,3 +542,42 @@ def bleach_html(html, tags=None, attrs=None, styles=None):
             attributes=attrs,
             styles=styles,
         )
+
+
+def is_valid_verion(version):
+    """Semantic version number - determines whether the version is qualified.
+    The format is MAJOR.Minor.PATCH, more with https://semver.org
+    """
+    if version and not PY2 and not isinstance(version, string_types):
+        version = version.decode("utf-8")
+    try:
+        import semver
+    except ImportError as e:
+        err_logger.error(e)
+    else:
+        return semver.VersionInfo.isvalid(version or "")
+
+
+def is_match_appversion(appversion=None):
+    """确认当前应用版本是否符合appversion要求"""
+    #: 没有要求appversion则默认认为兼容所有版本
+    if not appversion:
+        return True
+    if not PY2 and not isinstance(appversion, string_types):
+        appversion = appversion.decode("utf-8")
+    try:
+        import semver
+    except ImportError as e:
+        err_logger.error(e)
+    else:
+        ver = semver.VersionInfo.parse(PICBED_VERSION)
+        try:
+            return ver.match(appversion)
+        except ValueError:
+            return ver.match(">={}".format(appversion))
+
+
+def parse_author_mail(author):
+    """从形如 ``author <author-mail>`` 中分离author与mail"""
+    pat = author_mail_re.search(author)
+    return (pat.group(1), pat.group(2)) if pat else (author, None)

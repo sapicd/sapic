@@ -316,7 +316,9 @@
                     data.append(field, maybeImgurl);
                     ajaxUpload(data);
                 } else {
-                    layer.msg("粘贴内容非图片", {icon: 0});
+                    if (event.target.tagName !== "INPUT") {
+                        layer.msg("粘贴内容非图片", {icon: 0});
+                    }
                 }
             }
         });
