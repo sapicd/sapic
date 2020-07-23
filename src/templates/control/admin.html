@@ -523,7 +523,10 @@
                     },
                     {
                         field: 'author',
-                        title: '作者'
+                        title: '作者',
+                        templet: function(d) {
+                            return d.email ? ('<a href="mailto:' + d.email + '" title="Sendmail to author">' + d.author + '</a>') : d.author;
+                        }
                     },
                     {
                         field: 'description',

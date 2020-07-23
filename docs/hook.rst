@@ -338,22 +338,52 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
 
 3. 
   实际编写中，就是一个模块，复杂一点可以定义成包。
-  编写时需要定义元数据(必须包含version和author)，参照函数运行环境，
+  编写时需要定义元数据(**必须包含version和author**)，参照函数运行环境，
   灵活使用Flask的“全局”变量，之后就可以开搞了。
 
   .. code-block:: python
 
-    __version__ = '版本号'
+    __version__ = '符合语义化2.0规范的版本号'
     __author__ = '作者'
     __hookname__ = '直接定义钩子模块名称，否则默认是文件模块名'
     __state__ = 'enabled/disabled'  # 状态：启用(默认)/禁用
     __description__ = '描述'
     __catalog__ = '分类'
+    __appversion__ = '要求的应用版本号'
 
     #: Your Code Here.
 
+  目前会检测版本号是否符合 `语义化规范 <https://semver.org/>`_ ，不合规范则
+  不会加载并给出警告。
+
   可以参照 `Flask-PluginKit如何开发第三方插件 <https://flask-pluginkit.rtfd.vip/zh_CN/latest/tutorial/third-party-plugin.html#how-to-develop-plugins>`_ ，
   除了第一步开发细节，其他流程差不多。
+
+  .. note::
+
+    着重说一下appversion（可选），这是1.8.0新增，用于第三方定义允许加载此
+    钩子的程序版本，其格式是：``<op>version``，留空则表示允许所有版本。
+    
+    <op>是操作符（可选），允许使用 ``< <= > >= == !=`` 这六种符号，分别表示：
+    小于、小于等于、大于、大于等于、等于、不等于，默认是 **>=**
+
+    version表示picbed图床程序的版本号。
+
+    举例说明（__appversion__ = ↓）：
+
+    - '1.8.0'
+
+      说明此钩子要求的picbed图床程序版本最小是1.8.0，支持之后版本
+
+      ps：没有操作符，默认是大于等于(>=)
+
+    - '>1.8.0'
+
+      要求picbed版本1.8.0之后（不包含1.8.0），如1.8.1、1.9.0
+
+    - '<1.8.0'
+
+      跟上一条相反，1.8.0之前（不包含1.8.0），如1.7.99999、1.6
 
 .. |picbed_github_token| image:: /_static/images/picbed_github_token.png
 .. |picbed_github_hook| image:: /_static/images/picbed_github_hook.png
