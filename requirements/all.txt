@@ -1,5 +1,3 @@
 -r prod.txt
 -r up2upyun.txt
 -r up2qiniu.txt
--r up2oss.txt
--r up2cos.txt

@@ -1,6 +1,6 @@
 # picbed
 
-基于Flask的Web自建图床，默认存储在本地，内置支持存储到又拍云、七牛云、阿里云OSS、腾讯云COS、GitHub、Gitee(码云)。
+基于Flask的Web自建图床，默认存储在本地，支持存储到又拍云、七牛云、阿里云OSS、腾讯云COS、GitHub、Gitee(码云)等。
 
 [![Build Status](https://travis-ci.org/staugur/picbed.svg?branch=master)](https://travis-ci.org/staugur/picbed)
 [![codecov](https://codecov.io/gh/staugur/picbed/branch/master/graph/badge.svg)](https://codecov.io/gh/staugur/picbed)
@@ -19,15 +19,15 @@
     无法找到时加载环境变量，最后使用默认值，**必需设置picbed_redis_url**
 
     所以可以把配置项写到 `.bash_profile` 或 `.bashrc` 此类文件中在登录时加载，
-    也可以写入到 picbed/src/**.cfg** 文件里，这是推荐的方式，它不会被提交到仓库，
-    格式是k=v，每行一条，注意：v是所见即所得！
+    也可以写入到 /path/to/picbed/src/ 下的 **.cfg** 文件里，这是推荐的方式，
+    它不会被提交到仓库，格式是k=v，每行一条，注意：v是所见即所得！
 
     比如：`picbed_redis_url=redis://@localhost`
 
 5. 启动： 
 
     ```
-    $ cd picbed/src/
+    $ cd /path/to/picbed/src/
 
     // 首先创建一个管理员账号 -h/--help显示帮助
     $ flask sa create -u USER -p PASSWORD --isAdmin
@@ -48,7 +48,7 @@
     // 默认配置下，picbed启动监听127.0.0.1:9514，nginx配置示例：
     server {
         listen 80;
-        server_name picbed.domain.name;
+        server_name your-picbed.domain.name;
         charset utf-8;
         client_max_body_size 12M;
         location ~ ^\/static\/.*$ {
@@ -96,7 +96,7 @@
   使用 *docker run* 启动镜像的命令仅供参考，picbed所用配置可以使用-e设置
   环境变量，必需项picbed_redis_url，其他请参考文档。
 
-  此单一启动镜像方式不包括redis，所以还需要提前安装好redis才行。
+  此单一启动镜像方式不包括redis，所以还需要提前准备好redis才行。
 
 ------
 
@@ -107,13 +107,14 @@
 使用前，创建用户：
 
 ```
-  $ cd picbed # 仓库下，非src子目录，docker-compose.yml文件所在目录
+  $ cd /path/to/picbed
   $ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmin
 ```
 
 ps:
 
-  - Dockerfile采用分阶段构建，推送到Docker hub，目前压缩尺寸47MB，拉取到本地150MB左右。
+  - Dockerfile采用分阶段构建，推送到Docker hub，latest标签是master分支，
+    dev标签是dev分支，其他标签是已发布的版本。
 
   - docker-compose.yml仅为简单定义，可以自行修改，比如加上nginx、redis挂载数据(/data)。
 
@@ -123,7 +124,7 @@ ps:
 
 ## 演示站
 
-http://picbed.demo.saintic.com
+http://demo.picbed.pro
 
 测试账号及密码：demo 123456（请勿修改）
 

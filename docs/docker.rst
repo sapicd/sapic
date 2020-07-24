@@ -89,6 +89,8 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
 配置必需有picbed_redis_url，设置redis连接信息。
 其他的可选配置请参考 :ref:`picbed-config` 自行设置环境变量。
 
+查看我录制的使用docker单独启动的gif图: `picbed-alone-docker.gif <https://static.saintic.com/picbed/staugur/2020/07/24/picbed-alone-docker.gif>`_ 
+
 .. tip::
 
     可以将容器中的/picbed/static/upload、/picbed/logs挂载到宿主机或数据卷，
@@ -118,6 +120,8 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
     因为使用bind方式挂载了upload上传目录，所以删除数据卷并不会删除已经上传
     的图片（位于宿主机/data/picbed）！
 
+    查看我录制的使用docker单独启动的gif图（包括数据卷和nginx）: `picbed-docker-volume.gif <https://static.saintic.com/picbed/staugur/2020/07/24/picbed-docker-volume.gif>`_ 
+
 如果没有问题，docker ps查看其状态是Up，系统中能看到进程：
 
 .. code-block:: bash
@@ -130,8 +134,8 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
     root   23546  -- gunicorn: master [picbed]
     root   23548  -- gunicorn: worker [picbed]
     // 以上是使用setproctitle模块设置了优雅的进程名的效果，下面是未使用效果
-    root  - {gunicorn} /bin/python /bin/gunicorn app:app -c picbed_cfg.py
-    root  - {gunicorn} /bin/python /bin/gunicorn app:app -c picbed_cfg.py
+    root  - {gunicorn} /bin/python /bin/gunicorn app:app -c picbed.py
+    root  - {gunicorn} /bin/python /bin/gunicorn app:app -c picbed.py
 
 3.2 使用docker-compose启动
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -178,6 +182,8 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
       因为使用bind方式挂载了upload上传目录，所以删除数据卷并不会删除已经上传
       的图片（位于宿主机/data/picbed）！
 
+      查看我录制的使用docker-compose启动的gif图: `picbed-docker-compose.gif <https://static.saintic.com/picbed/staugur/2020/07/24/picbed-docker-compose.gif>`_
+
 4. nginx
 =================
 
@@ -191,7 +197,7 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
     
     使用docker-compose启动，已经在配置中完成了，直接启动就好了。
 
-    注意：下面两个-f后面 ``[[ ]]`` 中括号在执行时替换为大括号{}，因为本文档
+    注意：下面两个-f后面 ``[ ]`` 中括号在执行时替换为大括号{}，因为本文档
     主题的原因，不允许出现双大括号，所以只能这么显示。
 
     4.1.1 设置数据卷存放目录所有人有执行权（否则可能nginx 403权限拒绝）

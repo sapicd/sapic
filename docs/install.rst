@@ -66,6 +66,8 @@ NO.1 启动Redis
 
     使用redis集群，需要安装redis-py-cluster模块，它写在了可选模块文件：requirements/optional.txt
 
+    查看我录制的安装redis的gif图: `redis-install.gif <https://static.saintic.com/picbed/staugur/2020/07/24/redis-install.gif>`_
+
 .. _picbed-install-no2:
 
 NO.2 部署程序
@@ -252,6 +254,8 @@ SecretKey         picbed_secretkey             (大长串)         App应用秘�
     - 刚启动的picbed是没有默认管理员用户的，需要使用命令行手动创建，
       参考 :ref:`picbed-usgae`
 
+    - 查看我录制的手动部署的gif图: `picbed-install.gif <https://static.saintic.com/picbed/staugur/2020/07/24/picbed-install.gif>`_ 
+
 .. _picbed-nginx:
 
 NO.3 Nginx配置
@@ -287,6 +291,8 @@ Nginx配置示例如下，您也可以配置使其支持HTTPS:
     }
 
 程序部署好+Nginx配置完成，启动后，这个域名就能对外服务了（温馨提示：您可以使用HTTPS提供服务，并且也建议用HTTPS），即可进入下一篇查看如何注册、使用。
+
+此处也录制了安装配置nginx的gif图: `picbed-nginx.gif <https://static.saintic.com/picbed/staugur/2020/07/24/picbed-nginx.gif>`_
 
 NO.4 演示站
 -------------------

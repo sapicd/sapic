@@ -52,8 +52,8 @@
     使用方法：同上，配置要求的AK及SK可以在阿里云管理控制台-AccessKey密钥管理
     中拿到；允许使用RAM子用户的密钥（允许编程访问），要求拥有OSS管理权限即可。
 
-    .. deprecated:: 1.9.0
-        上传到阿里云OSS的内置钩子计划移除，独立成第三方扩展。
+    .. deprecated:: 1.8.0
+        请使用 `staugur/picbed-up2oss <https://github.com/staugur/picbed-up2oss>`_ 代替！
 
 - up2cos
 
@@ -61,8 +61,8 @@
 
     使用方法：同上，配置加速域名、Bucket、SecretID及Key等（在腾讯云控制台-访问管理-访问密钥-API密钥管理中可以拿到SecretId、SecretKey；允许使用子用户的密钥，要求拥有COS管理权限即可）。
 
-    .. deprecated:: 1.9.0
-        上传到腾讯云COS的内置钩子计划移除，独立成第三方扩展。
+    .. deprecated:: 1.8.0
+        请使用 `staugur/picbed-up2cos <https://github.com/staugur/picbed-up2cos>`_ 代替！
 
 .. versionadded:: 1.5.0
 
