@@ -117,7 +117,7 @@ class LocalStorage(BaseStorage):
     def set(self, key, value):
         """Set persistent data with shelve.
 
-        :param key: str: Index key
+        :param key: Index key
 
         :param value: All supported data types in python
         """

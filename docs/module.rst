@@ -1,19 +1,33 @@
-.. _module:
+.. _picbed-modules:
 
 ==============
 Picbed Modules
 ==============
 
-.. module:: libs.hook
+钩子管理类
+----------
 
-.. autoclass:: HookManager
+.. automodule:: libs.hook
     :members:
+    :undoc-members:
 
-.. module:: libs.storage
+本地存储类
+----------
 
-.. autoclass:: LocalStorage
+.. automodule:: libs.storage
     :members:
+    :undoc-members:
 
-    .. attribute:: index
+通用方法
+---------
 
-        The default index, as the only key, you can override it.
+.. automodule:: utils.tool
+    :members:
+    :undoc-members:
+
+适用Web环境的方法
+-----------------
+
+.. automodule:: utils.web
+    :members:
+    :undoc-members:

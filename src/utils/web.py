@@ -471,11 +471,13 @@ def get_upload_method(class_name):
         return "unknown"
 
 
-def _pip_install(pkg, index=None):
+def _pip_install(pkg, index=None, upgrade=None):
     """使用pip安装模块到用户目录$HOME/.local"""
     cmd = [executable, "-m", "pip", "install", "-q"]
     if not is_venv():
         cmd.append("--user")
+    if upgrade:
+        cmd.append("-U")
     if index:
         cmd.extend(["-i", index])
     cmd.append(pkg)

@@ -65,6 +65,7 @@ ALLOWED_HTTP_METHOD = ("GET", "POST", "PUT", "DELETE", "HEAD")
 
 
 def rsp(*args):
+    """使用 `picbed:` 前缀生成redis key"""
     return "picbed:" + ":".join(map(str, args))
 
 
@@ -97,6 +98,10 @@ def hmac_sha256(key, text):
 
 
 def get_current_timestamp(is_float=False):
+    """获取当前时间戳
+
+    :param bool is_float: True则获取10位秒级时间戳，否则原样返回
+    """
     return time() if is_float else int(time())
 
 
@@ -210,6 +215,7 @@ def format_apires(res, sn="code", oc=None, mn=None):
     """转换API响应JSON的格式
 
     可以用下面三个参数修改返回的res基本格式：
+
     - sn: status_name规定数据状态的字段名称，默认code
     - oc: ok_code规定成功的状态码，默认0，用字符串bool则会返回布尔类型
     - mn: msg_name规定状态信息的字段名称，默认msg
@@ -260,7 +266,9 @@ def get_origin(url):
 
 
 def check_origin(addr):
-    """Check whether UrlAddr is in a valid host origin, for example::
+    """Check whether UrlAddr is in a valid host origin, for example:
+
+    .. code-block::
 
         http://ip:port
         https://abc.com
@@ -399,10 +407,10 @@ def try_request(
     method='post'
 ):
     """
-    :param params: dict: 请求查询参数
-    :param data: dict: 提交表单数据
-    :param timeout: int: 超时时间，单位秒
-    :param num_retries: int: 超时重试次数
+    :param dict params: 请求查询参数
+    :param dict data: 提交表单数据
+    :param int timeout: 超时时间，单位秒
+    :param int num_retries: 超时重试次数
     """
     headers = headers or {}
     headers["User-Agent"] = "picbed/v%s" % PICBED_VERSION
@@ -457,10 +465,10 @@ def check_to_addr(to):
 
 
 class Mailbox(object):
-    """通过自有邮箱账户发送邮件"""
 
     def __init__(self, user, passwd, smtp_server, smtp_port=25):
         """初始化邮箱客户端配置。
+
         :param user: 邮箱地址
         :param passwd: 邮箱密码或可登录的授权码
         :param smtp_server: 邮箱的SMTP服务器地址
@@ -474,6 +482,7 @@ class Mailbox(object):
 
     @property
     def ssl(self):
+        """加密连接"""
         return self._ssl
 
     @ssl.setter
@@ -494,6 +503,12 @@ class Mailbox(object):
         return formataddr((Header(name, 'utf-8').encode(), addr))
 
     def send(self, subject, message, to_addrs, from_name=None):
+        """Sendmail
+
+        :param subject: email subject
+        :param message: email content
+        :param to_addrs: mailto, allow multi mail
+        """
         res = dict(code=1)
         if subject and message and to_addrs:
             if not isinstance(to_addrs, (list, tuple)):

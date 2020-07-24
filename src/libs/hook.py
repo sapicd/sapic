@@ -367,8 +367,6 @@ class HookManager(object):
             args replaced by `_args`;
             kwargs replaced by `_kwargs`
         """
-        args = _args
-        kwargs = _kwargs
         response = []
         for h in sorted(self.get_enabled_hooks, key=lambda h: h.name):
             if _include and isinstance(_include, (tuple, list)):
@@ -380,12 +378,12 @@ class HookManager(object):
             func = getattr(h.proxy, _funcname, None)
             if callable(func):
                 try:
-                    if args and kwargs:
-                        result = func(*args, **kwargs)
-                    elif kwargs:
-                        result = func(**kwargs)
-                    elif args:
-                        result = func(*args)
+                    if _args and _kwargs:
+                        result = func(*_args, **_kwargs)
+                    elif _kwargs:
+                        result = func(**_kwargs)
+                    elif _args:
+                        result = func(*_args)
                     else:
                         result = func()
                 except (ValueError, TypeError, Exception) as e:
@@ -404,8 +402,6 @@ class HookManager(object):
                             "sender" in _er:
                         result = _er
                 response.append(result)
-                if callable(_callback):
-                    _callback(result)
                 if _mode == "any_true":
                     if result.get("code") == 0:
                         break
