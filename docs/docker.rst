@@ -49,6 +49,10 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
 
     重写了Dockerfile，采用分阶段构建，最终打包150M左右。
 
+.. versionchanged:: 1.8.0
+
+    更新清减部分依赖，目前构建完成105M左右。
+
 打包步骤如下：
 
 - 国内环境
@@ -159,7 +163,7 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
         Container     Repository      Tag      Image Id       Size  
     ------------------------------------------------------------------
     picbed_redis_1    redis           alpine   b546e82a6d0e   31.51 MB
-    picbed_webapp_1   picbed_webapp   latest   1f3c98af1c3a   147.6 MB
+    picbed_webapp_1   picbed_webapp   latest   1f3c98af1c3a   105.1 MB
 
 .. versionchanged:: 1.8.0
 

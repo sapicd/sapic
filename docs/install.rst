@@ -386,3 +386,10 @@ NO.5 程序升级
 
         $ cd picbed/src
         $ flask sa upgrade --yes 1.7-1.8
+
+    .. warning::
+
+        up2cos、up2oss两个钩子从内置移除了，独立成第三方，分别是：
+        `staugur/picbed-up2cos <https://github.com/staugur/picbed-up2cos>`_ 、
+        `staugur/picbed-up2oss <https://github.com/staugur/picbed-up2oss>`_
+

@@ -174,8 +174,9 @@ def parse_accept_language(acceptLanguage, default_language="zh-CN"):
 
 def dfr(res, default='en-US'):
     """定义前端返回，将res中msg字段转换语言
-    @param res dict: like {"msg": None, "success": False}, 英文格式
-    @param default str: 默认语言
+
+    :param dict res: 例如 {"msg": "翻译内容(英文)", "other": "xx"}
+    :param str default: 默认语言
     """
     try:
         language = parse_accept_language(
@@ -533,7 +534,9 @@ def sendmail(subject, message, to):
 def make_email_tpl(tpl, **data):
     """制作邮件模板
 
-    :param tpl: 模板文件（位于templates/email/）
+    :param tpl: 模板文件（位于templates/email/下）
+    :keyword data: 模板所用变量
+    :returns: jinja2渲染好的html内容
     """
     je = Environment(
         loader=FileSystemLoader(pathjoin(

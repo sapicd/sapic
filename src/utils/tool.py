@@ -341,6 +341,7 @@ def parse_data_uri(datauri):
 
 
 def gen_ua():
+    """随机生成用户代理"""
     first_num = randint(55, 62)
     third_num = randint(0, 3200)
     fourth_num = randint(0, 140)
@@ -367,6 +368,7 @@ def gen_ua():
 
 
 def parse_ua(user_agent):
+    """解析用户代理，获取其操作系统、设备、版本"""
     from user_agents import parse as user_agents_parse
     uap = user_agents_parse(user_agent)
     device, ua_os, family = str(uap).split(' / ')
@@ -384,6 +386,7 @@ def parse_ua(user_agent):
 
 
 def slash_join(*args):
+    """用 / 连接参数"""
     stripped_strings = []
     for a in args:
         if a[0] == '/':
@@ -446,6 +449,7 @@ def try_request(
 
 
 def is_venv():
+    """判断当前环境是否在virtualenv、venv下"""
     return (hasattr(sys, 'real_prefix') or
             (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix))
 
@@ -456,6 +460,7 @@ def is_all_fail(l):
 
 
 def check_to_addr(to):
+    """检测收件人格式"""
     to_addrs = parse_valid_comma(to)
     if to_addrs:
         for to in to_addrs:
@@ -482,7 +487,7 @@ class Mailbox(object):
 
     @property
     def ssl(self):
-        """加密连接"""
+        """是否使用加密连接，支持setter"""
         return self._ssl
 
     @ssl.setter
@@ -491,6 +496,7 @@ class Mailbox(object):
 
     @property
     def debug(self):
+        """是否开启debug模式，支持setter"""
         return self._debug
 
     @debug.setter
@@ -505,9 +511,11 @@ class Mailbox(object):
     def send(self, subject, message, to_addrs, from_name=None):
         """Sendmail
 
-        :param subject: email subject
-        :param message: email content
-        :param to_addrs: mailto, allow multi mail
+        :param subject: 邮件主题
+        :param message: 内容，支持HTML
+        :param to_addrs: 收件人，支持多个
+        :returns: send result
+        :rtype: dict
         """
         res = dict(code=1)
         if subject and message and to_addrs:

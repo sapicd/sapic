@@ -344,12 +344,13 @@
 {% raw %}
 <script type="text/html" id="hook_action">
     {{#  if(d.state === 'enabled'){ }}
-    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-warm" lay-event="disable">禁用</a>
+    <a href="javascript:;" style="color:#FFB800" lay-event="disable" title="禁用"><i class="saintic-icon saintic-icon-ban-circle"></i></a>
     {{# } else { }}
-    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal" lay-event="enable">启用</a>
+    <a href="javascript:;" style="color:#1E9FFF" lay-event="enable" title="启用"><i class="saintic-icon saintic-icon-success"></i></a>
     {{#  } }}
+    &nbsp;
     {{#  if(d.family !== 'local'){ }}
-    <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-danger" lay-event="remove">删除</a>
+    <a href="javascript:;" style="color:#FF5722" lay-event="remove" title="删除"><i class="saintic-icon saintic-icon-trash"></i></a>
     {{#  } }}
 </script>
 <script type="text/html" id="toolbar">
@@ -524,6 +525,7 @@
                     {
                         field: 'author',
                         title: '作者',
+                        width: 100,
                         templet: function(d) {
                             return d.email ? ('<a href="mailto:' + d.email + '" title="Sendmail to author">' + d.author + '</a>') : d.author;
                         }
@@ -531,11 +533,11 @@
                     {
                         field: 'description',
                         title: '描述',
-                        minWidth: 150
                     },
                     {
                         field: 'family',
                         title: '所属',
+                        width: 70,
                         templet: function (d) {
                             return d.family === 'local' ? '<scan style="color:#5FB878">本地</scan>' : '<scan style="color:#FF5722">第三方</can>';
                         }
@@ -571,15 +573,15 @@
                         sort: true,
                         templet: function (d) {
                             if (d.state === 'enabled') {
-                                return '<scan style="color:#5FB878">enabled</scan>';
+                                return '<scan style="color:#5FB878">启用中</scan>';
                             } else {
-                                return '<scan style="color:#FF5722">disabled</scan>';
+                                return '<scan style="color:#FF5722">已禁用</scan>';
                             }
                         }
                     },
                     {
                         fixed: 'right',
-                        minWidth: 50,
+                        minWidth: 60,
                         align: 'left',
                         toolbar: '#hook_action'
                     }
@@ -595,12 +597,10 @@
             var data = obj.data; //获得当前行数据
             var layEvent = obj.event; //获得 lay-event 对应的值
             var tr = obj.tr; //获得当前行 tr 的 DOM 对象（如果有的话）
-            var delhtml = ' <a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-danger" lay-event="remove">删除</a></div>';
             if (layEvent === 'disable') { //禁用钩子
                 picbed.ajax("{{ url_for('api.hook', Action='disable') }}", function(res) {
                     layer.msg("已禁用钩子：" + data.name, {icon:1});
                     obj.update({state:'disabled'});
-                    tr[0].lastChild.innerHTML='<div class="layui-table-cell laytable-cell-1-0-9"><a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal" lay-event="enable">启用</a>' + (data.family === "local" ? '' : delhtml);
                 }, {
                     data: {name:data.name}
                 });
@@ -608,12 +608,11 @@
                 picbed.ajax("{{ url_for('api.hook', Action='enable') }}", function(res) {
                     layer.msg("已启用钩子：" + data.name, {icon:1});
                     obj.update({state:'enabled'});
-                    tr[0].lastChild.innerHTML='<div class="layui-table-cell laytable-cell-1-0-9"><a class="layui-btn layui-btn-xs layui-btn-radius layui-btn-warm" lay-event="disable">禁用</a>' + (data.family === "local" ? '' : delhtml);
                 }, {
                     data: {name:data.name}
                 });
             } else if (layEvent === 'remove') { //删除第三方钩子
-                layer.confirm('真的删除 ' + data.name + ' 么？', {icon:3,title:"请确认"}, function (index) {
+                layer.confirm('真的删除 ' + data.name + ' 么？', {icon:3,title:"请确认",shade:0.1}, function (index) {
                     layer.close(index);
                     //向服务端发送删除指令
                     picbed.ajax("{{ url_for('api.hook', Action='remove_third_hook') }}", function(res) {
@@ -638,7 +637,7 @@
                     formType: 0,
                     title: '钩子模块名（本地需已安装）',
                     placeholder: '注意与钩子名称不同',
-                    shade: 0
+                    shade: 0.1
                 }, function(value, index, elem){
                     if (value) {
                         layer.close(index);
@@ -653,16 +652,16 @@
             } else if (layEvent === "installPackage") {
                 layer.prompt({
                     formType: 0,
-                    title: '使用pip安装第三方包',
+                    title: '使用pip安装或升级第三方包',
                     placeholder: 'The pypi package name or VCS url',
-                    shade: 0
+                    shade: 0.1
                 }, function(value, index, elem){
                     if (value) {
                         layer.close(index);
                         picbed.ajax("{{ url_for('api.pip_install') }}", function(res) {
-                            layer.msg("已接收请求，后台安装中...", {icon:1});
+                            layer.msg("已接收请求，后台处理中...", {icon:1});
                         }, {
-                            data: {package:value}
+                            data: {package:value, upgrade:true}
                         });
                     }
                 });

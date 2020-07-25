@@ -497,8 +497,9 @@ def pip_install():
     res = dict(code=1, msg=None)
     pkg = request.form.get("package")
     index = request.form.get("index")
+    upgrade = is_true(request.form.get("upgrade"))
     if pkg and not pkg.startswith(".") and not pkg.startswith("-"):
-        thread.start_new_thread(_pip_install, (pkg, index))
+        thread.start_new_thread(_pip_install, (pkg, index, upgrade))
         res.update(code=0, msg="accepted")
         return jsonify(res), 201
     else:
