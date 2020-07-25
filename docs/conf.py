@@ -10,15 +10,17 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import sys
+from os.path import abspath, dirname, join
+sys.path.insert(0, join(dirname(dirname(abspath(__file__))), "src"))
+from version import __version__ as version
 
 # -- Project information -----------------------------------------------------
 
 project = 'SaintIC Picbed'
 copyright = '2020, staugur'
 author = 'staugur'
+release = version
 
 # -- General configuration ---------------------------------------------------
 
@@ -68,3 +70,5 @@ html_theme_options = {
 }
 #: fix ¶ #
 html_add_permalinks = " "
+
+autoclass_content = "both"

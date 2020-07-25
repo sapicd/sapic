@@ -52,8 +52,8 @@
     使用方法：同上，配置要求的AK及SK可以在阿里云管理控制台-AccessKey密钥管理
     中拿到；允许使用RAM子用户的密钥（允许编程访问），要求拥有OSS管理权限即可。
 
-    .. deprecated:: 1.9.0
-        上传到阿里云OSS的内置钩子计划移除，独立成第三方扩展。
+    .. deprecated:: 1.8.0
+        请使用 `staugur/picbed-up2oss <https://github.com/staugur/picbed-up2oss>`_ 代替！
 
 - up2cos
 
@@ -61,8 +61,8 @@
 
     使用方法：同上，配置加速域名、Bucket、SecretID及Key等（在腾讯云控制台-访问管理-访问密钥-API密钥管理中可以拿到SecretId、SecretKey；允许使用子用户的密钥，要求拥有COS管理权限即可）。
 
-    .. deprecated:: 1.9.0
-        上传到腾讯云COS的内置钩子计划移除，独立成第三方扩展。
+    .. deprecated:: 1.8.0
+        请使用 `staugur/picbed-up2cos <https://github.com/staugur/picbed-up2cos>`_ 代替！
 
 .. versionadded:: 1.5.0
 
@@ -371,17 +371,17 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
 
     举例说明（__appversion__ = ↓）：
 
-    - '1.8.0'
+    - 1.8.0
 
       说明此钩子要求的picbed图床程序版本最小是1.8.0，支持之后版本
 
       ps：没有操作符，默认是大于等于(>=)
 
-    - '>1.8.0'
+    - >1.8.0
 
       要求picbed版本1.8.0之后（不包含1.8.0），如1.8.1、1.9.0
 
-    - '<1.8.0'
+    - <1.8.0
 
       跟上一条相反，1.8.0之前（不包含1.8.0），如1.7.99999、1.6
 

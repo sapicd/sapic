@@ -8,13 +8,18 @@ Bug
 
 在GitHub中新建 [Issue](https://github.com/staugur/picbed/issues/new)：
 
-- 描述您期望发生的事情。
+- 描述实际发生的事情，如果可能，请提供完整的异常堆栈。
 
 - 如果可能，请提供一个最小、完整、可验证的示例，这也有助于检查问题是否与你自己的代码有关。
 
-- 描述实际发生的事情，如果可能，请提供完整的异常堆栈。
+- 列出你的Python、Flask、picbed版本、配置，如果可能，检查新版本是否解决。
 
-- 列出你的Python、Flask、picbed版本，如果可能，检查新版本是否解决。
+  ps：打印配置（SecretKey和Redis地址、密码可用星号代替）
+
+    ```
+    $ cd /path/to/picbed/src
+    $ python config.py
+    ```
 
 Feature
 -------

@@ -305,7 +305,7 @@ class HookManager(object):
     def proxy(self, name, is_enabled=True):
         """代理到钩子中执行方法
 
-        :param is_enabled: 布尔值，True表示仅从已启用钩子中查找方法，否则查找所有
+        :param bool is_enabled: True表示仅从已启用钩子中查找方法，否则查找所有
         """
         if is_enabled:
             if name in self.get_enabled_map_hooks:
@@ -350,32 +350,23 @@ class HookManager(object):
     def call(
         self,
         _funcname,
-        _callback=None,
         _include=None,
         _exclude=None,
         _every=None,
         _mode=None,
         _args=None,
         _kwargs=None,
-        *args,
-        **kwargs
     ):
         """Try to execute the func method in all enabled hooks.
 
         .. versionchanged:: 1.7.0
             add param `_mode` and `_every`
 
-        .. deprecated:: 1.7.0
-            - _callback: replaced by `_every`
-            - *args: replaced by `_args`
-            - **kwargs: replaced by `_kwargs`
+        .. deprecated:: 1.8.0
+            _callback replaced by `_every`;
+            args replaced by `_args`;
+            kwargs replaced by `_kwargs`
         """
-        if args or kwargs:
-            logger.warn(
-                "The args/kwargs is deprecated. Use _args/_kwargs instead."
-            )
-        args = _args or args
-        kwargs = _kwargs or kwargs
         response = []
         for h in sorted(self.get_enabled_hooks, key=lambda h: h.name):
             if _include and isinstance(_include, (tuple, list)):
@@ -387,12 +378,12 @@ class HookManager(object):
             func = getattr(h.proxy, _funcname, None)
             if callable(func):
                 try:
-                    if args and kwargs:
-                        result = func(*args, **kwargs)
-                    elif kwargs:
-                        result = func(**kwargs)
-                    elif args:
-                        result = func(*args)
+                    if _args and _kwargs:
+                        result = func(*_args, **_kwargs)
+                    elif _kwargs:
+                        result = func(**_kwargs)
+                    elif _args:
+                        result = func(*_args)
                     else:
                         result = func()
                 except (ValueError, TypeError, Exception) as e:
@@ -411,8 +402,6 @@ class HookManager(object):
                             "sender" in _er:
                         result = _er
                 response.append(result)
-                if callable(_callback):
-                    _callback(result)
                 if _mode == "any_true":
                     if result.get("code") == 0:
                         break

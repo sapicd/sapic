@@ -11,6 +11,7 @@ picbed - 简约不小气的自建图床程序
     admin
     hook
     api
+    module
     faq
     更新日志 <https://github.com/staugur/picbed/releases>
 
@@ -74,3 +75,5 @@ GitHub：https://github.com/staugur/picbed
 
 详细部署请看下一篇！
 --------------------
+
+文档中录制了一些操作过程，所用系统CentOS7.8最小化安装的纯净系统， Python2.7.5

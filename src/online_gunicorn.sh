@@ -10,7 +10,7 @@ procname=$(python -c "from config import GLOBAL;print(GLOBAL['ProcessName'])")
 
 [ -d ${dir}/logs ] || mkdir -p ${dir}/logs
 pidfile=${dir}/logs/${procname}.pid
-cfg="picbed_cfg.py"
+cfg="picbed.py"
 
 function Monthly2Number() {
     case "$1" in
