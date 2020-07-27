@@ -61,8 +61,11 @@ def exec_createuser(username, password, **kwargs):
         echo("用户名不合法或不允许注册", "yellow")
 
 
-sa_cli = AppGroup('sa', help='Administrator commands', context_settings={
-                  'help_option_names': ['-h', '--help']})
+sa_cli = AppGroup(
+    'sa',
+    help='Administrator commands',
+    context_settings={'help_option_names': ['-h', '--help']},
+)
 
 
 @sa_cli.command()

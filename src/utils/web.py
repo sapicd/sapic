@@ -283,7 +283,7 @@ def change_userinfo(userinfo):
                 markdown=is_true(g.userinfo.get("ucfg_urlrule_incopymd")),
             ),
             #: ..versionadded:: 1.7.0
-            #: 用户状态默认是1启用，-1待审核仅无法上传，0禁用无任何权限
+            #: 用户状态默认是1启用，-2、-1待审核仅无法上传，0禁用无任何权限
             status=int(userinfo.get("status", 1)),
         )
     return userinfo

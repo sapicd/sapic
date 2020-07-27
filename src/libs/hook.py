@@ -408,6 +408,15 @@ class HookManager(object):
         return response
 
     def call_intpl(self, _tplname, _include=None, _exclude=None, **context):
+        """在模板中渲染
+
+        :param _tplname: 扩展点名称
+        :param list _include: 仅查找哪些钩子
+        :param list _exclude: 排除哪些钩子
+        :kerword context: 渲染模板时传递的变量
+        :type _tplname: str or function
+        :returns: Markup HTML
+        """
         result = []
         for h in sorted(self.get_enabled_hooks, key=lambda h: h.name):
             if _include and isinstance(_include, (tuple, list)):

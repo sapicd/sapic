@@ -17,6 +17,7 @@
             <dd><a {% if request.endpoint != "front.my" %} href="{{ url_for('front.my', _anchor='!profile') }}" {% endif %}><i class="saintic-icon saintic-icon-user"></i> 个人资料</a></dd>
             <dd><a {% if request.endpoint != "front.my" %} href="{{ url_for('front.my', _anchor='!setting') }}" {% endif %}><i class="saintic-icon saintic-icon-setting"></i> 用户设置</a></dd>
             <dd><a {% if request.endpoint != "front.my" %} href="{{ url_for('front.my', _anchor='!picbed') }}" {% endif %}><i class="saintic-icon saintic-icon-user-album"></i> 我的图片</a></dd>
+            {{ intpl("nav") }}
             {% if g.is_admin %}
             <dd><a href="{{ url_for('front.admin') }}"><i class="saintic-icon saintic-icon-site-manager"></i> 站点管理</a></dd>
             {% endif %}

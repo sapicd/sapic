@@ -25,7 +25,7 @@ ENV LOCAL_PKG="/root/.local"
 ENV picbed_isrun=true
 COPY --from=build ${LOCAL_PKG} ${LOCAL_PKG}
 RUN ln -sf ${LOCAL_PKG}/bin/flask ${LOCAL_PKG}/bin/gunicorn /bin/ && \
-    ln -sf $(which python) /bin/python && \
-    sed -i "s#$(which python)#/bin/python#" /bin/gunicorn
+    ln -sf $(which python) /python && \
+    sed -i "s#$(which python)#/python#" /bin/gunicorn
 COPY src /picbed
 ENTRYPOINT ["gunicorn", "app:app", "-c", "picbed.py"]

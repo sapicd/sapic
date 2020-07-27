@@ -221,12 +221,20 @@
                             </div>
                             {% set bes = get_call_list("upimg_save", _type="func") %}
                             <div class="layui-form-item">
-                                <label class="layui-form-label" id="tip-be"><i class="saintic-icon saintic-icon-storage-cloud"></i> 存储后端</label>
+                                <label class="layui-form-label">用户分组上传</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="upload_group" value="{{ g.site.upload_group }}"
+                                        placeholder="按用户标签设置上传后端，格式是label:sender，逗号分隔多个" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label" id="tip-be"><i class="saintic-icon saintic-icon-storage-cloud"></i> 默认存储在</label>
                                 <div class="layui-input-block">
                                     <select name="upload_includes" lay-verify="required">
                                         {% for h in bes %}
-                                        <option value="{{ h.name }}" {% if h.name in g.site.upload_includes %}selected="selected"
-                                            {% endif %}>{{ h.name }}{% if h.description %}（{{ h.description }}）{% endif %}</option>
+                                        <option value="{{ h.name }}"
+                                            {% if h.name in g.site.upload_includes %}selected="selected"{% endif %}>{{ h.name }}{% if h.description %}（{{ h.description }}）{% endif %}
+                                        </option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -551,19 +559,19 @@
                         }
                     },
                     {
-                        field: 'ltime',
-                        title: '加载时间',
-                        hide: true,
-                        templet: function (d) {
-                            return util.toDateString(d.ltime * 1000);
-                        }
-                    },
-                    {
                         field: 'mtime',
                         title: '修改时间',
                         hide: true,
                         templet: function (d) {
                             return util.toDateString(d.mtime * 1000);
+                        }
+                    },
+                    {
+                        field: 'ltime',
+                        title: '加载时间',
+                        hide: true,
+                        templet: function (d) {
+                            return util.toDateString(d.ltime * 1000);
                         }
                     },
                     {
@@ -691,10 +699,9 @@
                     {
                         field: 'username',
                         title: '用户名',
-                        minWidth: 80,
+                        minWidth: 100,
                         templet: function(d) {
                             var user = d.avatar ? ('<a href="' + d.avatar + '" class="layui-table-link" target="_blank">' + d.username + '</a>') : d.username;
-                            if (d.username === "{{ g.userinfo.username }}") user += '&nbsp;<span class="layui-badge layui-bg-green">我</span>';
                             return d.pics > 0 ? (user + '&nbsp;<span class="layui-badge layui-bg-black">' + d.pics + '</span>') : user;
                         }
                     },
@@ -708,6 +715,12 @@
                         templet: function (d) {
                             return d.email ? (d.email_verified === 1 ? ('<scan style="color:#009688">' + d.email + '</scan>') : d.email) : "";
                         }
+                    },
+                    {
+                        field: 'label',
+                        title: '标签',
+                        edit: 'text',
+                        width: 80,
                     },
                     {
                         field: 'is_admin',
@@ -745,7 +758,7 @@
                     {
                         fixed: 'right',
                         align: 'left',
-                        minWidth: 90,
+                        minWidth: 70,
                         toolbar: '#usermanager_action'
                     }
                 ]
@@ -828,6 +841,16 @@
                     data: {username: data.username}
                 });
             }
+        });
+        //用户管理监听单元格编辑
+        table.on('edit(usermanager)', function(obj) {
+            picbed.ajax("{{ url_for('api.user', Action='label') }}", function (res) {
+                var tip = obj.value ? ("已设置用户标签为：" + obj.value) : "已取消标签";
+                layer.msg(tip, {icon:1});
+            }, {
+                method: "PUT",
+                data: {username: obj.data.username, label: obj.value}
+            })
         });
     });
 </script>
