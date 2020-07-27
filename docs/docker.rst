@@ -138,8 +138,8 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
     root   23546  -- gunicorn: master [picbed]
     root   23548  -- gunicorn: worker [picbed]
     // 以上是使用setproctitle模块设置了优雅的进程名的效果，下面是未使用效果
-    root  - {gunicorn} /bin/python /bin/gunicorn app:app -c picbed.py
-    root  - {gunicorn} /bin/python /bin/gunicorn app:app -c picbed.py
+    root  - {gunicorn} /python /bin/gunicorn app:app -c picbed.py
+    root  - {gunicorn} /python /bin/gunicorn app:app -c picbed.py
 
 3.2 使用docker-compose启动
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -163,7 +163,7 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
         Container     Repository      Tag      Image Id       Size  
     ------------------------------------------------------------------
     picbed_redis_1    redis           alpine   b546e82a6d0e   31.51 MB
-    picbed_webapp_1   picbed_webapp   latest   1f3c98af1c3a   105.1 MB
+    picbed_webapp_1   picbed_webapp   latest   1f3c98af1c3a   105.9 MB
 
 .. versionchanged:: 1.8.0
 

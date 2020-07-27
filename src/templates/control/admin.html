@@ -559,19 +559,19 @@
                         }
                     },
                     {
-                        field: 'ltime',
-                        title: '加载时间',
-                        hide: true,
-                        templet: function (d) {
-                            return util.toDateString(d.ltime * 1000);
-                        }
-                    },
-                    {
                         field: 'mtime',
                         title: '修改时间',
                         hide: true,
                         templet: function (d) {
                             return util.toDateString(d.mtime * 1000);
+                        }
+                    },
+                    {
+                        field: 'ltime',
+                        title: '加载时间',
+                        hide: true,
+                        templet: function (d) {
+                            return util.toDateString(d.ltime * 1000);
                         }
                     },
                     {
@@ -699,10 +699,9 @@
                     {
                         field: 'username',
                         title: '用户名',
-                        minWidth: 80,
+                        minWidth: 100,
                         templet: function(d) {
                             var user = d.avatar ? ('<a href="' + d.avatar + '" class="layui-table-link" target="_blank">' + d.username + '</a>') : d.username;
-                            if (d.username === "{{ g.userinfo.username }}") user += '&nbsp;<span class="layui-badge layui-bg-green">我</span>';
                             return d.pics > 0 ? (user + '&nbsp;<span class="layui-badge layui-bg-black">' + d.pics + '</span>') : user;
                         }
                     },
@@ -721,6 +720,7 @@
                         field: 'label',
                         title: '标签',
                         edit: 'text',
+                        width: 80,
                     },
                     {
                         field: 'is_admin',
@@ -758,7 +758,7 @@
                     {
                         fixed: 'right',
                         align: 'left',
-                        minWidth: 90,
+                        minWidth: 70,
                         toolbar: '#usermanager_action'
                     }
                 ]

@@ -12,7 +12,7 @@
 
 .. note::
 
-    当前内容适用于钩子开发者，需要对Python Flask、HTML有一定了解。
+    当前内容适用于管理员和钩子开发者，需要对Python Flask、HTML有一定了解。
 
 --------
 
