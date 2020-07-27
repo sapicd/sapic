@@ -24,7 +24,8 @@ from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, rsp, \
     sha256, get_current_timestamp, list_equal_split, generate_random, er_pat, \
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
-    check_ir, username_pat, ALLOWED_HTTP_METHOD, is_all_fail
+    username_pat, ALLOWED_HTTP_METHOD, is_all_fail, parse_valid_colon, \
+    check_ir
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
@@ -330,7 +331,7 @@ def hook():
     return res
 
 
-@bp.route("/user", methods=["GET", "DELETE", "PUT"])
+@bp.route("/user", methods=["GET", "DELETE", "PUT", "POST"])
 @admin_apilogin_required
 def user():
     """Manage users.
@@ -339,6 +340,7 @@ def user():
     """
     res = dict(code=1, msg=None)
     ak = rsp("accounts")
+    Action = request.args.get("Action")
     if request.method == "GET":
         #: 查询用户
         sort = request.args.get("sort") or "desc"
@@ -355,7 +357,7 @@ def user():
             fds = (
                 "username", "nickname", "avatar", "ctime", "mtime",
                 "is_admin", "status", "message", "email", "email_verified",
-                "status_reason"
+                "status_reason", "label"
             )
             pipe = g.rc.pipeline()
             for u in g.rc.smembers(ak):
@@ -438,7 +440,6 @@ def user():
         else:
             res.update(code=2, msg="No valid username found")
     elif request.method == "PUT":
-        Action = request.args.get("Action")
         username = request.form.get("username")
         if Action in ("reviewOK", "reviewFail", "disable", "enable"):
             if username:
@@ -470,6 +471,7 @@ def user():
             else:
                 res.update(code=2, msg="No valid username found")
         elif Action == "admin":
+            #: 设置/取消用户为管理员
             adm = 1 if is_true(request.form.get("is_admin")) else 0
             if username:
                 if username != g.userinfo.username and \
@@ -484,6 +486,30 @@ def user():
                     res.update(code=3, msg="No valid username found")
             else:
                 res.update(code=2, msg="No valid username found")
+        elif Action == "label":
+            #: 给用户贴上标签，允许置空
+            if username and g.rc.sismember(ak, username):
+                label = request.form.get("label") or ""
+                try:
+                    g.rc.hset(rsp("account", username), "label", label)
+                except RedisError:
+                    res.update(msg="Program data storage service error")
+                else:
+                    res.update(code=0)
+            else:
+                res.update(code=3, msg="No valid username found")
+    elif request.method == "POST":
+        if Action == "labels":
+            #: 综合获取用户标签
+            pipe = g.rc.pipeline()
+            for u in g.rc.smembers(ak):
+                pipe.hget(rsp("account", u), "label")
+            try:
+                data = pipe.execute()
+            except RedisError:
+                res.update(msg="Program data storage service error")
+            else:
+                res.update(code=0, data=list(set([l for l in data if l])))
     return res
 
 
@@ -967,6 +993,13 @@ def upload():
         includes = parse_valid_comma(g.cfg.upload_includes or 'up2local')
         if len(includes) > 1:
             includes = [choice(includes)]
+        #: 当用户有标签且定义了用户上传分组则尝试覆盖默认includes
+        up_grp = g.cfg.upload_group
+        usr_label = g.userinfo.label if g.signin else "anonymous"
+        if up_grp and usr_label:
+            up_grp = parse_valid_colon(up_grp) or {}
+            if usr_label in up_grp:
+                includes = [up_grp[usr_label]]
         #: TODO 定义保存图片时排除某些钩子，如: up2local, up2other
         #: excludes = parse_valid_comma(g.cfg.upload_excludes or '')
         #: 调用钩子中upimg_save方法（目前版本最终结果中应该最多只有1条数据）
@@ -1060,9 +1093,8 @@ def ep():
     if Object and Action:
         obj = current_app.extensions["hookmanager"].proxy(Object)
         if obj and hasattr(obj, Action):
-            result = getattr(obj, Action)()
-            if result and isinstance(result, Response):
-                return result
+            return getattr(obj, Action)()
+    return abort(404)
 
 
 @bp.route("/album", methods=["GET", "POST"])

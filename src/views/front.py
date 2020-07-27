@@ -10,10 +10,10 @@
 """
 
 from flask import Blueprint, render_template, make_response, redirect, \
-    url_for, current_app, Response, g, abort, render_template_string
+    url_for, current_app, Response, g, abort
 from utils.web import admin_apilogin_required, anonymous_required, \
     login_required, check_activate_token, dfr
-from utils.tool import is_true, rsp
+from utils.tool import is_true, rsp, string_types
 from utils._compat import PY2, text_type
 
 bp = Blueprint("front", "front")
@@ -119,3 +119,16 @@ def activate(token):
 @anonymous_required
 def forgot():
     return render_template("public/forgot.html")
+
+
+@bp.route("/extendpoint/<hookname>/", defaults=dict(route=None))
+@bp.route("/extendpoint/<hookname>/<route>")
+def ep(hookname, route):
+    obj = current_app.extensions["hookmanager"].proxy(hookname)
+    if obj and hasattr(obj, "route"):
+        rule = obj.route()
+        if isinstance(rule, string_types):
+            return rule
+        elif isinstance(rule, dict) and route in rule:
+            return rule[route]
+    return abort(404)

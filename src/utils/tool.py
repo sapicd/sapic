@@ -174,7 +174,12 @@ def parse_valid_verticaline(s):
 
 def parse_valid_colon(s):
     if s:
-        return dict([i.split(":") for i in comma_pat.split(s) if i])
+        return dict([
+            i.split(":")
+            for i in comma_pat.split(s)
+            if i and ":" in i and len(i.split(":")) == 2
+            and i.split(":")[0] and i.split(":")[1]
+        ])
 
 
 def is_true(value):
@@ -570,15 +575,26 @@ def bleach_html(html, tags=None, attrs=None, styles=None):
 def is_valid_verion(version):
     """Semantic version number - determines whether the version is qualified.
     The format is MAJOR.Minor.PATCH, more with https://semver.org
+
+    :param str version: 版本号
     """
-    if version and not PY2 and not isinstance(version, string_types):
+    if not version:
+        return False
+    if not PY2 and not isinstance(version, string_types):
         version = version.decode("utf-8")
     try:
         import semver
     except ImportError as e:
         err_logger.error(e)
     else:
-        return semver.VersionInfo.isvalid(version or "")
+        if hasattr(semver.VersionInfo, "isvalid"):
+            return semver.VersionInfo.isvalid(version or "")
+        try:
+            semver.parse(version)
+        except (TypeError, ValueError):
+            return False
+        else:
+            return True
 
 
 def is_match_appversion(appversion=None):

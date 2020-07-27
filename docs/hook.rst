@@ -10,6 +10,10 @@
 实现这一功能的核心在于钩子管理器：HookManager类（libs/hook.py），感兴趣可以
 看下源码，是提取 `Flask-PluginKit <https://github.com/staugur/Flask-PluginKit>`_ 部分加上其他东西实现的。
 
+.. note::
+
+    当前内容适用于钩子开发者，需要对Python Flask、HTML有一定了解。
+
 --------
 
 .. _picbed-local-hook:
@@ -233,17 +237,14 @@ before_request是flask的一种钩子，每次请求都先经过它“预处理�
     `picbed-ssoclient <https://github.com/staugur/picbed-ssoclient>`_ 。
 
 API
-^^^^^^^
+^^^^^
 
 程序有一个API接口是专门给钩子准备的，端点是 ``api.ep`` ，
 url是 ``/api/extendpoint`` ，仅支持POST方法，它从URL查询参数获取两个值：
 
-Object：即钩子模块名；
+Object：即钩子模块名；Action：钩子方法
 
-Action：钩子方法
-
-钩子管理器定位到Object执行Action函数，Action如果返回Flask.Response子类，
-那么路由函数则会直接返回Action函数执行结果。
+钩子管理器定位到Object执行（无传参）并返回Action函数结果，找不到返回404
 
 假设一个钩子helloworld，定义如下：
 
@@ -260,6 +261,77 @@ Action：钩子方法
 
     $ curl -XPOST "http://your-picbed-url/api/extendpoint?Object=helloworld&Action=welcome"
     {"hello": "world"}
+
+.. tip::
+
+    Action钩子方法内部可以直接使用g、request等，
+    以及 ``utils.web.apilogin_required`` 等。
+
+路由
+^^^^^^^^
+
+面向前端页面专门给钩子扩展用的，端点是 ``front.ep``, url是
+``/extendpoint/<Object>/[route-name]``
+
+Object：即钩子模块名；route-name：路由，可选。
+
+定位到Object直接执行route函数（无传参），按照其结果有两种判断：
+
+1. 返回的是字符串
+
+    此时route-name无效，无论是啥，最终路由返回的都是字符串这个结果
+
+    示例，钩子名test：
+
+    .. code-block:: python
+
+        from flask import render_template_string as render
+
+        def route():
+            return render('<b>hello world!</b>')
+
+    访问：
+
+    .. code-block:: bash
+
+        $ curl http://your-picbed-url/extendpoint/test/
+        <b>hello world!</b>
+
+        $ curl http://your-picbed-url/extendpoint/test/xxxx
+        <b>hello world!</b>
+
+2. 返回的字典对象
+
+    此时route-name有效，会从字典中查找值，最终路由返回这个值。
+    示例，钩子名test：
+
+    .. code-block:: python
+
+        from flask import render_template_string as render, jsonify
+
+        def route():
+            return dict(
+                s=render('<b>hello world!</b>'),
+                j=jsonify(text='hello world')
+            )
+
+    访问：
+
+    .. code-block:: bash
+
+        $ curl http://your-picbed-url/extendpoint/test/
+        !404
+
+        $ curl http://your-picbed-url/extendpoint/test/s
+        <b>hello world!</b>
+
+        $ curl http://your-picbed-url/extendpoint/test/j
+        {"text": "hello world"}
+
+.. tip::
+
+    route方法内部可以直接使用g、request等，
+    以及 ``utils.web.login_required`` 等。
 
 模板中钩子插入点
 ====================
@@ -321,6 +393,16 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
 - userscript
 
   用户中心脚本区域，要求内容是包含 **<script>** 的JS脚本内容
+
+- nav
+
+  右侧下拉导航，其内容是：
+
+  .. code-block:: html
+
+    <dd><a href="链接地址"><i class="icon 图标"></i> 导航标题</a></dd>
+
+  一个dd是一个导航，多个导航，多个dd
 
 .. tip::
 
