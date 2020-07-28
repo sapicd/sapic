@@ -182,6 +182,7 @@ class HookManager(object):
     def __scan_third(self):
         if self.__third_hooks and isinstance(self.__third_hooks, list):
             for hn in self.__third_hooks:
+                #: hn: the name of the hook module that can be imported
                 if hn in modules:
                     hm = modules[hn]
                     if getattr(hm, '__mtime__', 0) < getmtime(
@@ -211,6 +212,7 @@ class HookManager(object):
                     self.__hooks[hn] = self.__get_meta(ho)
 
     def __get_meta(self, f_obj):
+        #: 钩子友好的可见名，非模块名
         name = getattr(
             f_obj, "__hookname__", f_obj.__name__.split('.')[-1],
         )
@@ -289,6 +291,10 @@ class HookManager(object):
         self.__init_load_hooks()
 
     def add_third_hook(self, third_hook_name):
+        """添加第三方钩子
+
+        :param str third_hook_name: 钩子可直接导入的模块名
+        """
         if third_hook_name:
             self.__third_hooks = third_hook_name
             if hasattr(self, 'app'):
@@ -305,6 +311,7 @@ class HookManager(object):
     def proxy(self, name, is_enabled=True):
         """代理到钩子中执行方法
 
+        :param str name: 钩子名称，非其模块名
         :param bool is_enabled: True表示仅从已启用钩子中查找方法，否则查找所有
         """
         if is_enabled:
