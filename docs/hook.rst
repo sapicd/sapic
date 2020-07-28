@@ -5,8 +5,8 @@
 =======
 
 或者称为扩展、插件吧，本质就是增强某个功能点的代码段，当然是用Python实现，
-分为内置和第三方。
 
+分为内置和第三方。
 实现这一功能的核心在于钩子管理器：HookManager类（libs/hook.py），感兴趣可以
 看下源码，是提取 `Flask-PluginKit <https://github.com/staugur/Flask-PluginKit>`_ 部分加上其他东西实现的。
 
@@ -271,17 +271,18 @@ Object：即钩子模块名；Action：钩子方法
 ^^^^^^^^
 
 面向前端页面专门给钩子扩展用的，端点是 ``front.ep``, url是
-``/extendpoint/<Object>/[route-name]``
+``/extendpoint/<hook_name>/[route_name]``
 
-Object：即钩子模块名；route-name：路由，可选。
+hook_name：即钩子名称，比如up2oss、picbed-smtp；
+route_name：路由名称，可选。
 
-定位到Object直接执行route函数（无传参），按照其结果有两种判断：
+定位到 *hook_name* 直接执行route函数（无传参），按照其结果有两种判断：
 
 1. 返回的是字符串
 
-    此时route-name无效，无论是啥，最终路由返回的都是字符串这个结果
+    此时route_name无效，无论是啥，最终访问URL返回的都是字符串这个结果
 
-    示例，钩子名test：
+    示例，钩子名test（等同模块名）：
 
     .. code-block:: python
 
@@ -302,7 +303,7 @@ Object：即钩子模块名；route-name：路由，可选。
 
 2. 返回的字典对象
 
-    此时route-name有效，会从字典中查找值，最终路由返回这个值。
+    此时route_name有效，会从字典中查找值，最终路由返回这个值。
     示例，钩子名test：
 
     .. code-block:: python
@@ -332,6 +333,13 @@ Object：即钩子模块名；route-name：路由，可选。
 
     route方法内部可以直接使用g、request等，
     以及 ``utils.web.login_required`` 等。
+
+    构建路由可用url_for：
+
+    .. code-block:: python
+
+        from flask import url_for
+        url_for("front.ep", hook_name="test", route_name="xxx")
 
 模板中钩子插入点
 ====================
@@ -400,9 +408,12 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
 
   .. code-block:: html
 
-    <dd><a href="链接地址"><i class="icon 图标"></i> 导航标题</a></dd>
+    <dd><a href="链接地址"><i class="字体图标样式"></i> 导航标题</a></dd>
 
   一个dd是一个导航，多个导航，多个dd
+
+  图标可以使用layui框架提供的，也可以使用
+  `第三方 <https://open.saintic.com/openservice/iconfont>`_
 
 .. tip::
 
@@ -427,13 +438,20 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
 
     __version__ = '符合语义化2.0规范的版本号'
     __author__ = '作者'
-    __hookname__ = '直接定义钩子模块名称，否则默认是文件模块名'
+    __hookname__ = '直接定义钩子名称（昵称），否则默认是文件模块名'
     __state__ = 'enabled/disabled'  # 状态：启用(默认)/禁用
     __description__ = '描述'
     __catalog__ = '分类'
     __appversion__ = '要求的应用版本号'
 
     #: Your Code Here.
+
+  hookname是钩子名，用来定位钩子，一般可以设置为pypi上发布的包名。
+  比如picbed-smtp，这是pypi上包名称，可用pip安装它，但模块名是
+  picbed_smtp（python模块导入时，减号是非法的）。
+  
+  如果不设置hookname，那么钩子名会默认解析为picbed_smtp，除非你的钩子没有
+  特殊符号（例如up2oss），否则建议添加hookname！
 
   目前会检测版本号是否符合 `语义化规范 <https://semver.org/>`_ ，不合规范则
   不会加载并给出警告。

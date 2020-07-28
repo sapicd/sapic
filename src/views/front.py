@@ -121,14 +121,14 @@ def forgot():
     return render_template("public/forgot.html")
 
 
-@bp.route("/extendpoint/<hookname>/", defaults=dict(route=None))
-@bp.route("/extendpoint/<hookname>/<route>")
-def ep(hookname, route):
-    obj = current_app.extensions["hookmanager"].proxy(hookname)
+@bp.route("/extendpoint/<hook_name>/", defaults=dict(route_name=None))
+@bp.route("/extendpoint/<hook_name>/<route_name>")
+def ep(hook_name, route_name):
+    obj = current_app.extensions["hookmanager"].proxy(hook_name)
     if obj and hasattr(obj, "route"):
         rule = obj.route()
         if isinstance(rule, string_types):
             return rule
-        elif isinstance(rule, dict) and route in rule:
-            return rule[route]
+        elif isinstance(rule, dict) and route_name in rule:
+            return rule[route_name]
     return abort(404)

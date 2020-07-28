@@ -310,6 +310,7 @@ def hook():
         else:
             res.update(code=0)
     elif Action == 'add_third_hook':
+        #: hook module name
         name = request.form.get("name")
         try:
             __import__(name)
