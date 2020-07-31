@@ -483,7 +483,7 @@ def _pip_install(pkg, index=None, upgrade=None):
         cmd.extend(["-i", index])
     cmd.append(pkg)
     retcode = call(cmd)
-    logger.info("pip install {}, retcode: {}".format(pkg, retcode))
+    logger.info("{}, retcode: {}".format(" ".join(cmd), retcode))
 
 
 def generate_activate_token(dump_data, max_age=600):

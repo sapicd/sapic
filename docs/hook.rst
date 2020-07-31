@@ -18,8 +18,8 @@
 
 .. _picbed-local-hook:
 
-内置钩子
------------
+1. 内置钩子
+-------------
 
 所属本地，不允许删除，只能禁用、启用，目前有两个内置，up2local和token，
 分别是将上传的图片保存到本地、API可以使用Token（LinkToken）认证。
@@ -119,8 +119,8 @@
 
 .. _picbed-third-hook:
 
-第三方钩子
-------------
+2. 第三方钩子
+----------------
 
 非内置的钩子所属均为第三方，我发布的第三方可以在
 `GitHub搜索 <https://github.com/search?q=user%3Astaugur+picbed>`_
@@ -136,53 +136,56 @@
 
     $ pip install up2smms up2superbed
 
-目前已有的钩子及简介：
+3. 钩子开发
+-------------
+
+.. _picbed-hook-app-ep:
+
+3.1 应用中钩子扩展点
 =======================
 
-before_request
-^^^^^^^^^^^^^^^^^
+运行在服务端程序代码中用来扩展某些功能的地方，为Python函数，下面是扩展点
+名称及说明。
 
-即在flask的before_request钩子函数内运行的方法，无传参（return无效果）。
+- before_request
 
-after_request
-^^^^^^^^^^^^^^^^^
+  即在flask的before_request钩子函数内运行的方法，无传参（return无效果）。
 
-即在flask的after_request钩子函数内运行的方法，传递response参数。
+- after_request
 
-upimg_save
-^^^^^^^^^^^^^^
+  即在flask的after_request钩子函数内运行的方法，传递response参数。
 
-api上传在保存图片时使用的钩子，传递可变参数filename、stream、upload_path，分别是：文件名、二进制数据、上传路径。
+- upimg_save
 
-另外，钩子中还应该有个upimg_delete方法用以删除图片[可选]，传递可变参数sha、upload_path、filename、basedir、save_result，分别是：图片唯一id、上传路径、文件名、基础路径、upimg_save返回结果。
+  api上传在保存图片时使用的钩子，传递可变参数filename、stream、upload_path，分别是：文件名、二进制数据、上传路径。
 
-profile_update
-^^^^^^^^^^^^^^^^^^
+  另外，钩子中还应该有个upimg_delete方法用以删除图片[可选]，传递可变参数sha、upload_path、filename、basedir、save_result，分别是：图片唯一id、上传路径、文件名、基础路径、upimg_save返回结果。
 
-用户成功修改个人资料时触发此钩子方法，传递关键字参数nickname、avatar
+- profile_update
 
-第三方认证相关的几个钩子
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  用户成功修改个人资料时触发此钩子方法，传递关键字参数nickname、avatar
 
-site_auth      布尔值，True定义了自身是个第三方认证的钩子
+- 第三方认证相关的几个钩子
 
-login_handler  登录页面处理器，控制了/login路由，默认返回程序自身登录页
+  - site_auth      布尔值，True定义了自身是个第三方认证的钩子
 
-login_api      登录接口处理器，必须
+  - login_handler  登录页面处理器，控制了/login路由，默认返回程序自身登录页
 
-logout_handler 登出动作处理器，必须
+  - login_api      登录接口处理器，必须
 
-管理员控制台钩子配置处有一个第三方认证，钩子只有设置了 ``site_auth = True`` 才被认为是一个第三方认证钩子。
+  - logout_handler 登出动作处理器，必须
 
-这一块至少需要实现三个函数：login_api、logout_handler、before_request，
-分别处理登录登出动作以及每次请求登录态判断，少一个，程序都会进入默认处理，
-那这个钩子恐怕就没什么意义了。
+  管理员控制台钩子配置处有一个第三方认证，钩子只有设置了 ``site_auth = True`` 才被认为是一个第三方认证钩子。
 
-login_handler是登录页面，其通过ajax登录，传递username、password、remember三个
-参数，基本可以不用管，当然，如果你的登录参数复杂，可以定义此函数返回自定义
-登录页面，要求返回值要是Flask.Response的子类，示例：
+  这一块至少需要实现三个函数：login_api、logout_handler、before_request，
+  分别处理登录登出动作以及每次请求登录态判断，少一个，程序都会进入默认处理，
+  那这个钩子恐怕就没什么意义了。
 
-.. code-block:: python
+  login_handler是登录页面，其通过ajax登录，传递username、password、remember三个
+  参数，基本可以不用管，当然，如果你的登录参数复杂，可以定义此函数返回自定义
+  登录页面，要求返回值要是Flask.Response的子类，示例：
+
+  .. code-block:: python
 
     from flask import make_response
 
@@ -195,15 +198,15 @@ login_handler是登录页面，其通过ajax登录，传递username、password�
             <button>登录</button></form>
         """)
 
-login_api是登录动作处理器，默认登录页面是ajax提交给接口，验证用户名密码，
-通过后设置cookie登录态。
+  login_api是登录动作处理器，默认登录页面是ajax提交给接口，验证用户名密码，
+  通过后设置cookie登录态。
 
-必须要自定义此方法，程序默认会传递可变参数：username, password, set_state, max_age, is_secure，
-当然你也可以不接收，转而使用request另行处理（如果自定义了login_handler），
-另外要求返回值要是Flask.Response的子类，而且要设置登录态，
-比如cookie、session（如果采用默认登录页面，返回类型要求是JSON）。
+  必须要自定义此方法，程序默认会传递可变参数：username, password, set_state, max_age, is_secure，
+  当然你也可以不接收，转而使用request另行处理（如果自定义了login_handler），
+  另外要求返回值要是Flask.Response的子类，而且要设置登录态，
+  比如cookie、session（如果采用默认登录页面，返回类型要求是JSON）。
 
-.. code-block:: python
+  .. code-block:: python
 
     from flask import request, jsonify
 
@@ -212,14 +215,14 @@ login_api是登录动作处理器，默认登录页面是ajax提交给接口，�
         passwd = request.form.get("encrypted-pass")
         return jsonify(code=0, msg="ok")
 
-logout_handler是登出动作处理器，配合login_api的登录态设置方法，比如是cookie
-要设置清除cookie，是session要删除键值。
+  logout_handler是登出动作处理器，配合login_api的登录态设置方法，比如是cookie
+  要设置清除cookie，是session要删除键值。
 
-before_request是flask的一种钩子，每次请求都先经过它“预处理”一下再交给路由
-函数，自定义认证需要通过它设置 ``g.siginin = True/False`` 设定登录成功与否
-和 ``g.userinfo`` 登录用户的信息，必须字段username，其他字段is_admin、avatar、nickname等。
+  before_request是flask的一种钩子，每次请求都先经过它“预处理”一下再交给路由
+  函数，自定义认证需要通过它设置 ``g.siginin = True/False`` 设定登录成功与否
+  和 ``g.userinfo`` 登录用户的信息，必须字段username，其他字段is_admin、avatar、nickname等。
 
-.. code-block:: python
+  .. code-block:: python
 
     def before_request():
         if check_with_cookie_or_session_login_ok:
@@ -231,122 +234,20 @@ before_request是flask的一种钩子，每次请求都先经过它“预处理�
                 nickname='',
             )
 
-.. tip::
+  .. tip::
 
     可以结合profile_update方法更新一些字段。另外可以参考现有案例
     `picbed-ssoclient <https://github.com/staugur/picbed-ssoclient>`_ 。
 
-API
-^^^^^
+.. _picbed-hook-tpl-ep:
 
-程序有一个API接口是专门给钩子准备的，端点是 ``api.ep`` ，
-url是 ``/api/extendpoint`` ，仅支持POST方法，它从URL查询参数获取两个值：
-
-Object：即钩子模块名；Action：钩子方法
-
-钩子管理器定位到Object执行（无传参）并返回Action函数结果，找不到返回404
-
-假设一个钩子helloworld，定义如下：
-
-.. code-block:: python
-
-    from flask import jsonify
-
-    def welcome():
-        return jsonify(hello="world")
-
-上述钩子加入picbed，请求如下：
-
-.. code-block:: bash
-
-    $ curl -XPOST "http://your-picbed-url/api/extendpoint?Object=helloworld&Action=welcome"
-    {"hello": "world"}
-
-.. tip::
-
-    Action钩子方法内部可以直接使用g、request等，
-    以及 ``utils.web.apilogin_required`` 等。
-
-路由
-^^^^^^^^
-
-面向前端页面专门给钩子扩展用的，端点是 ``front.ep``, url是
-``/extendpoint/<hook_name>/[route_name]``
-
-hook_name：即钩子名称，比如up2oss、picbed-smtp；
-route_name：路由名称，可选。
-
-定位到 *hook_name* 直接执行route函数（无传参），按照其结果有两种判断：
-
-1. 返回的是字符串
-
-    此时route_name无效，无论是啥，最终访问URL返回的都是字符串这个结果
-
-    示例，钩子名test（等同模块名）：
-
-    .. code-block:: python
-
-        from flask import render_template_string as render
-
-        def route():
-            return render('<b>hello world!</b>')
-
-    访问：
-
-    .. code-block:: bash
-
-        $ curl http://your-picbed-url/extendpoint/test/
-        <b>hello world!</b>
-
-        $ curl http://your-picbed-url/extendpoint/test/xxxx
-        <b>hello world!</b>
-
-2. 返回的字典对象
-
-    此时route_name有效，会从字典中查找值，最终路由返回这个值。
-    示例，钩子名test：
-
-    .. code-block:: python
-
-        from flask import render_template_string as render, jsonify
-
-        def route():
-            return dict(
-                s=render('<b>hello world!</b>'),
-                j=jsonify(text='hello world')
-            )
-
-    访问：
-
-    .. code-block:: bash
-
-        $ curl http://your-picbed-url/extendpoint/test/
-        !404
-
-        $ curl http://your-picbed-url/extendpoint/test/s
-        <b>hello world!</b>
-
-        $ curl http://your-picbed-url/extendpoint/test/j
-        {"text": "hello world"}
-
-.. tip::
-
-    route方法内部可以直接使用g、request等，
-    以及 ``utils.web.login_required`` 等。
-
-    构建路由可用url_for：
-
-    .. code-block:: python
-
-        from flask import url_for
-        url_for("front.ep", hook_name="test", route_name="xxx")
-
-模板中钩子插入点
-====================
+3.2 模板中钩子扩展点
+=======================
 
 与上面不同，这些只作用在模板内，用来在页面某位置插入HTML代码。
 
-使用方法是，在钩子内，用 ``intpl_NAME`` 赋值（intpl_是固定前缀），可以定义成字符串或者函数。
+使用方法是，在钩子内，用 ``intpl_NAME`` 赋值（intpl_是固定前缀，NAME是
+扩展点名称），可以定义成字符串或者函数。
 
 如果是函数，那么会先执行函数（结果必须是字符串），
 其结果再判断是模板文件还是HTML代码。
@@ -420,8 +321,222 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
   由于前端页面使用 `Layui <https://www.layui.com/>`_ 框架，所以模板内表单
   您需要对其格式有所了解。
 
+.. _picbed-hook-api:
+
+3.3 API
+=========
+
+程序有一个API接口是专门给钩子准备的，端点是 ``api.ep`` ，
+url是 ``/api/extendpoint`` ，仅支持POST方法，它从URL查询参数获取两个值：
+
+Object：即钩子模块名；Action：钩子方法
+
+钩子管理器定位到Object执行（无传参）并返回Action函数结果，找不到返回404
+
+假设一个钩子helloworld，定义如下：
+
+.. code-block:: python
+
+    from flask import jsonify
+
+    def welcome():
+        return jsonify(hello="world")
+
+    def just_dict():
+        return dict(hello="world")
+
+上述钩子加入picbed，请求如下：
+
+.. code-block:: bash
+
+    $ curl -XPOST "http://your-picbed-url/api/extendpoint?Object=helloworld&Action=welcome"
+    {"hello": "world"}
+
+.. tip::
+
+    Action钩子方法内部可以直接使用g、request等，
+    以及 ``utils.web.apilogin_required`` 等。
+
+.. _picbed-hook-route:
+
+3.4 路由
+==========
+
+面向前端页面专门给钩子扩展用的，端点是 ``front.ep``, url是
+``/extendpoint/<hook_name>/[route_name]``
+
+hook_name：即钩子名称，比如up2oss、picbed-smtp；
+route_name：路由名称，可选。
+
+定位到 *hook_name* 直接执行route函数（无传参），按照其结果有两种判断：
+
+1. 返回的是字符串
+
+    此时route_name无效，无论是啥，最终访问URL返回的都是字符串这个结果
+
+    示例，钩子名test（等同模块名）：
+
+    .. code-block:: python
+
+        from flask import render_template_string as render
+
+        def route():
+            return render('<b>hello world!</b>')
+
+    访问：
+
+    .. code-block:: bash
+
+        $ curl http://your-picbed-url/extendpoint/test/
+        <b>hello world!</b>
+
+        $ curl http://your-picbed-url/extendpoint/test/xxxx
+        <b>hello world!</b>
+
+2. 返回的字典对象
+
+    此时route_name有效，会从字典中查找值，最终路由返回这个值。
+    示例，钩子名test：
+
+    .. code-block:: python
+
+        from flask import render_template_string as render, jsonify
+
+        def route():
+            return dict(
+                s=render('<b>hello world!</b>'),
+                j=jsonify(text='hello world')
+            )
+
+    访问：
+
+    .. code-block:: bash
+
+        $ curl http://your-picbed-url/extendpoint/test/
+        !404
+
+        $ curl http://your-picbed-url/extendpoint/test/s
+        <b>hello world!</b>
+
+        $ curl http://your-picbed-url/extendpoint/test/j
+        {"text": "hello world"}
+
+.. tip::
+
+    route方法内部可以直接使用g、request等，
+    以及 ``utils.web.login_required`` 等。
+
+    构建路由可用url_for：
+
+    .. code-block:: python
+
+        from flask import url_for
+        url_for("front.ep", hook_name="test", route_name="xxx")
+
+.. _picbed-hook-static:
+
+3.5 静态文件
+==============
+
+如果你的扩展比较复杂，定义成了一个包，里面有templates、static目录，那么
+如何从模板中访问扩展内的静态文件呢？
+
+这就用到了 :meth:`libs.hook.HookManager.emit_assets` 方法，可以在模板中直接
+调用它构建静态文件URI。
+
+说明
+^^^^^^^^
+
+- 扩展中的静态文件
+
+  .. code-block:: text
+
+    your_hook/
+    ├── __init__.py
+    ├── static
+    │   ├── css
+    │   │   └── style.css
+    │   ├── hello.png
+    │   └── js
+    │       └── demo.js
+    └── templates
+        └── demo.html
+
+- 在模板中访问静态文件
+
+  钩子管理器给app附加了一条路由可以访问扩展内静态文件：assets，构建如下：
+  
+  .. code-block:: python
+
+    url_for("assets", hook_name="your_hook", filename="css/style.css")
+    
+  不过这稍微有点长，不过好在已经在模板中注册了一个函数，使用
+  **emit_assets** 更方便：
+
+  .. code-block:: python
+
+    emit_assets("your_hook", "css/style.css")
+
+.. tip::
+
+    以.css和.js结尾的文件会自动解析成引入（link、script），
+    可以通过设置 **_raw=True** 要求不处理。
+
+    另外，如果需要构建文件的全路径（域名），通过设置 **_external=True** 即可
+
+    有个短名称es可以代替emit_assets，哈哈，不用记太多词。
+
+示例
+^^^^^^^^
+
+模板中这么写HTML：
+
+.. code-block:: html
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        {{ emit_assets('your_hook','css/style.css') }}
+    </head>
+    <body>
+        <div class="image">
+            <img src="{{ emit_assets('your_hook', 'hello.png') }}">
+        </div>
+
+        <div class="showJsPath">
+            <b>{{ emit_assets('your_hook', 'js/demo.js', _raw=True) }}</b>
+        </div>
+
+        {{ emit_assets("your_hook", filename="js/demo.js") }}
+    </body>
+    </html>
+
+页面上查看源码是这样：
+
+.. code-block:: html
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <link rel="stylesheet" href="/assets/your_hook/css/style.css">
+    </head>
+    <body>
+        <div class="image">
+            <img src="/assets/your_hook/hello.png">
+        </div>
+
+        <div class="showJsPath">
+            <b>/assets/your_hook/js/demo.js</b>
+        </div>
+
+        <script type="text/javascript" src="/assets/your_hook/js/demo.js"></script>
+    </body>
+    </html>
+
+.. _picbed-hook-how-write:
+
 如何编写钩子？
-----------------
+=================
 
 可参考内置钩子和已有第三方。
 

@@ -2,7 +2,7 @@
 {% if g.site.beian %}
     {% if "," in g.site.beian %}
     <a href="http://www.beian.miit.gov.cn" target="_blank">{{ g.site.beian.split(",")[0] }}</a>
-    <a href="http://www.beian.gov.cn" target="_blank">{{ g.site.beian.split(",")[1] }}</a>
+    <a href="http://www.beian.gov.cn" target="_blank"><img src="{{ url_for('static', filename='img/beian.png') }}">{{ g.site.beian.split(",")[1] }}</a>
     {% else %}
     <a href="http://www.beian.miit.gov.cn" target="_blank">{{ g.site.beian }}</a>
     {% endif %}

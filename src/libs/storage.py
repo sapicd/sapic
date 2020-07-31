@@ -155,7 +155,7 @@ class LocalStorage(BaseStorage):
 
 
 class RedisStorage(BaseStorage):
-    """Use redis stand-alone storage"""
+    """Use redis stand-alone or cluster storage"""
 
     DEFAULT_INDEX = rsp("dat")
 
