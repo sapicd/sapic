@@ -79,9 +79,13 @@ class HookManager(object):
         self.app = app
 
     @property
+    def _pid(self):
+        return str(getpid())
+
+    @property
     def __last_load_time(self):
         hlt = self.__storage.get("hookloadtime") or {}
-        return hlt.get(getpid())
+        return hlt.get(self._pid)
 
     @__last_load_time.setter
     def __last_load_time(self, timestamp):
@@ -91,7 +95,7 @@ class HookManager(object):
         if timestamp == 0:
             hlt = {k: 0 for k, v in iteritems(hlt)}
         else:
-            hlt[getpid()] = timestamp
+            hlt[self._pid] = timestamp
         self.__storage.set("hookloadtime", hlt)
 
     @__last_load_time.deleter
@@ -105,7 +109,7 @@ class HookManager(object):
     def __ensure_reloaded(self):
         hlt = self.__storage.get("hookloadtime") or {}
         hlt = {int(k): v for k, v in iteritems(hlt)}
-        myself = hlt.get(getpid(), 0)
+        myself = hlt.get(self._pid, 0)
         if 0 in hlt.values() or (time() - myself) > self.__MAX_RELOAD_TIME:
             self.__hooks = {}
             self.__last_load_time = time()
@@ -200,7 +204,7 @@ class HookManager(object):
                     if getattr(hm, '__mtime__', 0) < getmtime(
                         self.__get_fileorparent(hm)
                     ):
-                        del hm
+                        del modules[hn]
                 try:
                     ho = __import__(hn)
                 except ImportError as e:
