@@ -758,6 +758,8 @@ def waterfall():
                 ask_albums = parse_valid_comma(album)
                 if result and isinstance(result, (tuple, list)):
                     for i in result:
+                        if not i or not isinstance(i, dict):
+                            continue
                         albums.append(i.get("album"))
                         i.update(
                             senders=json.loads(i["senders"]),
