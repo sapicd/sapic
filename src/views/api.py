@@ -275,6 +275,7 @@ def hook():
                 name=h.name,
                 description=h.description,
                 version=h.version,
+                appversion=h.appversion,
                 author=h.author,
                 email=h.email,
                 catalog=h.catalog,
@@ -964,6 +965,29 @@ def upload():
             return res
         stream = fp.stream.read()
         suffix = splitext(fp.filename)[-1]
+        #: 处理图片二进制的钩子
+        for h in current_app.extensions["hookmanager"].call(
+            "upimg_stream_processor",
+            _args=(stream, suffix),
+        ):
+            #: 实际只有一个成功 TODO 更新后的stream作为新参数
+            if h.get("code") == 0 and isinstance(h.get("data"), dict) and \
+                    h.get("data").get("stream"):
+                stream = h["data"]["stream"]
+        for h in current_app.extensions["hookmanager"].call(
+            "upimg_stream_interceptor",
+            _args=(stream, suffix),
+            _mode="any_false",
+        ):
+            if h.get("code") != 0:
+                res.update(
+                    msg="Interceptor processing rejection, upload aborted",
+                    errors={
+                        h["sender"]: h.get("msg")
+                    }
+                )
+                return res
+
         filename = secure_filename(fp.filename)
         if "." not in filename:
             filename = "%s%s" % (generate_random(8), suffix)

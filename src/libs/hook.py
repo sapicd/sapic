@@ -402,33 +402,44 @@ class HookManager(object):
             func = getattr(h.proxy, _funcname, None)
             if callable(func):
                 try:
-                    if _args and _kwargs:
+                    if isinstance(_args, (list, tuple)) and \
+                            isinstance(_kwargs, dict):
                         result = func(*_args, **_kwargs)
-                    elif _kwargs:
+                    elif isinstance(_kwargs, dict):
                         result = func(**_kwargs)
-                    elif _args:
+                    elif isinstance(_args, (list, tuple)):
                         result = func(*_args)
                     else:
                         result = func()
                 except (ValueError, TypeError, Exception) as e:
-                    result = dict(code=1, msg=str(e), sender=h.name)
+                    result = dict(code=1, msg=str(e))
                 else:
                     if isinstance(result, dict):
-                        result["sender"] = h.name
                         if "code" not in result:
                             result["code"] = 0
                     else:
-                        result = dict(code=0, sender=h.name, data=result)
+                        result = dict(code=0, data=result)
+
+                result["sender"] = h.name
                 #: Use `_every` to change the hook execution result
                 if callable(_every):
-                    _er = _every(result)
-                    if _er and isinstance(_er, dict) and "code" in _er and \
-                            "sender" in _er:
-                        result = _er
+                    r = _every(result)
+                    if isinstance(r, dict) and "code" in r:
+                        if "sender" not in r:
+                            r["sender"] = h.name
+                        result = r
                 response.append(result)
+
                 if _mode == "any_true":
+                    #: 任意钩子处理成功时则中止后续
                     if result.get("code") == 0:
                         break
+
+                elif _mode == "any_false":
+                    #: 任意钩子处理失败时则中止后续
+                    if result.get("code") != 0:
+                        break
+
         return response
 
     def call_intpl(self, _tplname, _include=None, _exclude=None, **context):

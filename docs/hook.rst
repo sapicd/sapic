@@ -136,6 +136,9 @@
 
     $ pip install up2smms up2superbed
 
+钩子在更新版本后，管理员可以在web中通过“安装第三方包”的功能进行升级式安装
+或手动安装，完成后，程序会自动更新钩子模块，实现新功能。
+
 3. 钩子开发
 -------------
 
@@ -147,19 +150,74 @@
 运行在服务端程序代码中用来扩展某些功能的地方，为Python函数，下面是扩展点
 名称及说明。
 
+以下扩展点传递的参数和要求返回的格式、内容可能各不相同，大概分为：
+
+**接口型**
+
+  通常用在RESTful API环境中，要求返回dict格式，至少包含code字段。
+
+  code为0表示处理成功，非0表示失败，此处应该有msg字段表示错误消息。
+
+  在扩展点内用葡萄表示：🍇
+
+**路由型**
+
+  通常当作视图函数就行
+
+  在扩展点内用樱桃表示：🍒
+
+**随缘型**
+
+  可能没有传参、不要求返回，也没有代表水果，随缘就好~
+
 - before_request
 
   即在flask的before_request钩子函数内运行的方法，无传参（return无效果）。
 
 - after_request
 
-  即在flask的after_request钩子函数内运行的方法，传递response参数。
+  即在flask的after_request钩子函数内运行的方法，传递response参数，无需return
 
-- upimg_save
+  例如：
 
-  api上传在保存图片时使用的钩子，传递可变参数filename、stream、upload_path，分别是：文件名、二进制数据、上传路径。
+  .. code-block:: python
 
-  另外，钩子中还应该有个upimg_delete方法用以删除图片[可选]，传递可变参数sha、upload_path、filename、basedir、save_result，分别是：图片唯一id、上传路径、文件名、基础路径、upimg_save返回结果。
+    def after_request(res):
+        res.headers.add("Access-Control-Allow-Headers", "Authorization")
+
+- upimg_save 🍇
+
+  api上传在保存图片时使用的钩子，传递参数filename、stream、upload_path，
+  分别是：文件名、二进制数据、上传路径。
+
+  另外，钩子中还应该有个upimg_delete方法用以删除图片[可选]，传递参数sha、
+  upload_path、filename、basedir、save_result，分别是：图片唯一id、上传路径、
+  文件名、基础路径、upimg_save返回结果。
+
+- upimg_stream_processor 🍇
+
+  上传图片的处理钩子，传递参数stream、suffix，分别是：图片的二进制、后缀（
+  比如.png），第三方可以处理并返回新的stream。
+
+  适用场景：图片添加水印、裁剪等等。
+
+  如果返回新的替换原图二进制，要求返回格式：
+
+  .. code-block:: python
+
+    dict(code=0, data=dict(stream="新的图片二进制内容"))
+
+  遗憾的是，假设此扩展点有多个钩子进行处理，但最终只会是最后一个能成功
+  替换原图。
+
+- upimg_stream_interceptor 🍇
+
+  上传图片的处理钩子，传递参数stream、suffix，分别是：图片的二进制、后缀（
+  比如.png），第三方可以处理并确定是否继续，和上一个区别是，此扩展点
+  遇错返回，即处理的钩子任何一个返回了处理失败的结果，上传则中止，
+  并返回错误信息给用户。
+
+  适用场景：检测到图片涉及敏感信息时拒绝上传。
 
 - profile_update
 
@@ -169,11 +227,11 @@
 
   - site_auth      布尔值，True定义了自身是个第三方认证的钩子
 
-  - login_handler  登录页面处理器，控制了/login路由，默认返回程序自身登录页
+  - login_handler  🍒登录页面处理器，控制了/login路由，默认返回程序自身登录页
 
-  - login_api      登录接口处理器，必须
+  - login_api      🍇登录接口处理器，必须
 
-  - logout_handler 登出动作处理器，必须
+  - logout_handler 🍒登出动作处理器，必须
 
   管理员控制台钩子配置处有一个第三方认证，钩子只有设置了 ``site_auth = True`` 才被认为是一个第三方认证钩子。
 

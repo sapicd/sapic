@@ -26,7 +26,6 @@ worker_class = "gevent"
 worker_connections = 1000
 worker_tmp_dir = "/dev/shm"
 max_requests = 10000
-raw_env = ["IS_GUNICORN=true"]
 
 if IS_RUN:
     daemon = False
