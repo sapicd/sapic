@@ -598,7 +598,10 @@ def is_valid_verion(version):
 
 
 def is_match_appversion(appversion=None):
-    """确认当前应用版本是否符合appversion要求"""
+    """确认当前应用版本是否符合appversion要求
+
+    :param str appversion: 使用操作符和分组符匹配程序版本
+    """
     #: 没有要求appversion则默认认为兼容所有版本
     if not appversion:
         return True
@@ -609,11 +612,20 @@ def is_match_appversion(appversion=None):
     except ImportError as e:
         err_logger.error(e)
     else:
-        ver = semver.VersionInfo.parse(PICBED_VERSION)
-        try:
-            return ver.match(appversion)
-        except ValueError:
-            return ver.match(">={}".format(appversion))
+        sysver = semver.VersionInfo.parse(PICBED_VERSION)
+
+        def vermatch(check_ver):
+            try:
+                return sysver.match(check_ver)
+            except ValueError:
+                return sysver.match(">={}".format(check_ver))
+
+        avs = comma_pat.split(appversion)
+        for v in avs:
+            if not vermatch(v):
+                return False
+        else:
+            return True
 
 
 def parse_author_mail(author):
