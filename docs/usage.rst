@@ -196,12 +196,8 @@ Chrome, Microsoft Edge, Safari, Opera Next, 和 Firefox。
 只有开启用户脚本后才能产生脚本链接，不严格要求填写LinkToken，但是没有的话将
 会是匿名上传且不支持脚本更新。
 
-.. note::
-
-    脚本更新功能不在v1.5.0中，master最新代码、1.5.1修复版及之后版本可用。
-
-开启并保存后，点击上图开关旁边的小图标，能直接打开脚本地址，此时扩展会自动
-识别出用户脚本，给出安装界面：
+开启并 **保存** 后，点击上图开关旁边的小图标，能直接打开脚本地址，此时扩展
+会自动识别出用户脚本，给出安装界面：
 
 |picbed_userscript_install|
 
@@ -210,7 +206,7 @@ MacOS下使用Control/Option+点击，效果如下：
 
 |picbed_userscript_upload|
 
-通过Image URL方式上传，除基本图片外(含svg)，支持blob、base64类型。
+通过Image URL方式上传，除基本图片外(含svg)，支持base64类型。
 
 限制条件：
 
@@ -232,11 +228,6 @@ MacOS下使用Control/Option+点击，效果如下：
 
   - 另外，如果是被墙的网站图片，你的服务器在国内，那么很遗憾无法下载，应该
     会提示：未获取到图片或不允许的图片格式。
-
-.. note::
-
-    此用户脚本从 `Search-By-Image <https://github.com/ccloli/Search-By-Image/>`_
-    移植而来，如您正在使用它，注意快捷键冲突。
 
 .. _picbed-mypic:
 

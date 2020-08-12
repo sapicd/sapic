@@ -30,13 +30,8 @@ function Monthly2Number() {
     esac
 }
 
-function DeleteHookloadtime() {
-    python -c "from libs.storage import get_storage;s=get_storage();del s['hookloadtime']"
-}
-
 case $1 in
 start)
-    DeleteHookloadtime
     if [ -f $pidfile ]; then
         echo "Has pid($(cat $pidfile)) in $pidfile, please check, exit." ; exit 1
     else
@@ -50,7 +45,6 @@ start)
 
 run)
     #前台运行
-    DeleteHookloadtime
     picbed_isrun=true gunicorn app:app -c $cfg
     ;;
 
@@ -60,11 +54,12 @@ stop)
     else
         echo "Stopping ${procname}..."
         pid=$(cat $pidfile)
-        kill $pid
+        kill -TERM $pid
+        sleep 0.2
         while [ -x /proc/${pid} ]
         do
             echo "Waiting for ${procname} to shutdown ..."
-            kill $pid ; sleep 1
+            kill -QUIT $pid ; sleep 0.5
         done
         echo "${procname} stopped"
         rm -f $pidfile
@@ -94,7 +89,6 @@ status)
     ;;
 
 reload)
-    DeleteHookloadtime
     if [ -f $pidfile ]; then
         kill -HUP $(cat $pidfile)
     fi

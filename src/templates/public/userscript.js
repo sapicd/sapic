@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Upload to picbed <{{ request.host }}@{{ g.userinfo.username }}>
-// @version     0.1.4
+// @version     0.2.0
 // @description 上传图片到picbed
 // @author      staugur
 // @namespace   https://www.saintic.com/
@@ -8,165 +8,176 @@
 // @include     https://*
 // @exclude     {{ request.url_root }}*
 // @exclude     https://*.aliyun.com/*
-// @run-at      document-start
-// @grant       GM_getValue
 // @grant       GM_info
 // @created     2020-05-27
-// @modified    2020-07-03
+// @modified    2020-08-12
 // @github      https://github.com/staugur/picbed
 // @supportURL  https://github.com/staugur/picbed/issues/
 // @updateURL   {{ url_for('front.userscript', LinkToken=g.userinfo.ucfg_userscript_token, _external=True) }}
 // @icon        {{ g.site.favicon or url_for('static', filename='img/favicon.png', _external=True) }}
 // ==/UserScript==
 
-'use strict';
+(function () {
+    'use strict';
 
-var setting = {
-    "hot_key": "{{ g.userinfo.ucfg_userscript_hotkey or 'ctrlKey' }}",
-    "server_url": "{{ url_for('api.upload', _external=True) }}",
-    "link_token": "{{ g.userinfo.ucfg_userscript_token }}",
-    "upload_name": "{{ g.site.upload_field or 'picbed' }}",
-};
-var opt_panel = null;
-var disable_contextmenu = false;
-var img_src = null;
-var last_update = 0;
-var xhr = new XMLHttpRequest();
-var reader = new FileReader();
-reader.onload = function (file) {
-    upload_file(this.result);
-};
+    const cfg = {
+        "hot_key": "{{ g.userinfo.ucfg_userscript_hotkey or 'ctrlKey' }}",
+        "api_url": "{{ url_for('api.upload', _external=True) }}",
+        "link_token": "{{ g.userinfo.ucfg_userscript_token }}",
+        "upload_name": "{{ g.site.upload_field or 'picbed' }}",
+        "id": "picbed-menu",
+    };
 
-var i18n = {
-    'zh': {
-        'ca': '确认终止上传文件吗？',
-        'us': '上传完成！',
-        'uf': '上传失败！',
-        'utp': '上传到picbed',
-        'iu': '正在上传...',
-    },
-    'en': {
-        'ca': 'Are you sure to cancel uploading?',
-        'us': 'Upload finished!',
-        'uf': 'Upload failed!',
-        'utp': 'Upload to picbed',
-        'iu': 'Uploading...',
-    }
-};
-var lang = (navigator.language || navigator.browserLanguage).split('-')[0];
-if (!i18n[lang]) lang = 'en';
-
-function create_panel() {
-    //图片右键弹出的"上下文"菜单
-    opt_panel = document.createElement('div');
-    opt_panel.style.cssText = 'width: 180px; font-size: 14px; text-align: center; position: absolute; color: #000; z-index: 9999999999; box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.5); border: 1px solid #CCC; background: rgba(255, 255, 255, 0.9); border-top-right-radius: 2px; border-bottom-left-radius: 2px; font-family: "Arial"; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;';
-    document.body.appendChild(opt_panel);
-
-    var top = document.createElement('div');
-    top.style.cssText = 'height: 24px; line-height: 24px; font-size: 12px; overflow: hidden; margin: 0 auto; padding: 0 5px;';
-    top.className = 'img-opt-top';
-    top.innerHTML = '<div class="top_url" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; width: 100%; height: 24px;"></div><style>.img-opt-item{color: #000000; transition: all 0.2s linear; -webkit-transition: all 0.1s linear;}.img-opt-item:hover{background: #eeeeee;}</style>';
-    opt_panel.appendChild(top);
-
-    var item = document.createElement('div');
-    item.style.cssText = 'width: 100%; height: 24px; line-height: 24px; cursor: pointer;';
-    item.className = 'img-opt-item';
-    item.textContent = i18n[lang]['utp'];
-    item.setAttribute('img-opt', 'up2picbed');
-    opt_panel.appendChild(item);
-}
-
-function hide_panel() {
-    if (!opt_panel || !opt_panel.parentElement) return;
-    img_src = null;
-    opt_panel.parentElement && opt_panel.parentElement.removeChild(opt_panel);
-}
-
-function upload_file(data) {
-    if (xhr.readyState != 0) xhr.abort();
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4) {
-            if (xhr.status === 200) {
-                var res = JSON.parse(xhr.responseText);
-                console.log(res);
-                if (res.code === 0) {
-                    img_src = res.src
-                    opt_panel.getElementsByClassName('top_url')[0].style.marginTop = '0px';
-                    opt_panel.getElementsByClassName('top_url')[0].textContent = i18n[lang]['us'];
-                    setTimeout(hide_panel, 3000);
-                } else {
-                    opt_panel.getElementsByClassName('top_url')[0].style.marginTop = '0px';
-                    opt_panel.getElementsByClassName('top_url')[0].textContent = res.msg;
+    let isObject = v => Object.prototype.toString.call(v) === '[object Object]',
+        hasMenu = () => document.getElementById(cfg.id) ? true : false,
+        getMenu = () => document.getElementById(cfg.id),
+        hasSendingMenu = () => {
+            if (hasMenu()) {
+                let p = getMenu();
+                if (p && p.dataset.sendStatus === "sending") {
+                    return true;
                 }
+            }
+            return false;
+        },
+        setBtnText = text => {
+            if (text) getMenu().querySelector("button").textContent = text;
+        },
+        removeMenu = () => {
+            if (hasMenu()) getMenu().remove();
+        };
+
+    function upload(src, opts) {
+        if (!src) return false;
+        if (!opts) opts = {};
+        if (!isObject(opts)) return false;
+
+        let data = new FormData();
+        data.append(cfg.upload_name, src);
+        data.append('origin', `userscript/${GM_info.script.version}`);
+        Object.assign(opts, {
+            url: cfg.api_url,
+            method: "POST",
+            headers: {
+                Authorization: `LinkToken ${cfg.link_token}`
+            },
+            data: data,
+        });
+
+        let xhr = new XMLHttpRequest(),
+            error = typeof opts.error === 'function' ? opts.error : msg => {
+                console.error(msg);
+            };
+        xhr.responseType = 'json';
+        xhr.open(opts.method, opts.url, true);
+        for (let key in opts.headers) {
+            xhr.setRequestHeader(key, opts.headers[key]);
+        }
+        xhr.onloadstart = opts.start || null;
+        xhr.onload = function () {
+            typeof opts.success === 'function' && opts.success(xhr.response);
+        };
+        xhr.onerror = error("请求错误");
+        try {
+            xhr.send(opts.data);
+        } catch (e) {
+            error("网络异常");
+        };
+    }
+
+    function createMenu(e, onClick) {
+        if (hasSendingMenu()) return false;
+        removeMenu();
+
+        let src = e.target.src;
+        let wrapperCss = [
+            "position: absolute",
+            `left: ${e.pageX}px`,
+            `top:${e.pageY}px`,
+            "z-index: 9999999",
+            "width: 200px",
+            "background-color: #fff",
+            "color: #000",
+            "text-align: center",
+            "border: 1px #409eff solid",
+            "font-size: 14px",
+            "line-height: 24px",
+            "overflow: hidden",
+            "white-space: nowrap",
+            `text-overflow: ".../${src.split("/").slice(-1)[0]}"`,
+        ];
+        let wrapper = document.createElement('div');
+        wrapper.style.cssText = wrapperCss.join(";");
+        wrapper.textContent = src;
+        wrapper.setAttribute('id', cfg.id);
+
+        let btnCss = [
+            'display: block',
+            'margin: 0 auto',
+            'width: 100%',
+            'padding: 5px 10px',
+            'font-size: 12px',
+            'background-color: #fff',
+            'color: #409eff',
+            'border: 0px',
+            'cursor: pointer',
+            'user-select: none',
+        ];
+        let btn = document.createElement('button');
+        btn.style.cssText = btnCss.join(";");
+        btn.textContent = "点击上传";
+        btn.onclick = onClick;
+
+        wrapper.appendChild(btn);
+        document.body.appendChild(wrapper);
+    }
+
+    document.addEventListener('mousedown', function (e) {
+        //恢复默认右键菜单
+        document.oncontextmenu = null;
+        //在图片上使用 快捷键+鼠标右击 打开自定义菜单
+        if (e[cfg.hot_key] === true && e.button === 2) {
+            if (e.target.tagName.toLowerCase() === 'img' && e.target.src) {
+                //确定选中图片右键，打开上传菜单
+                document.oncontextmenu = () => false;
+                createMenu(e, () => {
+                    let menu = getMenu();
+                    menu.querySelector("button").onclick = null;
+                    menu.querySelector("button").style.cursor = 'text';
+                    if (/^(?:blob:|filesystem:)/.test(e.target.src)) {
+                        setBtnText("不支持的图片格式");
+                        return false;
+                    }
+                    if (location.protocol === "https:" && cfg.api_url.split("://")[0] === "http") {
+                        setBtnText("禁止混合内容");
+                        return false;
+                    }
+                    upload(e.target.src, {
+                        start: () => {
+                            menu.dataset.sendStatus = "sending";
+                            setBtnText("正在上传...");
+                        },
+                        success: res => {
+                            if (res.code === 0) {
+                                menu.dataset.sendStatus = "success";
+                                setBtnText("上传成功");
+                            } else {
+                                menu.dataset.sendStatus = "fail";
+                                setBtnText(res.msg);
+                            }
+                        },
+                        error: msg => {
+                            menu.dataset.sendStatus = "error";
+                            setBtnText(msg);
+                        },
+                    });
+                });
+            }
+        } else {
+            //非面板内的点击/右击等操作（且无发送中状态）则关闭菜单
+            if (e.target.id !== cfg.id && e.target.parentElement.id !== cfg.id) {
+                if (!hasSendingMenu()) removeMenu();
             }
         }
-    };
-    xhr.upload.onprogress = function (event) {
-        opt_panel.getElementsByClassName('top_url')[0].style.marginTop = '0px';
-        opt_panel.getElementsByClassName('top_url')[0].textContent = i18n[lang]['iu'];
-    };
-    xhr.onerror = function () {
-        alert(i18n[lang]['uf']);
-    };
-    var form = new FormData();
-    xhr.open('POST', setting.server_url);
-    xhr.setRequestHeader('Authorization', 'LinkToken ' + setting.link_token);
-    form.append(setting.upload_name, data);
-    form.append('origin', 'userscript/' + GM_info.script.version);
-    xhr.send(form);
-    opt_panel.getElementsByClassName('top_url')[0].style.marginTop = '-48px';
-}
-
-function upload_blob_url(url) {
-    if (!url) return;
-    var req = new XMLHttpRequest();
-    req.open('GET', url);
-    req.responseType = 'blob';
-    req.onload = function () {
-        reader.readAsDataURL(req.response);
-    };
-    req.onerror = function () {
-        alert(i18n[lang]['uf']);
-    };
-    req.send();
-}
-
-document.addEventListener('mousedown', function (event) {
-    if (disable_contextmenu === true) {
-        document.oncontextmenu = null;
-        disable_contextmenu = false;
-    }
-    //event.button: 0是单击，2是右击
-    if (event[setting.hot_key] === true && event.button === 2) {
-        if (event.target.tagName.toLowerCase() == 'img' && event.target.src != null) {
-            if (opt_panel === null) create_panel();
-            else {
-                if (last_update != GM_getValue('timestamp', 0)) {
-                    last_update = GM_getValue('timestamp', 0);
-                    opt_panel.parentElement && opt_panel.parentElement.removeChild(opt_panel);
-                    create_panel();
-                } else document.body.appendChild(opt_panel);
-            }
-            opt_panel.style.left = (document.documentElement.offsetWidth + (document.documentElement.scrollLeft || document.body.scrollLeft) - event.pageX >= 200 ? event.pageX : event.pageX >= 200 ? event.pageX - 200 : 0) + 'px';
-            opt_panel.style.top = (event.pageY + opt_panel.offsetHeight < (document.documentElement.scrollTop || document.body.scrollTop) + document.documentElement.clientHeight ? event.pageY : event.pageY >= opt_panel.scrollHeight ? event.pageY - opt_panel.offsetHeight : 0) + 'px';
-            disable_contextmenu = true;
-            document.oncontextmenu = function () {
-                return false;
-            };
-            opt_panel.getElementsByClassName('top_url')[0].style.marginTop = '0px';
-            opt_panel.getElementsByClassName('top_url')[0].textContent = event.target.src;
-            img_src = event.target.src;
-        } else hide_panel();
-    } else if (opt_panel != null) {
-        //打开panel后的单击、右击页面动作处理
-        if (event.target.compareDocumentPosition(opt_panel) === 10 || event.target.compareDocumentPosition(opt_panel) === 0) {
-            if (event.target.className === 'img-opt-item' && event.button === 0) {
-                //点击了panel内的item
-                if (event.target.getAttribute('img-opt') === "up2picbed") {
-                    if (/^(?:blob:|filesystem:)/.test(img_src)) upload_blob_url(img_src);
-                    else upload_file(img_src)
-                }
-            } else if (event.button != 0) hide_panel();
-        } else hide_panel();
-    }
-}, true);
+    }, true);
+})();

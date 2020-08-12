@@ -201,14 +201,11 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
     
     使用docker-compose启动，已经在配置中完成了，直接启动就好了。
 
-    注意：下面两个-f后面 ``[ ]`` 中括号在执行时替换为大括号{}，因为本文档
-    主题的原因，不允许出现双大括号，所以只能这么显示。
-
     4.1.1 设置数据卷存放目录所有人有执行权（否则可能nginx 403权限拒绝）
 
     .. code-block:: bash
 
-        $ chmod +x $(docker info -f '[[ .DockerRootDir ]]')/volumes
+        $ chmod +x $(docker info -f '{{ .DockerRootDir }}')/volumes
 
     4.1.2 nginx配置
 
@@ -216,7 +213,7 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
 
     .. code-block:: bash
 
-        $ docker volume inspect -f '[[ .Mountpoint ]]' picbed_static
+        $ docker volume inspect -f '{{ .Mountpoint }}' picbed_static
         /var/lib/docker/volumes/picbed_static/_data
 
     配置示例：

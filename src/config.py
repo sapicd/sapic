@@ -50,29 +50,12 @@ REDIS = envs.get("picbed_redis_url")
 # rediscluster://host:port,host:port...
 
 
-#: 存储一些非核心数据的相关设置
-STORAGE = {
-
-    "Method": envs.get("picbed_storage_method", "redis"),
-    #: 存储方法，目前支持: local, redis(rediscluster)
-
-    "LocalPath": envs.get("picbed_storage_local_path"),
-    #: 当存储方法为local时此值有效，格式: path
-    #: -- path总是建议为绝对目录，默认为: SysTempDir/picbed.dat
-
-    "RedisURL": envs.get("picbed_storage_redis_url") or REDIS,
-    #: 当存储方法为redis时此值有效，格式参考REDIS
-    #: -- 仅使用redis单库的一个hash，默认为: picbed:dat
-}
-
 if __name__ == "__main__":
-    #: debug print
     from json import dumps
     print(dumps(
         {
             "global": GLOBAL,
             "redis": REDIS,
-            "storage": STORAGE,
         },
         indent=4
     ))

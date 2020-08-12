@@ -16,7 +16,8 @@ from os import listdir, getpid
 from os.path import join, dirname, abspath, isdir, isfile, splitext, basename,\
     getmtime
 from jinja2 import ChoiceLoader, FileSystemLoader, PackageLoader
-from flask import render_template, render_template_string, Markup
+from flask import render_template, render_template_string, Markup, abort, \
+    send_from_directory, url_for
 from utils.tool import Attribution, is_valid_verion, is_match_appversion, \
     logger, parse_author_mail
 from utils._compat import string_types, integer_types, iteritems, text_type, \
@@ -43,6 +44,9 @@ class HookManager(object):
         self.__MAX_RELOAD_TIME = int(GLOBAL["HookReloadTime"] or reload_time)
         self.__third_hooks = third_hooks
         self.__last_load_time = time()
+        #: hook static endpoint and url_path
+        self.__static_endpoint = "assets"
+        self.__static_url_path = "/{}".format(self.__static_endpoint)
         #: local and thirds hooks data
         self.__hooks = {}
         #: Initialize app via a factory
@@ -55,21 +59,33 @@ class HookManager(object):
         app.jinja_env.globals.update(
             intpl=self.call_intpl,
             get_call_list=self.get_call_list,
+            emit_assets=self.emit_assets,
+            es=self.emit_assets,
         )
         #: Custom add multiple template folders.
         app.jinja_loader = ChoiceLoader([
             app.jinja_loader,
             FileSystemLoader(self.__get_valid_tpl),
         ])
+        #: Add a static rule for plugins
+        app.add_url_rule(
+            '{}/<hook_name>/<path:filename>'.format(self.__static_url_path),
+            endpoint=self.__static_endpoint,
+            view_func=self._send_static_file,
+        )
         #: register extension with app
         app.extensions = getattr(app, 'extensions', None) or {}
         app.extensions['hookmanager'] = self
         self.app = app
 
     @property
+    def _pid(self):
+        return str(getpid())
+
+    @property
     def __last_load_time(self):
         hlt = self.__storage.get("hookloadtime") or {}
-        return hlt.get(getpid())
+        return hlt.get(self._pid)
 
     @__last_load_time.setter
     def __last_load_time(self, timestamp):
@@ -79,7 +95,7 @@ class HookManager(object):
         if timestamp == 0:
             hlt = {k: 0 for k, v in iteritems(hlt)}
         else:
-            hlt[getpid()] = timestamp
+            hlt[self._pid] = timestamp
         self.__storage.set("hookloadtime", hlt)
 
     @__last_load_time.deleter
@@ -93,7 +109,7 @@ class HookManager(object):
     def __ensure_reloaded(self):
         hlt = self.__storage.get("hookloadtime") or {}
         hlt = {int(k): v for k, v in iteritems(hlt)}
-        myself = hlt.get(getpid(), 0)
+        myself = hlt.get(self._pid, 0)
         if 0 in hlt.values() or (time() - myself) > self.__MAX_RELOAD_TIME:
             self.__hooks = {}
             self.__last_load_time = time()
@@ -188,7 +204,7 @@ class HookManager(object):
                     if getattr(hm, '__mtime__', 0) < getmtime(
                         self.__get_fileorparent(hm)
                     ):
-                        del hm
+                        del modules[hn]
                 try:
                     ho = __import__(hn)
                 except ImportError as e:
@@ -232,6 +248,7 @@ class HookManager(object):
             "time": time(),
             "catalog": getattr(f_obj, "__catalog__", None),
             "tplpath": join(self.__get_fileorparent(f_obj, True), "templates"),
+            "atspath": join(self.__get_fileorparent(f_obj, True), "static"),
         })
 
     @property
@@ -385,33 +402,44 @@ class HookManager(object):
             func = getattr(h.proxy, _funcname, None)
             if callable(func):
                 try:
-                    if _args and _kwargs:
+                    if isinstance(_args, (list, tuple)) and \
+                            isinstance(_kwargs, dict):
                         result = func(*_args, **_kwargs)
-                    elif _kwargs:
+                    elif isinstance(_kwargs, dict):
                         result = func(**_kwargs)
-                    elif _args:
+                    elif isinstance(_args, (list, tuple)):
                         result = func(*_args)
                     else:
                         result = func()
                 except (ValueError, TypeError, Exception) as e:
-                    result = dict(code=1, msg=str(e), sender=h.name)
+                    result = dict(code=1, msg=str(e))
                 else:
                     if isinstance(result, dict):
-                        result["sender"] = h.name
                         if "code" not in result:
                             result["code"] = 0
                     else:
-                        result = dict(code=0, sender=h.name, data=result)
+                        result = dict(code=0, data=result)
+
+                result["sender"] = h.name
                 #: Use `_every` to change the hook execution result
                 if callable(_every):
-                    _er = _every(result)
-                    if _er and isinstance(_er, dict) and "code" in _er and \
-                            "sender" in _er:
-                        result = _er
+                    r = _every(result)
+                    if isinstance(r, dict) and "code" in r:
+                        if "sender" not in r:
+                            r["sender"] = h.name
+                        result = r
                 response.append(result)
+
                 if _mode == "any_true":
+                    #: 任意钩子处理成功时则中止后续
                     if result.get("code") == 0:
                         break
+
+                elif _mode == "any_false":
+                    #: 任意钩子处理失败时则中止后续
+                    if result.get("code") != 0:
+                        break
+
         return response
 
     def call_intpl(self, _tplname, _include=None, _exclude=None, **context):
@@ -447,3 +475,76 @@ class HookManager(object):
             if content:
                 result.append(content)
         return Markup("".join(result))
+
+    def _send_static_file(self, hook_name, filename):
+        try:
+            h = self.get_enabled_map_hooks[hook_name]
+        except KeyError:
+            return abort(404)
+        else:
+            return send_from_directory(h.atspath, filename)
+
+    def emit_assets(self, hook_name, filename, _raw=False, _external=False):
+        """在模板中快速构建出扩展中静态文件的地址。
+
+        当然，可以用 :func:`flask.url_for` 代替。
+
+        如果文件以 `.css` 结尾，那么将返回 `<link>` ，例如::
+
+            <link rel="stylesheet" href="/assets/hook/hi.css">
+
+        如果文件以 `.js` 结尾，那么将返回 `<script>` ，例如::
+
+            <script type="text/javascript" src="/assets/hook/hi.js"></script>
+
+        其他类型文件，仅仅返回文件地址，例如::
+
+            /assets/hook/img/logo.png
+            /assets/hook/attachment/test.zip
+
+        以下是一个完整的使用示例：
+
+        .. code-block:: html
+
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Hello World</title>
+                {{ emit_assets('demo','css/demo.css') }}
+            </head>
+            <body>
+                <div class="logo">
+                    <img src="{{ emit_assets('demo', 'img/logo.png') }}">
+                </div>
+                <div class="showJsPath">
+                    <scan>
+                        {{ emit_assets('demo', 'js/demo.js', _raw=True) }}
+                    </scan>
+                </div>
+            </body>
+            </html>
+
+        :param hook_name: 钩子名
+
+        :param path filename: 钩子包下static目录中的文件
+
+        :param bool _raw: True则只生成文件地址，不解析css、js，默认False
+
+        :param bool _external: 转发到url_for的_external
+
+        :returns: html code with :class:`~flask.Markup`
+
+        .. versionadded:: 1.9.0
+        """
+        uri = url_for(
+            self.__static_endpoint,
+            hook_name=hook_name,
+            filename=filename,
+            _external=_external,
+        )
+        if _raw is not True:
+            if filename.endswith(".css"):
+                uri = '<link rel="stylesheet" href="%s">' % uri
+            elif filename.endswith(".js"):
+                uri = '<script type="text/javascript" src="%s"></script>' % uri
+        return Markup(uri)

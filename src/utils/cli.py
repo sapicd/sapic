@@ -91,7 +91,9 @@ def create(username, password, isadmin, avatar, nickname):
               help=u'删除钩子加载时间', show_default=True)
 @click.option('--HookThirds/--no-HookThirds', default=False,
               help=u'删除已加载的第三方钩子', show_default=True)
-def clean(hookloadtime, hookthirds):
+@click.option('--InvalidKey/--no-InvalidKey', default=False,
+              help=u'删除无效的Redis键', show_default=True)
+def clean(hookloadtime, hookthirds, invalidkey):
     """清理系统"""
     if hookloadtime:
         s = get_storage()
@@ -99,6 +101,19 @@ def clean(hookloadtime, hookthirds):
     if hookthirds:
         s = get_storage()
         del s['hookthirds']
+    if invalidkey:
+        rc = create_redis_engine()
+        ius = rc.keys(rsp("index", "user", "*"))
+        pipe = rc.pipeline()
+        for uk in ius:
+            us = rc.smembers(uk)
+            for sha in us:
+                if not rc.exists(rsp("image", sha)):
+                    pipe.srem(uk, sha)
+        try:
+            pipe.execute()
+        except RedisError:
+            pass
 
 
 @sa_cli.command()
