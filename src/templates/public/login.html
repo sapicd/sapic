@@ -29,52 +29,79 @@
 {% endblock %}
 
 {% block content %}
-        <div class="login-area">
-            <h3 class="title">{{ g.site.login_title or '登录你的Picbed' }}</h3>
-            <form class="layui-form" action="">
-                <div class="layui-form-item">
-                    <div class="layui-input-block">
-                        <input type="text" name="username" required lay-verify="required" lay-verType="tips" placeholder="请输入登录用户" autocomplete="off" class="layui-input">
-                    </div>
-                </div>
-                <div class="layui-form-item">
-                    <div class="layui-input-block">
-                        <input type="password" name="password" required lay-verify="required" lay-verType="tips" placeholder="请输入登录密码" autocomplete="off" class="layui-input">
-                    </div>
-                </div>
-                <div class="layui-form-item">
-                    <div class="layui-input-inline remember">
-                        <input type="checkbox" name="remember" value="true" checked="checked" title="记住我" autocomplete="off">
-                    </div>
-                    <div class="layui-form-mid layui-word-aux"><a href="{{ url_for('front.forgot') }}">忘记密码</a></div>
-                </div>
-                <input type="hidden" name="set_state" value="true">
-                <div class="layui-form-item">
-                    <div class="layui-input-block">
-                        <button class="layui-btn layui-btn-fluid" lay-submit lay-filter="login">登录</button>
-                    </div>
-                </div>
-            </form>
+<div class="login-area">
+    <h3 class="title">{{ g.site.login_title or '登录你的Picbed' }}</h3>
+    {% raw %}
+    <div class="layui-form" id="login">
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <input type="text" placeholder="请输入登录用户" autocomplete="off" class="layui-input" v-model="username">
+            </div>
         </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <input type="password" placeholder="请输入登录密码" autocomplete="off" class="layui-input" v-model="password">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-inline remember">
+                <input type="checkbox" lay-ignore value="1" v-model="checked" title="记住我" lay-skin="primary"> 记住我7d
+            </div>
+            <a :href="forgotURL">忘记密码</a>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn layui-btn-fluid" @click="login">登录</button>
+            </div>
+        </div>
+    </div>
+    {% endraw %}
+</div>
 {% endblock %}
 
 {% block script %}
+<script src="https://cn.vuejs.org/js/vue.min.js"></script>
 <script>
-    layui.use(['picbed', 'form', 'layer'], function(){
-        var picbed = layui.picbed,
-            form = layui.form;
-        //监听提交
-        form.on('submit(login)', function(data) {
-            picbed.ajax("{{ url_for('api.login') }}", function(res) {
-                var next = res.next || "{{ request.args.next or g.next }}";
-                layer.msg("登录成功，即将跳转...", {icon:1,time:1000}, function() {
-                    location.href = location.hash ? next + location.hash : next;
+    var picbed = layui.picbed;
+    new Vue({
+        el: '#login',
+        data: {
+            username: '',
+            password: '',
+            checked: true,
+            error: null,
+            forgotURL: "{{ url_for('front.forgot') }}",
+        },
+        methods: {
+            login: function() {
+                var body = {
+                    username: this.username,
+                    password: this.password,
+                    set_state: true,
+                    remember: this.checked,
+                };
+                var utip = picbed.checkUsername(body.username);
+                if (!body.password) this.error = "请输入密码";
+                if (utip) this.error = utip;
+                if (utip || !body.password) return false;
+                picbed.ajax("{{ url_for('api.login') }}", function(res) {
+                    var next = res.next || "{{ request.args.next or g.next }}";
+                    layer.msg("登录成功，即将跳转...", {icon:1,time:1000}, function() {
+                        location.href = location.hash ? next + location.hash : next;
+                    });
+                }, {
+                    data: body
                 });
-            }, {
-                data: data.field
-            });
-            return false;
-        });
-    });
+            }
+        },
+        watch: {
+            error: function(text) {
+                if (text) {
+                    layer.msg(text, {icon:2});
+                    this.error = null;
+                }
+            }
+        }
+    })
 </script>
 {% endblock %}

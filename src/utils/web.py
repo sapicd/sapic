@@ -244,6 +244,7 @@ def dfr(res, default='en-US'):
             "Current state prohibits use of this method": "当前状态禁止使用此方法",
             "The user has no authenticated mailbox": "用户没有验证过的邮箱",
             "Interceptor processing rejection, upload aborted": "拦截器处理拒绝，上传中止",
+            "Request fail": "请求失败",
         },
     }
     if isinstance(res, dict) and "en" not in language:

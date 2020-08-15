@@ -4,6 +4,7 @@
 
 [![Build Status](https://travis-ci.org/staugur/picbed.svg?branch=master)](https://travis-ci.org/staugur/picbed)
 [![codecov](https://codecov.io/gh/staugur/picbed/branch/master/graph/badge.svg)](https://codecov.io/gh/staugur/picbed)
+![Last Release](https://img.shields.io/github/release/staugur/picbed.svg?style=flat-square)
 
 ## 手动部署
 

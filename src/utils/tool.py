@@ -447,6 +447,8 @@ def try_request(
                 timeout=timeout,
                 num_retries=num_retries-1
             )
+        else:
+            raise
     except (requests.exceptions.RequestException, Exception):
         raise
     else:

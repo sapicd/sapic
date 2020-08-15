@@ -676,18 +676,15 @@
             }
         });
         //检测版本更新
-        $.ajax({
-            url: "https://api.github.com/repos/staugur/picbed/releases/latest",
-            success: function(res) {
-                if (typeof res === "object" && res.tag_name) {
-                    var last_version = res.tag_name,
-                        curr_version = "{{ Version }}";
-                    if (picbed.versionStringCompare(curr_version, last_version) === -1) {
-                        $("#verTip").html("<a href='" + res.html_url + "' style='color:#FF5722' target='_blank'>新版本</a>");
-                        layer.tips("发布于" + picbed.convertUTCTimeToLocalTime(res.published_at), "#verTip", {tips:3});
-                    }
-                }
+        picbed.ajax("{{ url_for('api.github', Action='latestRelease') }}", function(res) {
+            var last_version = res.data.tag_name,
+                curr_version = "{{ Version }}";
+            if (picbed.versionStringCompare(curr_version, last_version) === -1) {
+                $("#verTip").html("<a href='" + res.data.html_url + "' style='color:#FF5722' target='_blank'>新版本</a>");
+                layer.tips("发布于" + picbed.convertUTCTimeToLocalTime(res.data.published_at), "#verTip", {tips:3});
             }
+        }, {
+            method: 'get'
         });
         //用户管理
         table.render({

@@ -25,7 +25,7 @@ from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     sha256, get_current_timestamp, list_equal_split, generate_random, er_pat, \
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
     username_pat, ALLOWED_HTTP_METHOD, is_all_fail, parse_valid_colon, \
-    check_ir
+    check_ir, try_request
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
@@ -1420,4 +1420,60 @@ def report(classify):
             res.update(msg="Wrong query range parameter")
     else:
         return abort(404)
+    return res
+
+
+@bp.route("/github")
+@apilogin_required
+def github():
+    res = dict(code=1, msg=None)
+    Action = request.args.get("Action")
+
+    if Action == "thirdHooks":
+        key = rsp("github", "hooks")
+        data = g.rc.get(key)
+        if data:
+            res.update(code=0, data=json.loads(data))
+        else:
+            url = "https://api.github.com/repos/{}/contents/{}".format(
+                "staugur/picbed-awesome", "list.json",
+            )
+            headers = dict(Accept='application/vnd.github.v3.raw')
+            try:
+                r = try_request(url, headers=headers, method='GET')
+                if not r.ok:
+                    raise ValueError("Not Found")
+            except (ValueError, Exception) as e:
+                res.update(msg=str(e))
+            else:
+                #: JSON文件内容
+                data = r.json()
+                res.update(code=0, data=data)
+                pipe = g.rc.pipeline()
+                pipe.set(key, json.dumps(data))
+                pipe.expire(key, 3600 * 6)
+                pipe.execute()
+
+    elif Action == "latestRelease":
+        key = rsp("github", "latest")
+        data = g.rc.get(key)
+        if data:
+            res.update(code=0, data=json.loads(data))
+        else:
+            url = "https://api.github.com/repos/staugur/picbed/releases/latest"
+            try:
+                r = try_request(url, method='GET')
+                if not r.ok:
+                    raise ValueError("Not Found")
+            except (ValueError, Exception) as e:
+                res.update(msg=str(e))
+            else:
+                fields = ["tag_name", "published_at", "html_url"]
+                data = {k: v for k, v in iteritems(r.json()) if k in fields}
+                res.update(code=0, data=data)
+                pipe = g.rc.pipeline()
+                pipe.set(key, json.dumps(data))
+                pipe.expire(key, 3600 * 24)
+                pipe.execute()
+
     return res
