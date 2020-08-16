@@ -17,6 +17,7 @@ from functools import wraps
 from base64 import urlsafe_b64decode as b64decode, b64decode as pic64decode
 from binascii import Error as BaseDecodeError
 from redis.exceptions import RedisError
+from requests.exceptions import RequestException
 from flask import g, redirect, request, url_for, abort, Response, jsonify,\
     current_app, make_response
 from jinja2 import Environment, FileSystemLoader
@@ -28,7 +29,7 @@ from libs.storage import get_storage
 from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
     parse_valid_verticaline, parse_valid_colon, is_true, is_venv, gen_ua, \
-    check_to_addr, is_all_fail, bleach_html
+    check_to_addr, is_all_fail, bleach_html, try_request, comma_pat
 from ._compat import PY2, text_type, urlsplit
 
 no_jump_ep = ("front.login", "front.logout", "front.register")
@@ -245,6 +246,7 @@ def dfr(res, default='en-US'):
             "The user has no authenticated mailbox": "用户没有验证过的邮箱",
             "Interceptor processing rejection, upload aborted": "拦截器处理拒绝，上传中止",
             "Request fail": "请求失败",
+            "Invalid expire param": "无效的expire参数",
         },
     }
     if isinstance(res, dict) and "en" not in language:
@@ -423,14 +425,14 @@ class ImgUrlFileStorage(object):
     def __download(self):
         if self._imgurl and url_pat.match(self._imgurl):
             try:
-                import requests
-                resp = requests.get(
-                    self._imgurl, headers=self.Headers, timeout=10
+                resp = try_proxy_request(
+                    self._imgurl,
+                    method='get',
+                    headers=self.Headers,
+                    timeout=15,
                 )
                 resp.raise_for_status()
-            except ImportError:
-                logger.error("Please install the requests module")
-            except requests.exceptions.RequestException as e:
+            except (RequestException, Exception) as e:
                 logger.debug(e, exc_info=True)
             else:
                 if resp.headers["Content-Type"].split("/")[0] == "image":
@@ -552,3 +554,12 @@ def make_email_tpl(tpl, **data):
     if "username" not in data:
         data["username"] = g.userinfo.nickname or g.userinfo.username
     return je.get_template(tpl).render(data)
+
+
+def try_proxy_request(url, **kwargs):
+    kwargs["proxy"] = dict([
+        ps.split("=")
+        for ps in comma_pat.split(g.cfg.proxies)
+        if ps and "=" in ps
+    ]) if g.cfg.proxies else None
+    return try_request(url, **kwargs)

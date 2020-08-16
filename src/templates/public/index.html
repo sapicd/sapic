@@ -89,7 +89,7 @@
             number = parseInt("{{ g.site.upload_number or 10 }}"),
             field = "{{ g.cfg.upload_field or 'picbed' }}",
             upviewDom = $('#previewList'),
-            imgUrlRe = new RegExp("^(http[s]?://.*.(?:" + exts + "))$", "i");
+            imgUrlRe = /(http|ftp|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/;
 
         var showUploadCopy = function (res) {
             res["get_src"] = function() {

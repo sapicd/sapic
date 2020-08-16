@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Upload to picbed <{{ request.host }}@{{ g.userinfo.username }}>
-// @version     0.2.0
+// @version     0.2.1
 // @description 上传图片到picbed
 // @author      staugur
 // @namespace   https://www.saintic.com/
@@ -10,7 +10,7 @@
 // @exclude     https://*.aliyun.com/*
 // @grant       GM_info
 // @created     2020-05-27
-// @modified    2020-08-12
+// @modified    2020-08-16
 // @github      https://github.com/staugur/picbed
 // @supportURL  https://github.com/staugur/picbed/issues/
 // @updateURL   {{ url_for('front.userscript', LinkToken=g.userinfo.ucfg_userscript_token, _external=True) }}
@@ -47,13 +47,15 @@
             if (hasMenu()) getMenu().remove();
         };
 
-    function upload(src, opts) {
+    function upload(e, opts) {
+        let src = e.target.src;
         if (!src) return false;
         if (!opts) opts = {};
         if (!isObject(opts)) return false;
 
         let data = new FormData();
         data.append(cfg.upload_name, src);
+        data.append('title', e.target.title || e.target.alt || '');
         data.append('origin', `userscript/${GM_info.script.version}`);
         Object.assign(opts, {
             url: cfg.api_url,
@@ -152,7 +154,7 @@
                         setBtnText("禁止混合内容");
                         return false;
                     }
-                    upload(e.target.src, {
+                    upload(e, {
                         start: () => {
                             menu.dataset.sendStatus = "sending";
                             setBtnText("正在上传...");

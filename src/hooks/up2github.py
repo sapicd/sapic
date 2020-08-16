@@ -9,7 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __author__ = 'staugur <staugur@saintic.com>'
 __hookname__ = 'up2github'
 __description__ = '将图片保存到GitHub'
@@ -21,13 +21,14 @@ import requests
 from flask import g
 from posixpath import join
 from base64 import b64encode
-from utils.tool import slash_join, try_request, is_true
+from utils.tool import slash_join, is_true
+from utils.web import try_proxy_request
 from utils._compat import string_types
 
 
 intpl_localhooksetting = '''
 <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
-<fieldset class="layui-elem-field">
+<fieldset class="layui-elem-field layui-field-title">
     <legend>GitHub版本库（{% if "up2github" in g.site.upload_includes %}使用中{% else %}未使用{% endif %}）</legend>
     <div class="layui-field-box">
         <div class="layui-form-item">
@@ -118,7 +119,7 @@ def upimg_save(**kwargs):
                 "Authorization": "token %s" % token
             }
             try:
-                r = try_request(
+                r = try_proxy_request(
                     "https://api.github.com/repos/%s/contents/%s" % (
                         repo, filepath
                     ),
@@ -187,7 +188,7 @@ def upimg_delete(sha, upload_path, filename, basedir, save_result):
             "User-Agent": "picbed-up2github/%s" % __version__,
             "Authorization": "token %s" % token
         }
-        try_request(
+        try_proxy_request(
             "https://api.github.com/repos/%s/contents/%s" % (
                 repo, filepath
             ),

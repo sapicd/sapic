@@ -33,6 +33,7 @@ if PY2:
 logger = Logger("sys").getLogger
 err_logger = Logger("error").getLogger
 comma_pat = re.compile(r"\s*,\s*")
+colon_pat = re.compile(r"\s*:\s*")
 verticaline_pat = re.compile(r"\s*\|\s*")
 username_pat = re.compile(r'^[a-zA-Z][0-9a-zA-Z\_]{3,31}$')
 point_pat = re.compile(r'^\w{1,9}\.?\w{1,9}$')
@@ -411,14 +412,19 @@ def try_request(
     data=None,
     headers=None,
     timeout=5,
+    method='post',
+    proxy=None,
     num_retries=1,
-    method='post'
+    _is_retry=False,
 ):
     """
     :param dict params: 请求查询参数
     :param dict data: 提交表单数据
     :param int timeout: 超时时间，单位秒
+    :param str method: 请求方法，get、post、put、delete
+    :param str proxy: 设置代理服务器
     :param int num_retries: 超时重试次数
+    :param bool _is_retry: 判定为重试请求，这不应该由用户发出
     """
     headers = headers or {}
     headers["User-Agent"] = "picbed/v%s" % PICBED_VERSION
@@ -435,8 +441,8 @@ def try_request(
         method_func = requests.post
     try:
         resp = method_func(
-            url,
-            params=params, headers=headers, timeout=timeout, data=data
+            url, params=params, headers=headers, data=data, timeout=timeout,
+            proxies=proxy if _is_retry is True and proxy else None
         )
     except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
         if num_retries > 0:
@@ -444,8 +450,12 @@ def try_request(
                 url,
                 params=params,
                 data=data,
+                headers=headers,
                 timeout=timeout,
-                num_retries=num_retries-1
+                method=method,
+                proxy=proxy,
+                num_retries=num_retries-1,
+                _is_retry=True,
             )
         else:
             raise

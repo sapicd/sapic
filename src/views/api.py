@@ -20,16 +20,17 @@ from flask import Blueprint, request, g, url_for, current_app, abort, \
 from functools import partial
 from redis.exceptions import RedisError
 from collections import Counter
-from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
+from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1, \
     parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, rsp, \
     sha256, get_current_timestamp, list_equal_split, generate_random, er_pat, \
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
     username_pat, ALLOWED_HTTP_METHOD, is_all_fail, parse_valid_colon, \
-    check_ir, try_request
+    check_ir
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
-    sendmail, generate_activate_token, check_activate_token
+    generate_activate_token, check_activate_token, try_proxy_request, \
+    sendmail
 from utils._compat import iteritems, thread
 
 bp = Blueprint("api", "api")
@@ -166,6 +167,7 @@ def register():
                         nickname=request.form.get("nickname") or "",
                         ctime=get_current_timestamp(),
                         status=status,
+                        label=g.cfg.default_userlabel,
                     )
                     uk = rsp("account", username)
                     pipe = g.rc.pipeline()
@@ -942,6 +944,14 @@ def upload():
         allowed_file,
         suffix=parse_valid_verticaline(g.cfg.upload_exts)
     )
+    #: 图片过期（单位：秒）
+    try:
+        expire = int(request.form.get("expire", 0))
+        if expire < 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        res.update(msg="Invalid expire param")
+        return res
     #: 尝试读取上传数据
     fp = request.files.get(FIELD_NAME)
     #: 当fp无效时尝试读取base64或url
@@ -1089,7 +1099,10 @@ def upload():
                 "origin", "UA: %s" % request.headers.get('User-Agent', '')
             ),
             method=get_upload_method(fp.__class__.__name__),
+            title=request.form.get("title") or "",
         ))
+        if expire > 0:
+            pipe.expire(rsp("image", sha), expire)
         try:
             pipe.execute()
         except RedisError as e:
@@ -1440,19 +1453,48 @@ def github():
             )
             headers = dict(Accept='application/vnd.github.v3.raw')
             try:
-                r = try_request(url, headers=headers, method='GET')
+                r = try_proxy_request(url, headers=headers, method='GET')
                 if not r.ok:
                     raise ValueError("Not Found")
             except (ValueError, Exception) as e:
                 res.update(msg=str(e))
             else:
-                #: JSON文件内容
                 data = r.json()
                 res.update(code=0, data=data)
                 pipe = g.rc.pipeline()
                 pipe.set(key, json.dumps(data))
                 pipe.expire(key, 3600 * 6)
                 pipe.execute()
+        if res["code"] == 0:
+            def fmt(i):
+                pypi = i.get("pypi", "").replace("$name", i["name"])
+                status = i.get("status")
+                if status == "beta":
+                    status_text = "公测版"
+                elif status == "rc":
+                    status_text = "预发布"
+                elif status in ("stable", "production", "ga"):
+                    status_text = "正式版"
+                else:
+                    status_text = ""
+                if pypi:
+                    pypi = "https://pypi.org/project/{}".format(pypi)
+                i.update(
+                    github="https://github.com/{}".format(i["github"]),
+                    pypi=pypi,
+                    status_text=status_text,
+                )
+                return i
+            data = [
+                fmt(i)
+                for i in res["data"]
+                if isinstance(i, dict) and
+                "name" in i and
+                "module" in i and
+                "desc" in i and
+                "github" in i
+            ]
+            res.update(data=data)
 
     elif Action == "latestRelease":
         key = rsp("github", "latest")
@@ -1462,7 +1504,7 @@ def github():
         else:
             url = "https://api.github.com/repos/staugur/picbed/releases/latest"
             try:
-                r = try_request(url, method='GET')
+                r = try_proxy_request(url, method='GET')
                 if not r.ok:
                     raise ValueError("Not Found")
             except (ValueError, Exception) as e:

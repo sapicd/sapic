@@ -584,7 +584,7 @@
                         return img.src;
                     };
                     shaDatas[img.sha] = img;
-                    return '<div class="pin"><img src="' + img.get_src("loadmypic") + '" data-sha="' + img.sha + '"></div>';
+                    return '<div class="pin"><img src="' + img.get_src("loadmypic") + '" data-sha="' + img.sha + '" title="' + (img.title || '') + '"></div>';
                 }).join("");
                 $("#waterfall").html(html);
                 //flow.lazyimg();
