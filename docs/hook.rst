@@ -122,8 +122,14 @@
 2. 第三方钩子
 ----------------
 
-非内置的钩子所属均为第三方，我发布的第三方可以在
-`GitHub搜索 <https://github.com/search?q=user%3Astaugur+picbed>`_
+非内置的钩子所属均为第三方，我发布的第三方已经整理在
+`Awesome for picbed <https://github.com/staugur/picbed-awesome/>`_ ，
+其内容（管理员）可以在安装第三方钩子时，通过类似“应用商店”的形式进行显示，
+并在线安装！
+
+Awesome for picbed 收藏的第三方经过审核，可放心食用。
+
+-------------
 
 第三方是通过pip、easy_install等安装到本地环境中的模块、包。
 
@@ -413,7 +419,7 @@ Object：即钩子模块名；Action：钩子方法
 .. tip::
 
     Action钩子方法内部可以直接使用g、request等，
-    以及 ``utils.web.apilogin_required`` 等。
+    以及 :meth:`utils.web.apilogin_required` 等。
 
 .. _picbed-hook-route:
 
@@ -482,7 +488,7 @@ route_name：路由名称，可选。
 .. tip::
 
     route方法内部可以直接使用g、request等，
-    以及 ``utils.web.login_required`` 等。
+    以及 :meth:`utils.web.login_required` 等。
 
     构建路由可用url_for：
 
@@ -610,7 +616,7 @@ route_name：路由名称，可选。
   .. code-block:: python
 
     __version__ = '符合语义化2.0规范的版本号'
-    __author__ = '作者'
+    __author__ = '作者 <邮箱>'
     __hookname__ = '直接定义钩子名称（昵称），否则默认是文件模块名'
     __state__ = 'enabled/disabled'  # 状态：启用(默认)/禁用
     __description__ = '描述'
@@ -642,7 +648,7 @@ route_name：路由名称，可选。
 
     version表示picbed图床程序的版本号。
 
-    另外，允许用逗号（英文）分组，表示匹配所有分组才允许加载。
+    另外，允许用半角逗号分组，表示匹配所有分组才允许加载。
 
     举例说明（__appversion__ = ↓）：
 

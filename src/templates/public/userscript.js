@@ -10,7 +10,7 @@
 // @exclude     https://*.aliyun.com/*
 // @grant       GM_info
 // @created     2020-05-27
-// @modified    2020-08-16
+// @modified    2020-08-18
 // @github      https://github.com/staugur/picbed
 // @supportURL  https://github.com/staugur/picbed/issues/
 // @updateURL   {{ url_for('front.userscript', LinkToken=g.userinfo.ucfg_userscript_token, _external=True) }}
@@ -177,7 +177,7 @@
             }
         } else {
             //非面板内的点击/右击等操作（且无发送中状态）则关闭菜单
-            if (e.target.id !== cfg.id && e.target.parentElement.id !== cfg.id) {
+            if (e.target.id !== cfg.id && e.target.parentElement && e.target.parentElement.id !== cfg.id) {
                 if (!hasSendingMenu()) removeMenu();
             }
         }

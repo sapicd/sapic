@@ -11,10 +11,9 @@
 
 from flask import Flask, g, request, render_template, jsonify
 from views import front_bp, api_bp
-from utils.tool import Attribute, is_true, parse_valid_comma, err_logger, \
-    create_redis_engine
+from utils.tool import Attribute, is_true, parse_valid_comma, err_logger
 from utils.web import get_site_config, JsonResponse, default_login_auth, \
-    get_redirect_url, change_userinfo
+    get_redirect_url, change_userinfo, rc, get_page_msg
 from utils.cli import sa_cli
 from libs.hook import HookManager
 from config import GLOBAL
@@ -34,8 +33,6 @@ app.config.update(
 )
 
 hm = HookManager(app)
-rc = create_redis_engine()
-
 app.register_blueprint(front_bp)
 app.register_blueprint(api_bp, url_prefix="/api")
 app.cli.add_command(sa_cli)
@@ -43,7 +40,10 @@ app.cli.add_command(sa_cli)
 
 @app.context_processor
 def gtv():
-    return {"Version": __version__, "Doc": __doc__, "is_true": is_true}
+    return {
+        "Version": __version__, "Doc": __doc__,
+        "is_true": is_true, "get_page_msg": get_page_msg
+    }
 
 
 @app.before_request

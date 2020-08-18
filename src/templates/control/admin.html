@@ -4,15 +4,15 @@
 
 {% block head %}
 <style>
-    .layui-elem-field {
+    .layui-tab-content .layui-elem-field {
         font-size: 12px;
     }
-    .layui-elem-field legend {
+    .layui-tab-content .layui-elem-field legend {
         font-size: 14px;
         font-weight: bold;
         color: #009688;
     }
-    .layui-elem-field .layui-elem-field legend {
+    .layui-tab-content .layui-elem-field .layui-elem-field legend {
         font-size: 10px;
     }
     .layui-inline, img {
@@ -456,15 +456,50 @@
     <input type="checkbox" data-username="{{ d.username }}" value="1" lay-skin="primary" lay-filter="set_admin"
     {{ d.is_admin === true ? 'checked' : '' }}>
 </script>
+<script type="text/html" id="thidhook_action">
+    <a href="javascript:;" style="color:#FF5722" lay-event="install" title="安装/升级/使用"><i class="saintic-icon saintic-icon-setup"></i></a>
+</script>
+<script id="thirhook_link" type="text/html">
+    <a href="{{ d.github }}" target="_blank" title="GitHub"><i class="saintic-icon saintic-icon-github"></i></a>&nbsp;
+    {{#  if(d.pypi){ }}
+    <a href="{{ d.pypi }}" target="_blank" title="Pypi"><i class="saintic-icon saintic-icon-pypi"></i></a>&nbsp;
+    {{#  } }}
+    {{#  if(d.pkg.installed === true){ }}
+    <abbr style="color:#009688" title="本地已安装 {{ d.pkg.local.version }} 版本">{{ d.name }}</abbr>
+    {{#  } else { }}
+    {{ d.name }}
+    {{#  } }}
+</script>
+<script id="thirdhook_show_tpl" type="text/html">
+<div style="padding: 10px">
+    <fieldset class="layui-elem-field layui-field-title" style="margin-bottom:0px">
+        <legend style="color:#009688;font-size:14px">已审核且开源的第三方钩子列表&nbsp;
+            <sub><a href="javascript:;" id="refreshThirdHookTable" style="color:#01AAED;font-size:0.85em">刷新缓存</a></sub></legend>
+        <div class="layui-field-box">
+            <table id="thid-hook-list" lay-filter="thid-hook-list" class="layui-table"></table>
+        </div>
+    </fieldset>
+    <fieldset class="layui-elem-field layui-field-title" style="margin-top:0px">
+        <legend style="color:#FFB800;font-size:14px">安装/升级（其他/本地）第三方包</legend>
+        <div class="layui-field-box">
+            <div class="layui-form" action="">
+                <input type="text" name="package" required lay-verify="required" lay-verType="tips" placeholder="The pypi package name or VCS url" autocomplete="off" class="layui-input" style="width:300px;display:inline-block">
+                <button type="button" title="提交安装" class="layui-btn layui-btn-xs layui-btn-radius" lay-submit lay-filter="addInstallPackage"><i class="layui-icon layui-icon-ok"></i></button>
+            </div>
+        </div>
+    </fieldset>
+</div>
+</script>
 {% endraw %}
 <script>
-    layui.use(['picbed', 'layer', 'form', 'table', 'element', 'util'], function () {
+    layui.use(['picbed', 'layer', 'form', 'table', 'element', 'util', 'laytpl'], function () {
         var $ = layui.$,
             picbed = layui.picbed,
             util = layui.util,
             form = layui.form,
             layer = layui.layer,
             table = layui.table,
+            laytpl = layui.laytpl,
             element = layui.element;
         //显示当前tab
         if (location.hash) {
@@ -521,7 +556,7 @@
             var tip = [
                 '此代理用于程序请求外部HTTP[s]时(部分情况)，当首次请求超时、连接错误时自动调用代理。',
                 '<b>格式：</b>http[s]=proxy-server,scheme://hostname=proxy-server',
-                '详细请参考<a href="https://requests.readthedocs.io/en/latest/user/advanced/#proxies" target="_blank" style="color:green">requests文档</a>',
+                '详细请参考文档！',
             ];
             layer.tips(tip.join("<br>"), this, {tips: 1});
         });
@@ -736,22 +771,149 @@
                     }
                 });
             } else if (layEvent === "installPackage") {
-                layer.prompt({
-                    formType: 0,
-                    title: '使用pip安装或升级第三方包',
-                    placeholder: 'The pypi package name or VCS url',
-                    shade: 0.1
-                }, function(value, index, elem){
-                    if (value) {
-                        layer.close(index);
-                        picbed.ajax("{{ url_for('api.pip_install') }}", function(res) {
-                            layer.msg("已接收请求，后台处理中...", {icon:1});
-                        }, {
-                            data: {package:value, upgrade:true}
-                        });
-                    }
+                laytpl(thirdhook_show_tpl.innerHTML).render({}, function(html){
+                    layer.open({
+                        type: 1,
+                        title: '使用pip安装或升级第三方包',
+                        closeBtn: false,
+                        area: [
+                            document.body.clientWidth > 580 ? '580px' : '95%',
+                            '470px'
+                        ],
+                        shade: 0.1,
+                        shadeClose: true,
+                        maxmin: true,
+                        content: html,
+                        success: function(layero, indexo) {
+                            var thidHooksTable = table.render({
+                                elem: "#thid-hook-list",
+                                url: "{{ url_for('api.github', Action='thirdHooks') }}",
+                                cols: [[
+                                    {
+                                        field: 'name',
+                                        title: '钩子名称',
+                                        templet: "#thirhook_link",
+                                        minWidth: 120
+                                    },
+                                    {
+                                        field: 'module',
+                                        title: '模块',
+                                        hide: true,
+                                    },
+                                    {
+                                        field: 'desc',
+                                        title: '描述',
+                                        minWidth: 100,
+                                    },
+                                    {
+                                        field: 'author',
+                                        title: '作者',
+                                        width: 80,
+                                        templet: function(d) {
+                                            return `<a href="${d.home}" target="_blank" style="color:#01AAED">${d.author}</a>`;
+                                        }
+                                    },
+                                    {
+                                        field: 'catalog',
+                                        title: '分类',
+                                        hide: true,
+                                    },
+                                    {
+                                        field: 'status_text',
+                                        title: '状态',
+                                        width: 80
+                                    },
+                                    {
+                                        fixed: 'right',
+                                        toolbar: '#thidhook_action',
+                                        width: 45
+                                    }
+                                ]],
+                                size: 'sm',
+                                skin: 'line',
+                                page: true,
+                                limit: 5,
+                                limits: [5, 10, 20],
+                                width: document.body.clientWidth > 580 ? 560 : document.body.clientWidth * 0.9
+                            });
+                            $('#refreshThirdHookTable').click(function() {
+                                thidHooksTable.reload({
+                                    where: {no_fresh:0}
+                                });
+                            });
+                            table.on('tool(thid-hook-list)', function(obj){
+                                var data = obj.data;
+                                var layEvent = obj.event;
+                                var tr = obj.tr;
+                                if(layEvent === 'install'){
+                                    var pypiHide = data.pypi ? "" : "layui-hide";
+                                    var content = [
+                                        '<div style="padding: 15px">',
+                                        `<h2 style="text-align:center">${data.name}</h2></br>`,
+                                        '<div style="font-size:0.85em">',
+                                        `<p>描述：${data.desc}</p>`,
+                                        '<p>本地：' + (data.pkg.installed === true ? `已安装 ${data.pkg.local.version} 版本` : '未安装'),
+                                        `<p>使用：请在安装成功后，在 <i>添加第三方钩子</i> 中输入模块名 <b style="color:#FF5722">${data.module}</b> 进行加载！</p>`,
+                                        '</div></br><form class="layui-form" action="">',
+                                        '从GitHub安装（留空使用master分支）<br>',
+                                        '<input type="text" name="branch" placeholder="使用GitHub分支或标签" autocomplete="off" class="my-input">',
+                                        `<input type="hidden" name="github" value="${data.github}">`,
+                                        '<input type="hidden" name="index" value="">',
+                                        '&nbsp;<button type="button" title="提交安装" class="layui-btn layui-btn-xs layui-btn-radius" lay-submit lay-filter="install-from-github"><i class="layui-icon layui-icon-ok"></i></button>',
+                                        `</form><br><form class="layui-form ${pypiHide}" action="">`,
+                                        '从Pypi安装<br>',
+                                        '<input type="text" name="version" placeholder="[可选]使用Pypi版本号" autocomplete="off" class="my-input">',
+                                        `<input type="hidden" name="pkg" value="${data.pkg.name}">`,
+                                        '<input type="hidden" name="index" value="">',
+                                        '&nbsp;<button type="button" title="提交安装" class="layui-btn layui-btn-xs layui-btn-radius" lay-submit lay-filter="install-from-pypi"><i class="layui-icon layui-icon-ok"></i></button>',
+                                        '</form></div>'
+                                    ].join("");
+                                    layer.open({
+                                        type: 1,
+                                        title: false,
+                                        closeBtn: true,
+                                        area: '300px',
+                                        anim: 2,
+                                        shade: 0.1,
+                                        shadeClose: true,
+                                        content: content,
+                                        success: function(layero, index) {
+                                            var i = layero[0].querySelectorAll("input[name='index']");
+                                            i[0].value = index;
+                                            i[1].value = index;
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
                 });
             }
+        });
+        //监听安装
+        form.on('submit(install-from-github)', function(data){
+            var branch = data.field.branch || 'master',
+                value = `git+${data.field.github}@${branch}`;
+            picbed.ajax("{{ url_for('api.pip_install') }}", function(res) {
+                layer.msg(`正在安装${value}，请稍后...`, {time:1000}, function() {
+                    if (data.field.index) layer.close(data.field.index);
+                });
+            }, {
+                data: {package:value, upgrade:true}
+            });
+            return false;
+        });
+        form.on('submit(install-from-pypi)', function(data){
+            var pkg = data.field.pkg,
+                value = data.field.version ? `${pkg}==${data.field.version}` : pkg;
+            picbed.ajax("{{ url_for('api.pip_install') }}", function(res) {
+                layer.msg(`正在安装${value}，请稍后...`, {time:1000}, function() {
+                    if (data.field.index) layer.close(data.field.index);
+                });
+            }, {
+                data: {package:value, upgrade:true}
+            });
+            return false;
         });
         //检测版本更新
         picbed.ajax("{{ url_for('api.github', Action='latestRelease') }}", function(res) {

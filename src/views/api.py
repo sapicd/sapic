@@ -30,7 +30,7 @@ from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
     generate_activate_token, check_activate_token, try_proxy_request, \
-    sendmail
+    sendmail, _pip_list
 from utils._compat import iteritems, thread
 
 bp = Blueprint("api", "api")
@@ -1437,15 +1437,26 @@ def report(classify):
 
 
 @bp.route("/github")
-@apilogin_required
+@admin_apilogin_required
 def github():
     res = dict(code=1, msg=None)
     Action = request.args.get("Action")
+    no_fresh = is_true(request.args.get("no_fresh", True))
 
     if Action == "thirdHooks":
-        key = rsp("github", "hooks")
+        page = request.args.get("page") or 1
+        limit = request.args.get("limit") or 5
+        try:
+            page = int(page) - 1
+            limit = int(limit)
+            if page < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            res.update(code=2, msg="Parameter error")
+            return res
+        key = rsp("cache", "thirdhooks")
         data = g.rc.get(key)
-        if data:
+        if no_fresh and data:
             res.update(code=0, data=json.loads(data))
         else:
             url = "https://api.github.com/repos/{}/contents/{}".format(
@@ -1466,8 +1477,8 @@ def github():
                 pipe.expire(key, 3600 * 6)
                 pipe.execute()
         if res["code"] == 0:
-            def fmt(i):
-                pypi = i.get("pypi", "").replace("$name", i["name"])
+            def fmt(i, pkgs):
+                pkg = i.get("pypi", "").replace("$name", i["name"])
                 status = i.get("status")
                 if status == "beta":
                     status_text = "公测版"
@@ -1477,16 +1488,27 @@ def github():
                     status_text = "正式版"
                 else:
                     status_text = ""
-                if pypi:
-                    pypi = "https://pypi.org/project/{}".format(pypi)
+                if pkg:
+                    pypi = "https://pypi.org/project/{}".format(pkg)
+                else:
+                    pypi = None
+                user = i["github"].split("/")[0]
                 i.update(
+                    author=i.get("author", user),
+                    home=i.get("home", "https://github.com/{}".format(user)),
                     github="https://github.com/{}".format(i["github"]),
                     pypi=pypi,
                     status_text=status_text,
+                    pkg=dict(
+                        name=pkg,
+                        installed=pkg in pkgs,
+                        local=pkgs.get(pkg),
+                    ),
                 )
                 return i
+            pkgs = _pip_list(fmt="dict", no_fresh=no_fresh)
             data = [
-                fmt(i)
+                fmt(i, pkgs)
                 for i in res["data"]
                 if isinstance(i, dict) and
                 "name" in i and
@@ -1494,12 +1516,24 @@ def github():
                 "desc" in i and
                 "github" in i
             ]
-            res.update(data=data)
+            data.reverse()
+            count = len(data)
+            data = list_equal_split(data, limit)
+            pageCount = len(data)
+            if page < pageCount:
+                res.update(
+                    code=0,
+                    count=count,
+                    data=data[page],
+                    pageCount=pageCount,
+                )
+            else:
+                res.update(code=3, msg="No data")
 
     elif Action == "latestRelease":
-        key = rsp("github", "latest")
+        key = rsp("cache", "latestrelease")
         data = g.rc.get(key)
-        if data:
+        if no_fresh and data:
             res.update(code=0, data=json.loads(data))
         else:
             url = "https://api.github.com/repos/staugur/picbed/releases/latest"

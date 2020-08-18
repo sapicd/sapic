@@ -265,11 +265,12 @@ class HookManager(object):
         self.__ensure_reloaded()
         if not self.__hooks:
             self.__init_load_hooks()
-        hooks = []
-        for h in list(self.__hooks.values()):
+        data = []
+        hooks = list(self.__hooks.values())
+        for h in hooks:
             h['state'] = self.__get_state(h)
-            hooks.append(h)
-        return hooks
+            data.append(h)
+        return data
 
     @property
     def get_map_hooks(self):
