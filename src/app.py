@@ -13,7 +13,8 @@ from flask import Flask, g, request, render_template, jsonify
 from views import front_bp, api_bp
 from utils.tool import Attribute, is_true, parse_valid_comma, err_logger
 from utils.web import get_site_config, JsonResponse, default_login_auth, \
-    get_redirect_url, change_userinfo, rc, get_page_msg
+    get_redirect_url, change_userinfo, rc, get_page_msg, dfr
+from utils.exceptions import ApiError, PageError
 from utils.cli import sa_cli
 from libs.hook import HookManager
 from config import GLOBAL
@@ -82,7 +83,7 @@ def after_request(res):
 @app.errorhandler(403)
 @app.errorhandler(413)
 @app.errorhandler(400)
-def page_error(e):
+def handle_error(e):
     if getattr(e, "code", None) == 500:
         err_logger.error(e, exc_info=True)
     code = e.code
@@ -90,3 +91,18 @@ def page_error(e):
     if request.path.startswith("/api/"):
         return jsonify(dict(msg=name, code=code)), code
     return render_template("public/error.html", code=code, name=name), code
+
+
+@app.errorhandler(ApiError)
+def handle_api_error(e):
+    response = jsonify(dfr(e.to_dict()))
+    response.status_code = e.status_code
+    return response
+
+
+@app.errorhandler(PageError)
+def handle_page_error(e):
+    resp = dfr(e.to_dict())
+    return render_template(
+        "public/error.html", code=resp["code"], name=resp["msg"]
+    ), e.status_code

@@ -72,7 +72,10 @@ def get_redirect_url(endpoint="front.index"):
 
 
 def default_login_auth(dSid=None):
-    """默认登录解密，返回: (signin:boolean, userinfo:dict)"""
+    """默认登录解密
+
+    :returns: (signin:boolean, userinfo:dict)
+    """
     sid = request.cookies.get("dSid") or dSid or ""
     signin = False
     userinfo = {}
@@ -418,7 +421,7 @@ class Base64FileStorage(object):
 
 
 class ImgUrlFileStorage(object):
-    """上传接口中接受远程图片地址，可自动调用代理下载图片。"""
+    """上传接口中接受远程图片地址，会自动调用代理下载图片。"""
 
     def __init__(self, imgurl, filename=None, allowed_exts=None):
         self._imgurl = imgurl
@@ -554,7 +557,12 @@ def check_activate_token(token):
 
 
 def sendmail(subject, message, to):
-    """调用钩子中发送邮件函数（任意钩子发送成功即停止）"""
+    """调用钩子中发送邮件函数（任意钩子发送成功即停止）
+
+    :param str subject: 主题
+    :param str message: 正文（支持HTML）
+    :param str to: 收件人，可用逗号添加多个
+    """
     res = dict(code=1)
     if subject and message and to and check_to_addr(to):
         to = ",".join(parse_valid_comma(to))
@@ -596,7 +604,13 @@ def make_email_tpl(tpl, **data):
 
 
 def try_proxy_request(url, **kwargs):
-    """自动调用代理服务的try_request"""
+    """自动调用代理服务的try_request
+
+    :param str url: 请求地址
+    :keyword kwars: :func:`utils.tool.try_request` 要求的其他参数
+
+    .. versionadded:: 1.9.0
+    """
     kwargs["proxy"] = dict([
         ps.split("=")
         for ps in comma_pat.split(g.cfg.proxies)
@@ -610,6 +624,8 @@ def set_page_msg(text, level='info'):
 
     :param str text: 消息内容
     :param str level: 级别，error、info(默认)、warn、success
+
+    .. versionadded:: 1.9.0
     """
     levels = dict(info=-1, warn=0, success=1, error=2)
     if text and level in levels.keys():
