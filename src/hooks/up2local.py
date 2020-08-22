@@ -9,14 +9,24 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 __author__ = 'staugur'
 __description__ = '将图片保存到本地'
 __catalog__ = 'upload'
 
 from os import makedirs, remove
 from os.path import exists, join, isfile
+from flask import current_app, url_for
+from posixpath import join as posixjoin
 from utils._compat import string_types
+
+
+def get_basedir():
+    return join(
+        current_app.root_path,
+        current_app.static_folder,
+        current_app.config["UPLOAD_FOLDER"]
+    )
 
 
 def upimg_save(**kwargs):
@@ -25,7 +35,7 @@ def upimg_save(**kwargs):
         filename = kwargs["filename"]
         stream = kwargs["stream"]
         upload_path = kwargs.get("upload_path") or ""
-        local_basedir = kwargs["local_basedir"]
+        local_basedir = get_basedir()
         if not filename or not stream or not local_basedir:
             return ValueError
     except (KeyError, ValueError):
@@ -40,13 +50,21 @@ def upimg_save(**kwargs):
             filepath = join(saveto, filename)
             with open(filepath, "wb") as fp:
                 fp.write(stream)
-                res.update(code=0)
+                res.update(code=0, src=url_for(
+                    "static",
+                    filename=posixjoin(
+                        current_app.config['UPLOAD_FOLDER'],
+                        upload_path,
+                        filename
+                    ),
+                    _external=True
+                ))
         else:
             res.update(msg="The upload_path type error")
     return res
 
 
 def upimg_delete(sha, upload_path, filename, basedir, save_result):
-    filepath = join(basedir, upload_path, filename)
+    filepath = join(get_basedir(), upload_path, filename)
     if isfile(filepath):
         remove(filepath)

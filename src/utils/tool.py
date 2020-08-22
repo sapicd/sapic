@@ -427,7 +427,8 @@ def try_request(
     :param bool _is_retry: 判定为重试请求，这不应该由用户发出
     """
     headers = headers or {}
-    headers["User-Agent"] = "picbed/v%s" % PICBED_VERSION
+    if "User-Agent" not in headers:
+        headers["User-Agent"] = "picbed/v%s" % PICBED_VERSION
     method = method.lower()
     if method == 'get':
         method_func = requests.get

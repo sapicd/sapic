@@ -30,12 +30,11 @@ from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
     generate_activate_token, check_activate_token, try_proxy_request, \
-    sendmail, _pip_list
+    sendmail, _pip_list, get_user_ip
 from utils._compat import iteritems, thread
+from utils.exceptions import ApiError
 
 bp = Blueprint("api", "api")
-#: 定义本地上传的钩子在保存图片时的基础目录前缀（在static子目录下）
-UPLOAD_FOLDER = "upload"
 
 
 @bp.after_request
@@ -99,9 +98,10 @@ def login():
             password = userinfo.get("password")
             if password and check_password_hash(password, pwd):
                 #: 登录成功
-                g.rc.hset(
-                    rsp("account", usr), "login_at", get_current_timestamp()
-                )
+                g.rc.hmset(rsp("account", usr), dict(
+                    login_at=get_current_timestamp(),
+                    login_ip=get_user_ip(),
+                ))
                 expire = get_current_timestamp() + max_age
                 sid = "%s.%s.%s" % (
                     usr,
@@ -361,7 +361,7 @@ def user():
             fds = (
                 "username", "nickname", "avatar", "ctime", "mtime",
                 "is_admin", "status", "message", "email", "email_verified",
-                "status_reason", "label"
+                "status_reason", "label", "login_at", "login_ip"
             )
             pipe = g.rc.pipeline()
             for u in g.rc.smembers(ak):
@@ -384,6 +384,7 @@ def user():
                         ctime=int(d["ctime"]),
                         status=int(d.get("status", 1)),
                         email_verified=int(d.get("email_verified", 1)),
+                        login_at=int(d.get("login_at", 0)),
                     )
                     if d.get("mtime"):
                         d["mtime"] = int(d["mtime"])
@@ -820,8 +821,9 @@ def shamgr(sha):
                 ctime=int(data["ctime"]),
                 tpl=dict(
                     URL="%s" % get_url_with_suffix(data, "url"),
-                    HTML="<img src='%s' alt='%s'>" % (
-                        get_url_with_suffix(data, "html"), n
+                    HTML="<img src='%s' title='%s' alt='%s'>" % (
+                        get_url_with_suffix(data, "html"),
+                        data.get("title", ""), n
                     ),
                     rST=".. image:: %s" % get_url_with_suffix(data, "rst"),
                     Markdown="![%s](%s)" % (
@@ -864,12 +866,7 @@ def shamgr(sha):
                                 sha=sha,
                                 upload_path=info["upload_path"],
                                 filename=info["filename"],
-                                basedir=(join(
-                                    current_app.root_path,
-                                    current_app.static_folder,
-                                    UPLOAD_FOLDER
-                                ) if i["sender"] == "up2local"
-                                    else i.get("basedir")),
+                                basedir=i.get("basedir"),
                                 save_result=i
                             )
                     except (ValueError, AttributeError, Exception) as e:
@@ -886,11 +883,11 @@ def shamgr(sha):
             if not g.rc.sismember(gk, sha):
                 return abort(404)
             #: 更改相册名，允许图片所属用户或管理员修改，允许置空
-            album = request.form.get("album")
-            shaOwner = g.rc.hget(ik, "user")
-            if g.userinfo.username == shaOwner or g.is_admin:
+            album = request.form.get("album") or ""
+            owner = g.rc.hget(ik, "user")
+            if g.userinfo.username == owner or g.is_admin:
                 try:
-                    g.rc.hset(ik, "album", album)
+                    g.rc.hset(ik, "album", album.strip())
                 except RedisError:
                     res.update(msg="Program data storage service error")
                 else:
@@ -909,9 +906,8 @@ def upload():
     1. 获取上传的文件，判断允许格式
         - 拦截下判断文件，如果为空，尝试获取body中提交的picbed
         - 如果picbed是合法base64，那么会返回Base64FileStorage类；
-          如果picbed是合法url[图片]，那么服务端会自动下载，返回ImgUrlFileStorage类；
-          否则为空。
-          PS: 允许DATA URI形式, eg: data:image/png;base64,the base64 of image
+            如果是合法url，服务端则会自动下载，返回ImgUrlFileStorage类；否则为空。
+            PS: 允许DATA URI形式, eg: data:image/png;base64,the base64 of image
     2. 生成文件名、唯一sha值、上传目录等，选择图片存储的后端钩子（单一）
         - 存储图片的钩子目前版本仅一个，默认是up2local（如果禁用则保存失败）
         - 如果提交album参数会自动创建相册，否则归档到默认相册
@@ -926,15 +922,15 @@ def upload():
     FIELD_NAME = g.cfg.upload_field or "picbed"
     #: 匿名上传开关检测
     if not is_true(g.cfg.anonymous) and not g.signin:
-        res.update(code=403, msg="Anonymous user is not sign in")
-        return res
+        raise ApiError("Anonymous user is not sign in", 403)
     #: 判断已登录用户是否待审核
     if g.signin and g.userinfo.status in (-2, -1, 0):
-        msg = ("Pending review, cannot upload pictures" if
-               g.userinfo.status in (-2, -1) else
-               "The user is disabled, no operation")
-        res.update(code=403, msg=msg)
-        return res
+        msg = (
+            "Pending review, cannot upload pictures" if
+            g.userinfo.status in (-2, -1) else
+            "The user is disabled, no operation"
+        )
+        raise ApiError(msg, 403)
     #: 相册名称，可以是任意字符串
     album = (
         request.form.get("album") or getattr(g, "up_album", "")
@@ -950,8 +946,7 @@ def upload():
         if expire < 0:
             raise ValueError
     except (ValueError, TypeError):
-        res.update(msg="Invalid expire param")
-        return res
+        raise ApiError("Invalid expire param")
     #: 尝试读取上传数据
     fp = request.files.get(FIELD_NAME)
     #: 当fp无效时尝试读取base64或url
@@ -969,12 +964,6 @@ def upload():
                 except ValueError as e:
                     logger.debug(e)
     if fp and allowed_suffix(fp.filename):
-        try:
-            g.rc.ping()
-        except RedisError as e:
-            logger.error(e, exc_info=True)
-            res.update(code=2, msg="Program data storage service error")
-            return res
         stream = fp.stream.read()
         suffix = splitext(fp.filename)[-1]
         #: 处理图片二进制的钩子
@@ -999,7 +988,7 @@ def upload():
                     }
                 )
                 return res
-
+        #: 定义图片文件名
         filename = secure_filename(fp.filename)
         if "." not in filename:
             filename = "%s%s" % (generate_random(8), suffix)
@@ -1008,10 +997,7 @@ def upload():
             g.userinfo.ucfg_upload_file_rule or g.cfg.upload_file_rule
         ) if is_true(g.cfg.upload_rule_overridden) else g.cfg.upload_file_rule
         if upload_file_rule in ("time1", "time2", "time3"):
-            filename = "%s%s" % (
-                gen_rnd_filename(upload_file_rule),
-                suffix
-            )
+            filename = "%s%s" % (gen_rnd_filename(upload_file_rule), suffix)
         #: 上传文件位置前缀规则
         upload_path_rule = (
             g.userinfo.ucfg_upload_path_rule or g.cfg.upload_path_rule
@@ -1034,9 +1020,9 @@ def upload():
         up_grp = g.cfg.upload_group
         usr_label = g.userinfo.label if g.signin else "anonymous"
         if up_grp and usr_label:
-            up_grp = parse_valid_colon(up_grp) or {}
-            if usr_label in up_grp:
-                includes = [up_grp[usr_label]]
+            up_grp_rule = parse_valid_colon(up_grp) or {}
+            if usr_label in up_grp_rule:
+                includes = [up_grp_rule[usr_label]]
         #: TODO 定义保存图片时排除某些钩子，如: up2local, up2other
         #: excludes = parse_valid_comma(g.cfg.upload_excludes or '')
         #: 调用钩子中upimg_save方法（目前版本最终结果中应该最多只有1条数据）
@@ -1047,26 +1033,11 @@ def upload():
                 filename=filename,
                 stream=stream,
                 upload_path=upload_path,
-                local_basedir=join(
-                    current_app.root_path,
-                    current_app.static_folder,
-                    UPLOAD_FOLDER
-                )
             )
         )
-        for i, result in enumerate(data):
-            if result["sender"] == "up2local":
-                data.pop(i)
-                result["src"] = url_for(
-                    "static",
-                    filename=join(UPLOAD_FOLDER, upload_path, filename),
-                    _external=True
-                )
-                data.insert(i, result)
         #: 判定后端存储全部失败时，上传失败
         if not data:
-            res.update(code=1, msg="No valid backend storage service")
-            return res
+            raise ApiError("No valid backend storage service")
         if is_all_fail(data):
             res.update(
                 code=1,
@@ -1091,7 +1062,7 @@ def upload():
             upload_path=upload_path,
             user=g.userinfo.username if g.signin else 'anonymous',
             ctime=get_current_timestamp(),
-            status='enabled',  # disabled, deleted
+            status='enabled',  # deleted
             src=defaultSrc,
             sender=data[0]["sender"],
             senders=json.dumps(data),
@@ -1287,7 +1258,7 @@ def link():
             ctime=get_current_timestamp(),
             user=username,
             comment=comment,
-            album=album,
+            album=album.strip(),
             status=1,  # 状态，1是启用，0是禁用
             allow_origin=allow_origin,
             allow_ip=allow_ip,
@@ -1393,7 +1364,6 @@ def report(classify):
     page = request.args.get("page")
     limit = request.args.get("limit")
     sort = (request.args.get("sort") or "asc").upper()
-    is_mgr = is_true(request.args.get("is_mgr"))
     if classify in ("linktokens",):
         try:
             #: start、end可正可负
@@ -1452,8 +1422,7 @@ def github():
             if page < 0:
                 raise ValueError
         except (ValueError, TypeError):
-            res.update(code=2, msg="Parameter error")
-            return res
+            raise ApiError("Parameter error")
         key = rsp("cache", "thirdhooks")
         data = g.rc.get(key)
         if no_fresh and data:
@@ -1468,7 +1437,7 @@ def github():
                 if not r.ok:
                     raise ValueError("Not Found")
             except (ValueError, Exception) as e:
-                res.update(msg=str(e))
+                raise ApiError(str(e))
             else:
                 data = r.json()
                 res.update(code=0, data=data)

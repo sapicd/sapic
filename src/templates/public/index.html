@@ -38,7 +38,8 @@
     .d { max-width: 50px; }
     .e { max-width: 80px; }
     .f { max-width: 150px; min-width: 80px; }
-    .g { max-width: 80px; }
+    .g { max-width: 150px; min-width: 80px; }
+    .x { max-width: 80px; }
     .layui-layout-admin .layui-footer {
         line-height: initial;
         padding: 0;
@@ -64,7 +65,8 @@
                             <th class="d">状态</th>
                             <th class="e">进度</th>
                             <th class="f">相册</th>
-                            <th class="g">操作</th>
+                            <th class="g">描述</th>
+                            <th class="x">操作</th>
                         </tr>
                     </thead>
                     <tbody id="previewList"></tbody>
@@ -89,7 +91,7 @@
             number = parseInt("{{ g.site.upload_number or 10 }}"),
             field = "{{ g.cfg.upload_field or 'picbed' }}",
             upviewDom = $('#previewList'),
-            imgUrlRe = /(http|ftp|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/;
+            imgUrlRe = /(http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/;
 
         var showUploadCopy = function (res) {
             res["get_src"] = function() {
@@ -176,7 +178,8 @@
             method: 'POST',
             data: {
                 album: "{{ request.args.album }}",
-                origin: "homepage/{{ Version }}"
+                origin: "homepage/{{ Version }}",
+                title: "",
             },
             accept: 'images',
             exts: exts,
@@ -191,6 +194,7 @@
                 //改源码upload.js
                 //typeof options.updateData === 'function' &&  options.updateData(index, options.data);
                 data.album = $("#album-" + index).val();
+                data.title = $("#title-" + index).val();
             },
             choose: function (obj) {
                 $(".before-upload-area").hide();
@@ -206,7 +210,8 @@
                         '<td class="d">等待</td>',
                         '<td class="e"><div id="progress-' + index + '"></div></td>',
                         '<td class="f">{% if g.signin %}<input type="text" id="album-' + index + '" autocomplete="off" class="layui-input" value="{{ request.args.album }}">{% else %}<i class="saintic-icon saintic-icon-anonymous"></i>{% endif %}</td>',
-                        '<td class="g">',
+                        '<td class="g"><input type="text" id="title-' + index + '" autocomplete="off" class="layui-input"></td>',
+                        '<td class="x">',
                         '<button class="layui-btn layui-btn-xs upload-reload layui-hide">重传</button>',
                         '<button class="layui-btn layui-btn-xs layui-btn-danger upload-delete">删除</button>',
                         '</td>',
@@ -242,10 +247,11 @@
                     var tr = upviewDom.find('tr#upload-' + index),
                         tds = tr.children();
                     tds.eq(3).html('<span style="color: #5FB878;">成功</span>');
-                    tds.eq(6).html('<button class="layui-btn layui-btn-xs layui-btn-normal upload-show" data-index="' + index + '">查看</button>'); //清空操作
+                    tds.eq(7).html('<button class="layui-btn layui-btn-xs layui-btn-normal upload-show" data-index="' + index + '">查看</button>'); //清空操作
                     delete this.files[index]; //删除文件队列已经上传成功的文件
                     //layer.closeAll('loading');
                     tr.find('.upload-show').on('click', function () {
+                        res.title = $("#title-" + index).val();
                         showUploadCopy(res);
                     });
                     return;
@@ -260,7 +266,7 @@
                 var tr = upviewDom.find('tr#upload-' + index),
                     tds = tr.children();
                 tds.eq(3).html('<span style="color: #FF5722;"><abbr title="' + err_msg + '">失败</abbr></span>');
-                tds.eq(6).find('.upload-reload').removeClass('layui-hide'); //显示重传
+                tds.eq(7).find('.upload-reload').removeClass('layui-hide'); //显示重传
                 //layer.closeAll('loading');
             }
         });

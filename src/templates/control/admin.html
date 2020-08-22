@@ -938,7 +938,11 @@
                         title: '用户名',
                         minWidth: 100,
                         templet: function(d) {
-                            var user = d.avatar ? ('<a href="' + d.avatar + '" class="layui-table-link" target="_blank">' + d.username + '</a>') : d.username;
+                            var login_tip = d.login_at ? (
+                                '上次登录于 ' + util.toDateString(d.login_at * 1000) + (d.login_ip ? ` @ ${d.login_ip || ''}` : '')
+                            ) : '';
+                            var user = d.avatar ? (`<a href="${d.avatar}" class="layui-table-link" target="_blank">${d.username}</a>`) : d.username;
+                            user = `<scan title="${login_tip}">${user}</scan>`;
                             return d.pics > 0 ? (user + '&nbsp;<span class="layui-badge layui-bg-black">' + d.pics + '</span>') : user;
                         }
                     },

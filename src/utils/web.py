@@ -33,16 +33,12 @@ from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     check_to_addr, is_all_fail, bleach_html, try_request, comma_pat, \
     create_redis_engine
 from ._compat import PY2, text_type, urlsplit
+if not PY2:
+    from functools import reduce
 
-#: redis连接实例
-#:
-#: .. versionadded:: 1.9.0
-#:
 rc = create_redis_engine()
 
 no_jump_ep = ("front.login", "front.logout", "front.register")
-if not PY2:
-    from functools import reduce
 
 
 def get_referrer_url():
@@ -132,6 +128,7 @@ def login_required(f):
 
 
 def anonymous_required(f):
+    """页面要求匿名装饰器"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if g.signin:
@@ -271,7 +268,7 @@ def dfr(res, default='en-US'):
             try:
                 new = trans[language][msg]
             except KeyError:
-                logger.warn("Miss translation: %s" % msg)
+                logger.debug("Miss translation: %s" % msg)
             else:
                 res["msg"] = new
     return res
@@ -629,7 +626,7 @@ def set_page_msg(text, level='info'):
     """
     levels = dict(info=-1, warn=0, success=1, error=2)
     if text and level in levels.keys():
-        rc.rpush(rsp("msg", "admin", "control"), json.dumps(dict(
+        return rc.rpush(rsp("msg", "admin", "control"), json.dumps(dict(
             text=text, icon=levels[level]
         )))
 
@@ -639,8 +636,6 @@ def get_page_msg():
     key = rsp("msg", "admin", "control")
     msgs = rc.lrange(key, 0, -1)
     if msgs:
-        rc.delete(key)
-
         def tpl_plus(total, new):
             return total % new
 
@@ -659,6 +654,17 @@ def get_page_msg():
             ) % '',
             '</script>',
         )
+        rc.delete(key)
         return Markup("".join(html))
     else:
         return ""
+
+
+def get_user_ip():
+    """首先从HTTP标头的X-Forwarded-For获取代理IP，其次获取X-Real-IP，最后是客户端IP"""
+    if request.headers.get('X-Forwarded-For'):
+        return request.headers['X-Forwarded-For']
+    elif request.headers.get('X-Real-IP'):
+        return request.headers.get('X-Real-IP')
+    else:
+        return request.remote_addr

@@ -11,13 +11,6 @@ Picbed Modules
     :members:
     :undoc-members:
 
-本地存储类
-----------
-
-.. autoclass:: libs.storage.RedisStorage
-    :members:
-    :undoc-members:
-
 通用方法
 ---------
 
@@ -56,15 +49,50 @@ Picbed Modules
 .. autofunction:: is_valid_verion
 
 .. autoclass:: Mailbox
+    :members:
 
 适用Web环境的方法
 -----------------
 
-.. automodule:: utils.web
-    :members:
-    :undoc-members:
+.. currentmodule:: utils.web
 
-异常
+.. data:: rc
+
+    redis连接实例
+
+    .. versionadded:: 1.9.0
+
+.. autodecorator:: login_required
+
+.. autodecorator:: anonymous_required
+
+.. autodecorator:: apilogin_required
+
+.. autodecorator:: admin_apilogin_required
+
+.. autofunction:: get_site_config
+
+.. autofunction:: set_site_config
+
+.. autofunction:: sendmail
+
+.. autofunction:: make_email_tpl
+
+.. autofunction:: try_proxy_request
+
+.. autofunction:: set_page_msg
+
+.. autofunction:: get_page_msg
+
+.. autofunction:: get_user_ip
+
+.. autoclass:: Base64FileStorage
+    :members:
+
+.. autoclass:: ImgUrlFileStorage
+    :members:
+
+异常类
 --------
 
 .. currentmodule:: utils.exceptions

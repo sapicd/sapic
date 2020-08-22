@@ -1,6 +1,6 @@
 -r base.txt
 # py3
-sphinx
+sphinx<3.1.0
 pygments
 git+https://github.com/staugur/sphinx_press_theme.git@master
 sphinxcontrib-httpdomain
