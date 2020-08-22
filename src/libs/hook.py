@@ -387,6 +387,9 @@ class HookManager(object):
         .. versionchanged:: 1.7.0
             add param `_mode` and `_every`
 
+        .. versionchanged:: 1.9.0
+            _mode add any_false
+
         .. deprecated:: 1.8.0
             _callback replaced by `_every`;
             args replaced by `_args`;

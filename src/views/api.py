@@ -30,7 +30,7 @@ from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
     generate_activate_token, check_activate_token, try_proxy_request, \
-    sendmail, _pip_list, get_user_ip
+    sendmail, _pip_list, get_user_ip, has_image
 from utils._compat import iteritems, thread
 from utils.exceptions import ApiError
 
@@ -384,7 +384,7 @@ def user():
                         ctime=int(d["ctime"]),
                         status=int(d.get("status", 1)),
                         email_verified=int(d.get("email_verified", 1)),
-                        login_at=int(d.get("login_at", 0)),
+                        login_at=int(d.get("login_at") or 0),
                     )
                     if d.get("mtime"):
                         d["mtime"] = int(d["mtime"])
@@ -813,7 +813,7 @@ def shamgr(sha):
                     g.userinfo.parsed_ucfg_url_rule.get(d["sender"], "")
                 )
             return d["src"]
-        if g.rc.sismember(gk, sha):
+        if has_image(sha):
             data = g.rc.hgetall(ik)
             n = data["filename"]
             data.update(
@@ -837,7 +837,7 @@ def shamgr(sha):
     elif request.method == "DELETE":
         if not g.signin:
             return abort(403)
-        if g.rc.sismember(gk, sha):
+        if has_image(sha):
             #: 图片所属用户
             #: - 如果不是匿名，那么判断请求用户是否属所属用户或管理员
             #: - 如果是匿名上传，那么只有管理员有权删除
@@ -880,7 +880,7 @@ def shamgr(sha):
         if Action == "updateAlbum":
             if not g.signin:
                 return abort(403)
-            if not g.rc.sismember(gk, sha):
+            if not has_image(sha):
                 return abort(404)
             #: 更改相册名，允许图片所属用户或管理员修改，允许置空
             album = request.form.get("album") or ""

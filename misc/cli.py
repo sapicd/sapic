@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "staugur"
 
 from json import loads, dumps
@@ -25,6 +25,8 @@ def main(parser):
     api = args.picbed_url
     token = args.picbed_token
     album = args.album or ""
+    title = args.desc or ""
+    expire = args.expire or 0
     if not api:
         api = getenv("picbed_cli_apiurl")
         if not api:
@@ -47,6 +49,8 @@ def main(parser):
                     picbed=b64encode(stream),
                     filename=filename,
                     album=album,
+                    title=title,
+                    expire=expire,
                     origin="cli/{}".format(__version__),
                 )).encode("utf-8"),
                 headers=dict(Authorization="LinkToken {}".format(token)),
@@ -72,6 +76,9 @@ if __name__ == "__main__":
                         help="The picbed upload api url")
     parser.add_argument("-t", "--picbed-token", help="Your LinkToken")
     parser.add_argument("-a", "--album", help="Set image album")
+    parser.add_argument("-d", "--desc", help="Set image title(description)")
+    parser.add_argument("-e", "--expire", type=int,
+                        help="Set image expire(seconds)")
     parser.add_argument("-s", "--style", help="upload result output style",
                         default="default", choices=["default", "typora"])
     parser.add_argument("file", nargs="+", help="Local file")

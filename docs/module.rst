@@ -86,11 +86,15 @@ Picbed Modules
 
 .. autofunction:: get_user_ip
 
+.. autofunction:: has_image
+
 .. autoclass:: Base64FileStorage
     :members:
+    :undoc-members:
 
 .. autoclass:: ImgUrlFileStorage
     :members:
+    :undoc-members:
 
 异常类
 --------

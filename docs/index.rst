@@ -13,7 +13,7 @@ picbed - 简约不小气的自建图床程序
     api
     module
     faq
-    更新日志 <https://github.com/staugur/picbed/releases>
+    changelog
 
 .. _picbed-readme:
 
@@ -24,6 +24,8 @@ picbed - 简约不小气的自建图床程序
 基于Flask的Web自建图床，默认存储在本地，内置支持又拍云、七牛云、阿里云OSS、腾讯云COS等对象存储，支持GitHub、Gitee（码云）。
 
 GitHub：https://github.com/staugur/picbed
+
+Gitee：https://gitee.com/staugur/picbed
 
 语言：Python
 
@@ -39,6 +41,7 @@ GitHub：https://github.com/staugur/picbed
 2. 可插拔的钩子管理器，允许第三方扩展功能点
 
   - 扩展了如sm.ms,superbed.cn等公共图床
+  - 多个扩展点，针对多个功能增强，开发简单
 
 3. API
 

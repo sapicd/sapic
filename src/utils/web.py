@@ -668,3 +668,14 @@ def get_user_ip():
         return request.headers.get('X-Real-IP')
     else:
         return request.remote_addr
+
+
+def has_image(sha):
+    """是否存在图片"""
+    gk = rsp("index", "global")
+    ik = rsp("image", sha)
+    pipe = rc.pipeline()
+    pipe.sismember(gk, sha)
+    pipe.exists(ik)
+    result = pipe.execute()
+    return result == [True, 1]
