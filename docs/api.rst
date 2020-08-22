@@ -351,6 +351,10 @@ RESTful API
 
     上传方式优先级：文件域 > Image URL > Image base64
 
+  .. versionchanged:: 1.9.0
+
+    增加title和expire字段，前者设置图片描述，后者添加为临时图片
+
   获取上传数据的字段默认是picbed，管理员可以在控制台修改，但是不建议改，
   如果要改，首页上传会自动更新，但引用uploader.js在外部上传的话，那就需要
   设置 **name** 值，具体参考 :ref:`LinkToken-upload-plugin` ，有一个name选项
@@ -360,6 +364,8 @@ RESTful API
   :form format: 等于query查询参数的format
   :form album: 图片所属相册（匿名时总是直接设置为anonymous）
   :form picbed: 上传字段名
+  :form title: 图片简单描述，页面显示时作为title
+  :form expire: 表明上传临时图片，int类型，单位秒，过期删除数据（不会物理删除图片）
   :form filename: 使用 **base64/url** 方式上传时此值有效，设定文件名
   :resjson string filename: 最终保存到服务器的文件名
   :resjson string sender: 保存图片的钩子名

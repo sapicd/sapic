@@ -11,10 +11,10 @@
 
 from flask import Flask, g, request, render_template, jsonify
 from views import front_bp, api_bp
-from utils.tool import Attribute, is_true, parse_valid_comma, err_logger, \
-    create_redis_engine
+from utils.tool import Attribute, is_true, parse_valid_comma, err_logger
 from utils.web import get_site_config, JsonResponse, default_login_auth, \
-    get_redirect_url, change_userinfo
+    get_redirect_url, change_userinfo, rc, get_page_msg, dfr
+from utils.exceptions import ApiError, PageError
 from utils.cli import sa_cli
 from libs.hook import HookManager
 from config import GLOBAL
@@ -31,11 +31,10 @@ app.config.update(
     SECRET_KEY=GLOBAL["SecretKey"],
     MAX_CONTENT_LENGTH=10 * 1024 * 1024,
     DOCS_BASE_URL="https://picbed.rtfd.vip",
+    UPLOAD_FOLDER="upload",
 )
 
 hm = HookManager(app)
-rc = create_redis_engine()
-
 app.register_blueprint(front_bp)
 app.register_blueprint(api_bp, url_prefix="/api")
 app.cli.add_command(sa_cli)
@@ -43,7 +42,10 @@ app.cli.add_command(sa_cli)
 
 @app.context_processor
 def gtv():
-    return {"Version": __version__, "Doc": __doc__, "is_true": is_true}
+    return {
+        "Version": __version__, "Doc": __doc__,
+        "is_true": is_true, "get_page_msg": get_page_msg
+    }
 
 
 @app.before_request
@@ -82,7 +84,7 @@ def after_request(res):
 @app.errorhandler(403)
 @app.errorhandler(413)
 @app.errorhandler(400)
-def page_error(e):
+def handle_error(e):
     if getattr(e, "code", None) == 500:
         err_logger.error(e, exc_info=True)
     code = e.code
@@ -90,3 +92,18 @@ def page_error(e):
     if request.path.startswith("/api/"):
         return jsonify(dict(msg=name, code=code)), code
     return render_template("public/error.html", code=code, name=name), code
+
+
+@app.errorhandler(ApiError)
+def handle_api_error(e):
+    response = jsonify(dfr(e.to_dict()))
+    response.status_code = e.status_code
+    return response
+
+
+@app.errorhandler(PageError)
+def handle_page_error(e):
+    resp = dfr(e.to_dict())
+    return render_template(
+        "public/error.html", code=resp["code"], name=resp["msg"]
+    ), e.status_code

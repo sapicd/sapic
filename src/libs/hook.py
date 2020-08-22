@@ -265,11 +265,12 @@ class HookManager(object):
         self.__ensure_reloaded()
         if not self.__hooks:
             self.__init_load_hooks()
-        hooks = []
-        for h in list(self.__hooks.values()):
+        data = []
+        hooks = list(self.__hooks.values())
+        for h in hooks:
             h['state'] = self.__get_state(h)
-            hooks.append(h)
-        return hooks
+            data.append(h)
+        return data
 
     @property
     def get_map_hooks(self):
@@ -385,6 +386,9 @@ class HookManager(object):
 
         .. versionchanged:: 1.7.0
             add param `_mode` and `_every`
+
+        .. versionchanged:: 1.9.0
+            _mode add any_false
 
         .. deprecated:: 1.8.0
             _callback replaced by `_every`;

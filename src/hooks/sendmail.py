@@ -9,7 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __author__ = 'staugur'
 __description__ = '多方式发送邮件'
 
@@ -32,8 +32,8 @@ intpl_emailsetting = '''
     </div>
     <div class="layui-form-item">
         <div class="layui-inline">
-            <label class="layui-form-label" style="width: auto;">SaintIC Open</label>
-            <div class="layui-input-inline">
+            <label class="layui-form-label">SaintIC Open</label>
+            <div class="layui-input-block">
                 <input type="text" name="email_open_token"
                     value="{{ g.site.email_open_token }}" placeholder="Api密钥"
                     autocomplete="off" class="layui-input">
@@ -44,26 +44,24 @@ intpl_emailsetting = '''
         <legend><i class="saintic-icon saintic-icon-info" id="tip-sc" style="font-size:120%"></i> SendCloud</legend>
         <div class="layui-field-box">
             <div class="layui-form-item">
-                <div class="layui-inline">
-                    <label class="layui-form-label" style="width: auto;">Api User</label>
-                    <div class="layui-input-inline">
-                        <input type="text" name="email_sendcloud_apiuser" value="{{ g.site.email_sendcloud_apiuser }}"
-                            placeholder="SendCloud.sohu.com API USER" autocomplete="off" class="layui-input">
-                    </div>
+                <label class="layui-form-label">Api User</label>
+                <div class="layui-input-block">
+                    <input type="text" name="email_sendcloud_apiuser" value="{{ g.site.email_sendcloud_apiuser }}"
+                        placeholder="SendCloud.sohu.com API USER" autocomplete="off" class="layui-input">
                 </div>
-                <div class="layui-inline">
-                    <label class="layui-form-label" style="width: auto;">Api Key</label>
-                    <div class="layui-input-inline">
-                        <input type="text" name="email_sendcloud_apikey" value="{{ g.site.email_sendcloud_apikey }}"
-                            placeholder="SendCloud KEY of API USER" autocomplete="off" class="layui-input">
-                    </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">Api Key</label>
+                <div class="layui-input-block">
+                    <input type="text" name="email_sendcloud_apikey" value="{{ g.site.email_sendcloud_apikey }}"
+                        placeholder="SendCloud KEY of API USER" autocomplete="off" class="layui-input">
                 </div>
-                <div class="layui-inline">
-                    <label class="layui-form-label" style="width: auto;">From</label>
-                    <div class="layui-input-inline">
-                        <input type="text" name="email_sendcloud_from" value="{{ g.site.email_sendcloud_from }}"
-                            placeholder="(可选)发件人地址" autocomplete="off" class="layui-input">
-                    </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">From</label>
+                <div class="layui-input-block">
+                <input type="text" name="email_sendcloud_from" value="{{ g.site.email_sendcloud_from }}"
+                    placeholder="(可选)发件人地址" autocomplete="off" class="layui-input">
                 </div>
             </div>
         </div>

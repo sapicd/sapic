@@ -8,7 +8,7 @@
     <p>所属用户：{{ d.user }}</p>
     <p>
         <div class="layui-form" action="">
-            所属相册：<input type="text" name="album" autocomplete="off" value="{{ d.album || '' }}" list="list_user_albums">
+            所属相册：<input type="text" name="album" autocomplete="off" value="{{ d.album || '' }}" list="list_user_albums" class="my-input">
             <datalist id="list_user_albums"></datalist>
             <input type="hidden" name="sha" autocomplete="off" value="{{ d.sha }}">
             <button type="button" title="更新相册名" class="layui-btn layui-btn-xs layui-btn-radius" lay-submit lay-filter="updateAlbumSubmit"><i class="layui-icon layui-icon-ok"></i></button>
@@ -45,7 +45,7 @@
                     </div>
                     <div class="layui-tab-item">
                         <textarea class="layui-textarea" readonly
-                            id="html">&lt;img src="{{ d.get_src('html') }}" alt="{{ d.filename }}"&gt;</textarea>
+                            id="html">&lt;img src="{{ d.get_src('html') }}" title="{{ d.title }}" alt="{{ d.filename }}"&gt;</textarea>
                         <button type="button" class="layui-btn layui-btn-sm layui-btn-fluid upload_show_copy"
                             data-copyid="#html">复制</button>
                     </div>

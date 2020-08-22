@@ -122,8 +122,14 @@
 2. 第三方钩子
 ----------------
 
-非内置的钩子所属均为第三方，我发布的第三方可以在
-`GitHub搜索 <https://github.com/search?q=user%3Astaugur+picbed>`_
+非内置的钩子所属均为第三方，我发布的第三方已经整理在
+`Awesome for picbed <https://github.com/staugur/picbed-awesome/>`_ ，
+其内容（管理员）可以在安装第三方钩子时，通过类似“应用商店”的形式进行显示，
+并在线安装！
+
+Awesome for picbed 收藏的第三方经过审核，可放心食用。
+
+-------------
 
 第三方是通过pip、easy_install等安装到本地环境中的模块、包。
 
@@ -170,13 +176,26 @@
 
   可能没有传参、不要求返回，也没有代表水果，随缘就好~
 
-- before_request
+-------------
+
+before_request
+^^^^^^^^^^^^^^^^
 
   即在flask的before_request钩子函数内运行的方法，无传参（return无效果）。
 
-- after_request
+  此方法内，你可以使用 ``flask.g`` 获取一些定义：
 
-  即在flask的after_request钩子函数内运行的方法，传递response参数，无需return
+  - ``g.rc`` redis连接实例
+
+  - ``g.cfg`` 站点配置信息（dict，允许使用属性的方式引用）
+
+  - ``g.signin && g.userinfo`` 前者是布尔值，True表示已经登录；
+    后者是用户信息（dict，不经过解析的用户信息）
+
+after_request
+^^^^^^^^^^^^^^^^
+
+  即在flask的after_request钩子函数内运行的方法，传递response位置参数，无需return
 
   例如：
 
@@ -185,7 +204,8 @@
     def after_request(res):
         res.headers.add("Access-Control-Allow-Headers", "Authorization")
 
-- upimg_save 🍇
+upimg_save 🍇
+^^^^^^^^^^^^^^^^
 
   api上传在保存图片时使用的钩子，传递参数filename、stream、upload_path，
   分别是：文件名、二进制数据、上传路径。
@@ -194,7 +214,8 @@
   upload_path、filename、basedir、save_result，分别是：图片唯一id、上传路径、
   文件名、基础路径、upimg_save返回结果。
 
-- upimg_stream_processor 🍇
+upimg_stream_processor 🍇
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
   上传图片的处理钩子，传递参数stream、suffix，分别是：图片的二进制、后缀（
   比如.png），第三方可以处理并返回新的stream。
@@ -210,7 +231,8 @@
   遗憾的是，假设此扩展点有多个钩子进行处理，但最终只会是最后一个能成功
   替换原图。
 
-- upimg_stream_interceptor 🍇
+upimg_stream_interceptor 🍇
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
   上传图片的处理钩子，传递参数stream、suffix，分别是：图片的二进制、后缀（
   比如.png），第三方可以处理并确定是否继续，和上一个区别是，此扩展点
@@ -219,13 +241,15 @@
 
   适用场景：检测到图片涉及敏感信息时拒绝上传。
 
-- profile_update
+profile_update
+^^^^^^^^^^^^^^^^
 
   用户成功修改个人资料时触发此钩子方法，传递关键字参数nickname、avatar
 
-- 第三方认证相关的几个钩子
+第三方认证相关的几个钩子
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  - site_auth      布尔值，True定义了自身是个第三方认证的钩子
+  - site_auth      布尔值，True定义了自身是个第三方认证的钩子，必须
 
   - login_handler  🍒登录页面处理器，控制了/login路由，默认返回程序自身登录页
 
@@ -297,6 +321,14 @@
     可以结合profile_update方法更新一些字段。另外可以参考现有案例
     `picbed-ssoclient <https://github.com/staugur/picbed-ssoclient>`_ 。
 
+  .. warning::
+
+    第三方认证隐藏很大风险，比如，其username可以直接读取同名已注册用户所有
+    数据（然而实际上可能不是同一人），is_admin字段更是直接拥有了管理员
+    权限，比如绕过注册审核，等等。
+    
+    所以，如果不是相当 **信任** ，请不要使用此类钩子扩展！
+
 .. _picbed-hook-tpl-ep:
 
 3.2 模板中钩子扩展点
@@ -316,7 +348,8 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
 
 目前模板中可用的NAME如下：
 
-- sitesetting
+sitesetting
+^^^^^^^^^^^^^^^^
 
   管理员控制台站点设置下与上传设置之间，表单内容。
 
@@ -331,37 +364,45 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
     </div>
     '''
 
-- hooksetting
+hooksetting
+^^^^^^^^^^^^^^^^
 
   管理员控制台钩子设置下，表单内容，格式参考上面。
 
   支持复选框、开关样式（勾选值为1，否则0）
 
-- emailsetting
+emailsetting
+^^^^^^^^^^^^^^^^
 
   邮件配置，表单内容，格式参考上面
 
-- adminscript
+adminscript
+^^^^^^^^^^^^^^^^
 
   管理员控制台脚本区域，要求内容是 **<script>** JS脚本
 
-- profile
+profile
+^^^^^^^^^^^^^^^^
 
   用户个人资料下，表单内容，格式参考上面。
 
-- usersetting
+usersetting
+^^^^^^^^^^^^^^^^
 
   用户设置的站点个性化设置下面，表单内容，格式参考上面。
 
-- before_usersetting
+before_usersetting
+^^^^^^^^^^^^^^^^^^^
 
   用户设置的站点个性化设置上面，表单内容，格式参考上面。
 
-- userscript
+userscript
+^^^^^^^^^^^^^^^^
 
   用户中心脚本区域，要求内容是包含 **<script>** 的JS脚本内容
 
-- nav
+nav
+^^^^^^^^^^^^^^^^
 
   右侧下拉导航，其内容是：
 
@@ -374,10 +415,15 @@ HTML模板代码，前者以render_template渲染，后者以render_template_str
   图标可以使用layui框架提供的，也可以使用
   `第三方 <https://open.saintic.com/openservice/iconfont>`_
 
+login_area
+^^^^^^^^^^^^^^^^
+
+  位于登录页面的密码框与记住我复选框中间，格式是表单元素，比如input、select等
+
 .. tip::
 
-  由于前端页面使用 `Layui <https://www.layui.com/>`_ 框架，所以模板内表单
-  您需要对其格式有所了解。
+    由于前端页面使用 `Layui <https://www.layui.com/>`_ 框架，所以模板内表单
+    您需要对其格式有所了解。
 
 .. _picbed-hook-api:
 
@@ -413,7 +459,7 @@ Object：即钩子模块名；Action：钩子方法
 .. tip::
 
     Action钩子方法内部可以直接使用g、request等，
-    以及 ``utils.web.apilogin_required`` 等。
+    以及 :meth:`utils.web.apilogin_required` 等。
 
 .. _picbed-hook-route:
 
@@ -421,18 +467,19 @@ Object：即钩子模块名；Action：钩子方法
 ==========
 
 面向前端页面专门给钩子扩展用的，端点是 ``front.ep``, url是
-``/extendpoint/<hook_name>/[route_name]``
+``/extendpoint/<hook_name>/[route_name]``, 仅支持GET访问
 
 hook_name：即钩子名称，比如up2oss、picbed-smtp；
+
 route_name：路由名称，可选。
 
-定位到 *hook_name* 直接执行route函数（无传参），按照其结果有两种判断：
+定位到 *hook_name* 直接执行 **route** 函数（无传参），按照其结果有两种判断：
 
 1. 返回的是字符串
 
     此时route_name无效，无论是啥，最终访问URL返回的都是字符串这个结果
 
-    示例，钩子名test（等同模块名）：
+    示例，钩子名test：
 
     .. code-block:: python
 
@@ -453,17 +500,25 @@ route_name：路由名称，可选。
 
 2. 返回的字典对象
 
-    此时route_name有效，会从字典中查找值，最终路由返回这个值。
+    此时route_name有效，会从字典中查找route_name对应的值，
+    **注意：** 如果值可以回调并且不是 :class:`flask.wrappers.Response` 实例，
+    那么会当作函数执行并直接返回执行结果，否则直接返回。
+
     示例，钩子名test：
 
     .. code-block:: python
 
         from flask import render_template_string as render, jsonify
 
+        def a_func():
+            #: your code
+            return abort(403)
+
         def route():
             return dict(
                 s=render('<b>hello world!</b>'),
-                j=jsonify(text='hello world')
+                j=jsonify(text='hello world'),
+                f=a_func
             )
 
     访问：
@@ -479,10 +534,13 @@ route_name：路由名称，可选。
         $ curl http://your-picbed-url/extendpoint/test/j
         {"text": "hello world"}
 
+        $ curl http://your-picbed-url/extendpoint/test/f
+        !403
+
 .. tip::
 
     route方法内部可以直接使用g、request等，
-    以及 ``utils.web.login_required`` 等。
+    以及 :meth:`utils.web.login_required` 等。
 
     构建路由可用url_for：
 
@@ -610,7 +668,7 @@ route_name：路由名称，可选。
   .. code-block:: python
 
     __version__ = '符合语义化2.0规范的版本号'
-    __author__ = '作者'
+    __author__ = '作者 <邮箱>'
     __hookname__ = '直接定义钩子名称（昵称），否则默认是文件模块名'
     __state__ = 'enabled/disabled'  # 状态：启用(默认)/禁用
     __description__ = '描述'
@@ -642,7 +700,7 @@ route_name：路由名称，可选。
 
     version表示picbed图床程序的版本号。
 
-    另外，允许用逗号（英文）分组，表示匹配所有分组才允许加载。
+    另外，允许用半角逗号分组，表示匹配所有分组才允许加载。
 
     举例说明（__appversion__ = ↓）：
 
@@ -665,9 +723,9 @@ route_name：路由名称，可选。
 
       要求picbed图床版本最低是1.8.0，最高是1.9.0
 
-    - >1.8.1,<1.9.0,!=1.8.2
+    - >1.8.0,<1.9.0,!=1.8.2
 
-      要求图床版本大于1.8.1小于1.9.0且不等于1.8.2
+      要求图床版本大于1.8.0小于1.9.0且不等于1.8.2
 
 .. |picbed_github_token| image:: /_static/images/picbed_github_token.png
 .. |picbed_github_hook| image:: /_static/images/picbed_github_hook.png

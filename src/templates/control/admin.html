@@ -4,15 +4,15 @@
 
 {% block head %}
 <style>
-    .layui-elem-field {
+    .layui-tab-content .layui-elem-field {
         font-size: 12px;
     }
-    .layui-elem-field legend {
+    .layui-tab-content .layui-elem-field legend {
         font-size: 14px;
         font-weight: bold;
         color: #009688;
     }
-    .layui-elem-field .layui-elem-field legend {
+    .layui-tab-content .layui-elem-field .layui-elem-field legend {
         font-size: 10px;
     }
     .layui-inline, img {
@@ -25,7 +25,7 @@
 <div class="layui-container">
     <div class="layui-tab layui-tab-brief" lay-filter="tab">
         <ul class="layui-tab-title">
-            <li class="layui-this" lay-id="setting"><i class="saintic-icon saintic-icon-system-setting"></i> 系统设置</li>
+            <li class="layui-this" lay-id="setting"><i class="saintic-icon saintic-icon-system-setting"></i> 配置管理</li>
             <li lay-id="hook"><i class="saintic-icon saintic-icon-plugin"></i> 钩子扩展</li>
             <li lay-id="user"><i class="saintic-icon saintic-icon-user-manager"></i> 用户管理</li>
             <li lay-id="picbed"><i class="saintic-icon saintic-icon-jump"></i> 全站图片管理</li>
@@ -33,307 +33,377 @@
         <div class="layui-tab-content">
             <div class="layui-tab-item layui-show">
                 <form class="layui-form" id="control" lay-filter="setting" autocomplete="off">
-                    
-                  <div class="layui-row">
-                   <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
-                    <fieldset class="layui-elem-field layui-field-title">
-                        <legend>站点</legend>
-                        <div class="layui-field-box">
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">站点名称</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="title_name" value="{{ g.site.title_name }}"
-                                        placeholder="站点名称，统一标题后缀，默认picbed" autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">站点关键词</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="seo_keywords" value="{{ g.site.seo_keywords }}"
-                                        placeholder="指定站点的SEO关键词" autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">站点描述</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="seo_description" value="{{ g.site.seo_description }}"
-                                        placeholder="指定站点的SEO内容描述" autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">站点图标</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="favicon" value="{{ g.site.favicon }}" placeholder="站点图标地址，默认是：{{ url_for('static', filename='img/favicon.png') }}"
-                                        autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">Logo</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="logo" value="{{ g.site.logo }}"
-                                        placeholder="站点Logo地址，默认是：{{ url_for('static', filename='img/logo.png') }}"
-                                        autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">登录欢迎文案</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="login_title" value="{{ g.site.login_title }}"
-                                        placeholder="登录页面的标题文字，默认是：登录你的Picbed" autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">背景图</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="bg_mg" value="{{ g.site.bg_mg }}" placeholder="站点PC端背景图地址，下拉可选择默认提供的背景图"
-                                        autocomplete="off" class="layui-input" list="bg_mg_defaults">
-                                    <datalist id="bg_mg_defaults">
-                                        <option value="https://open.saintic.com/api/bingPic">
-                                        <option value="{{ url_for('static', filename='img/bg1.jpg') }}">
-                                        <option value="{{ url_for('static', filename='img/bg2.jpg') }}">
-                                        <option value="{{ url_for('static', filename='img/bg3.jpg') }}">
-                                        <option value="{{ url_for('static', filename='img/bg4.jpg') }}">
-                                        <option value="{{ url_for('static', filename='img/bg5.jpg') }}">
-                                    </datalist>
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">移动端背景图</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="bg_mobile" value="{{ g.site.bg_mobile }}" placeholder="站点移动端背景图地址，下拉可选择默认提供的背景图"
-                                        autocomplete="off" class="layui-input" list="bg_mobile_defaults">
-                                    <datalist id="bg_mobile_defaults">
-                                        <option value="{{ url_for('static', filename='img/mbg1.jpg') }}">
-                                        <option value="{{ url_for('static', filename='img/mbg2.jpg') }}">
-                                        <option value="{{ url_for('static', filename='img/mbg3.jpg') }}">
-                                        <option value="{{ url_for('static', filename='img/mbg4.jpg') }}">
-                                        <option value="{{ url_for('static', filename='img/mbg5.jpg') }}">
-                                    </datalist>
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">背景透明度</label>
-                                <div class="layui-input-block">
-                                    <input type="number" step=0.1 min=0 max=1 name="bg_ransparency" value="{{ g.site.bg_ransparency }}"
-                                        placeholder="站点背景透明度，0-1之间（值越大越透明），默认是0.5" autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">备案号</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="beian" value="{{ g.site.beian }}" placeholder="ICP备案号，若有公网安备请加英文逗号再填写公安备案号"
-                                        autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">页脚</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="footer" value="{{ g.site.footer }}" placeholder="位于Copyright年份与版权声明之间"
-                                        autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">CORS Origin</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="cors" value="{{ g.site.cors }}" placeholder="设置跨域允许的源站(仅协议和域名、端口)，允许*"
-                                        autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">禁止注册用户</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="forbidden_username" value="{{ g.site.forbidden_username }}" placeholder="禁止注册的用户名，逗号分割多个，默认包含anonymous"
-                                        autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label"><i class="saintic-icon saintic-icon-info" id="tip-register-options"></i> 注册选项</label>
-                                <div class="layui-input-block">
-                                    <input type="checkbox" name="register" title="开放注册" lay-skin="primary"
-                                        {% if is_true(g.site.register) %}checked="checked" {% endif %} autocomplete="off"
-                                        value="1">
-                                    <input type="checkbox" name="review" title="注册审核" lay-skin="primary"
-                                        {% if is_true(g.site.review) %}checked="checked" {% endif %} autocomplete="off"
-                                        value="1">
-                                    <input type="checkbox" name="disable_login" title="禁止登录" lay-skin="primary"
-                                        {% if is_true(g.site.disable_login) %}checked="checked" {% endif %} autocomplete="off"
-                                        value="1">
-                                </div>
-                            </div>
-                            <div class="layui-form-item layui-form-text">
-                                <label class="layui-form-label"><i class="saintic-icon saintic-icon-bulletin" id="tip-bulletin"></i> 全站公告</label>
-                                <div class="layui-input-block">
-                                    <textarea name="bulletin" placeholder="页面顶部公告栏"
-                                        value="" class="layui-textarea"></textarea>
-                                </div>
-                            </div>
-                            {{ intpl("sitesetting") }}
-                        </div>
-                    </fieldset>
-                   </div>
-                   <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
-                    <fieldset class="layui-elem-field layui-field-title">
-                        <legend>上传</legend>
-                        <div class="layui-field-box">
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">匿名上传</label>
-                                <div class="layui-input-block">
-                                    <input type="checkbox" name="anonymous" lay-skin="switch" lay-text="ON|OFF"
-                                        {% if is_true(g.site.anonymous) %}checked="checked" {% endif %} autocomplete="off"
-                                        value="1">
-                                </div>
-                            </div>
-                            <div class="layui-form-item layui-form-text">
-                                <label class="layui-form-label"><i class="saintic-icon saintic-icon-tip" id="tip-uploadbeforehtml"></i> 首页上传区域提示</label>
-                                <div class="layui-input-block">
-                                    <textarea name="upload_beforehtml" placeholder="首页上传区域上方文字提示"
-                                        value="" class="layui-textarea"></textarea>
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">图片后缀限制</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="upload_exts" value="{{ g.site.upload_exts }}"
-                                        placeholder="竖线分隔上传允许的后缀，默认是jpg|jpeg|png|gif|webp|bmp" autocomplete="off"
-                                        class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">大小限制</label>
-                                <div class="layui-input-block">
-                                    <input type="number" step=1 name="upload_size" max=10 min=1 value="{{ g.site.upload_size }}"
-                                        placeholder="上传允许的大小，最大10，单位MB，默认是10" autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">数量限制</label>
-                                <div class="layui-input-block">
-                                    <input type="number" step=1 min=0 max=10 name="upload_number" value="{{ g.site.upload_number }}"
-                                        placeholder="上传允许的数量，最大10，默认是10" autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label" style="color:red"><i class="saintic-icon saintic-icon-warn"></i> 上传字段</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="upload_field" value="{{ g.site.upload_field }}"
-                                        placeholder="上传接口获取文件字段名，默认picbed，谨慎修改！" autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            {% set bes = get_call_list("upimg_save", _type="func") %}
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">用户分组上传</label>
-                                <div class="layui-input-block">
-                                    <input type="text" name="upload_group" value="{{ g.site.upload_group }}"
-                                        placeholder="按用户标签设置上传后端，格式是label:sender，逗号分隔多个" autocomplete="off" class="layui-input">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label" id="tip-be"><i class="saintic-icon saintic-icon-storage-cloud"></i> 默认存储在</label>
-                                <div class="layui-input-block">
-                                    <select name="upload_includes" lay-verify="required">
-                                        {% for h in bes %}
-                                        <option value="{{ h.name }}"
-                                            {% if h.name in g.site.upload_includes %}selected="selected"{% endif %}>{{ h.name }}{% if h.description %}（{{ h.description }}）{% endif %}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">图片路径前缀规则: user/&lt;&gt;</label>
-                                <div class="layui-input-block">
-                                    <input type="radio" name="upload_path_rule" value="default" title="默认(无路径)"
-                                        {% if g.site.upload_path_rule|d("default") == "default" %}checked="checked" {% endif %}
-                                        autocomplete="off">
-                                    <input type="radio" name="upload_path_rule" value="date1" title="年/月/日"
-                                        {% if g.site.upload_path_rule == "date1" %}checked="checked" {% endif %} autocomplete="off">
-                                    <input type="radio" name="upload_path_rule" value="date2" title="年月日"
-                                        {% if g.site.upload_path_rule == "date2" %}checked="checked" {% endif %} autocomplete="off">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label">图片文件命名规则: /&lt;name&gt;</label>
-                                <div class="layui-input-block">
-                                    <input type="radio" name="upload_file_rule" value="default" title="默认(原名)"
-                                        {% if g.site.upload_file_rule|d("default") == "default" %}checked="checked" {% endif %}
-                                        autocomplete="off">
-                                    <input type="radio" name="upload_file_rule" value="time1" title="时间戳(毫秒)"
-                                        {% if g.site.upload_file_rule == "time1" %}checked="checked" {% endif %} autocomplete="off">
-                                    <input type="radio" name="upload_file_rule" value="time2" title="时间戳+随机数"
-                                        {% if g.site.upload_file_rule == "time2" %}checked="checked" {% endif %} autocomplete="off">
-                                    <input type="radio" name="upload_file_rule" value="time3" title="年月日时分秒+随机数"
-                                        {% if g.site.upload_file_rule == "time3" %}checked="checked" {% endif %} autocomplete="off">
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <label class="layui-form-label" style="width: auto;">上述两条规则允许用户覆盖</label>
-                                <div class="layui-input-block" style="width: auto;">
-                                    <input type="checkbox" name="upload_rule_overridden" lay-skin="switch" lay-text="ON|OFF"
-                                        {% if is_true(g.site.upload_rule_overridden) %}checked="checked" {% endif %} autocomplete="off"
-                                        value="1">
-                                </div>
-                            </div>
-                        </div>
-                    </fieldset>
-                   </div>
-                  </div>
 
-                  <div class="layui-row">
-                    <fieldset class="layui-elem-field layui-field-title">
-                        <legend>钩子</legend>
-                        <div class="layui-field-box">
-                            <div class="layui-row layui-col-space10">
-                                <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
+                    <div class="layui-row">
+                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
+                            <fieldset class="layui-elem-field layui-field-title">
+                                <legend>站点</legend>
+                                <div class="layui-field-box">
                                     <div class="layui-form-item">
-                                        <label class="layui-form-label" id="tip-sa"><b style="color: red;">?</b> 第三方认证</label>
+                                        <label class="layui-form-label">站点名称</label>
                                         <div class="layui-input-block">
-                                            <select name="site_auth">
-                                                <option value="">默认（取消选择）</option>
-                                                {% for h in get_call_list("site_auth", _type="bool") %}
-                                                    <option value="{{ h.name }}" {% if h.name == g.site.site_auth %}selected="selected" {% endif %}>{{ h.name }}{% if h.description %}（{{ h.description }}）{% endif %}</option>
+                                            <input type="text" name="title_name" value="{{ g.site.title_name }}"
+                                                placeholder="站点名称，统一标题后缀，默认picbed" autocomplete="off"
+                                                class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">站点关键词</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="seo_keywords" value="{{ g.site.seo_keywords }}"
+                                                placeholder="指定站点的SEO关键词" autocomplete="off" class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">站点描述</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="seo_description"
+                                                value="{{ g.site.seo_description }}" placeholder="指定站点的SEO内容描述"
+                                                autocomplete="off" class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">站点图标</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="favicon" value="{{ g.site.favicon }}"
+                                                placeholder="站点图标地址，默认是：{{ url_for('static', filename='img/favicon.png') }}"
+                                                autocomplete="off" class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">Logo</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="logo" value="{{ g.site.logo }}"
+                                                placeholder="站点Logo地址，默认是：{{ url_for('static', filename='img/logo.png') }}"
+                                                autocomplete="off" class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">登录欢迎文案</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="login_title" value="{{ g.site.login_title }}"
+                                                placeholder="登录页面的标题文字，默认是：登录你的Picbed" autocomplete="off"
+                                                class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">背景图</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="bg_mg" value="{{ g.site.bg_mg }}"
+                                                placeholder="站点PC端背景图地址，下拉可选择默认提供的背景图" autocomplete="off"
+                                                class="layui-input" list="bg_mg_defaults">
+                                            <datalist id="bg_mg_defaults">
+                                                <option value="https://open.saintic.com/api/bingPic">
+                                                <option value="{{ url_for('static', filename='img/bg1.jpg') }}">
+                                                <option value="{{ url_for('static', filename='img/bg2.jpg') }}">
+                                                <option value="{{ url_for('static', filename='img/bg3.jpg') }}">
+                                                <option value="{{ url_for('static', filename='img/bg4.jpg') }}">
+                                                <option value="{{ url_for('static', filename='img/bg5.jpg') }}">
+                                            </datalist>
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">移动端背景图</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="bg_mobile" value="{{ g.site.bg_mobile }}"
+                                                placeholder="站点移动端背景图地址，下拉可选择默认提供的背景图" autocomplete="off"
+                                                class="layui-input" list="bg_mobile_defaults">
+                                            <datalist id="bg_mobile_defaults">
+                                                <option value="{{ url_for('static', filename='img/mbg1.jpg') }}">
+                                                <option value="{{ url_for('static', filename='img/mbg2.jpg') }}">
+                                                <option value="{{ url_for('static', filename='img/mbg3.jpg') }}">
+                                                <option value="{{ url_for('static', filename='img/mbg4.jpg') }}">
+                                                <option value="{{ url_for('static', filename='img/mbg5.jpg') }}">
+                                            </datalist>
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">背景透明度</label>
+                                        <div class="layui-input-block">
+                                            <input type="number" step=0.1 min=0 max=1 name="bg_ransparency"
+                                                value="{{ g.site.bg_ransparency }}"
+                                                placeholder="站点背景透明度，0-1之间（值越大越透明），默认是0.5" autocomplete="off"
+                                                class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">备案号</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="beian" value="{{ g.site.beian }}"
+                                                placeholder="ICP备案号，若有公网安备请加半角逗号再填写公安备案号" autocomplete="off"
+                                                class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">页脚</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="footer" value="{{ g.site.footer }}"
+                                                placeholder="位于Copyright年份与版权声明之间" autocomplete="off"
+                                                class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item layui-form-text">
+                                        <label class="layui-form-label"><i class="saintic-icon saintic-icon-bulletin"
+                                                id="tip-bulletin"></i> 全站公告</label>
+                                        <div class="layui-input-block">
+                                            <textarea name="bulletin" placeholder="页面顶部公告栏" value=""
+                                                class="layui-textarea"></textarea>
+                                        </div>
+                                    </div>
+                                    {{ intpl("sitesetting") }}
+                                </div>
+                            </fieldset>
+                        </div>
+                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
+                            <fieldset class="layui-elem-field layui-field-title">
+                                <legend>上传</legend>
+                                <div class="layui-field-box">
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">匿名上传</label>
+                                        <div class="layui-input-block">
+                                            <input type="checkbox" name="anonymous" lay-skin="switch" lay-text="ON|OFF"
+                                                {% if is_true(g.site.anonymous) %}checked="checked" {% endif %}
+                                                autocomplete="off" value="1">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item layui-form-text">
+                                        <label class="layui-form-label"><i class="saintic-icon saintic-icon-tip"
+                                                id="tip-uploadbeforehtml"></i> 首页上传区域提示</label>
+                                        <div class="layui-input-block">
+                                            <textarea name="upload_beforehtml" placeholder="首页上传区域上方文字提示" value=""
+                                                class="layui-textarea"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">图片后缀限制</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="upload_exts" value="{{ g.site.upload_exts }}"
+                                                placeholder="竖线分隔上传允许的后缀，默认是jpg|jpeg|png|gif|webp|bmp"
+                                                autocomplete="off" class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">大小限制</label>
+                                        <div class="layui-input-block">
+                                            <input type="number" step=1 name="upload_size" max=10 min=1
+                                                value="{{ g.site.upload_size }}" placeholder="上传允许的大小，最大10，单位MB，默认是10"
+                                                autocomplete="off" class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">数量限制</label>
+                                        <div class="layui-input-block">
+                                            <input type="number" step=1 min=0 max=10 name="upload_number"
+                                                value="{{ g.site.upload_number }}" placeholder="上传允许的数量，最大10，默认是10"
+                                                autocomplete="off" class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label" style="color:red"><i
+                                                class="saintic-icon saintic-icon-warn"></i> 上传字段</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="upload_field" value="{{ g.site.upload_field }}"
+                                                placeholder="上传接口获取文件字段名，默认picbed，谨慎修改！" autocomplete="off"
+                                                class="layui-input">
+                                        </div>
+                                    </div>
+                                    {% set bes = get_call_list("upimg_save", _type="func") %}
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">用户分组上传</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="upload_group" value="{{ g.site.upload_group }}"
+                                                placeholder="按用户标签设置上传后端，格式是label:sender，半角逗号分隔" autocomplete="off"
+                                                class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label" id="tip-be"><i
+                                                class="saintic-icon saintic-icon-storage-cloud"></i> 默认存储在</label>
+                                        <div class="layui-input-block">
+                                            <select name="upload_includes" lay-verify="required">
+                                                {% for h in bes %}
+                                                <option value="{{ h.name }}"
+                                                    {% if h.name in g.site.upload_includes %}selected="selected"
+                                                    {% endif %}>{{ h.name }}{% if h.description %}（{{ h.description }}）{% endif %}
+                                                </option>
                                                 {% endfor %}
                                             </select>
                                         </div>
                                     </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">图片路径前缀规则: user/&lt;&gt;</label>
+                                        <div class="layui-input-block">
+                                            <input type="radio" name="upload_path_rule" value="default" title="默认(无路径)"
+                                                {% if g.site.upload_path_rule|d("default") == "default" %}checked="checked"
+                                                {% endif %} autocomplete="off">
+                                            <input type="radio" name="upload_path_rule" value="date1" title="年/月/日"
+                                                {% if g.site.upload_path_rule == "date1" %}checked="checked" {% endif %}
+                                                autocomplete="off">
+                                            <input type="radio" name="upload_path_rule" value="date2" title="年月日"
+                                                {% if g.site.upload_path_rule == "date2" %}checked="checked" {% endif %}
+                                                autocomplete="off">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">图片文件命名规则: /&lt;name&gt;</label>
+                                        <div class="layui-input-block">
+                                            <input type="radio" name="upload_file_rule" value="default" title="默认(原名)"
+                                                {% if g.site.upload_file_rule|d("default") == "default" %}checked="checked"
+                                                {% endif %} autocomplete="off">
+                                            <input type="radio" name="upload_file_rule" value="time1" title="时间戳(毫秒)"
+                                                {% if g.site.upload_file_rule == "time1" %}checked="checked" {% endif %}
+                                                autocomplete="off">
+                                            <input type="radio" name="upload_file_rule" value="time2" title="时间戳+随机数"
+                                                {% if g.site.upload_file_rule == "time2" %}checked="checked" {% endif %}
+                                                autocomplete="off">
+                                            <input type="radio" name="upload_file_rule" value="time3" title="年月日时分秒+随机数"
+                                                {% if g.site.upload_file_rule == "time3" %}checked="checked" {% endif %}
+                                                autocomplete="off">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label" style="width: auto;">上述两条规则允许用户覆盖</label>
+                                        <div class="layui-input-block" style="width: auto;">
+                                            <input type="checkbox" name="upload_rule_overridden" lay-skin="switch"
+                                                lay-text="ON|OFF"
+                                                {% if is_true(g.site.upload_rule_overridden) %}checked="checked"
+                                                {% endif %} autocomplete="off" value="1">
+                                        </div>
+                                    </div>
                                 </div>
-                                {{ intpl("hooksetting") }}
+                            </fieldset>
+                        </div>
+                    </div>
+                    <div class="layui-row">
+                        <fieldset class="layui-elem-field layui-field-title">
+                            <legend>系统</legend>
+                            <div class="layui-field-box">
+                                <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">CORS Origin</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="cors" value="{{ g.site.cors }}"
+                                                placeholder="设置跨域允许的源站(仅协议和域名、端口)，允许*" autocomplete="off"
+                                                class="layui-input">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label"><i class="saintic-icon saintic-icon-info"
+                                                id="tip-register-options"></i> 注册选项</label>
+                                        <div class="layui-input-block">
+                                            <input type="checkbox" name="register" title="开放注册" lay-skin="primary"
+                                                {% if is_true(g.site.register) %}checked="checked" {% endif %}
+                                                autocomplete="off" value="1">
+                                            <input type="checkbox" name="review" title="注册审核" lay-skin="primary"
+                                                {% if is_true(g.site.review) %}checked="checked" {% endif %}
+                                                autocomplete="off" value="1">
+                                            <input type="checkbox" name="disable_login" title="禁止登录" lay-skin="primary"
+                                                {% if is_true(g.site.disable_login) %}checked="checked" {% endif %}
+                                                autocomplete="off" value="1">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">禁止注册用户</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="forbidden_username"
+                                                value="{{ g.site.forbidden_username }}"
+                                                placeholder="禁止注册的用户名，半角逗号分割多个，默认包含anonymous" autocomplete="off"
+                                                class="layui-input">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">注册默认分组</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="default_userlabel"
+                                                value="{{ g.site.default_userlabel }}"
+                                                placeholder="新注册用户默认标签（用户初始分组）" autocomplete="off"
+                                                class="layui-input">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label"><i class="saintic-icon saintic-icon-info" id="tip-proxy"></i>代理服务</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="proxies"
+                                                value="{{ g.site.proxies }}"
+                                                placeholder="全局外部HTTP请求代理" autocomplete="off"
+                                                class="layui-input">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="layui-row layui-col-space10">
-                                {{ intpl("localhooksetting") }}
-                            </div>
-                            <div class="layui-row layui-col-space10">
-                                <fieldset class="layui-elem-field">
-                                    <legend style="font-size: 13px;">邮件服务设置 <sub><a href="javascript:;" style="font-size:10px" id="SendTestMail">{ 发送测试邮件 }</a></sub></legend>
-                                    <div class="layui-field-box">
+                        </fieldset>
+                    </div>
+                    <div class="layui-row">
+                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                            <fieldset class="layui-elem-field layui-field-title">
+                                <legend>钩子</legend>
+                                <div class="layui-field-box">
+                                    <div class="layui-row layui-col-space10">
                                         <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
                                             <div class="layui-form-item">
-                                                <div class="layui-inline">
-                                                    <label class="layui-form-label" style="width: auto;">发件人名称</label>
-                                                    <div class="layui-input-inline">
-                                                        <input type="text" name="email_from_name"
-                                                            value="{{ g.site.email_from_name }}" placeholder="统一发件人别名，默认站点名"
-                                                            autocomplete="off" class="layui-input">
-                                                    </div>
+                                                <label class="layui-form-label" id="tip-sa"><b style="color: red;">?</b>
+                                                    第三方认证</label>
+                                                <div class="layui-input-block">
+                                                    <select name="site_auth">
+                                                        <option value="">默认（取消选择）</option>
+                                                        {% for h in get_call_list("site_auth", _type="bool") %}
+                                                        <option value="{{ h.name }}"
+                                                            {% if h.name == g.site.site_auth %}selected="selected"
+                                                            {% endif %}>{{ h.name }}{% if h.description %}（{{ h.description }}）{% endif %}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
                                                 </div>
                                             </div>
                                         </div>
-                                        {{ intpl("emailsetting") }}
+                                        {{ intpl("hooksetting") }}
                                     </div>
-                                </fieldset>
-                            </div>
-                        </div>
-                    </fieldset>
-                  </div>
-                  <div class="layui-row">
-                   <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
-                    <div class="layui-form-item">
-                        <div class="layui-input-block">
-                            <button class="layui-btn" lay-submit lay-filter="*">立即提交</button>
-                            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                                    <div class="layui-row layui-col-space10">
+                                        {{ intpl("localhooksetting") }}
+                                    </div>
+                                    <div class="layui-row layui-col-space10">
+                                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
+                                            <fieldset class="layui-elem-field">
+                                                <legend style="font-size: 13px;">邮件服务设置 <sub><a href="javascript:;"
+                                                        style="font-size:10px" id="SendTestMail">{ 发送测试邮件 }</a></sub>
+                                                </legend>
+                                                <div class="layui-field-box">
+                                                    <div class="layui-form-item">
+                                                            <label class="layui-form-label" >发件人名称</label>
+                                                            <div class="layui-input-block">
+                                                                <input type="text" name="email_from_name"
+                                                                    value="{{ g.site.email_from_name }}"
+                                                                    placeholder="统一发件人别名，默认站点名" autocomplete="off"
+                                                                    class="layui-input">
+                                                            </div>
+                                                    </div>
+                                                    {{ intpl("emailsetting") }}
+                                                </div>
+                                            </fieldset>
+                                        </div>
+                                    </div>
+                                </div>
+                            </fieldset>
                         </div>
                     </div>
-                   </div>
-                  </div>
+                    <div class="layui-row">
+                        <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                            <div class="layui-form-item">
+                                <div class="layui-input-block">
+                                    <button class="layui-btn" lay-submit lay-filter="*">立即提交</button>
+                                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="layui-tab-item">
@@ -386,15 +456,50 @@
     <input type="checkbox" data-username="{{ d.username }}" value="1" lay-skin="primary" lay-filter="set_admin"
     {{ d.is_admin === true ? 'checked' : '' }}>
 </script>
+<script type="text/html" id="thidhook_action">
+    <a href="javascript:;" style="color:#FF5722" lay-event="install" title="安装/升级/使用"><i class="saintic-icon saintic-icon-setup"></i></a>
+</script>
+<script id="thirhook_link" type="text/html">
+    <a href="{{ d.github }}" target="_blank" title="GitHub"><i class="saintic-icon saintic-icon-github"></i></a>&nbsp;
+    {{#  if(d.pypi){ }}
+    <a href="{{ d.pypi }}" target="_blank" title="Pypi"><i class="saintic-icon saintic-icon-pypi"></i></a>&nbsp;
+    {{#  } }}
+    {{#  if(d.pkg.installed === true){ }}
+    <abbr style="color:#009688" title="本地已安装 {{ d.pkg.local.version }} 版本">{{ d.name }}</abbr>
+    {{#  } else { }}
+    {{ d.name }}
+    {{#  } }}
+</script>
+<script id="thirdhook_show_tpl" type="text/html">
+<div style="padding: 10px">
+    <fieldset class="layui-elem-field layui-field-title" style="margin-bottom:0px">
+        <legend style="color:#009688;font-size:14px">已审核且开源的第三方钩子列表&nbsp;
+            <sub><a href="javascript:;" id="refreshThirdHookTable" style="color:#01AAED;font-size:0.85em">刷新缓存</a></sub></legend>
+        <div class="layui-field-box">
+            <table id="thid-hook-list" lay-filter="thid-hook-list" class="layui-table"></table>
+        </div>
+    </fieldset>
+    <fieldset class="layui-elem-field layui-field-title" style="margin-top:0px">
+        <legend style="color:#FFB800;font-size:14px">安装/升级（其他/本地）第三方包</legend>
+        <div class="layui-field-box">
+            <div class="layui-form" action="">
+                <input type="text" name="package" required lay-verify="required" lay-verType="tips" placeholder="The pypi package name or VCS url" autocomplete="off" class="layui-input" style="width:300px;display:inline-block">
+                <button type="button" title="提交安装" class="layui-btn layui-btn-xs layui-btn-radius" lay-submit lay-filter="addInstallPackage"><i class="layui-icon layui-icon-ok"></i></button>
+            </div>
+        </div>
+    </fieldset>
+</div>
+</script>
 {% endraw %}
 <script>
-    layui.use(['picbed', 'layer', 'form', 'table', 'element', 'util'], function () {
+    layui.use(['picbed', 'layer', 'form', 'table', 'element', 'util', 'laytpl'], function () {
         var $ = layui.$,
             picbed = layui.picbed,
             util = layui.util,
             form = layui.form,
             layer = layui.layer,
             table = layui.table,
+            laytpl = layui.laytpl,
             element = layui.element;
         //显示当前tab
         if (location.hash) {
@@ -446,6 +551,14 @@
             layer.tips('<b>开放注册：</b>允许任何人注册<br><b>注册审核：</b>限制新注册用户需要管理员审核后才能上传<br><b>禁止登录：</b>禁止普通用户登录（任何方式）',
                 this, {tips: 1}
             );
+        });
+        $('#tip-proxy').on("mouseover click",function() {
+            var tip = [
+                '此代理用于程序请求外部HTTP[s]时(部分情况)，当首次请求超时、连接错误时自动调用代理。',
+                '<b>格式：</b>http[s]=proxy-server,scheme://hostname=proxy-server',
+                '详细请参考文档！',
+            ];
+            layer.tips(tip.join("<br>"), this, {tips: 1});
         });
         //发送测试邮件
         $('#SendTestMail').on("click", function() {
@@ -658,36 +771,160 @@
                     }
                 });
             } else if (layEvent === "installPackage") {
-                layer.prompt({
-                    formType: 0,
-                    title: '使用pip安装或升级第三方包',
-                    placeholder: 'The pypi package name or VCS url',
-                    shade: 0.1
-                }, function(value, index, elem){
-                    if (value) {
-                        layer.close(index);
-                        picbed.ajax("{{ url_for('api.pip_install') }}", function(res) {
-                            layer.msg("已接收请求，后台处理中...", {icon:1});
-                        }, {
-                            data: {package:value, upgrade:true}
-                        });
-                    }
+                laytpl(thirdhook_show_tpl.innerHTML).render({}, function(html){
+                    layer.open({
+                        type: 1,
+                        title: '使用pip安装或升级第三方包',
+                        closeBtn: false,
+                        area: [
+                            document.body.clientWidth > 580 ? '580px' : '95%',
+                            '470px'
+                        ],
+                        shade: 0.1,
+                        shadeClose: true,
+                        maxmin: true,
+                        content: html,
+                        success: function(layero, indexo) {
+                            var thidHooksTable = table.render({
+                                elem: "#thid-hook-list",
+                                url: "{{ url_for('api.github', Action='thirdHooks') }}",
+                                cols: [[
+                                    {
+                                        field: 'name',
+                                        title: '钩子名称',
+                                        templet: "#thirhook_link",
+                                        minWidth: 120
+                                    },
+                                    {
+                                        field: 'module',
+                                        title: '模块',
+                                        hide: true,
+                                    },
+                                    {
+                                        field: 'desc',
+                                        title: '描述',
+                                        minWidth: 100,
+                                    },
+                                    {
+                                        field: 'author',
+                                        title: '作者',
+                                        width: 80,
+                                        templet: function(d) {
+                                            return `<a href="${d.home}" target="_blank" style="color:#01AAED">${d.author}</a>`;
+                                        }
+                                    },
+                                    {
+                                        field: 'catalog',
+                                        title: '分类',
+                                        hide: true,
+                                    },
+                                    {
+                                        field: 'status_text',
+                                        title: '状态',
+                                        width: 80
+                                    },
+                                    {
+                                        fixed: 'right',
+                                        toolbar: '#thidhook_action',
+                                        width: 45
+                                    }
+                                ]],
+                                size: 'sm',
+                                skin: 'line',
+                                page: true,
+                                limit: 5,
+                                limits: [5, 10, 20],
+                                width: document.body.clientWidth > 580 ? 560 : document.body.clientWidth * 0.9
+                            });
+                            $('#refreshThirdHookTable').click(function() {
+                                thidHooksTable.reload({
+                                    where: {no_fresh:0}
+                                });
+                            });
+                            table.on('tool(thid-hook-list)', function(obj){
+                                var data = obj.data;
+                                var layEvent = obj.event;
+                                var tr = obj.tr;
+                                if(layEvent === 'install'){
+                                    var pypiHide = data.pypi ? "" : "layui-hide";
+                                    var content = [
+                                        '<div style="padding: 15px">',
+                                        `<h2 style="text-align:center">${data.name}</h2></br>`,
+                                        '<div style="font-size:0.85em">',
+                                        `<p>描述：${data.desc}</p>`,
+                                        '<p>本地：' + (data.pkg.installed === true ? `已安装 ${data.pkg.local.version} 版本` : '未安装'),
+                                        `<p>使用：请在安装成功后，在 <i>添加第三方钩子</i> 中输入模块名 <b style="color:#FF5722">${data.module}</b> 进行加载！</p>`,
+                                        '</div></br><form class="layui-form" action="">',
+                                        '从GitHub安装（留空使用master分支）<br>',
+                                        '<input type="text" name="branch" placeholder="使用GitHub分支或标签" autocomplete="off" class="my-input">',
+                                        `<input type="hidden" name="github" value="${data.github}">`,
+                                        '<input type="hidden" name="index" value="">',
+                                        '&nbsp;<button type="button" title="提交安装" class="layui-btn layui-btn-xs layui-btn-radius" lay-submit lay-filter="install-from-github"><i class="layui-icon layui-icon-ok"></i></button>',
+                                        `</form><br><form class="layui-form ${pypiHide}" action="">`,
+                                        '从Pypi安装<br>',
+                                        '<input type="text" name="version" placeholder="[可选]使用Pypi版本号" autocomplete="off" class="my-input">',
+                                        `<input type="hidden" name="pkg" value="${data.pkg.name}">`,
+                                        '<input type="hidden" name="index" value="">',
+                                        '&nbsp;<button type="button" title="提交安装" class="layui-btn layui-btn-xs layui-btn-radius" lay-submit lay-filter="install-from-pypi"><i class="layui-icon layui-icon-ok"></i></button>',
+                                        '</form></div>'
+                                    ].join("");
+                                    layer.open({
+                                        type: 1,
+                                        title: false,
+                                        closeBtn: true,
+                                        area: '300px',
+                                        anim: 2,
+                                        shade: 0.1,
+                                        shadeClose: true,
+                                        content: content,
+                                        success: function(layero, index) {
+                                            var i = layero[0].querySelectorAll("input[name='index']");
+                                            i[0].value = index;
+                                            i[1].value = index;
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
                 });
             }
         });
+        //监听安装
+        form.on('submit(install-from-github)', function(data){
+            var branch = data.field.branch || 'master',
+                value = `git+${data.field.github}@${branch}`;
+            picbed.ajax("{{ url_for('api.pip_install') }}", function(res) {
+                layer.msg(`正在安装${value}，请稍后...`, {time:1000}, function() {
+                    if (data.field.index) layer.close(data.field.index);
+                });
+            }, {
+                data: {package:value, upgrade:true}
+            });
+            return false;
+        });
+        form.on('submit(install-from-pypi)', function(data){
+            var pkg = data.field.pkg,
+                value = data.field.version ? `${pkg}==${data.field.version}` : pkg;
+            picbed.ajax("{{ url_for('api.pip_install') }}", function(res) {
+                layer.msg(`正在安装${value}，请稍后...`, {time:1000}, function() {
+                    if (data.field.index) layer.close(data.field.index);
+                });
+            }, {
+                data: {package:value, upgrade:true}
+            });
+            return false;
+        });
         //检测版本更新
-        $.ajax({
-            url: "https://api.github.com/repos/staugur/picbed/releases/latest",
-            success: function(res) {
-                if (typeof res === "object" && res.tag_name) {
-                    var last_version = res.tag_name,
-                        curr_version = "{{ Version }}";
-                    if (picbed.versionStringCompare(curr_version, last_version) === -1) {
-                        $("#verTip").html("<a href='" + res.html_url + "' style='color:#FF5722' target='_blank'>新版本</a>");
-                        layer.tips("发布于" + picbed.convertUTCTimeToLocalTime(res.published_at), "#verTip", {tips:3});
-                    }
-                }
+        picbed.ajax("{{ url_for('api.github', Action='latestRelease') }}", function(res) {
+            var last_version = res.data.tag_name,
+                curr_version = "{{ Version }}";
+            if (picbed.versionStringCompare(curr_version, last_version) === -1) {
+                $("#verTip").html("<a href='" + res.data.html_url + "' style='color:#FF5722' target='_blank'>新版本</a>");
+                layer.tips("发布于" + picbed.convertUTCTimeToLocalTime(res.data.published_at), "#verTip", {tips:3});
             }
+        }, {
+            method: 'get'
         });
         //用户管理
         table.render({
@@ -701,7 +938,11 @@
                         title: '用户名',
                         minWidth: 100,
                         templet: function(d) {
-                            var user = d.avatar ? ('<a href="' + d.avatar + '" class="layui-table-link" target="_blank">' + d.username + '</a>') : d.username;
+                            var login_tip = d.login_at ? (
+                                '上次登录于 ' + util.toDateString(d.login_at * 1000) + (d.login_ip ? ` @ ${d.login_ip || ''}` : '')
+                            ) : '';
+                            var user = d.avatar ? (`<a href="${d.avatar}" class="layui-table-link" target="_blank">${d.username}</a>`) : d.username;
+                            user = `<scan title="${login_tip}">${user}</scan>`;
                             return d.pics > 0 ? (user + '&nbsp;<span class="layui-badge layui-bg-black">' + d.pics + '</span>') : user;
                         }
                     },

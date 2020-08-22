@@ -9,6 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
+import json
 import imghdr
 from posixpath import basename, splitext
 from os.path import join as pathjoin
@@ -17,19 +18,25 @@ from functools import wraps
 from base64 import urlsafe_b64decode as b64decode, b64decode as pic64decode
 from binascii import Error as BaseDecodeError
 from redis.exceptions import RedisError
+from requests.exceptions import RequestException
 from flask import g, redirect, request, url_for, abort, Response, jsonify,\
-    current_app, make_response
+    current_app, make_response, Markup
 from jinja2 import Environment, FileSystemLoader
 from sys import executable
-from subprocess import call
+from subprocess import call, check_output
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, \
     SignatureExpired, BadSignature
 from libs.storage import get_storage
 from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
     parse_valid_verticaline, parse_valid_colon, is_true, is_venv, gen_ua, \
-    check_to_addr, is_all_fail, bleach_html
+    check_to_addr, is_all_fail, bleach_html, try_request, comma_pat, \
+    create_redis_engine
 from ._compat import PY2, text_type, urlsplit
+if not PY2:
+    from functools import reduce
+
+rc = create_redis_engine()
 
 no_jump_ep = ("front.login", "front.logout", "front.register")
 
@@ -61,7 +68,10 @@ def get_redirect_url(endpoint="front.index"):
 
 
 def default_login_auth(dSid=None):
-    """默认登录解密，返回: (signin:boolean, userinfo:dict)"""
+    """默认登录解密
+
+    :returns: (signin:boolean, userinfo:dict)
+    """
     sid = request.cookies.get("dSid") or dSid or ""
     signin = False
     userinfo = {}
@@ -102,6 +112,7 @@ def default_login_auth(dSid=None):
 
 
 def login_required(f):
+    """页面要求登录装饰器"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not g.signin:
@@ -117,6 +128,7 @@ def login_required(f):
 
 
 def anonymous_required(f):
+    """页面要求匿名装饰器"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if g.signin:
@@ -126,6 +138,7 @@ def anonymous_required(f):
 
 
 def apilogin_required(f):
+    """接口要求登录装饰器"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not g.signin:
@@ -140,6 +153,7 @@ def apilogin_required(f):
 
 
 def admin_apilogin_required(f):
+    """接口要求管理员级别登录装饰器"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if g.signin:
@@ -244,6 +258,8 @@ def dfr(res, default='en-US'):
             "Current state prohibits use of this method": "当前状态禁止使用此方法",
             "The user has no authenticated mailbox": "用户没有验证过的邮箱",
             "Interceptor processing rejection, upload aborted": "拦截器处理拒绝，上传中止",
+            "Request fail": "请求失败",
+            "Invalid expire param": "无效的expire参数",
         },
     }
     if isinstance(res, dict) and "en" not in language:
@@ -252,7 +268,7 @@ def dfr(res, default='en-US'):
             try:
                 new = trans[language][msg]
             except KeyError:
-                logger.warn("Miss translation: %s" % msg)
+                logger.debug("Miss translation: %s" % msg)
             else:
                 res["msg"] = new
     return res
@@ -291,12 +307,14 @@ def change_userinfo(userinfo):
 
 
 def get_site_config():
+    """获取站点配置"""
     s = get_storage()
     cfg = s.get("siteconfig") or {}
     return cfg
 
 
 def set_site_config(mapping):
+    """设置站点信息"""
     if mapping and isinstance(mapping, dict):
         ALLOWED_TAGS = ['a', 'abbr', 'b', 'i', 'code', 'p', 'br', 'h3', 'h4']
         ALLOWED_ATTRIBUTES = {
@@ -400,7 +418,7 @@ class Base64FileStorage(object):
 
 
 class ImgUrlFileStorage(object):
-    """上传接口中接受远程图片地址。"""
+    """上传接口中接受远程图片地址，会自动调用代理下载图片。"""
 
     def __init__(self, imgurl, filename=None, allowed_exts=None):
         self._imgurl = imgurl
@@ -422,14 +440,14 @@ class ImgUrlFileStorage(object):
     def __download(self):
         if self._imgurl and url_pat.match(self._imgurl):
             try:
-                import requests
-                resp = requests.get(
-                    self._imgurl, headers=self.Headers, timeout=10
+                resp = try_proxy_request(
+                    self._imgurl,
+                    method='get',
+                    headers=self.Headers,
+                    timeout=15,
                 )
                 resp.raise_for_status()
-            except ImportError:
-                logger.error("Please install the requests module")
-            except requests.exceptions.RequestException as e:
+            except (RequestException, Exception) as e:
                 logger.debug(e, exc_info=True)
             else:
                 if resp.headers["Content-Type"].split("/")[0] == "image":
@@ -484,7 +502,31 @@ def _pip_install(pkg, index=None, upgrade=None):
         cmd.extend(["-i", index])
     cmd.append(pkg)
     retcode = call(cmd)
+    if retcode == 0:
+        set_page_msg(pkg + " 安装成功", "success")
+        _pip_list(no_fresh=False)
+    else:
+        set_page_msg(pkg + " 安装失败", "warn")
     logger.info("{}, retcode: {}".format(" ".join(cmd), retcode))
+
+
+def _pip_list(fmt=None, no_fresh=True):
+    """获取pip list的JSON结果"""
+    key = rsp("cache", "piplist")
+    data = rc.get(key)
+    if is_true(no_fresh) and data:
+        data = json.loads(data)
+    else:
+        cmd = [executable, "-m", "pip", "list", "--format", "json"]
+        data = json.loads(check_output(cmd))
+        pipe = rc.pipeline()
+        pipe.set(key, json.dumps(data))
+        pipe.expire(key, 3600)
+        pipe.execute()
+    if fmt == "dict":
+        return {n["name"]: n for n in data}
+    else:
+        return data
 
 
 def generate_activate_token(dump_data, max_age=600):
@@ -512,7 +554,12 @@ def check_activate_token(token):
 
 
 def sendmail(subject, message, to):
-    """调用钩子中发送邮件函数（任意钩子发送成功即停止）"""
+    """调用钩子中发送邮件函数（任意钩子发送成功即停止）
+
+    :param str subject: 主题
+    :param str message: 正文（支持HTML）
+    :param str to: 收件人，可用逗号添加多个
+    """
     res = dict(code=1)
     if subject and message and to and check_to_addr(to):
         to = ",".join(parse_valid_comma(to))
@@ -551,3 +598,84 @@ def make_email_tpl(tpl, **data):
     if "username" not in data:
         data["username"] = g.userinfo.nickname or g.userinfo.username
     return je.get_template(tpl).render(data)
+
+
+def try_proxy_request(url, **kwargs):
+    """自动调用代理服务的try_request
+
+    :param str url: 请求地址
+    :keyword kwars: :func:`utils.tool.try_request` 要求的其他参数
+
+    .. versionadded:: 1.9.0
+    """
+    kwargs["proxy"] = dict([
+        ps.split("=")
+        for ps in comma_pat.split(g.cfg.proxies)
+        if ps and "=" in ps
+    ]) if g.cfg.proxies else None
+    return try_request(url, **kwargs)
+
+
+def set_page_msg(text, level='info'):
+    """给管理员的控制台消息
+
+    :param str text: 消息内容
+    :param str level: 级别，error、info(默认)、warn、success
+
+    .. versionadded:: 1.9.0
+    """
+    levels = dict(info=-1, warn=0, success=1, error=2)
+    if text and level in levels.keys():
+        return rc.rpush(rsp("msg", "admin", "control"), json.dumps(dict(
+            text=text, icon=levels[level]
+        )))
+
+
+def get_page_msg():
+    """生成消息Js，仅在管理员控制台页面闪现消息"""
+    key = rsp("msg", "admin", "control")
+    msgs = rc.lrange(key, 0, -1)
+    if msgs:
+        def tpl_plus(total, new):
+            return total % new
+
+        def make_layer(msg):
+            return (
+                'layer.alert("@1",{icon:@2,offset:"rt",shade:0,'
+                'title:false,btn:"我知道了",btnAlign:"c",closeBtn:0},'
+                'function(index){layer.close(index);%s});'
+            ).replace('@1', msg["text"]).replace('@2', str(msg["icon"]))
+
+        html = (
+            '<script>',
+            reduce(
+                tpl_plus,
+                map(make_layer, [json.loads(i) for i in msgs])
+            ) % '',
+            '</script>',
+        )
+        rc.delete(key)
+        return Markup("".join(html))
+    else:
+        return ""
+
+
+def get_user_ip():
+    """首先从HTTP标头的X-Forwarded-For获取代理IP，其次获取X-Real-IP，最后是客户端IP"""
+    if request.headers.get('X-Forwarded-For'):
+        return request.headers['X-Forwarded-For']
+    elif request.headers.get('X-Real-IP'):
+        return request.headers.get('X-Real-IP')
+    else:
+        return request.remote_addr
+
+
+def has_image(sha):
+    """是否存在图片"""
+    gk = rsp("index", "global")
+    ik = rsp("image", sha)
+    pipe = rc.pipeline()
+    pipe.sismember(gk, sha)
+    pipe.exists(ik)
+    result = pipe.execute()
+    return result == [True, 1]

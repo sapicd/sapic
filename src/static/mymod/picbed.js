@@ -332,6 +332,7 @@ layui.define(["layer", "util", "element"], function (exports) {
             return document.getElementById(id) ? true : false;
         },
         checkUsername: function(value, item){
+            if (!value) return '请输入用户名';
             if(!new RegExp("^[a-zA-Z0-9_\u4e00-\u9fa5\\s·]+$").test(value)){
                 return '用户名不能有特殊字符';
             }

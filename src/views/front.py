@@ -130,5 +130,9 @@ def ep(hook_name, route_name):
         if isinstance(rule, string_types):
             return rule
         elif isinstance(rule, dict) and route_name in rule:
-            return rule[route_name]
+            rst = rule[route_name]
+            if callable(rst):
+                if not isinstance(rst, Response):
+                    return rst()
+            return rst
     return abort(404)

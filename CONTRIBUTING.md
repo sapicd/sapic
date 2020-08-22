@@ -52,7 +52,7 @@ Pull Request
 - 如果可能，请编写文档，位于docs下，构建文档(py3)：
 
   ```
-  $ cd picbed/docs
+  $ cd /path/to/picbed/docs
   $ python3 -m pip install -r ../requirements/docs.txt
   $ make html
   ```
@@ -62,3 +62,8 @@ Pull Request
 - 提交代码
 
 - 在GitHub上发起合并到dev分支的``pull request``
+
+钩子扩展
+---------
+
+如果您开发了一个钩子扩展，欢迎提交到[Awesome for picbed](https://github.com/staugur/picbed-awesome)
