@@ -221,34 +221,6 @@ layui.define(["layer", "util", "element"], function (exports) {
             }
             return false;
         },
-        versionStringCompare: function(srcVersion, destVersion) {
-            /** 语义化版本号比较，前者与后者比较
-             * @param srcVersion: 比较版本
-             * @param destVersion: 被比较的版本
-             * @return {Number}
-             *   1表示 srcVersion > destVersion
-             *   0表示两个版本相同
-             *   -1表示 srcVersion < destVersion
-             */
-            var sources = srcVersion.split('.');
-            var dests = destVersion.split('.');
-            var maxL = Math.max(sources.length, dests.length);
-            var result = 0;
-            for (let i = 0; i < maxL; i++) {
-                let preValue = sources.length>i ? sources[i]:0;
-                let preNum = isNaN(Number(preValue)) ? preValue.charCodeAt() : Number(preValue);
-                let lastValue = dests.length>i ? dests[i]:0;
-                let lastNum =  isNaN(Number(lastValue)) ? lastValue.charCodeAt() : Number(lastValue);
-                if (preNum < lastNum) {
-                    result = -1;
-                    break;
-                } else if (preNum > lastNum) {
-                    result = 1;
-                    break;
-                }
-            }
-            return result;
-        },
         convertUTCTimeToLocalTime: function(UTCDateString) {
             if(!UTCDateString){
                 return '-';
