@@ -917,9 +917,7 @@
         });
         //检测版本更新
         picbed.ajax("{{ url_for('api.github', Action='latestRelease') }}", function(res) {
-            var last_version = res.data.tag_name,
-                curr_version = "{{ Version }}";
-            if (picbed.versionStringCompare(curr_version, last_version) === -1) {
+            if (res.show_upgrade === true) {
                 $("#verTip").html("<a href='" + res.data.html_url + "' style='color:#FF5722' target='_blank'>新版本</a>");
                 layer.tips("发布于" + picbed.convertUTCTimeToLocalTime(res.data.published_at), "#verTip", {tips:3});
             }

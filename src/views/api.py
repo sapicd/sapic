@@ -25,7 +25,7 @@ from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1, \
     sha256, get_current_timestamp, list_equal_split, generate_random, er_pat, \
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
     username_pat, ALLOWED_HTTP_METHOD, is_all_fail, parse_valid_colon, \
-    check_ir
+    check_ir, less_latest_tag
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
@@ -1520,5 +1520,7 @@ def github():
                 pipe.set(key, json.dumps(data))
                 pipe.expire(key, 3600 * 24)
                 pipe.execute()
+        if res["code"] == 0:
+            res["show_upgrade"] = less_latest_tag(res["data"]["tag_name"])
 
     return res
