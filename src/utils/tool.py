@@ -15,6 +15,7 @@ import hmac
 import hashlib
 import requests
 import smtplib
+import semver
 from uuid import uuid4
 from time import time
 from datetime import datetime
@@ -23,6 +24,9 @@ from redis import from_url
 from email.header import Header
 from email.mime.text import MIMEText
 from email.utils import parseaddr, formataddr
+from user_agents import parse as user_agents_parse
+from bleach import clean as bleach_clean
+from bleach.sanitizer import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
 from version import __version__ as PICBED_VERSION
 from .log import Logger
 from ._compat import string_types, text_type, PY2, urlparse
@@ -375,7 +379,6 @@ def gen_ua():
 
 def parse_ua(user_agent):
     """解析用户代理，获取其操作系统、设备、版本"""
-    from user_agents import parse as user_agents_parse
     uap = user_agents_parse(user_agent)
     device, ua_os, family = str(uap).split(' / ')
     if uap.is_mobile:
@@ -565,24 +568,18 @@ class Mailbox(object):
         return res
 
 
-def bleach_html(html, tags=None, attrs=None, styles=None):
-    try:
-        from bleach import clean as bleach_clean
-        from bleach.sanitizer import (
-            ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
-        )
-    except ImportError:
-        raise
-    else:
-        tags = tags or ALLOWED_TAGS
-        attrs = attrs or ALLOWED_ATTRIBUTES
-        styles = styles or ALLOWED_STYLES
-        return bleach_clean(
-            html,
-            tags=tags,
-            attributes=attrs,
-            styles=styles,
-        )
+def bleach_html(
+    html,
+    tags=ALLOWED_TAGS,
+    attrs=ALLOWED_ATTRIBUTES,
+    styles=ALLOWED_STYLES,
+):
+    return bleach_clean(
+        html,
+        tags=tags,
+        attributes=attrs,
+        styles=styles,
+    )
 
 
 def is_valid_verion(version):
@@ -595,19 +592,16 @@ def is_valid_verion(version):
         return False
     if not PY2 and not isinstance(version, string_types):
         version = version.decode("utf-8")
+
+    if hasattr(semver.VersionInfo, "isvalid"):
+        return semver.VersionInfo.isvalid(version or "")
+
     try:
-        import semver
-    except ImportError as e:
-        err_logger.error(e)
+        semver.parse(version)
+    except (TypeError, ValueError):
+        return False
     else:
-        if hasattr(semver.VersionInfo, "isvalid"):
-            return semver.VersionInfo.isvalid(version or "")
-        try:
-            semver.parse(version)
-        except (TypeError, ValueError):
-            return False
-        else:
-            return True
+        return True
 
 
 def is_match_appversion(appversion=None):
@@ -620,25 +614,27 @@ def is_match_appversion(appversion=None):
         return True
     if not PY2 and not isinstance(appversion, string_types):
         appversion = appversion.decode("utf-8")
-    try:
-        import semver
-    except ImportError as e:
-        err_logger.error(e)
+
+    sysver = semver.VersionInfo.parse(PICBED_VERSION)
+
+    def vermatch(check_ver):
+        try:
+            return sysver.match(check_ver)
+        except ValueError:
+            return sysver.match(">={}".format(check_ver))
+
+    avs = comma_pat.split(appversion)
+    for v in avs:
+        if not vermatch(v):
+            return False
     else:
-        sysver = semver.VersionInfo.parse(PICBED_VERSION)
+        return True
 
-        def vermatch(check_ver):
-            try:
-                return sysver.match(check_ver)
-            except ValueError:
-                return sysver.match(">={}".format(check_ver))
 
-        avs = comma_pat.split(appversion)
-        for v in avs:
-            if not vermatch(v):
-                return False
-        else:
-            return True
+def less_latest_tag(latest_tag):
+    """当前应用是否小于GitHub最新版本比较"""
+    if latest_tag and is_valid_verion(latest_tag):
+        return semver.compare(latest_tag, PICBED_VERSION) == 1
 
 
 def parse_author_mail(author):

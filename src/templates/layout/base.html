@@ -100,62 +100,6 @@
         base: "/static/mymod/",
         version: "{{ Version }}"
     }).use('picbed');
-    if (!String.prototype.startsWith) {
-        Object.defineProperty(String.prototype, 'startsWith', {
-            value: function (search, pos) {
-                pos = !pos || pos < 0 ? 0 : +pos;
-                return this.substring(pos, pos + search.length) === search;
-            }
-        });
-    }
-    if (!String.prototype.endsWith) {
-        String.prototype.endsWith = function (search, this_len) {
-            if (this_len === undefined || this_len > this.length) {
-                this_len = this.length;
-            }
-            return this.substring(this_len - search.length, this_len) === search;
-        };
-    }
-    if (!String.prototype.trim) {
-        String.prototype.trim = function () {
-            return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
-        };
-    }
-    if (!Object.keys) {
-        Object.keys = (function () {
-            var hasOwnProperty = Object.prototype.hasOwnProperty,
-                hasDontEnumBug = !({
-                    toString: null
-                }).propertyIsEnumerable('toString'),
-                dontEnums = [
-                    'toString',
-                    'toLocaleString',
-                    'valueOf',
-                    'hasOwnProperty',
-                    'isPrototypeOf',
-                    'propertyIsEnumerable',
-                    'constructor'
-                ],
-                dontEnumsLength = dontEnums.length;
-
-            return function (obj) {
-                if (typeof obj !== 'object' && typeof obj !== 'function' || obj === null) throw new TypeError('Object.keys called on non-object');
-
-                var result = [];
-
-                for (var prop in obj) {
-                    if (hasOwnProperty.call(obj, prop)) result.push(prop);
-                }
-
-                if (hasDontEnumBug) {
-                    for (var i = 0; i < dontEnumsLength; i++) {
-                        if (hasOwnProperty.call(obj, dontEnums[i])) result.push(dontEnums[i]);
-                    }
-                }
-                return result;
-            }
-        })()
-    };
 </script>
 {% block LayoutScript %}{% endblock %}
 </body>

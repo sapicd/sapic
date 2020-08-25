@@ -296,10 +296,12 @@ class HookManager(object):
         }
 
     def disable(self, name):
+        """禁用钩子"""
         if name in self.get_map_hooks:
             self.__set_state_storage(name, "disabled")
 
     def enable(self, name):
+        """启用钩子"""
         if name in self.get_map_hooks:
             self.__set_state_storage(name, "enabled")
 
@@ -329,7 +331,7 @@ class HookManager(object):
     def proxy(self, name, is_enabled=True):
         """代理到钩子中执行方法
 
-        :param str name: 钩子名称，非其模块名
+        :param str name: 钩子名称（__hookname__），非其模块名
         :param bool is_enabled: True表示仅从已启用钩子中查找方法，否则查找所有
         """
         if is_enabled:
@@ -342,6 +344,7 @@ class HookManager(object):
     def get_call_list(
         self, _callname, _include=None, _exclude=None, _type='all'
     ):
+        """获取所有启用钩子的某个类型对应的方法/变量"""
         hooks = []
         for h in sorted(self.get_enabled_hooks, key=lambda h: h.name):
             if _include and isinstance(_include, (tuple, list)):

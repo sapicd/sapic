@@ -29,7 +29,7 @@ app = Flask(__name__)
 app.response_class = JsonResponse
 app.config.update(
     SECRET_KEY=GLOBAL["SecretKey"],
-    MAX_CONTENT_LENGTH=10 * 1024 * 1024,
+    MAX_CONTENT_LENGTH=20 * 1024 * 1024,
     DOCS_BASE_URL="https://picbed.rtfd.vip",
     UPLOAD_FOLDER="upload",
 )
@@ -61,6 +61,7 @@ def before_request():
     g.is_admin = is_true(g.userinfo.is_admin)
     g.next = get_redirect_url()
     g.site_name = g.cfg.title_name or "picbed"
+    g.hm = hm
 
 
 @app.after_request
@@ -75,6 +76,8 @@ def after_request(res):
             origin = request.headers.get("Origin")
             if origin in cors:
                 res.headers.add("Access-Control-Allow-Origin", origin)
+    res.headers['X-Content-Type-Options'] = 'nosniff'
+    res.headers['X-Frame-Options'] = 'SAMEORIGIN'
     return res
 
 
