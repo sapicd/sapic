@@ -344,6 +344,7 @@ class HookManager(object):
     def get_call_list(
         self, _callname, _include=None, _exclude=None, _type='all'
     ):
+        """获取所有启用钩子的某个类型对应的方法/变量"""
         hooks = []
         for h in sorted(self.get_enabled_hooks, key=lambda h: h.name):
             if _include and isinstance(_include, (tuple, list)):
