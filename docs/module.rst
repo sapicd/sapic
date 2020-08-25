@@ -18,9 +18,21 @@ Picbed Modules
 
 .. data:: logger
 
+.. data:: err_logger
+
 .. autofunction:: rsp
 
+.. autofunction:: md5
+
+.. autofunction:: sha1
+
+.. autofunction:: sha256
+
+.. autofunction:: hmac_sha256
+
 .. autofunction:: get_current_timestamp
+
+.. autofunction:: create_redis_engine
 
 .. autofunction:: parse_valid_comma
 

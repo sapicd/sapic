@@ -185,7 +185,7 @@
                                     <div class="layui-form-item">
                                         <label class="layui-form-label">大小限制</label>
                                         <div class="layui-input-block">
-                                            <input type="number" step=1 name="upload_size" max=20 min=1
+                                            <input type="number" step=1 name="upload_size" max="{{ config.MAX_UPLOAD }}" min="1"
                                                 value="{{ g.site.upload_size }}" placeholder="上传允许的大小，单位MB，默认是10"
                                                 autocomplete="off" class="layui-input">
                                         </div>

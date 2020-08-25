@@ -201,8 +201,9 @@ v是所见即所得（不要有多余的引号等，除非真的需要）！
 HOST              picbed_host                 127.0.0.1         监听地址
 PORT              picbed_port                  9514             监听端口
 LOGLEVEL          picbed_loglevel              DEBUG            日志级别，可选DEBUG, INFO, WARNING, ERROR, CRITICAL
-SecretKey         picbed_secretkey             (大长串)         App应用秘钥(默认有固定值)
 **REDIS**         picbed_redis_url             无               核心数据存储（redis连接串，格式是：redis://[:password]@host:port/db）
+SecretKey         picbed_secretkey             (大长串)         App应用秘钥(默认有固定值)
+MaxUpload         picbed_maxupload             20               设定程序最大上传容量，单位MB
 ================  ==========================  ===============   ====================================================================
 
 更多参数请参考config.py配置文件中的注释。
@@ -273,8 +274,8 @@ Nginx配置示例如下，您也可以配置使其支持HTTPS:
         charset utf-8;
         #防止在IE9、Chrome和Safari中的MIME类型混淆攻击
         add_header X-Content-Type-Options nosniff;
-        #上传大小限制12M（实际程序上限是10M）
-        client_max_body_size 12M;
+        #上传大小限制（单位，实际程序上限默认是20M，可以手动设定上限，此处同步限制）
+        client_max_body_size 20M;
         #可以设置不允许搜索引擎抓取信息
         #处理静态资源，root路径根据实际情况修改
         location ~ ^\/static\/.*$ {
