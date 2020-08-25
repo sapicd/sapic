@@ -124,7 +124,8 @@ def login():
                         value=sid,
                         max_age=max_age,
                         httponly=True,
-                        secure=is_secure
+                        secure=is_secure,
+                        samesite="Lax",
                     )
             else:
                 res.update(msg="Password verification failed")

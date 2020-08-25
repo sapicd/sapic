@@ -75,6 +75,8 @@ def after_request(res):
             origin = request.headers.get("Origin")
             if origin in cors:
                 res.headers.add("Access-Control-Allow-Origin", origin)
+    res.headers['X-Content-Type-Options'] = 'nosniff'
+    res.headers['X-Frame-Options'] = 'SAMEORIGIN'
     return res
 
 
