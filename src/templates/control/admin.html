@@ -185,8 +185,8 @@
                                     <div class="layui-form-item">
                                         <label class="layui-form-label">大小限制</label>
                                         <div class="layui-input-block">
-                                            <input type="number" step=1 name="upload_size" max=10 min=1
-                                                value="{{ g.site.upload_size }}" placeholder="上传允许的大小，最大10，单位MB，默认是10"
+                                            <input type="number" step=1 name="upload_size" max=15 min=1
+                                                value="{{ g.site.upload_size }}" placeholder="上传允许的大小，单位MB，默认是10"
                                                 autocomplete="off" class="layui-input">
                                         </div>
                                     </div>
@@ -636,7 +636,6 @@
                         field: 'name',
                         title: '钩子名称',
                         sort: true,
-                        fixed: 'left'
                     },
                     {
                         field: 'version',
@@ -712,6 +711,10 @@
             title: '钩子扩展列表',
             size: 'sm',
             skin: 'line',
+            initSort: {
+                field: 'state',
+                type: 'desc'
+            },
         });
         //监听表格工具条
         table.on('tool(hook)', function (obj) {
