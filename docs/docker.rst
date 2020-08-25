@@ -224,8 +224,8 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
             listen 80;
             server_name 域名;
             charset utf-8;
-            #上传大小限制12M（实际程序上限是10M）
-            client_max_body_size 12M;
+            #上传大小限制
+            client_max_body_size 20M;
             #可以设置不允许搜索引擎抓取信息
             #处理静态资源，root路径根据实际情况修改
             location ^~ /static/ {

@@ -354,11 +354,11 @@
     <div class="layui-btn-group">
         <a class="layui-btn layui-btn-xs" lay-event="copy">复制</a>
         {{# if(d.status === "1" || d.status === 1) { }}
-        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="disable">禁用</a>
+        <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="disable">禁用</a>
         {{# } else { }}
         <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="enable">启用</a>
         {{# } }}
-        <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="edit">编辑</a>
         <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
     </div>
 </script>

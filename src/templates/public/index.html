@@ -87,7 +87,8 @@
             element = layui.element;
 
         var exts = "{{ g.site.upload_exts or 'jpg|png|gif|bmp|jpeg|webp' }}",
-            size = parseFloat("{{ g.site.upload_size or 10 }}"), //MB
+            size = parseInt("{{ g.site.upload_size or 10 }}"), //MB
+            max_size = parseInt("{{ config.MAX_UPLOAD }}"),
             number = parseInt("{{ g.site.upload_number or 10 }}"),
             field = "{{ g.cfg.upload_field or 'picbed' }}",
             upviewDom = $('#previewList'),
@@ -189,7 +190,7 @@
             drag: true,
             field: field,
             number: number > 10 ? 10 : number,
-            size: (size > 20 ? 20 : size) * 1024,
+            size: (size > max_size ? max_size : size) * 1024,
             updateData: function (index, data) {
                 //改源码upload.js
                 //typeof options.updateData === 'function' &&  options.updateData(index, options.data);

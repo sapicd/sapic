@@ -51,7 +51,7 @@
         listen 80;
         server_name your-picbed.domain.name;
         charset utf-8;
-        client_max_body_size 12M;
+        client_max_body_size 20M;
         location ~ ^\/static\/.*$ {
             root /path/to/picbed/src/;
         }

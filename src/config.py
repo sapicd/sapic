@@ -37,6 +37,9 @@ GLOBAL = {
         "picbed_secretkey", "BD1E2CF7DF9CD6971D641C115EE72871BEDA2806"
     ),
     # Web应用固定密钥
+
+    "MaxUpload": int(envs.get("picbed_maxupload", 20)),
+    # 上传最大尺寸，单位MB
 }
 
 
