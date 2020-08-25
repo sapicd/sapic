@@ -69,7 +69,7 @@ def login():
     #: 登录接口钩子
     try:
         if g.cfg.site_auth:
-            so = current_app.extensions["hookmanager"].proxy(g.cfg.site_auth)
+            so = g.hm.proxy(g.cfg.site_auth)
             if so and hasattr(so, "login_api"):
                 result = so.login_api(usr, pwd, set_state, max_age, is_secure)
                 if result and isinstance(result, Response):
@@ -270,7 +270,7 @@ def config():
 def hook():
     res = dict(code=1, msg=None)
     Action = request.args.get("Action")
-    hm = current_app.extensions["hookmanager"]
+    hm = g.hm
     if Action == "query":
         hooks = hm.get_all_hooks
         data = [
@@ -648,7 +648,7 @@ def my():
         else:
             res.update(code=0)
             #: 更新资料触发一次钩子
-            current_app.extensions["hookmanager"].call(
+            g.hm.call(
                 "profile_update", _kwargs=data
             )
     elif Action == "updatePassword":
@@ -861,7 +861,7 @@ def shamgr(sha):
                         #: TODO 无论禁用与否都删除?
                         senders = json.loads(info.get("senders"))
                         for i in senders:
-                            current_app.extensions["hookmanager"].proxy(
+                            g.hm.proxy(
                                 i["sender"]
                             ).upimg_delete(
                                 sha=sha,
@@ -968,15 +968,15 @@ def upload():
         stream = fp.stream.read()
         suffix = splitext(fp.filename)[-1]
         #: 处理图片二进制的钩子
-        for h in current_app.extensions["hookmanager"].call(
-            "upimg_stream_processor",
-            _args=(stream, suffix),
+        for h in g.hm.get_call_list(
+            "upimg_stream_processor", _type="func"
         ):
-            #: 实际只有一个成功 TODO 更新后的stream作为新参数
-            if h.get("code") == 0 and isinstance(h.get("data"), dict) and \
-                    h.get("data").get("stream"):
-                stream = h["data"]["stream"]
-        for h in current_app.extensions["hookmanager"].call(
+            rst = g.hm.proxy(h["name"]).upimg_stream_processor(stream, suffix)
+            if isinstance(rst, dict) and rst.get("code") == 0 and \
+                    isinstance(rst.get("data"), dict) and \
+                    rst["data"].get("stream"):
+                stream = rst["data"]["stream"]
+        for h in g.hm.call(
             "upimg_stream_interceptor",
             _args=(stream, suffix),
             _mode="any_false",
@@ -1027,7 +1027,7 @@ def upload():
         #: TODO 定义保存图片时排除某些钩子，如: up2local, up2other
         #: excludes = parse_valid_comma(g.cfg.upload_excludes or '')
         #: 调用钩子中upimg_save方法（目前版本最终结果中应该最多只有1条数据）
-        data = current_app.extensions["hookmanager"].call(
+        data = g.hm.call(
             _funcname="upimg_save",
             _include=includes,
             _kwargs=dict(
@@ -1103,7 +1103,7 @@ def ep():
     Object = request.args.get("Object")
     Action = request.args.get("Action")
     if Object and Action:
-        obj = current_app.extensions["hookmanager"].proxy(Object)
+        obj = g.hm.proxy(Object)
         if obj and hasattr(obj, Action):
             return getattr(obj, Action)()
     return abort(404)

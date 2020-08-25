@@ -61,6 +61,7 @@ def before_request():
     g.is_admin = is_true(g.userinfo.is_admin)
     g.next = get_redirect_url()
     g.site_name = g.cfg.title_name or "picbed"
+    g.hm = hm
 
 
 @app.after_request
