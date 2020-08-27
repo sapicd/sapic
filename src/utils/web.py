@@ -32,7 +32,7 @@ from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_verticaline, parse_valid_colon, is_true, is_venv, gen_ua, \
     check_to_addr, is_all_fail, bleach_html, try_request, comma_pat, \
     create_redis_engine
-from ._compat import PY2, text_type, urlsplit
+from ._compat import PY2, text_type, urlsplit, parse_qs
 if not PY2:
     from functools import reduce
 
@@ -356,6 +356,23 @@ def check_username(usr):
     return False
 
 
+def guess_filename_from_url(url, allowed_exts=None):
+    """从url中猜测filename"""
+    _allowed_exts = allowed_exts or [
+        ".{}".format(e)
+        for e in parse_valid_verticaline(g.cfg.upload_exts) or ALLOWED_EXTS
+    ]
+    ufn = basename(urlsplit(url).path)
+    if splitext(ufn)[-1] in _allowed_exts:
+        return ufn
+    else:
+        fns = parse_qs(urlsplit(url).query).get("filename")
+        if fns and isinstance(fns, (list, tuple)):
+            filename = fns[0]
+            if splitext(filename)[-1] in _allowed_exts:
+                return filename
+
+
 class JsonResponse(Response):
 
     @classmethod
@@ -456,8 +473,8 @@ class ImgUrlFileStorage(object):
     @property
     def filename(self):
         if not self._filename and self._imgobj:
-            ufn = basename(urlsplit(self._imgobj.url).path)
-            if splitext(ufn)[-1] in self._allowed_exts:
+            ufn = guess_filename_from_url(self._imgobj.url, self._allowed_exts)
+            if ufn and splitext(ufn)[-1] in self._allowed_exts:
                 self._filename = ufn
                 return ufn
             ext = imghdr.what(None, self._imgobj.content)

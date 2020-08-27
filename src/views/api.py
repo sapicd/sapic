@@ -20,12 +20,12 @@ from flask import Blueprint, request, g, url_for, current_app, abort, \
 from functools import partial
 from redis.exceptions import RedisError
 from collections import Counter
-from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1, \
+from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, rsp, \
     sha256, get_current_timestamp, list_equal_split, generate_random, er_pat, \
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
     username_pat, ALLOWED_HTTP_METHOD, is_all_fail, parse_valid_colon, \
-    check_ir, less_latest_tag
+    check_ir, less_latest_tag, check_url
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
@@ -554,6 +554,126 @@ def test():
             )
         else:
             res.update(msg="Parameter error")
+    return res
+
+
+@bp.route("/github")
+@admin_apilogin_required
+def github():
+    res = dict(code=1, msg=None)
+    Action = request.args.get("Action")
+    no_fresh = is_true(request.args.get("no_fresh", True))
+
+    if Action == "thirdHooks":
+        page = request.args.get("page") or 1
+        limit = request.args.get("limit") or 5
+        try:
+            page = int(page) - 1
+            limit = int(limit)
+            if page < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise ApiError("Parameter error")
+        key = rsp("cache", "thirdhooks")
+        data = g.rc.get(key)
+        if no_fresh and data:
+            res.update(code=0, data=json.loads(data))
+        else:
+            url = "https://api.github.com/repos/{}/contents/{}".format(
+                "staugur/picbed-awesome", "list.json",
+            )
+            headers = dict(Accept='application/vnd.github.v3.raw')
+            try:
+                r = try_proxy_request(url, headers=headers, method='GET')
+                if not r.ok:
+                    raise ValueError("Not Found")
+            except (ValueError, Exception) as e:
+                raise ApiError(str(e))
+            else:
+                data = r.json()
+                res.update(code=0, data=data)
+                pipe = g.rc.pipeline()
+                pipe.set(key, json.dumps(data))
+                pipe.expire(key, 3600 * 6)
+                pipe.execute()
+        if res["code"] == 0:
+            def fmt(i, pkgs):
+                pkg = i.get("pypi", "").replace("$name", i["name"])
+                status = i.get("status")
+                if status == "beta":
+                    status_text = "公测版"
+                elif status == "rc":
+                    status_text = "预发布"
+                elif status in ("stable", "production", "ga"):
+                    status_text = "正式版"
+                else:
+                    status_text = ""
+                if pkg:
+                    pypi = "https://pypi.org/project/{}".format(pkg)
+                else:
+                    pypi = None
+                user = i["github"].split("/")[0]
+                i.update(
+                    author=i.get("author", user),
+                    home=i.get("home", "https://github.com/{}".format(user)),
+                    github="https://github.com/{}".format(i["github"]),
+                    pypi=pypi,
+                    status_text=status_text,
+                    pkg=dict(
+                        name=pkg,
+                        installed=pkg in pkgs,
+                        local=pkgs.get(pkg),
+                    ),
+                )
+                return i
+            pkgs = _pip_list(fmt="dict", no_fresh=no_fresh)
+            data = [
+                fmt(i, pkgs)
+                for i in res["data"]
+                if isinstance(i, dict) and
+                "name" in i and
+                "module" in i and
+                "desc" in i and
+                "github" in i
+            ]
+            data.reverse()
+            count = len(data)
+            data = list_equal_split(data, limit)
+            pageCount = len(data)
+            if page < pageCount:
+                res.update(
+                    code=0,
+                    count=count,
+                    data=data[page],
+                    pageCount=pageCount,
+                )
+            else:
+                res.update(code=3, msg="No data")
+
+    elif Action == "latestRelease":
+        key = rsp("cache", "latestrelease")
+        data = g.rc.get(key)
+        if no_fresh and data:
+            res.update(code=0, data=json.loads(data))
+        else:
+            url = "https://api.github.com/repos/staugur/picbed/releases/latest"
+            try:
+                r = try_proxy_request(url, method='GET')
+                if not r.ok:
+                    raise ValueError("Not Found")
+            except (ValueError, Exception) as e:
+                res.update(msg=str(e))
+            else:
+                fields = ["tag_name", "published_at", "html_url"]
+                data = {k: v for k, v in iteritems(r.json()) if k in fields}
+                res.update(code=0, data=data)
+                pipe = g.rc.pipeline()
+                pipe.set(key, json.dumps(data))
+                pipe.expire(key, 3600 * 24)
+                pipe.execute()
+        if res["code"] == 0:
+            res["show_upgrade"] = less_latest_tag(res["data"]["tag_name"])
+
     return res
 
 
@@ -1407,121 +1527,18 @@ def report(classify):
     return res
 
 
-@bp.route("/github")
-@admin_apilogin_required
-def github():
-    res = dict(code=1, msg=None)
-    Action = request.args.get("Action")
-    no_fresh = is_true(request.args.get("no_fresh", True))
-
-    if Action == "thirdHooks":
-        page = request.args.get("page") or 1
-        limit = request.args.get("limit") or 5
-        try:
-            page = int(page) - 1
-            limit = int(limit)
-            if page < 0:
-                raise ValueError
-        except (ValueError, TypeError):
-            raise ApiError("Parameter error")
-        key = rsp("cache", "thirdhooks")
-        data = g.rc.get(key)
-        if no_fresh and data:
-            res.update(code=0, data=json.loads(data))
-        else:
-            url = "https://api.github.com/repos/{}/contents/{}".format(
-                "staugur/picbed-awesome", "list.json",
-            )
-            headers = dict(Accept='application/vnd.github.v3.raw')
-            try:
-                r = try_proxy_request(url, headers=headers, method='GET')
-                if not r.ok:
-                    raise ValueError("Not Found")
-            except (ValueError, Exception) as e:
-                raise ApiError(str(e))
-            else:
-                data = r.json()
-                res.update(code=0, data=data)
-                pipe = g.rc.pipeline()
-                pipe.set(key, json.dumps(data))
-                pipe.expire(key, 3600 * 6)
-                pipe.execute()
-        if res["code"] == 0:
-            def fmt(i, pkgs):
-                pkg = i.get("pypi", "").replace("$name", i["name"])
-                status = i.get("status")
-                if status == "beta":
-                    status_text = "公测版"
-                elif status == "rc":
-                    status_text = "预发布"
-                elif status in ("stable", "production", "ga"):
-                    status_text = "正式版"
-                else:
-                    status_text = ""
-                if pkg:
-                    pypi = "https://pypi.org/project/{}".format(pkg)
-                else:
-                    pypi = None
-                user = i["github"].split("/")[0]
-                i.update(
-                    author=i.get("author", user),
-                    home=i.get("home", "https://github.com/{}".format(user)),
-                    github="https://github.com/{}".format(i["github"]),
-                    pypi=pypi,
-                    status_text=status_text,
-                    pkg=dict(
-                        name=pkg,
-                        installed=pkg in pkgs,
-                        local=pkgs.get(pkg),
-                    ),
-                )
-                return i
-            pkgs = _pip_list(fmt="dict", no_fresh=no_fresh)
-            data = [
-                fmt(i, pkgs)
-                for i in res["data"]
-                if isinstance(i, dict) and
-                "name" in i and
-                "module" in i and
-                "desc" in i and
-                "github" in i
-            ]
-            data.reverse()
-            count = len(data)
-            data = list_equal_split(data, limit)
-            pageCount = len(data)
-            if page < pageCount:
-                res.update(
-                    code=0,
-                    count=count,
-                    data=data[page],
-                    pageCount=pageCount,
-                )
-            else:
-                res.update(code=3, msg="No data")
-
-    elif Action == "latestRelease":
-        key = rsp("cache", "latestrelease")
-        data = g.rc.get(key)
-        if no_fresh and data:
-            res.update(code=0, data=json.loads(data))
-        else:
-            url = "https://api.github.com/repos/staugur/picbed/releases/latest"
-            try:
-                r = try_proxy_request(url, method='GET')
-                if not r.ok:
-                    raise ValueError("Not Found")
-            except (ValueError, Exception) as e:
-                res.update(msg=str(e))
-            else:
-                fields = ["tag_name", "published_at", "html_url"]
-                data = {k: v for k, v in iteritems(r.json()) if k in fields}
-                res.update(code=0, data=data)
-                pipe = g.rc.pipeline()
-                pipe.set(key, json.dumps(data))
-                pipe.expire(key, 3600 * 24)
-                pipe.execute()
-        if res["code"] == 0:
-            res["show_upgrade"] = less_latest_tag(res["data"]["tag_name"])
-
+@bp.route("/load", methods=["POST"])
+@apilogin_required
+def load():
+    """把图片导入系统"""
+    res = dict(code=1)
+    #: 应该提交JSON数据，是一个数组，元素是字典对象，其字段是url、filename
+    data = request.json
+    if data and isinstance(data, list):
+        pipe = g.rc.pipeline()
+        for img in data:
+            if check_url(img.get("url")):
+                filename = img.get("filename")
+    else:
+        raise ApiError("Parameter error")
     return res
