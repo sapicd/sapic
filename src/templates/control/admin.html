@@ -18,6 +18,9 @@
     .layui-inline, img {
         display: inline;
     }
+    .my-textarea {
+        min-height: 50px;
+    }
 </style>
 {% endblock %}
 
@@ -68,6 +71,14 @@
                                             <input type="text" name="favicon" value="{{ g.site.favicon }}"
                                                 placeholder="站点图标地址，默认是：{{ url_for('static', filename='img/favicon.png') }}"
                                                 autocomplete="off" class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">订阅源名称</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="feed_name" value="{{ g.site.feed_name }}"
+                                                placeholder="Feed订阅源名称" autocomplete="off"
+                                                class="layui-input">
                                         </div>
                                     </div>
                                     <div class="layui-form-item">
@@ -147,7 +158,7 @@
                                                 id="tip-bulletin"></i> 全站公告</label>
                                         <div class="layui-input-block">
                                             <textarea name="bulletin" placeholder="页面顶部公告栏" value=""
-                                                class="layui-textarea"></textarea>
+                                                class="layui-textarea my-textarea"></textarea>
                                         </div>
                                     </div>
                                     {{ intpl("sitesetting") }}

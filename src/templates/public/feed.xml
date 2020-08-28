@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+<channel>
+    <title>{{ g.site.feed_name or 'Picbed Feed' }} - {{ g.site_name }}</title>
+    <link>{{ request.url_root }}</link>
+    <description>{{ g.site.seo_description or Doc }}</description>
+    {% for i in items %}
+    <item>
+        <title>{{ i.title or i.filename }}</title>
+        <link>{{ i.src }}</link>
+        <description>
+            <image>
+                <url>{{ i.src }}</url>
+                <link>{{ i.src }}</link>
+            </image>
+        </description>
+    </item>
+    {% endfor %}
+</channel>
+</rss>

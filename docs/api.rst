@@ -379,18 +379,26 @@ RESTful API
       那么进入Image URL上传流程，否则进入Image Base64上传流程。
 
     - Image URL上传，程序会从url中尝试查找出文件名，无效时判定失败，除非手动设置文件名。
-      
+
       .. versionchanged:: 1.4.0
 
         优化了图片链接上传，程序自动尝试从链接查找文件名，无果也无妨，
         继续请求url，根据其返回内容、类型猜测文件后缀。
-      
-      程序使用get方式请求url，只有返回状态码是2xx或3xx且Content-Type是image
-      类型时才有效。
 
-      简而言之，是真正的图片链接才行。当然，被伪造也是可能的。
+      .. versionchanged:: 1.10.0
+
+        猜测文件名使用 :func:`utils.web.guess_filename_from_url` ，相比之前，
+        额外允许从url本身查询参数filename获取图片文件名。
+
+      程序通过 :class:`utils.web.ImgUrlFileStorage` 处理，使用get方式请求
+      url，只有返回状态码是2xx或3xx且Content-Type是image类型时才有效。
+
+      简而言之，是真正的图片链接才行。当然，还是有被伪造的可能。
 
     - base64方式上传允许 `Data URI <https://developer.mozilla.org/docs/Web/HTTP/data_URIs>`_ 形式的！
+
+      程序通过 :class:`utils.web.Base64FileStorage` 处理，
+      使用b64decode解码（非url安全）
 
     - 图片地址src是可以自定义的，利用format参数，允许使用最多一个点号。
 
@@ -565,8 +573,8 @@ RESTful API
     导入流程：
 
     1. 筛选json数据（传参），把合法url及可以提取出filename的放入todo留待处理
-        程序会从url path和url query(?filename=xxx)尝试解析filename，
-        无有效时（符合管理员控制台允许的图片后缀或默认后缀），扔到fail
+        使用 :func:`utils.web.guess_filename_from_url` 尝试解析filename，
+        文件名无效时（符合管理员控制台允许的图片后缀或默认后缀），扔到fail
 
     2. 处理todo中合法数据，保存成功的放到success，失败的放到fail
 

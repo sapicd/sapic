@@ -358,12 +358,18 @@ def check_username(usr):
 
 
 def guess_filename_from_url(url, allowed_exts=None):
-    """从url中猜测filename，后缀符合控制台设定或默认
+    """从url中猜测图片文件名，其后缀符合控制台设定或默认予以返回。
+
+    首先尝试从url path猜测，比如http://example.com/upload/abc.png，这合法。
+
+    如果猜测失败，则从url query查找filename查询参数。
 
     :param str url: 图片地址
     :param list allowed_exts: 允许的图片后缀，比如['png', 'jpg']，
                               如未设置，则使用控制台设定或默认
     :returns: 当图片合法时返回filename，否则None
+
+    .. versionadded:: 1.10.0
     """
     _allowed_exts = [
         ".{}".format(e)
@@ -717,7 +723,13 @@ def has_image(sha):
 
 
 def allowed_suffix(filename):
-    """判断filename是否匹配控制台配置的上传后缀（及默认）"""
+    """判断filename是否匹配控制台配置的上传后缀（及默认）
+
+    :param str filename: 图片文件名
+    :rtype: boolean
+
+    .. versionadded:: 1.10.0
+    """
     return partial(
         allowed_file,
         suffix=parse_valid_verticaline(g.cfg.upload_exts)
