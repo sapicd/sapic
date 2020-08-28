@@ -29,14 +29,13 @@ class ApiError(PicbedError):
         {"code": -1, "msg": "Some message"}
 
     :param str message: 错误信息
-    :param int code: 错误码
+    :param int code: 非0错误码
     :param int status_code: 请求响应码，如200、403、404
 
     .. versionadded:: 1.9.0
     """
 
     def __init__(self, message, code=-1, status_code=200):
-
         super(ApiError, self).__init__()
         self.code = code
         self.message = message

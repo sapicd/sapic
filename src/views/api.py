@@ -30,7 +30,8 @@ from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
     generate_activate_token, check_activate_token, try_proxy_request, \
-    sendmail, _pip_list, get_user_ip, has_image
+    sendmail, _pip_list, get_user_ip, has_image, guess_filename_from_url, \
+    allowed_suffix
 from utils._compat import iteritems, thread
 from utils.exceptions import ApiError
 
@@ -1532,13 +1533,63 @@ def report(classify):
 def load():
     """把图片导入系统"""
     res = dict(code=1)
-    #: 应该提交JSON数据，是一个数组，元素是字典对象，其字段是url、filename
+    #: 应该提交JSON数据，是一个数组，元素是字典对象
+    #: 其字段必须有url，建议filename，可选title、album
     data = request.json
     if data and isinstance(data, list):
-        pipe = g.rc.pipeline()
+        fail = []
+        todo = []
+        #: 筛选
         for img in data:
-            if check_url(img.get("url")):
-                filename = img.get("filename")
+            if img and isinstance(img, dict) and check_url(img.get("url")):
+                filename = secure_filename(
+                    img.get("filename") or guess_filename_from_url(
+                        img["url"]
+                    ) or ""
+                )
+                if allowed_suffix(filename):
+                    img["filename"] = filename
+                    todo.append(img)
+                    continue
+            fail.append(img)
+        #: 处理
+        pipe = g.rc.pipeline()
+        success = []
+        for img in todo:
+            filename = img["filename"]
+            #: 定义文件名唯一索引
+            sha = "sha1.%s.%s" % (get_current_timestamp(True), sha1(filename))
+            #: 入库
+            pipe.sadd(rsp("index", "global"), sha)
+            pipe.sadd(rsp("index", "user", g.userinfo.username), sha)
+            pipe.hmset(rsp("image", sha), dict(
+                sha=sha,
+                album=img.get("album") or "",
+                filename=filename,
+                upload_path=g.userinfo.username + "/",
+                user=g.userinfo.username,
+                ctime=get_current_timestamp(),
+                status='enabled',
+                src=img["url"],
+                sender="load",
+                senders=json.dumps([]),
+                origin=request.form.get(
+                    "origin", "UA: %s" % request.headers.get('User-Agent', '')
+                ),
+                method="load",
+                title=img.get("title") or "",
+            ))
+            try:
+                pipe.execute()
+            except RedisError:
+                fail.append(img)
+            else:
+                img["sha"] = sha
+                success.append(img)
+        res.update(
+            code=0, success=success, fail=fail,
+            count=dict(success=len(success), fail=len(fail))
+        )
     else:
-        raise ApiError("Parameter error")
+        res.update(msg="Parameter error")
     return res

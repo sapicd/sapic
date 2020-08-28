@@ -20,6 +20,10 @@ Picbed Modules
 
 .. data:: err_logger
 
+.. data:: ALLOWED_EXTS
+
+    默认允许上传的图片后缀
+
 .. autofunction:: rsp
 
 .. autofunction:: md5
@@ -99,6 +103,10 @@ Picbed Modules
 .. autofunction:: get_user_ip
 
 .. autofunction:: has_image
+
+.. autofunction:: guess_filename_from_url
+
+.. autofunction:: allowed_suffix
 
 .. autoclass:: Base64FileStorage
     :members:

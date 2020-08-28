@@ -540,13 +540,93 @@ RESTful API
 
   专为钩子实现的接口
 
-10. api.link
---------------
-
-  LinkToken管理接口
-
-11. api.report
+10. api.load
 ---------------
 
-  记录查询接口
+.. http:post:: /api/load
+  
+  图片导入接口，即可以将已存在其他位置的远程图片导入到系统中。
+
+  目前仅支持通过接口方式，提交JSON数组。
+
+  :reqjsonarr str url: 图片地址
+  :reqjsonarr str filename: 图片文件名[建议填写]
+  :reqjsonarr str title: 描述[可选]
+  :reqjsonarr str album: 相册[可选]
+  :reqheader Content-Type: application/json
+  :resjson int code: 除非传参错误，否则都是0，主要是success字段
+  :resjson object count: success、fail数量
+  :resjsonarr array success: 成功导入的地址
+  :resjsonarr array fail: 导入失败
+  :statuscode 403: 用户未登录时
+
+  .. note::
+  
+    导入流程：
+
+    1. 筛选json数据（传参），把合法url及可以提取出filename的放入todo留待处理
+        程序会从url path和url query(?filename=xxx)尝试解析filename，
+        无有效时（符合管理员控制台允许的图片后缀或默认后缀），扔到fail
+
+    2. 处理todo中合法数据，保存成功的放到success，失败的放到fail
+
+    由于图片直接导入，只写入些逻辑数据，所以不会调用存储钩子，故此
+    图片钩子名保留为：**load**
+
+  **请求与响应示例：**
+
+  .. http:example:: curl python-requests
+
+    POST /api/load HTTP/1.0
+    Host: 127.0.0.1:9514
+    Content-Type: application/json
+    Authorization: LinkToken Your-LinkToken-Value
+
+    [
+        {
+            "url": "https://static.saintic.com/misc/test.jpg",
+            "album": "test"
+        },
+        {
+            "url": "https://hbimg.huabanimg.com/6b7b7456a3cb7b1b149be2463dca29c18e8c03c2bd0c-DcxKZ5",
+            "filename": "huaban-logo.png",
+            "title": "Huaban.com Logo"
+        },
+        {
+            "url": "xxx"
+        },
+        "skipped"
+    ]
+
+
+    HTTP/1.0 200 OK
+    Content-Type: application/json
+
+    {
+        "count": {
+            "fail": 2,
+            "success": 2
+        },
+        "fail": [
+            {
+                "url": "xxx"
+            },
+            "skipped"
+        ],
+        "success": [
+            {
+                "album": "test",
+                "filename": "test.jpg",
+                "sha": "sha1.1598598852.2625027.cb56752477cae6405f85b131872c60d21b967c6a",
+                "url": "https://static.saintic.com/misc/test.jpg"
+            },
+            {
+                "filename": "huaban-logo.png",
+                "sha": "sha1.1598598852.2630813.052bb5af0535881a3acaf94978cded5d6b249457",
+                "title": "Huaban.com Logo",
+                "url": "https://hbimg.huabanimg.com/6b7b7456a3cb7b1b149be2463dca29c18e8c03c2bd0c-DcxKZ5"
+            }
+        ],
+        "code": 0
+    }
 
