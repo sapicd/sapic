@@ -17,7 +17,7 @@ import requests
 import smtplib
 import semver
 from uuid import uuid4
-from time import time
+from time import time, localtime, strftime
 from datetime import datetime
 from random import randrange, sample, randint, choice
 from redis import from_url
@@ -108,6 +108,21 @@ def get_current_timestamp(is_float=False):
     :param bool is_float: True则获取10位秒级时间戳，否则原样返回
     """
     return time() if is_float else int(time())
+
+
+def timestamp_to_timestring(timestamp, fmt='%Y-%m-%d %H:%M:%S'):
+    """ 将时间戳(10位)转换为可读性的时间 """
+    if not isinstance(timestamp, (int, float)):
+        try:
+            timestamp = int(timestamp)
+        except:
+            raise
+    # timestamp为传入的值为时间戳(10位整数)，如：1332888820
+    timestamp = localtime(timestamp)
+    # 经过localtime转换后变成
+    ## time.struct_time(tm_year=2012, tm_mon=3, tm_mday=28, tm_hour=6, tm_min=53, tm_sec=40, tm_wday=2, tm_yday=88, tm_isdst=0)
+    # 最后再经过strftime函数转换为正常日期格式。
+    return strftime(fmt, timestamp)
 
 
 def create_redis_engine(redis_url=None):

@@ -324,6 +324,14 @@
                             </div>
                         </div>
                     </div>
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">订阅源名称</label>
+                            <div class="layui-input-inline" style="width: 150px;">
+                                <input type="text" name="ucfg_feed_name" placeholder="RSS订阅源名称" autocomplete="off" class="layui-input" value="{{ g.userinfo.ucfg_feed_name }}">
+                            </div>
+                        </div>
+                    </div>
                     {{ intpl("usersetting") }}
                     <div class="layui-form-item">
                         <button class="layui-btn" lay-submit lay-filter="*">立即提交</button>
@@ -354,11 +362,11 @@
     <div class="layui-btn-group">
         <a class="layui-btn layui-btn-xs" lay-event="copy">复制</a>
         {{# if(d.status === "1" || d.status === 1) { }}
-        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="disable">禁用</a>
+        <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="disable">禁用</a>
         {{# } else { }}
         <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="enable">启用</a>
         {{# } }}
-        <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="edit">编辑</a>
         <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
     </div>
 </script>
@@ -962,7 +970,7 @@
         }
         function renderEpSelect(selectd_ep) {
             /*渲染ep的select下拉多选*/
-            let eps = ["api.upload", "api.waterfall", "api.login", "api.register", "front.userscript"];
+            let eps = ["api.upload", "api.load", "api.waterfall", "front.userscript", "front.feed"];
             let data = eps.map(function(e) {
                 return {
                     hash: picbed.getHash(e),

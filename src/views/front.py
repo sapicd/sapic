@@ -150,7 +150,8 @@ def feed():
     data = [dict(zip(fields, i)) for i in result if i]
     xml = render_template('public/feed.xml', items=sorted(
         data,
-        key=lambda k: (k.get('ctime', 0), k.get('filename', '')),
+        key=lambda k: int(k.get('ctime')),
+        reverse=True
     )[:10])
     response = make_response(xml)
     response.headers['Content-Type'] = 'application/xml'
