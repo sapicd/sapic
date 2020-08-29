@@ -76,6 +76,57 @@
         .my-input::placeholder {
             color: #c2c2c2;
         }
+        /*消息组件*/
+        [class^="msg-icon-"],
+        [class*="msg-icon-"] {
+            font-style: normal;
+            font-weight: normal;
+            font-variant: normal;
+            text-transform: none;
+            line-height: 1;
+            vertical-align: middle;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .msg-icon-success {
+            color: #00a854;
+        }
+        .msg-icon-info {
+            color: #108ee9;
+        }
+        .msg-icon-warn {
+            color: #ffbf00;
+        }
+        .msg-icon-error {
+            color: #f04134;
+        }
+        .m-message {
+            pointer-events: none;
+            /*可以点击下面的元素*/
+            position: fixed;
+            overflow: hidden;
+            z-index: 1001;
+        }
+        .c-message-notice {
+            text-align: center;
+            margin: 10px 10px;
+        }
+        .m_content {
+            font-family: "microsoft yahei", "宋体";
+            display: inline-block;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+            color: #555;
+            text-align: left;
+            max-width: 90%;
+            padding: 5px 10px 5px 15px;
+            background-color: #fff;
+        }
+        .m_content span {
+            vertical-align: middle;
+            margin-left: 5px;
+        }
         @media screen and (max-width: 400px) {
             .layui-layout-admin .layui-logo {
                 width: auto;

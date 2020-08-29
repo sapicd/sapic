@@ -433,6 +433,7 @@
 {% else %}
 {% set load_album = request.args.album or g.userinfo.ucfg_default_album %}
 {% endif %}
+{{ get_push_msg() }}
 <script>
     layui.use(['picbed', 'laypage', 'flow', 'form', 'element', 'layer', 'laytpl', 'util', 'table', 'tableSelect', 'avatar'], function () {
         var $ = layui.jquery,

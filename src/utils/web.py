@@ -658,10 +658,10 @@ def try_proxy_request(url, **kwargs):
 
 
 def set_page_msg(text, level='info'):
-    """给管理员的控制台消息
+    """给管理员的控制台消息（任意环境均可）
 
     :param str text: 消息内容
-    :param str level: 级别，error、info(默认)、warn、success
+    :param str level: 级别，info(默认)、success、error、warn
 
     .. versionadded:: 1.9.0
     """
@@ -673,7 +673,7 @@ def set_page_msg(text, level='info'):
 
 
 def get_page_msg():
-    """生成消息Js，仅在管理员控制台页面闪现消息"""
+    """生成消息Js，仅在管理员控制台页面闪现消息（仅Web环境调用）"""
     key = rsp("msg", "admin", "control")
     msgs = rc.lrange(key, 0, -1)
     if msgs:
@@ -697,6 +697,51 @@ def get_page_msg():
         )
         rc.delete(key)
         return Markup("".join(html))
+    else:
+        return ""
+
+
+def push_user_msg(to, text, level='info', time=3, align='right'):
+    """给用户推送消息（任意环境均可）
+
+    :param str to: 用户名
+    :param str text: 消息内容
+    :param str level: 级别，info(默认)、success、error、warn
+    :param int time: 超时时间，单位秒
+    :param str align: 消息显示位置，right右上角、center顶部中间、left左上角
+
+    .. versionadded:: 1.10.0
+    """
+    if to and text and level in ('info', 'warn', 'success', 'error') and \
+            isinstance(time, int) and align in ('left', 'center', 'right'):
+        if rc.exists(rsp("account", to)):
+            return rc.rpush(rsp("msg", to), json.dumps(dict(
+                text=text, level=level, time=time * 1000, align=align
+            )))
+
+
+def get_push_msg():
+    """生成消息Js，仅在个人中心页面闪现消息（仅Web环境调用）"""
+    key = rsp("msg", g.userinfo.username)
+    msgs = rc.lrange(key, 0, -1)
+    if msgs:
+        def make_layer(data):
+            return (
+                'message.push("{text}","{level}","{align}",{time});'
+            ).format(
+                text=data["text"],
+                level=data["level"],
+                align=data["align"],
+                time=int(data["time"]),
+            )
+
+        html = (
+            '<script>'
+            'layui.use("message",function(){var message = layui.message;%s});'
+            '</script>'
+        ) % ''.join(map(make_layer, [json.loads(i) for i in msgs]))
+        rc.delete(key)
+        return Markup(html)
     else:
         return ""
 

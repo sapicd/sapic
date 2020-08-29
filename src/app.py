@@ -14,7 +14,7 @@ from views import front_bp, api_bp
 from utils.tool import Attribute, is_true, parse_valid_comma, err_logger, \
     timestamp_to_timestring
 from utils.web import get_site_config, JsonResponse, default_login_auth, \
-    get_redirect_url, change_userinfo, rc, get_page_msg, dfr
+    get_redirect_url, change_userinfo, rc, get_page_msg, get_push_msg, dfr
 from utils.exceptions import ApiError, PageError
 from utils.cli import sa_cli
 from libs.hook import HookManager
@@ -47,7 +47,7 @@ def gtv():
     return {
         "Version": __version__, "Doc": __doc__, "is_true": is_true,
         "timestamp_to_timestring": timestamp_to_timestring,
-        "get_page_msg": get_page_msg
+        "get_page_msg": get_page_msg, "get_push_msg": get_push_msg,
     }
 
 

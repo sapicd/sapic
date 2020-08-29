@@ -100,6 +100,10 @@ Picbed Modules
 
 .. autofunction:: get_page_msg
 
+.. autofunction:: push_user_msg
+
+.. autofunction:: get_push_msg
+
 .. autofunction:: get_user_ip
 
 .. autofunction:: has_image
