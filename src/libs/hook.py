@@ -40,7 +40,7 @@ class HookManager(object):
         """
         self.__storage = get_storage()
         self.__hf = hooks_dir
-        self.__hooksdir = join(dirname(dirname(abspath(__file__))), self.__hf)
+        self.__hook_dir = join(dirname(dirname(abspath(__file__))), self.__hf)
         self.__MAX_RELOAD_TIME = int(GLOBAL["HookReloadTime"] or reload_time)
         self.__third_hooks = third_hooks
         self.__last_load_time = time()
@@ -108,9 +108,8 @@ class HookManager(object):
 
     def __ensure_reloaded(self):
         hlt = self.__storage.get("hookloadtime") or {}
-        hlt = {int(k): v for k, v in iteritems(hlt)}
-        myself = hlt.get(self._pid, 0)
-        if 0 in hlt.values() or (time() - myself) > self.__MAX_RELOAD_TIME:
+        myself = hlt.get(self._pid)
+        if not myself or (time() - myself) > self.__MAX_RELOAD_TIME:
             self.__hooks = {}
             self.__last_load_time = time()
 
@@ -174,10 +173,10 @@ class HookManager(object):
         self.__scan_third()
 
     def __scan_local(self):
-        if isdir(self.__hooksdir):
-            for f in listdir(self.__hooksdir):
+        if isdir(self.__hook_dir):
+            for f in listdir(self.__hook_dir):
                 fn, fs = splitext(basename(f))
-                fa, fm = join(self.__hooksdir, f), "%s.%s" % (self.__hf, fn)
+                fa, fm = join(self.__hook_dir, f), "%s.%s" % (self.__hf, fn)
                 if isfile(fa) and fn != "__init__" and fs == ".py":
                     if fm in modules:
                         #: The mtime timestamp of the file when the module
@@ -185,7 +184,7 @@ class HookManager(object):
                         if getattr(modules[fm], '__mtime__', 0) < getmtime(fa):
                             del modules[fm]
                     try:
-                        fo = __import__(fm, fromlist=[self.__hooksdir])
+                        fo = __import__(fm, fromlist=[self.__hook_dir])
                     except ImportError as e:
                         logger.error(e, exc_info=True)
                         continue
@@ -265,12 +264,28 @@ class HookManager(object):
         self.__ensure_reloaded()
         if not self.__hooks:
             self.__init_load_hooks()
-        data = []
-        hooks = list(self.__hooks.values())
-        for h in hooks:
-            h['state'] = self.__get_state(h)
-            data.append(h)
-        return data
+        return self.__hooks.values()
+
+    @property
+    def get_all_hooks_for_api(self):
+        """query hook for admin api"""
+        hooks = self.get_all_hooks
+        return [
+            dict(
+                name=h.name,
+                description=h.description,
+                version=h.version,
+                appversion=h.appversion,
+                author=h.author,
+                email=h.email,
+                catalog=h.catalog,
+                state=self.__get_state(h),
+                ltime=h.time,
+                mtime=h.proxy.__mtime__,
+                family=h.proxy.__family__,
+            )
+            for h in hooks
+        ]
 
     @property
     def get_map_hooks(self):

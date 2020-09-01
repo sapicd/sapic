@@ -273,23 +273,7 @@ def hook():
     Action = request.args.get("Action")
     hm = g.hm
     if Action == "query":
-        hooks = hm.get_all_hooks
-        data = [
-            dict(
-                name=h.name,
-                description=h.description,
-                version=h.version,
-                appversion=h.appversion,
-                author=h.author,
-                email=h.email,
-                catalog=h.catalog,
-                state=h.state,
-                ltime=h.time,
-                mtime=h.proxy.__mtime__,
-                family=h.proxy.__family__,
-            )
-            for h in hooks
-        ]
+        data = hm.get_all_hooks_for_api
         res.update(code=0, data=data, count=len(data))
     elif Action == 'disable':
         name = request.form.get("name")
