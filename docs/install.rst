@@ -89,7 +89,6 @@ dev分支的功能完成后会合并到master分支；
 一阶段功能完成会从master分支发版。
 
 - 开发版（dev）
-
     ! 建议，如果你有git，可以：\ ``git clone -b dev https://github.com/staugur/picbed``
 
     ! 也可以下载压缩包：
@@ -101,11 +100,9 @@ dev分支的功能完成后会合并到master分支；
         $ mv picbed-dev picbed
 
 - 尝鲜版（master）
-
     ``git clone https://github.com/staugur/picbed``
 
 - 正式版（release）
-
     ! 到 `release <https://github.com/staugur/picbed/releases>`_ 页面下载正式版本的包。
 
 2.2 安装依赖
@@ -154,11 +151,9 @@ optional.txt是系统可选功能依赖的模块（可选）。
     单独安装。
 
     - CentOS/RHEL
-
         $ sudo yum install -y gcc python-devel # python3-devel
 
     - Ubuntu
-
         $ sudo apt install build-essential python-dev # python3-dev
 
 .. tip:: 
@@ -327,12 +322,10 @@ NO.5 程序升级
 如果使用upgrade命令行，注意不要跨版本（当然其参数固定，也无法跨多个）。
 
 - v1.2.0
-
     增加了依赖，需要安装requests模块（pip install requests），
     已写到requirements/base.txt
 
 - v1.6.0
-
     1. 兼容了redis cluster集群模式，如果使用此存储，需要安装redis-py-cluster模块
 
     .. code-block:: bash
@@ -349,7 +342,6 @@ NO.5 程序升级
     如果需要旧数据，可以将旧版key改名，加上 `:{your username}`
 
 - v1.7.0
-
     值得一提的是，这个版本命令行增加了upgrade子命令，用来在版本更新时迁移数据、字段等。
 
     .. code-block:: bash
@@ -372,7 +364,6 @@ NO.5 程序升级
         $ flask sa upgrade --yes 1.6-1.7
 
 - v1.8.0
-
     - 增加了依赖模块bleach和semver，可以手动安装：
     
       .. code-block:: bash

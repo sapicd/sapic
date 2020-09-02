@@ -261,6 +261,7 @@ def dfr(res, default='en-US'):
             "Interceptor processing rejection, upload aborted": "拦截器处理拒绝，上传中止",
             "Request fail": "请求失败",
             "Invalid expire param": "无效的expire参数",
+            "Users also have pictures that cannot be deleted": "用户还有图片，不能删除",
         },
     }
     if isinstance(res, dict) and "en" not in language:

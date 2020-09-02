@@ -25,16 +25,13 @@
 分别是将上传的图片保存到本地、API可以使用Token（LinkToken）认证。
 
 .. versionadded:: 1.1.0
-
     内置增加了4个，将我之前写的常用的对象存储内置集成了，不过默认是禁用的。
 
 - up2local
-
     将上传的图片保存到本地（picbed源码目录src/static/upload），默认保存图片
     的钩子。
 
 - up2upyun
-    
     将上传的图片保存到又拍云的 `USS云存储服务 <https://www.upyun.com/products/file-storage>`_
 
     使用方法：启用钩子，刷新控制台页面，在 **站点管理-网站设置** 底部的
@@ -43,14 +40,12 @@
     保存到又拍云。
 
 - up2qiniu
-
     将上传的图片保存到七牛云的 `KODO对象存储服务 <https://www.qiniu.com/products/kodo>`_
 
     使用方法：参考又拍云的使用即可，配置加速域名、Bucket、AK及SK等（在七牛云
     个人中心-密钥管理可以拿到AK、SK）。
 
 - up2oss
-
     将上传的图片保存到阿里云 `OSS对象存储 <https://www.aliyun.com/product/oss>`_
 
     使用方法：同上，配置要求的AK及SK可以在阿里云管理控制台-AccessKey密钥管理
@@ -60,7 +55,6 @@
         请使用 `staugur/picbed-up2oss <https://github.com/staugur/picbed-up2oss>`_ 代替！
 
 - up2cos
-
     用来将上传的图片保存到腾讯云 `COS对象存储 <https://cloud.tencent.com/product/cos>`_
 
     使用方法：同上，配置加速域名、Bucket、SecretID及Key等（在腾讯云控制台-访问管理-访问密钥-API密钥管理中可以拿到SecretId、SecretKey；允许使用子用户的密钥，要求拥有COS管理权限即可）。
@@ -71,7 +65,6 @@
 .. versionadded:: 1.5.0
 
 - up2github
-
     用来将上传的图片保存到 `GitHub <https://github.com>`_ 公开仓库，您需要拥有github账号，并获取personal access token。
 
     定位到：https://github.com/settings/tokens/new，勾选repo权限，生成后会有
@@ -100,7 +93,6 @@
         刚上传的图片也不能立刻访问，需要等构建成功。
 
 - up2gitee
-
     用来将上传的图片保存到 `Gitee（码云） <https://github.com>`_ ，生成
     `私人令牌 <https://gitee.com/profile/personal_access_tokens/new>`_ ，勾选
     projects权限，其他不需要。
@@ -114,7 +106,6 @@
 .. versionadded:: 1.7.0
 
 - sendmail
-
     通过3种方式发送邮件
 
 .. _picbed-third-hook:
@@ -475,7 +466,6 @@ route_name：路由名称，可选。
 定位到 *hook_name* 直接执行 **route** 函数（无传参），按照其结果有两种判断：
 
 1. 返回的是字符串
-
     此时route_name无效，无论是啥，最终访问URL返回的都是字符串这个结果
 
     示例，钩子名test：
@@ -498,7 +488,6 @@ route_name：路由名称，可选。
         <b>hello world!</b>
 
 2. 返回的字典对象
-
     此时route_name有效，会从字典中查找route_name对应的值，
     **注意：** 如果值可以回调并且不是 :class:`flask.wrappers.Response` 实例，
     那么会当作函数执行并直接返回执行结果，否则直接返回。

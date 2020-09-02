@@ -52,6 +52,10 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
 .. versionchanged:: 1.8.0
 
     更新清减部分依赖，目前构建完成105M左右。
+    
+.. versionchanged:: 1.8.1
+
+    由于依赖的python基础镜像精简，目前构建完成仅75M左右。
 
 打包步骤如下：
 

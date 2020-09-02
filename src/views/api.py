@@ -271,14 +271,13 @@ def config():
 def hook():
     res = dict(code=1, msg=None)
     Action = request.args.get("Action")
-    hm = g.hm
     if Action == "query":
-        data = hm.get_all_hooks_for_api
+        data = g.hm.get_all_hooks_for_api
         res.update(code=0, data=data, count=len(data))
     elif Action == 'disable':
         name = request.form.get("name")
         try:
-            hm.disable(name)
+            g.hm.disable(name)
         except:
             res.update(msg="An unknown error occurred in the program")
         else:
@@ -286,14 +285,14 @@ def hook():
     elif Action == 'enable':
         name = request.form.get("name")
         try:
-            hm.enable(name)
+            g.hm.enable(name)
         except:
             res.update(msg="An unknown error occurred in the program")
         else:
             res.update(code=0)
     elif Action == 'reload':
         try:
-            hm.reload()
+            g.hm.reload()
         except:
             res.update(msg="An unknown error occurred in the program")
         else:
@@ -303,7 +302,7 @@ def hook():
         name = request.form.get("name")
         try:
             __import__(name)
-            hm.add_third_hook(name)
+            g.hm.add_third_hook(name)
         except ImportError:
             res.update(msg="The third module not found")
         except:
@@ -313,7 +312,7 @@ def hook():
     elif Action == 'remove_third_hook':
         name = request.form.get("name")
         try:
-            hm.remove_third_hook(name)
+            g.hm.remove_third_hook(name)
         except:
             res.update(msg="An unknown error occurred in the program")
         else:
@@ -732,7 +731,8 @@ def token():
 @apilogin_required
 def my():
     res = dict(code=1, msg=None)
-    ak = rsp("account", g.userinfo.username)
+    username = g.userinfo.username
+    ak = rsp("account", username)
     Action = request.args.get("Action")
     if Action == "updateProfile":
         #: 基于资料本身进行的统一更新
@@ -813,7 +813,7 @@ def my():
             "front.activate",
             token=generate_activate_token(dict(
                 Action=Action,
-                username=g.userinfo.username,
+                username=username,
                 email=g.userinfo.email,
             )),
             _external=True,
@@ -823,6 +823,30 @@ def my():
             message=html,
             to=g.userinfo.email,
         )
+    elif Action == "deleteAccount":
+        #: 检测用户是否存在图片数据
+        uk = rsp("index", "user", username)
+        pics = g.rc.scard(uk)
+        if pics > 0:
+            raise ApiError("Users also have pictures that cannot be deleted")
+        #: 删除用户相关数据
+        pipe = g.rc.pipeline()
+        pipe.srem(rsp("accounts"), username)
+        pipe.delete(ak)
+        # 删除linktoken
+        lk = rsp("linktokens")
+        for ltid, usr in iteritems(g.rc.hgetall(lk)):
+            if usr == username:
+                pipe.hdel(lk, ltid)
+                pipe.delete(rsp("linktoken", ltid))
+        # 删除统计
+        pipe.delete(rsp("report", "linktokens", username))
+        try:
+            pipe.execute()
+        except RedisError:
+            res.update(msg="Program data storage service error")
+        else:
+            res.update(code=0)
     return res
 
 
@@ -1039,7 +1063,9 @@ def upload():
         raise ApiError(msg, 403)
     #: 相册名称，可以是任意字符串
     album = (
-        request.form.get("album") or getattr(g, "up_album", "")
+        request.form.get("album") or getattr(
+            g, "up_album", g.userinfo.ucfg_default_upload_album
+        ) or ""
     ) if g.signin else 'anonymous'
     #: 实时获取后台配置中允许上传的后缀，如: jpg|jpeg|png
     allowed_suffix = partial(

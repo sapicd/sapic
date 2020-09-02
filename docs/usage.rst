@@ -227,7 +227,7 @@ MacOS下使用Control/Option+点击，效果如下：
   - 简而言之，脚本必须获取到实际图片且允许上传才行
 
   - 另外，如果是被墙的网站图片，你的服务器在国内，那么很遗憾无法下载，应该
-    会提示：未获取到图片或不允许的图片格式。
+    会提示：未获取到图片或不允许的图片格式（除非管理员设置了可翻-qiang的代理）。
 
 .. _picbed-mypic:
 
@@ -301,18 +301,18 @@ Web中只有首页可以上传，同时最多选择10张，默认支持jpg、jpe
 
 .. versionchanged:: 1.2.0
 
-    - 首页支持选择或拖拽系统图片上传，粘贴图片或图片链接上传。
+- 首页支持选择或拖拽系统图片上传，粘贴图片或图片链接上传。
+  
+  需要注意的是，粘贴图片上传（Windows/MacOS快捷键：Ctrl+V/Command+V）
+  支持复制浏览器内图片、系统软件内图片（QQ、微信等）、截图等上传，
+  不支持操作系统内的文件。
 
-      需要注意的是，粘贴图片上传（Windows/MacOS快捷键：Ctrl+V/Command+V）
-      支持复制浏览器内图片、系统软件内图片（QQ、微信等）、截图等上传，
-      不支持操作系统内的文件。
+  另外，MacOS操作系统可能会因为安全性限制导致无法粘贴其他应用图片上传。
 
-      另外，MacOS操作系统可能会因为安全性限制导致无法粘贴其他应用图片上传。
-
-    - API也支持了图片链接上传。
-
-      符合 `http://` 或 `https://` 的合法URL会进入图片链接上传模式，
-      :ref:`参考Upload Api <picbed-api-upload>`
+- API也支持了图片链接上传。
+  
+  符合 `http://` 或 `https://` 的合法URL会进入图片链接上传模式，
+  :ref:`参考Upload Api <picbed-api-upload>`
 
 3.1 以下是几个客户端(通过API)上传的示例：
 +++++++++++++++++++++++++++++++++++++++++++
@@ -382,31 +382,38 @@ Web中只有首页可以上传，同时最多选择10张，默认支持jpg、jpe
 .. code-block:: bash
 
     $ python cli.py -h
-    usage: cli.py [-h] -u PICBED_URL [-t PICBED_TOKEN] [-a ALBUM]
-            [-s {default,typora}]
-            file [file ...]
+    usage: cli.py [-h] -u PICBED_URL [-t PICBED_TOKEN] [-a ALBUM] [-d DESC]
+                  [-e EXPIRE] [-s {default,typora}]
+                  file [file ...]
 
     positional arguments:
-        file                  Local file
+      file                  Local file
 
     optional arguments:
-        -h, --help          show this help message and exit
-        -u PICBED_URL, --picbed-url PICBED_URL
+      -h, --help            show this help message and exit
+      -u PICBED_URL, --picbed-url PICBED_URL
                             The picbed upload api url
-        -t PICBED_TOKEN, --picbed-token PICBED_TOKEN
+      -t PICBED_TOKEN, --picbed-token PICBED_TOKEN
                             Your LinkToken
-        -a ALBUM, --album ALBUM
+      -a ALBUM, --album ALBUM
                             Set image album
-        -s {default,typora}, --style {default,typora}
+      -d DESC, --desc DESC  Set image title(description)
+      -e EXPIRE, --expire EXPIRE
+                            Set image expire(seconds)
+      -s {default,typora}, --style {default,typora}
                             upload result output style
 
 -u: 指定图床的服务地址，http[s]://你的picbed域名
 
 -t: 设置LinkToken认证、授权，拥有 ``api.upload`` 的 ``post`` 权限
 
--s: 指定输出风格，默认原样返回API响应
+-a: 设置相册名（可以覆盖LinkToken设置的默认相册）
 
-其他：-a指定相册名称，-h查看帮助信息
+-d: 设置图片描述
+
+-e: 指定过期时间（秒），作为临时图片上传
+
+-s: 指定输出风格，默认原样返回API响应
 
 **应用示例：作为自定义命令在使用Typora时上传图片到picbed**
 
