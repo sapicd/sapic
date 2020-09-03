@@ -18,6 +18,9 @@
     .layui-inline, img {
         display: inline;
     }
+    .my-textarea {
+        min-height: 50px;
+    }
 </style>
 {% endblock %}
 
@@ -147,7 +150,7 @@
                                                 id="tip-bulletin"></i> 全站公告</label>
                                         <div class="layui-input-block">
                                             <textarea name="bulletin" placeholder="页面顶部公告栏" value=""
-                                                class="layui-textarea"></textarea>
+                                                class="layui-textarea my-textarea"></textarea>
                                         </div>
                                     </div>
                                     {{ intpl("sitesetting") }}
@@ -491,6 +494,7 @@
 </div>
 </script>
 {% endraw %}
+{{ get_page_msg() }}
 <script>
     layui.use(['picbed', 'layer', 'form', 'table', 'element', 'util', 'laytpl'], function () {
         var $ = layui.$,

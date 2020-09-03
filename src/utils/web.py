@@ -23,6 +23,7 @@ from flask import g, redirect, request, url_for, abort, Response, jsonify,\
     current_app, make_response, Markup
 from jinja2 import Environment, FileSystemLoader
 from sys import executable
+from functools import partial
 from subprocess import call, check_output
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, \
     SignatureExpired, BadSignature
@@ -31,8 +32,8 @@ from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
     parse_valid_verticaline, parse_valid_colon, is_true, is_venv, gen_ua, \
     check_to_addr, is_all_fail, bleach_html, try_request, comma_pat, \
-    create_redis_engine
-from ._compat import PY2, text_type, urlsplit
+    create_redis_engine, allowed_file
+from ._compat import PY2, text_type, urlsplit, parse_qs
 if not PY2:
     from functools import reduce
 
@@ -260,6 +261,7 @@ def dfr(res, default='en-US'):
             "Interceptor processing rejection, upload aborted": "拦截器处理拒绝，上传中止",
             "Request fail": "请求失败",
             "Invalid expire param": "无效的expire参数",
+            "Users also have pictures that cannot be deleted": "用户还有图片，不能删除",
         },
     }
     if isinstance(res, dict) and "en" not in language:
@@ -354,6 +356,39 @@ def check_username(usr):
         if usr not in fus:
             return True
     return False
+
+
+def guess_filename_from_url(url, allowed_exts=None):
+    """从url中猜测图片文件名，其后缀符合控制台设定或默认予以返回。
+
+    首先尝试从url path猜测，比如http://example.com/upload/abc.png，这合法。
+
+    如果猜测失败，则从url query查找filename查询参数。
+
+    :param str url: 图片地址
+    :param list allowed_exts: 允许的图片后缀，比如['png', 'jpg']，
+                              如未设置，则使用控制台设定或默认
+    :returns: 当图片合法时返回filename，否则None
+
+    .. versionadded:: 1.10.0
+    """
+    _allowed_exts = [
+        ".{}".format(e)
+        for e in (
+            allowed_exts or parse_valid_verticaline(
+                g.cfg.upload_exts
+            ) or ALLOWED_EXTS
+        )
+    ]
+    ufn = basename(urlsplit(url).path)
+    if splitext(ufn)[-1] in _allowed_exts:
+        return ufn
+    else:
+        fns = parse_qs(urlsplit(url).query).get("filename")
+        if fns and isinstance(fns, (list, tuple)):
+            filename = fns[0]
+            if splitext(filename)[-1] in _allowed_exts:
+                return filename
 
 
 class JsonResponse(Response):
@@ -455,9 +490,16 @@ class ImgUrlFileStorage(object):
 
     @property
     def filename(self):
+        """定义url图片文件名：
+        如果给定文件名，则用，否则从url path猜测。
+        猜测失败，从url query查找filename参数。
+        未果，则读取图片二进制猜测格式。
+        未果，从返回标头Content-Type解析image类型。
+        未果，文件名后缀可能是None，将不合要求。
+        """
         if not self._filename and self._imgobj:
-            ufn = basename(urlsplit(self._imgobj.url).path)
-            if splitext(ufn)[-1] in self._allowed_exts:
+            ufn = guess_filename_from_url(self._imgobj.url, self._allowed_exts)
+            if ufn and splitext(ufn)[-1] in self._allowed_exts:
                 self._filename = ufn
                 return ufn
             ext = imghdr.what(None, self._imgobj.content)
@@ -617,10 +659,10 @@ def try_proxy_request(url, **kwargs):
 
 
 def set_page_msg(text, level='info'):
-    """给管理员的控制台消息
+    """给管理员的控制台消息（任意环境均可）
 
     :param str text: 消息内容
-    :param str level: 级别，error、info(默认)、warn、success
+    :param str level: 级别，info(默认)、success、error、warn
 
     .. versionadded:: 1.9.0
     """
@@ -632,7 +674,7 @@ def set_page_msg(text, level='info'):
 
 
 def get_page_msg():
-    """生成消息Js，仅在管理员控制台页面闪现消息"""
+    """生成消息Js，仅在管理员控制台页面闪现消息（仅Web环境调用）"""
     key = rsp("msg", "admin", "control")
     msgs = rc.lrange(key, 0, -1)
     if msgs:
@@ -660,6 +702,51 @@ def get_page_msg():
         return ""
 
 
+def push_user_msg(to, text, level='info', time=3, align='right'):
+    """给用户推送消息（任意环境均可）
+
+    :param str to: 用户名
+    :param str text: 消息内容
+    :param str level: 级别，info(默认)、success、error、warn
+    :param int time: 超时时间，单位秒
+    :param str align: 消息显示位置，right右上角、center顶部中间、left左上角
+
+    .. versionadded:: 1.10.0
+    """
+    if to and text and level in ('info', 'warn', 'success', 'error') and \
+            isinstance(time, int) and align in ('left', 'center', 'right'):
+        if rc.exists(rsp("account", to)):
+            return rc.rpush(rsp("msg", to), json.dumps(dict(
+                text=text, level=level, time=time * 1000, align=align
+            )))
+
+
+def get_push_msg():
+    """生成消息Js，仅在个人中心页面闪现消息（仅Web环境调用）"""
+    key = rsp("msg", g.userinfo.username)
+    msgs = rc.lrange(key, 0, -1)
+    if msgs:
+        def make_layer(data):
+            return (
+                'message.push("{text}","{level}","{align}",{time});'
+            ).format(
+                text=data["text"],
+                level=data["level"],
+                align=data["align"],
+                time=int(data["time"]),
+            )
+
+        html = (
+            '<script>'
+            'layui.use("message",function(){var message = layui.message;%s});'
+            '</script>'
+        ) % ''.join(map(make_layer, [json.loads(i) for i in msgs]))
+        rc.delete(key)
+        return Markup(html)
+    else:
+        return ""
+
+
 def get_user_ip():
     """首先从HTTP标头的X-Forwarded-For获取代理IP，其次获取X-Real-IP，最后是客户端IP"""
     if request.headers.get('X-Forwarded-For'):
@@ -679,3 +766,17 @@ def has_image(sha):
     pipe.exists(ik)
     result = pipe.execute()
     return result == [True, 1]
+
+
+def allowed_suffix(filename):
+    """判断filename是否匹配控制台配置的上传后缀（及默认）
+
+    :param str filename: 图片文件名
+    :rtype: boolean
+
+    .. versionadded:: 1.10.0
+    """
+    return partial(
+        allowed_file,
+        suffix=parse_valid_verticaline(g.cfg.upload_exts)
+    )(filename)

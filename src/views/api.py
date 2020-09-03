@@ -20,17 +20,18 @@ from flask import Blueprint, request, g, url_for, current_app, abort, \
 from functools import partial
 from redis.exceptions import RedisError
 from collections import Counter
-from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1, \
+from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
     parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, rsp, \
     sha256, get_current_timestamp, list_equal_split, generate_random, er_pat, \
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
     username_pat, ALLOWED_HTTP_METHOD, is_all_fail, parse_valid_colon, \
-    check_ir, less_latest_tag
+    check_ir, less_latest_tag, check_url
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
     generate_activate_token, check_activate_token, try_proxy_request, \
-    sendmail, _pip_list, get_user_ip, has_image
+    sendmail, _pip_list, get_user_ip, has_image, guess_filename_from_url, \
+    allowed_suffix
 from utils._compat import iteritems, thread
 from utils.exceptions import ApiError
 
@@ -270,30 +271,13 @@ def config():
 def hook():
     res = dict(code=1, msg=None)
     Action = request.args.get("Action")
-    hm = g.hm
     if Action == "query":
-        hooks = hm.get_all_hooks
-        data = [
-            dict(
-                name=h.name,
-                description=h.description,
-                version=h.version,
-                appversion=h.appversion,
-                author=h.author,
-                email=h.email,
-                catalog=h.catalog,
-                state=h.state,
-                ltime=h.time,
-                mtime=h.proxy.__mtime__,
-                family=h.proxy.__family__,
-            )
-            for h in hooks
-        ]
+        data = g.hm.get_all_hooks_for_api
         res.update(code=0, data=data, count=len(data))
     elif Action == 'disable':
         name = request.form.get("name")
         try:
-            hm.disable(name)
+            g.hm.disable(name)
         except:
             res.update(msg="An unknown error occurred in the program")
         else:
@@ -301,14 +285,14 @@ def hook():
     elif Action == 'enable':
         name = request.form.get("name")
         try:
-            hm.enable(name)
+            g.hm.enable(name)
         except:
             res.update(msg="An unknown error occurred in the program")
         else:
             res.update(code=0)
     elif Action == 'reload':
         try:
-            hm.reload()
+            g.hm.reload()
         except:
             res.update(msg="An unknown error occurred in the program")
         else:
@@ -318,7 +302,7 @@ def hook():
         name = request.form.get("name")
         try:
             __import__(name)
-            hm.add_third_hook(name)
+            g.hm.add_third_hook(name)
         except ImportError:
             res.update(msg="The third module not found")
         except:
@@ -328,7 +312,7 @@ def hook():
     elif Action == 'remove_third_hook':
         name = request.form.get("name")
         try:
-            hm.remove_third_hook(name)
+            g.hm.remove_third_hook(name)
         except:
             res.update(msg="An unknown error occurred in the program")
         else:
@@ -557,6 +541,126 @@ def test():
     return res
 
 
+@bp.route("/github")
+@admin_apilogin_required
+def github():
+    res = dict(code=1, msg=None)
+    Action = request.args.get("Action")
+    no_fresh = is_true(request.args.get("no_fresh", True))
+
+    if Action == "thirdHooks":
+        page = request.args.get("page") or 1
+        limit = request.args.get("limit") or 5
+        try:
+            page = int(page) - 1
+            limit = int(limit)
+            if page < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise ApiError("Parameter error")
+        key = rsp("cache", "thirdhooks")
+        data = g.rc.get(key)
+        if no_fresh and data:
+            res.update(code=0, data=json.loads(data))
+        else:
+            url = "https://api.github.com/repos/{}/contents/{}".format(
+                "staugur/picbed-awesome", "list.json",
+            )
+            headers = dict(Accept='application/vnd.github.v3.raw')
+            try:
+                r = try_proxy_request(url, headers=headers, method='GET')
+                if not r.ok:
+                    raise ValueError("Not Found")
+            except (ValueError, Exception) as e:
+                raise ApiError(str(e))
+            else:
+                data = r.json()
+                res.update(code=0, data=data)
+                pipe = g.rc.pipeline()
+                pipe.set(key, json.dumps(data))
+                pipe.expire(key, 3600 * 6)
+                pipe.execute()
+        if res["code"] == 0:
+            def fmt(i, pkgs):
+                pkg = i.get("pypi", "").replace("$name", i["name"])
+                status = i.get("status")
+                if status == "beta":
+                    status_text = "公测版"
+                elif status == "rc":
+                    status_text = "预发布"
+                elif status in ("stable", "production", "ga"):
+                    status_text = "正式版"
+                else:
+                    status_text = ""
+                if pkg:
+                    pypi = "https://pypi.org/project/{}".format(pkg)
+                else:
+                    pypi = None
+                user = i["github"].split("/")[0]
+                i.update(
+                    author=i.get("author", user),
+                    home=i.get("home", "https://github.com/{}".format(user)),
+                    github="https://github.com/{}".format(i["github"]),
+                    pypi=pypi,
+                    status_text=status_text,
+                    pkg=dict(
+                        name=pkg,
+                        installed=pkg in pkgs,
+                        local=pkgs.get(pkg),
+                    ),
+                )
+                return i
+            pkgs = _pip_list(fmt="dict", no_fresh=no_fresh)
+            data = [
+                fmt(i, pkgs)
+                for i in res["data"]
+                if isinstance(i, dict) and
+                "name" in i and
+                "module" in i and
+                "desc" in i and
+                "github" in i
+            ]
+            data.reverse()
+            count = len(data)
+            data = list_equal_split(data, limit)
+            pageCount = len(data)
+            if page < pageCount:
+                res.update(
+                    code=0,
+                    count=count,
+                    data=data[page],
+                    pageCount=pageCount,
+                )
+            else:
+                res.update(code=3, msg="No data")
+
+    elif Action == "latestRelease":
+        key = rsp("cache", "latestrelease")
+        data = g.rc.get(key)
+        if no_fresh and data:
+            res.update(code=0, data=json.loads(data))
+        else:
+            url = "https://api.github.com/repos/staugur/picbed/releases/latest"
+            try:
+                r = try_proxy_request(url, method='GET')
+                if not r.ok:
+                    raise ValueError("Not Found")
+            except (ValueError, Exception) as e:
+                res.update(msg=str(e))
+            else:
+                fields = ["tag_name", "published_at", "html_url"]
+                data = {k: v for k, v in iteritems(r.json()) if k in fields}
+                res.update(code=0, data=data)
+                pipe = g.rc.pipeline()
+                pipe.set(key, json.dumps(data))
+                pipe.expire(key, 3600 * 24)
+                pipe.execute()
+        if res["code"] == 0:
+            res["show_upgrade"] = less_latest_tag(res["data"]["tag_name"])
+
+    return res
+
+
 @bp.route("/token", methods=["POST"])
 @apilogin_required
 def token():
@@ -627,7 +731,8 @@ def token():
 @apilogin_required
 def my():
     res = dict(code=1, msg=None)
-    ak = rsp("account", g.userinfo.username)
+    username = g.userinfo.username
+    ak = rsp("account", username)
     Action = request.args.get("Action")
     if Action == "updateProfile":
         #: 基于资料本身进行的统一更新
@@ -708,7 +813,7 @@ def my():
             "front.activate",
             token=generate_activate_token(dict(
                 Action=Action,
-                username=g.userinfo.username,
+                username=username,
                 email=g.userinfo.email,
             )),
             _external=True,
@@ -718,6 +823,30 @@ def my():
             message=html,
             to=g.userinfo.email,
         )
+    elif Action == "deleteAccount":
+        #: 检测用户是否存在图片数据
+        uk = rsp("index", "user", username)
+        pics = g.rc.scard(uk)
+        if pics > 0:
+            raise ApiError("Users also have pictures that cannot be deleted")
+        #: 删除用户相关数据
+        pipe = g.rc.pipeline()
+        pipe.srem(rsp("accounts"), username)
+        pipe.delete(ak)
+        # 删除linktoken
+        lk = rsp("linktokens")
+        for ltid, usr in iteritems(g.rc.hgetall(lk)):
+            if usr == username:
+                pipe.hdel(lk, ltid)
+                pipe.delete(rsp("linktoken", ltid))
+        # 删除统计
+        pipe.delete(rsp("report", "linktokens", username))
+        try:
+            pipe.execute()
+        except RedisError:
+            res.update(msg="Program data storage service error")
+        else:
+            res.update(code=0)
     return res
 
 
@@ -934,7 +1063,9 @@ def upload():
         raise ApiError(msg, 403)
     #: 相册名称，可以是任意字符串
     album = (
-        request.form.get("album") or getattr(g, "up_album", "")
+        request.form.get("album") or getattr(
+            g, "up_album", g.userinfo.ucfg_default_upload_album
+        ) or ""
     ) if g.signin else 'anonymous'
     #: 实时获取后台配置中允许上传的后缀，如: jpg|jpeg|png
     allowed_suffix = partial(
@@ -1086,6 +1217,7 @@ def upload():
                 filename=filename,
                 sender=data[0]["sender"],
                 api=url_for("api.shamgr", sha=sha, _external=True),
+                sha=sha,
             )
             #: format指定图片地址的显示字段，默认src，可以用点号指定
             #: 比如data.src，那么返回格式{code, filename..., data:{src}, ...}
@@ -1407,121 +1539,68 @@ def report(classify):
     return res
 
 
-@bp.route("/github")
-@admin_apilogin_required
-def github():
-    res = dict(code=1, msg=None)
-    Action = request.args.get("Action")
-    no_fresh = is_true(request.args.get("no_fresh", True))
-
-    if Action == "thirdHooks":
-        page = request.args.get("page") or 1
-        limit = request.args.get("limit") or 5
-        try:
-            page = int(page) - 1
-            limit = int(limit)
-            if page < 0:
-                raise ValueError
-        except (ValueError, TypeError):
-            raise ApiError("Parameter error")
-        key = rsp("cache", "thirdhooks")
-        data = g.rc.get(key)
-        if no_fresh and data:
-            res.update(code=0, data=json.loads(data))
-        else:
-            url = "https://api.github.com/repos/{}/contents/{}".format(
-                "staugur/picbed-awesome", "list.json",
-            )
-            headers = dict(Accept='application/vnd.github.v3.raw')
-            try:
-                r = try_proxy_request(url, headers=headers, method='GET')
-                if not r.ok:
-                    raise ValueError("Not Found")
-            except (ValueError, Exception) as e:
-                raise ApiError(str(e))
-            else:
-                data = r.json()
-                res.update(code=0, data=data)
-                pipe = g.rc.pipeline()
-                pipe.set(key, json.dumps(data))
-                pipe.expire(key, 3600 * 6)
-                pipe.execute()
-        if res["code"] == 0:
-            def fmt(i, pkgs):
-                pkg = i.get("pypi", "").replace("$name", i["name"])
-                status = i.get("status")
-                if status == "beta":
-                    status_text = "公测版"
-                elif status == "rc":
-                    status_text = "预发布"
-                elif status in ("stable", "production", "ga"):
-                    status_text = "正式版"
-                else:
-                    status_text = ""
-                if pkg:
-                    pypi = "https://pypi.org/project/{}".format(pkg)
-                else:
-                    pypi = None
-                user = i["github"].split("/")[0]
-                i.update(
-                    author=i.get("author", user),
-                    home=i.get("home", "https://github.com/{}".format(user)),
-                    github="https://github.com/{}".format(i["github"]),
-                    pypi=pypi,
-                    status_text=status_text,
-                    pkg=dict(
-                        name=pkg,
-                        installed=pkg in pkgs,
-                        local=pkgs.get(pkg),
-                    ),
+@bp.route("/load", methods=["POST"])
+@apilogin_required
+def load():
+    """把图片导入系统"""
+    res = dict(code=1)
+    #: 应该提交JSON数据，是一个数组，元素是字典对象
+    #: 其字段必须有url，建议filename，可选title、album
+    data = request.json
+    if data and isinstance(data, list):
+        fail = []
+        todo = []
+        #: 筛选
+        for img in data:
+            if img and isinstance(img, dict) and check_url(img.get("url")):
+                filename = secure_filename(
+                    img.get("filename") or guess_filename_from_url(
+                        img["url"]
+                    ) or ""
                 )
-                return i
-            pkgs = _pip_list(fmt="dict", no_fresh=no_fresh)
-            data = [
-                fmt(i, pkgs)
-                for i in res["data"]
-                if isinstance(i, dict) and
-                "name" in i and
-                "module" in i and
-                "desc" in i and
-                "github" in i
-            ]
-            data.reverse()
-            count = len(data)
-            data = list_equal_split(data, limit)
-            pageCount = len(data)
-            if page < pageCount:
-                res.update(
-                    code=0,
-                    count=count,
-                    data=data[page],
-                    pageCount=pageCount,
-                )
-            else:
-                res.update(code=3, msg="No data")
-
-    elif Action == "latestRelease":
-        key = rsp("cache", "latestrelease")
-        data = g.rc.get(key)
-        if no_fresh and data:
-            res.update(code=0, data=json.loads(data))
-        else:
-            url = "https://api.github.com/repos/staugur/picbed/releases/latest"
+                if allowed_suffix(filename):
+                    img["filename"] = filename
+                    todo.append(img)
+                    continue
+            fail.append(img)
+        #: 处理
+        pipe = g.rc.pipeline()
+        success = []
+        for img in todo:
+            filename = img["filename"]
+            #: 定义文件名唯一索引
+            sha = "sha1.%s.%s" % (get_current_timestamp(True), sha1(filename))
+            #: 入库
+            pipe.sadd(rsp("index", "global"), sha)
+            pipe.sadd(rsp("index", "user", g.userinfo.username), sha)
+            pipe.hmset(rsp("image", sha), dict(
+                sha=sha,
+                album=img.get("album") or "",
+                filename=filename,
+                upload_path=g.userinfo.username + "/",
+                user=g.userinfo.username,
+                ctime=get_current_timestamp(),
+                status='enabled',
+                src=img["url"],
+                sender="load",
+                senders=json.dumps([]),
+                origin=request.form.get(
+                    "origin", "UA: %s" % request.headers.get('User-Agent', '')
+                ),
+                method="load",
+                title=img.get("title") or "",
+            ))
             try:
-                r = try_proxy_request(url, method='GET')
-                if not r.ok:
-                    raise ValueError("Not Found")
-            except (ValueError, Exception) as e:
-                res.update(msg=str(e))
-            else:
-                fields = ["tag_name", "published_at", "html_url"]
-                data = {k: v for k, v in iteritems(r.json()) if k in fields}
-                res.update(code=0, data=data)
-                pipe = g.rc.pipeline()
-                pipe.set(key, json.dumps(data))
-                pipe.expire(key, 3600 * 24)
                 pipe.execute()
-        if res["code"] == 0:
-            res["show_upgrade"] = less_latest_tag(res["data"]["tag_name"])
-
+            except RedisError:
+                fail.append(img)
+            else:
+                img["sha"] = sha
+                success.append(img)
+        res.update(
+            code=0, success=success, fail=fail,
+            count=dict(success=len(success), fail=len(fail))
+        )
+    else:
+        res.update(msg="Parameter error")
     return res

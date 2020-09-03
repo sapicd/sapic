@@ -38,20 +38,28 @@ class Logger(object):
         if not exists(self.log_dir):
             mkdir(self.log_dir)
 
+        LEVEL = GLOBAL.get('LogLevel', 'INFO').upper()
+        if LEVEL == "DEBUG":
+            LOGFMT = (
+                '[ %(levelname)s ] %(threadName)s %(asctime)s'
+                '%(filename)s:%(lineno)d %(message)s'
+            )
+        else:
+            LOGFMT = (
+                '[ %(levelname)s ] %(asctime)s'
+                '%(filename)s:%(lineno)d %(message)s'
+            )
         handler = logging.handlers.TimedRotatingFileHandler(
             filename=self.log_file,
             backupCount=backup_count,
             when="midnight"
         )
         handler.suffix = "%Y%m%d"
-        formatter = logging.Formatter(
-            '[ %(levelname)s ] %(asctime)s %(filename)s:%(lineno)d %(message)s',
-            datefmt=self._logfmt
-        )
+        formatter = logging.Formatter(LOGFMT, datefmt=self._logfmt)
         handler.setFormatter(formatter)
         self._logger.addHandler(handler)
         self._logger.setLevel(
-            self._levels.get(GLOBAL.get('LogLevel', 'INFO').upper())
+            self._levels.get(LEVEL)
         )
 
     @property

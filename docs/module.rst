@@ -4,21 +4,27 @@
 Picbed Modules
 ==============
 
+下面仅列出可能有用的部分
+
 钩子管理类
-------------
+-------------
 
 .. autoclass:: libs.hook.HookManager
     :members:
     :undoc-members:
 
 通用方法
----------
+----------
 
 .. currentmodule:: utils.tool
 
 .. data:: logger
 
 .. data:: err_logger
+
+.. data:: ALLOWED_EXTS
+
+    默认允许上传的图片后缀
 
 .. autofunction:: rsp
 
@@ -96,9 +102,17 @@ Picbed Modules
 
 .. autofunction:: get_page_msg
 
+.. autofunction:: push_user_msg
+
+.. autofunction:: get_push_msg
+
 .. autofunction:: get_user_ip
 
 .. autofunction:: has_image
+
+.. autofunction:: guess_filename_from_url
+
+.. autofunction:: allowed_suffix
 
 .. autoclass:: Base64FileStorage
     :members:

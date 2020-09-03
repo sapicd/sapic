@@ -136,3 +136,23 @@ def ep(hook_name, route_name):
                     return rst()
             return rst
     return abort(404)
+
+
+@bp.route("/feed")
+@login_required
+def feed():
+    pipe = g.rc.pipeline()
+    uk = rsp("index", "user", g.userinfo.username)
+    fields = ["title", "filename", "ctime", "user", "src"]
+    for sha in g.rc.smembers(uk):
+        pipe.hmget(rsp("image", sha), *fields)
+    result = pipe.execute()
+    data = [dict(zip(fields, i)) for i in result if i]
+    xml = render_template('public/feed.xml', items=sorted(
+        data,
+        key=lambda k: int(k.get('ctime')),
+        reverse=True
+    )[:10])
+    response = make_response(xml)
+    response.headers['Content-Type'] = 'application/xml'
+    return response

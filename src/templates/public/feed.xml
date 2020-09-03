@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+<channel>
+    <title>{{ g.userinfo.ucfg_feed_name or 'My Feed' }} - {{ g.site_name }}</title>
+    <link>{{ request.url_root }}</link>
+    <description>{{ g.site.seo_description or Doc }}</description>
+    {% for i in items %}
+    <item>
+        <title>{{ i.title or i.filename }}</title>
+        <link>{{ i.src }}</link>
+        <description>
+            <![CDATA[<img src="{{ i.src }}">]]>
+        </description>
+        <pubDate>{{ timestamp_to_timestring(i.ctime) }}</pubDate>
+    </item>
+    {% endfor %}
+</channel>
+</rss>

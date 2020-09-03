@@ -13,10 +13,14 @@
     
     - 各配置项提及的半角逗号即英文输入法下的逗号
 
+.. _picbed-admin-gloabl:
+
 1. 全局设置
 -------------
 
 全局设置，包括网站本身、上传细节、钩子配置。
+
+.. _picbed-admin-site:
 
 1.1 站点设置
 ===============
@@ -47,6 +51,8 @@
 
   位于所有页面最顶部的信息，藏青色背景，最大高度60px，允许使用部分HTML标签
 
+.. _picbed-admin-upload:
+
 1.2 上传设置
 ==============
 
@@ -66,6 +72,8 @@
 
   选择保存图片的扩展钩子，本地、又拍云、GitHub等，至少有一个，否则无法保存
   图片，其扩展名就是sender，许多地方都有使用。
+
+.. _picbed-admin-system:
 
 1.3 系统设置
 ===============
@@ -108,6 +116,8 @@
 
     要求HTTP Basic Auth认证的代理可以这么设置: `http://user:password@host/`
 
+.. _picbed-admin-hook:
+
 1.4 钩子设置
 =============
 
@@ -136,8 +146,12 @@ ps：可以通过安装 `picbed-smtp <https://github.com/staugur/picbed-smtp>`_
 扩展钩子发送邮件，它通过邮箱SMTP服务发送，所以例如QQ、腾讯企业邮、网易、
 新浪、阿里云等邮箱都可作为发送者。
 
+.. _picbed-admin-hook-extension:
+
 2. 钩子扩展
 ---------------
+
+.. _picbed-admin-install-third:
 
 2.1 安装第三方包
 ===================
@@ -157,6 +171,8 @@ ps：可以通过安装 `picbed-smtp <https://github.com/staugur/picbed-smtp>`_
 
     会使用upgrade选项尝试升级式安装，如果不需要最新版本，注意固定版本。
 
+.. _picbed-admin-add-third:
+
 2.2 添加第三方钩子
 =====================
 
@@ -164,6 +180,8 @@ ps：可以通过安装 `picbed-smtp <https://github.com/staugur/picbed-smtp>`_
 
 输入的是可以直接加载的模块，它很可能不是包名称，且第三方钩子文档应当给出
 明确的提示。
+
+.. _picbed-admin-usermanager:
 
 3. 用户管理
 -------------

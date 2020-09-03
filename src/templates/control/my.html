@@ -78,7 +78,7 @@
     <div class="layui-tab layui-tab-brief" lay-filter="tab">
         <ul class="layui-tab-title">
             <li class="layui-this" lay-id="profile"><i class="saintic-icon saintic-icon-user"></i> 个人资料</li>
-            <li lay-id="password"><i class="saintic-icon saintic-icon-password"></i> 修改密码</li>
+            <li lay-id="password"><i class="saintic-icon saintic-icon-password"></i> 账户安全</li>
             <li lay-id="setting"><i class="saintic-icon saintic-icon-setting"></i> 用户设置</span>
             <li lay-id="chart"><i class="saintic-icon saintic-icon-chart"></i> 统计图表</li>
             <li lay-id="picbed"><i class="saintic-icon saintic-icon-picture"></i> 我的图片</li>
@@ -165,8 +165,8 @@
                         </div>
                     </div>
                     <div class="layui-form-item">
-                        <button class="layui-btn" lay-filter="passwd" lay-submit="">确认修改</button>
-                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                        <button class="layui-btn" lay-filter="passwd" lay-submit="">修改密码</button>
+                        <a id="deleteAccount" class="layui-btn layui-btn-danger">删除账号</a>
                     </div>
                 </form>
             </div>
@@ -216,12 +216,6 @@
                     </div>
                     <div class="layui-form-item">
                         <div class="layui-inline">
-                            <label class="layui-form-label">默认相册</label>
-                            <div class="layui-input-inline" style="width: 150px;">
-                                <input type="text" class="layui-input" name="ucfg_default_album" id="render_default_album" placeholder="默认加载的相册" value="{{ g.userinfo.ucfg_default_album }}" autocomplete="off">
-                            </div>
-                        </div>
-                        <div class="layui-inline">
                             <label class="layui-form-label">图片放大度</label>
                             <div class="layui-input-inline" style="width: 150px;">
                                 <input type="number" step=0.1 min=1 max=2 name="ucfg_mypic_scale"
@@ -234,6 +228,22 @@
                             <div class="layui-input-inline" style="width: 150px;">
                                 <input type="number" step=1 min=1 max=100 name="ucfg_mypic_limit"
                                 value="{{ g.userinfo.ucfg_mypic_limit }}" placeholder="加载图片的数量"
+                                autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">加载相册</label>
+                            <div class="layui-input-inline" style="width: 150px;">
+                                <input type="text" class="layui-input" name="ucfg_default_album" id="render_default_album" placeholder="默认加载的相册" value="{{ g.userinfo.ucfg_default_album }}" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">上传相册名</label>
+                            <div class="layui-input-inline" style="width: 200px;">
+                                <input type="text" name="ucfg_default_upload_album"
+                                value="{{ g.userinfo.ucfg_default_upload_album }}" placeholder="上传时图片的默认相册名"
                                 autocomplete="off" class="layui-input">
                             </div>
                         </div>
@@ -324,9 +334,17 @@
                             </div>
                         </div>
                     </div>
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">订阅源名称</label>
+                            <div class="layui-input-inline" style="width: 150px;">
+                                <input type="text" name="ucfg_feed_name" placeholder="RSS订阅源名称" autocomplete="off" class="layui-input" value="{{ g.userinfo.ucfg_feed_name }}">
+                            </div>
+                        </div>
+                    </div>
                     {{ intpl("usersetting") }}
                     <div class="layui-form-item">
-                        <button class="layui-btn" lay-submit lay-filter="*">立即提交</button>
+                        <button class="layui-btn" lay-submit lay-filter="*">保存配置</button>
                         <button type="reset" class="layui-btn layui-btn-primary">重置</button>
                     </div>
                 </form>
@@ -425,6 +443,7 @@
 {% else %}
 {% set load_album = request.args.album or g.userinfo.ucfg_default_album %}
 {% endif %}
+{{ get_push_msg() }}
 <script>
     layui.use(['picbed', 'laypage', 'flow', 'form', 'element', 'layer', 'laytpl', 'util', 'table', 'tableSelect', 'avatar'], function () {
         var $ = layui.jquery,
@@ -758,6 +777,19 @@
             });
             return false;
         });
+        $("#deleteAccount").on("click", function() {
+            var tip = [
+                '真的要删除您的账号么？',
+                '<small>当账号下无图片时才会删除成功！</small>',
+                '<b style="color:red">此操作将会清除用户数据且不可逆转，一旦删除，则直接退出系统！</b>',
+            ];
+            layer.confirm(tip.join("<br>"), {icon:3,title:"请确认",shade:0.1}, function (index) {
+                layer.close(index);
+                picbed.ajax("{{ url_for('api.my', Action='deleteAccount') }}", function(res) {
+                    location.href = "{{ url_for('front.logout') }}";
+                });
+            });
+        });
         //监听token动作
         $("#createToken").on("click", function() {
             picbed.ajax("{{ url_for('api.token', Action='create') }}", function(res) {
@@ -962,7 +994,7 @@
         }
         function renderEpSelect(selectd_ep) {
             /*渲染ep的select下拉多选*/
-            let eps = ["api.upload", "api.waterfall", "api.login", "api.register", "front.userscript"];
+            let eps = ["api.upload", "api.load", "api.waterfall", "front.userscript", "front.feed"];
             let data = eps.map(function(e) {
                 return {
                     hash: picbed.getHash(e),

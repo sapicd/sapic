@@ -5,13 +5,14 @@
  *
  * picbed外部上传封装
  *
- * PS：ES6模块，使用 babel-minify 仅压缩源文件
+ * PS：ES6模块，使用 https://github.com/babel/minify 仅压缩源文件
+ *     minify uploader.js -o uploader.min.js
  */
 'use strict';
 
 var up2picbed = (function () {
 
-    let version = '1.1.1';
+    let version = '1.1.2';
 
     /* 上传类，options配置项如下
      * @param url {String}:  [必需]上传接口
@@ -89,7 +90,6 @@ var up2picbed = (function () {
 
             //判断上传图片大小
             if (size > 0) {
-                if (size > 10 * 1024) size = 10 * 1024;
                 let s = FILE.size / 1024;
                 if (s > size) {
                     return self._alert("上传图片超过限制大小【" + size + "KB】");
@@ -202,6 +202,7 @@ var up2picbed = (function () {
      * @param auto: [注意]当值为true时脚本会自动初始化，否则需要在手动调用up2picbed函数初始化elem上传
      * @param token: [建议]picbed上传所需的LinkToken值，当然允许匿名可以省略
      * @param album: 定义上传图片所属相册，留空表示默认使用LinkToken设定值（仅当LinkToken认证成功此项才有效）
+     * @param title: 定义图片的描述信息
      * @param style: 仅当值为false时有效，会取消自动设置elem的内联样式
      * @param size: 允许上传的图片大小，单位Kb，最大10Mb
      * @param exts: 允许上传的图片后缀
@@ -221,6 +222,7 @@ var up2picbed = (function () {
             token = opt.token || getSelf.dataset.token,
             style = opt.style || getSelf.dataset.style,
             album = opt.album || getSelf.dataset.album,
+            title = opt.title || getSelf.dataset.title,
             progress = opt.progress || (getSelf.dataset.progress && window[getSelf.dataset.progress]),
             success = opt.success || (getSelf.dataset.success && window[getSelf.dataset.success]),
             fail = opt.fail || (getSelf.dataset.fail && window[getSelf.dataset.fail]),
@@ -245,6 +247,7 @@ var up2picbed = (function () {
             data["album"] = album;
         }
         data["origin"] = `uploader.js/${version}`;
+        data["title"] = title || "";
         return new Uploader({
             elem: elem,
             url: url,

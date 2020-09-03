@@ -379,18 +379,26 @@ RESTful API
       那么进入Image URL上传流程，否则进入Image Base64上传流程。
 
     - Image URL上传，程序会从url中尝试查找出文件名，无效时判定失败，除非手动设置文件名。
-      
+
       .. versionchanged:: 1.4.0
 
         优化了图片链接上传，程序自动尝试从链接查找文件名，无果也无妨，
         继续请求url，根据其返回内容、类型猜测文件后缀。
-      
-      程序使用get方式请求url，只有返回状态码是2xx或3xx且Content-Type是image
-      类型时才有效。
 
-      简而言之，是真正的图片链接才行。当然，被伪造也是可能的。
+      .. versionchanged:: 1.10.0
+
+        猜测文件名使用 :func:`utils.web.guess_filename_from_url` ，相比之前，
+        额外允许从url本身查询参数filename获取图片文件名。
+
+      程序通过 :class:`utils.web.ImgUrlFileStorage` 处理，使用get方式请求
+      url，只有返回状态码是2xx或3xx且Content-Type是image类型时才有效。
+
+      简而言之，是真正的图片链接才行。当然，还是有被伪造的可能。
 
     - base64方式上传允许 `Data URI <https://developer.mozilla.org/docs/Web/HTTP/data_URIs>`_ 形式的！
+
+      程序通过 :class:`utils.web.Base64FileStorage` 处理，
+      使用b64decode解码（非url安全）
 
     - 图片地址src是可以自定义的，利用format参数，允许使用最多一个点号。
 
@@ -540,13 +548,95 @@ RESTful API
 
   专为钩子实现的接口
 
-10. api.link
---------------
+.. _picbed-api-load:
 
-  LinkToken管理接口
-
-11. api.report
+10. api.load
 ---------------
 
-  记录查询接口
+.. http:post:: /api/load
+  
+  图片导入接口，即可以将已存在其他位置的远程图片导入到系统中。
+
+  目前仅支持通过接口方式，提交JSON数组。
+
+  :reqjsonarr str url: 图片地址
+  :reqjsonarr str filename: 图片文件名[建议填写]
+  :reqjsonarr str title: 描述[可选]
+  :reqjsonarr str album: 相册[可选]
+  :reqheader Content-Type: application/json
+  :resjson int code: 除非传参错误，否则都是0，主要是success字段
+  :resjson object count: success、fail数量
+  :resjsonarr array success: 成功导入的地址
+  :resjsonarr array fail: 导入失败
+  :statuscode 403: 用户未登录时
+
+  .. note::
+  
+    导入流程：
+
+    1. 筛选json数据（传参），把合法url及可以提取出filename的放入todo留待处理
+        使用 :func:`utils.web.guess_filename_from_url` 尝试解析filename，
+        文件名无效时（符合管理员控制台允许的图片后缀或默认后缀），扔到fail
+
+    2. 处理todo中合法数据，保存成功的放到success，失败的放到fail
+
+    由于图片直接导入，只写入些逻辑数据，所以不会调用存储钩子，故此
+    图片钩子名保留为：**load**
+
+  **请求与响应示例：**
+
+  .. http:example:: curl python-requests
+
+    POST /api/load HTTP/1.0
+    Host: 127.0.0.1:9514
+    Content-Type: application/json
+    Authorization: LinkToken Your-LinkToken-Value
+
+    [
+        {
+            "url": "https://static.saintic.com/misc/test.jpg",
+            "album": "test"
+        },
+        {
+            "url": "https://hbimg.huabanimg.com/6b7b7456a3cb7b1b149be2463dca29c18e8c03c2bd0c-DcxKZ5",
+            "filename": "huaban-logo.png",
+            "title": "Huaban.com Logo"
+        },
+        {
+            "url": "xxx"
+        },
+        "skipped"
+    ]
+
+
+    HTTP/1.0 200 OK
+    Content-Type: application/json
+
+    {
+        "count": {
+            "fail": 2,
+            "success": 2
+        },
+        "fail": [
+            {
+                "url": "xxx"
+            },
+            "skipped"
+        ],
+        "success": [
+            {
+                "album": "test",
+                "filename": "test.jpg",
+                "sha": "sha1.1598598852.2625027.cb56752477cae6405f85b131872c60d21b967c6a",
+                "url": "https://static.saintic.com/misc/test.jpg"
+            },
+            {
+                "filename": "huaban-logo.png",
+                "sha": "sha1.1598598852.2630813.052bb5af0535881a3acaf94978cded5d6b249457",
+                "title": "Huaban.com Logo",
+                "url": "https://hbimg.huabanimg.com/6b7b7456a3cb7b1b149be2463dca29c18e8c03c2bd0c-DcxKZ5"
+            }
+        ],
+        "code": 0
+    }
 
