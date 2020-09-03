@@ -264,7 +264,12 @@ class HookManager(object):
         self.__ensure_reloaded()
         if not self.__hooks:
             self.__init_load_hooks()
-        return self.__hooks.values()
+        hooks = self.__hooks.values()
+        data = []
+        for h in hooks:
+            h["state"] = self.__get_state(h)
+            data.append(h)
+        return data
 
     @property
     def get_all_hooks_for_api(self):
@@ -279,7 +284,7 @@ class HookManager(object):
                 author=h.author,
                 email=h.email,
                 catalog=h.catalog,
-                state=self.__get_state(h),
+                state=h.state,
                 ltime=h.time,
                 mtime=h.proxy.__mtime__,
                 family=h.proxy.__family__,
