@@ -548,6 +548,8 @@ RESTful API
 
   专为钩子实现的接口
 
+.. _picbed-api-load:
+
 10. api.load
 ---------------
 

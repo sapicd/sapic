@@ -1217,6 +1217,7 @@ def upload():
                 filename=filename,
                 sender=data[0]["sender"],
                 api=url_for("api.shamgr", sha=sha, _external=True),
+                sha=sha,
             )
             #: format指定图片地址的显示字段，默认src，可以用点号指定
             #: 比如data.src，那么返回格式{code, filename..., data:{src}, ...}

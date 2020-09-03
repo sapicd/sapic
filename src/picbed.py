@@ -1,6 +1,6 @@
 # picbed gunicorn config
 
-from os.path import abspath, dirname, join, exists
+from os.path import abspath, dirname, join, exists, isdir
 from os import getenv, mkdir
 from multiprocessing import cpu_count
 from config import GLOBAL
@@ -24,8 +24,9 @@ proc_name = GLOBAL['ProcessName']
 workers = CPU_COUNT
 worker_class = "gevent"
 worker_connections = 1000
-worker_tmp_dir = "/dev/shm"
 max_requests = 10000
+if isdir("/dev/shm"):
+    worker_tmp_dir = "/dev/shm"
 
 if IS_RUN:
     daemon = False

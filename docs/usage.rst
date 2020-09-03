@@ -370,6 +370,8 @@ Web中只有首页可以上传，同时最多选择10张，默认支持jpg、jpe
 
     URL路径：["src"]
 
+.. _picbed-command-line:
+
 3.2 cli.py上传
 +++++++++++++++
 
@@ -379,12 +381,20 @@ Web中只有首页可以上传，同时最多选择10张，默认支持jpg、jpe
 脚本，可以单独使用，用以命令行形式上传本地图片，
 不依赖第三方模块，支持python2.7、3.x
 
+.. versionchanged:: 1.9.0
+    支持上传临时图片
+
+.. versionchanged:: 1.10.0
+    style允许自行扩展；默认输出由打印每个结果（json object）改为打印整体结果（json array）
+
 .. code-block:: bash
 
     $ python cli.py -h
-    usage: cli.py [-h] -u PICBED_URL [-t PICBED_TOKEN] [-a ALBUM] [-d DESC]
-                  [-e EXPIRE] [-s {default,typora}]
-                  file [file ...]
+    usage: picbed cli [-h] [-u PICBED_URL] [-t PICBED_TOKEN] [-a ALBUM] [-d DESC]
+                      [-e EXPIRE] [-s STYLE]
+                      file [file ...]
+
+    More docs to https://picbed.rtfd.vip/usage.html#cli-py
 
     positional arguments:
       file                  Local file
@@ -392,20 +402,25 @@ Web中只有首页可以上传，同时最多选择10张，默认支持jpg、jpe
     optional arguments:
       -h, --help            show this help message and exit
       -u PICBED_URL, --picbed-url PICBED_URL
-                            The picbed upload api url
+                            The picbed upload api url.
+                            Or use environment variable: picbed_cli_apiurl
       -t PICBED_TOKEN, --picbed-token PICBED_TOKEN
-                            Your LinkToken
+                            The picbed LinkToken.
+                            Or use environment variable: picbed_cli_apitoken
       -a ALBUM, --album ALBUM
                             Set image album
       -d DESC, --desc DESC  Set image title(description)
       -e EXPIRE, --expire EXPIRE
                             Set image expire(seconds)
-      -s {default,typora}, --style {default,typora}
-                            upload result output style
+      -s STYLE, --style STYLE
+                            The upload result output style: { default, typora }.
+                            Or, allows the use of "module.function" to customize the output style.
 
 -u: 指定图床的服务地址，http[s]://你的picbed域名
+    可以通过环境变量 **picbed_cli_apiurl** 设定
 
--t: 设置LinkToken认证、授权，拥有 ``api.upload`` 的 ``post`` 权限
+-t: 设置LinkToken用以认证、授权，要求拥有 ``api.upload`` 的 ``post`` 权限
+    可以通过环境变量 **picbed_cli_apitoken** 设定
 
 -a: 设置相册名（可以覆盖LinkToken设置的默认相册）
 
@@ -413,7 +428,26 @@ Web中只有首页可以上传，同时最多选择10张，默认支持jpg、jpe
 
 -e: 指定过期时间（秒），作为临时图片上传
 
--s: 指定输出风格，默认原样返回API响应
+-s: 指定输出风格，支持typora、default、{DIY}
+
+    - typora: 专为Typora编辑器上传图片准备的格式
+
+    - {DIY}: 编写Python实现自定义输出，其格式是: **module.function**
+        cli.py会尝试加载module模块，执行其function函数，
+        传参是result（列表，每个元素都是字典，是图片上传的响应结果）
+
+        示例：
+    
+        .. code-block:: bash
+
+            $ cat output.py
+            import json
+            def pretty(result):
+                for i in result:
+                    print(json.dumps(i))
+            $ python cli.py -s output.pretty upload_file...
+
+    - default: 默认值，打印JSON格式的整体结果（即result）
 
 **应用示例：作为自定义命令在使用Typora时上传图片到picbed**
 

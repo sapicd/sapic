@@ -143,7 +143,7 @@ def ep(hook_name, route_name):
 def feed():
     pipe = g.rc.pipeline()
     uk = rsp("index", "user", g.userinfo.username)
-    fields = ["title", "filename", "ctime", "user", "src", "sha"]
+    fields = ["title", "filename", "ctime", "user", "src"]
     for sha in g.rc.smembers(uk):
         pipe.hmget(rsp("image", sha), *fields)
     result = pipe.execute()

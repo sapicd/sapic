@@ -4,15 +4,17 @@
 Picbed Modules
 ==============
 
+下面仅列出可能有用的部分
+
 钩子管理类
-------------
+-------------
 
 .. autoclass:: libs.hook.HookManager
     :members:
     :undoc-members:
 
 通用方法
----------
+----------
 
 .. currentmodule:: utils.tool
 

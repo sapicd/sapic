@@ -218,7 +218,8 @@ NO.1 实现这个场景，首先创建一个LinkToken，根据自己的需求填
 
 弹框中复制手动引用和自动引用都是用JS和LinkToken的进一步封装，重要的是
 LinkToken值和JS地址。LinkToken是一长串编码后的字符串；JS地址固定，就是picbed
-静态目录下的文件：/static/sdk/uploader.js，这个js文件可以单独上传到CDN中以供加速。
+静态目录下的文件：**/static/sdk/uploader.min.js**，
+这个js文件（即uploader.js的压缩版）可以单独上传到CDN中以供加速。
 
 注意：这个js请用在 **现代化** 浏览器环境中（啥？IE？对不起），它对外暴露了
 一个 **up2picbed** 方法，所需参数不少，只有url是必需的。
@@ -227,12 +228,12 @@ NO.2 初始化
 
 - 手动调用
 
-  如下，在页面引入uploader.js，找一个按钮放到需要上传的地方，写js初始化即可。
+  如下，在页面引入uploader.js或压缩版，找一个按钮放到需要上传的地方，写js初始化即可。
 
   .. code-block:: html
 
     <button id="up2picbed">上传</button>
-    <script src="Your Picbed URL/static/sdk/uploader.js"></script>
+    <script src="Your Picbed URL/static/sdk/uploader.min.js"></script>
     <script>
         up2picbed({
             url: "Your Picbed URL",
@@ -262,7 +263,7 @@ NO.2 初始化
             alert(JSON.stringify(res));
         }
     </script>
-    <script src="Your Picbed URL/static/sdk/uploader.js"
+    <script src="Your Picbed URL/static/sdk/uploader.min.js"
         data-url="Your Picbed URL"
         data-token="Your Picbed LinkToken"
         data-success="onSuccess"
@@ -303,18 +304,24 @@ NO.2 初始化
   定义上传图片所属相册，留空表示使用LinkToken设定的默认值（仅当LinkToken
   认证成功此项才有效，匿名状态下其最终是anonymous）
 
+- title
+
+  定义上传图片的描述信息
+
 - style
 
-  引入uploader.js时，脚本会自动给绑定的elem元素附加内联样式以美化，不过会有
-  一段空窗期元素是原始状态，所以建议您设置style=false，会取消自动设置elem的
-  内联样式，以便您自己定义样式。
+  引入uploader.js（或压缩版）时，脚本会自动给绑定的elem元素附加内联样式以美化，
+  不过会有一段空窗期元素是原始状态，所以建议您设置style=false，
+  会取消自动设置elem的内联样式，以便您自己定义样式。
 
   如何自定义，可以参考下方【关于style选项的小技巧】。
 
 - size
 
-  允许上传的图片大小，单位Kb，最大10 * 1024（10Mb，即便设置超过，也会
-  直接定死）。
+  允许上传的图片大小，单位Kb，默认10Mb
+
+  .. versionchanged:: 1.10.0
+      取消超过10Mb时仍然限定的设置
 
 - exts
 
