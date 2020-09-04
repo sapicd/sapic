@@ -3,6 +3,6 @@
 <meta name="author" content="SaintIC">
 <meta name="keywords" content="{{ g.site.seo_keywords or 'SaintIC,picbed,图床' }}">
 <meta name="description" content="{{ g.site.seo_description or Doc }}">
-<link rel="alternate" type="application/atom+xml" title="{{ g.site.feed_name }}" href="{{ url_for('front.feed') }}">
+<link rel="alternate" type="application/atom+xml" title="{{ g.userinfo.ucfg_feed_name or ('The RSS of ' + g.userinfo.username) }} - {{ g.site_name }} Feed" href="{{ url_for('front.feed') }}">
 <link href="{{ g.site.favicon or url_for('static', filename='img/favicon.png') }}" rel="icon" type="image/x-icon" />
 <link href="{{ g.site.favicon or url_for('static', filename='img/favicon.png') }}" rel="shortcut icon" type="image/x-icon" />

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0">
 <channel>
-    <title>{{ g.userinfo.ucfg_feed_name or 'My Feed' }} - {{ g.site_name }}</title>
+    <title>{{ g.userinfo.ucfg_feed_name or ('The RSS of ' + g.userinfo.username) }} - {{ g.site_name }} Feed</title>
     <link>{{ request.url_root }}</link>
     <description>{{ g.site.seo_description or Doc }}</description>
     {% for i in items %}
