@@ -201,9 +201,13 @@ upimg_save 🍇
   api上传在保存图片时使用的钩子，传递参数filename、stream、upload_path，
   分别是：文件名、二进制数据、上传路径。
 
+  接口型，返回一个字典对象，code非0表示上传失败，msg为错误信息；code=0表示上传成功，
+  此时需要设置src字段表示图片地址，还建议有一个basedir字段表示图片存储到对应存储服务的
+  最终所在路径，成功时所有返回的字段都会存储到系统中（即下面的save_result）。
+
   另外，钩子中还应该有个upimg_delete方法用以删除图片[可选]，传递参数sha、
   upload_path、filename、basedir、save_result，分别是：图片唯一id、上传路径、
-  文件名、基础路径、upimg_save返回结果。
+  文件名、钩子计算的图片保存到存储服务的基础路径、upimg_save返回结果。
 
 upimg_stream_processor 🍇
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
