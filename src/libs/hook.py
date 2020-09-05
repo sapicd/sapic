@@ -118,19 +118,23 @@ class HookManager(object):
         return self.__storage.get("hookthirds") or []
 
     @__third_hooks.setter
-    def __third_hooks(self, third_hook_name):
-        if not third_hook_name:
+    def __third_hooks(self, third_hook_module_name):
+        """添加/删除第三方钩子
+
+        :param str,list third_hook_module_name: 模块名
+        """
+        if not third_hook_module_name:
             return
         hooks = set(self.__storage.get("hookthirds") or [])
-        if isinstance(third_hook_name, string_types):
-            if third_hook_name.endswith(":delete"):
-                delete_name = third_hook_name.split(":")[0]
+        if isinstance(third_hook_module_name, string_types):
+            if third_hook_module_name.endswith(":delete"):
+                delete_name = third_hook_module_name.split(":")[0]
                 if delete_name in hooks:
                     hooks.remove(delete_name)
             else:
-                hooks.add(third_hook_name)
-        elif isinstance(third_hook_name, (list, tuple)):
-            hooks.update(third_hook_name)
+                hooks.add(third_hook_module_name)
+        elif isinstance(third_hook_module_name, (list, tuple)):
+            hooks.update(third_hook_module_name)
         self.__storage.set("hookthirds", list(set(hooks)))
 
     def __get_state_storage(self, name):
@@ -224,6 +228,7 @@ class HookManager(object):
                         continue
                     ho.__mtime__ = getmtime(self.__get_fileorparent(ho))
                     ho.__family__ = "third"
+                    ho.__module_name__ = hn
                     self.__hooks[hn] = self.__get_meta(ho)
 
     def __get_meta(self, f_obj):
@@ -264,12 +269,16 @@ class HookManager(object):
         self.__ensure_reloaded()
         if not self.__hooks:
             self.__init_load_hooks()
-        hooks = self.__hooks.values()
-        data = []
-        for h in hooks:
-            h["state"] = self.__get_state(h)
-            data.append(h)
-        return data
+        try:
+            hooks = self.__hooks.values()
+            data = []
+            for h in hooks:
+                h["state"] = self.__get_state(h)
+                data.append(h)
+        except RuntimeError:
+            return self.get_all_hooks
+        else:
+            return data
 
     @property
     def get_all_hooks_for_api(self):
@@ -330,23 +339,29 @@ class HookManager(object):
         self.__last_load_time = 0
         self.__init_load_hooks()
 
-    def add_third_hook(self, third_hook_name):
+    def add_third_hook(self, third_hook_module_name):
         """添加第三方钩子
 
-        :param str third_hook_name: 钩子可直接导入的模块名
+        :param str third_hook_module_name: 钩子可直接导入的模块名
         """
-        if third_hook_name:
-            self.__third_hooks = third_hook_name
+        if third_hook_module_name:
+            self.__third_hooks = third_hook_module_name
             if hasattr(self, 'app'):
                 self.app.jinja_loader.loaders.append(
-                    PackageLoader(third_hook_name)
+                    PackageLoader(third_hook_module_name)
                 )
             self.reload()
 
     def remove_third_hook(self, third_hook_name):
+        """移除第三方钩子
+
+        :param str third_hook_name: 钩子名（非模块名）
+        """
         if third_hook_name:
-            self.__third_hooks = "%s:delete" % third_hook_name
-            self.reload()
+            p = self.proxy(third_hook_name, is_enabled=False)
+            if p and p.__family__ == "third" and hasattr(p, "__module_name__"):
+                self.__third_hooks = "%s:delete" % p.__module_name__
+                self.reload()
 
     def proxy(self, name, is_enabled=True):
         """代理到钩子中执行方法
