@@ -38,6 +38,20 @@ from utils.exceptions import ApiError
 bp = Blueprint("api", "api")
 
 
+def get_url_with_suffix(d, _type):
+    """根据type返回src
+    :param dict d: image data
+    :param str _type: url, html, md, rst
+    """
+    if g.userinfo and "parsed_ucfg_url_rule_switch" in g.userinfo and \
+            is_true(g.userinfo.parsed_ucfg_url_rule_switch.get(_type)):
+        return "%s%s" % (
+            d["src"],
+            g.userinfo.parsed_ucfg_url_rule.get(d["sender"], "")
+        )
+    return d["src"]
+
+
 @bp.after_request
 def api_after_handler(res):
     if res.is_json:
@@ -934,15 +948,6 @@ def shamgr(sha):
     gk = rsp("index", "global")
     ik = rsp("image", sha)
     if request.method == "GET":
-        def get_url_with_suffix(d, _type):
-            """根据type返回src"""
-            if g.userinfo and "parsed_ucfg_url_rule_switch" in g.userinfo and \
-                    is_true(g.userinfo.parsed_ucfg_url_rule_switch.get(_type)):
-                return "%s%s" % (
-                    d["src"],
-                    g.userinfo.parsed_ucfg_url_rule.get(d["sender"], "")
-                )
-            return d["src"]
         if has_image(sha):
             data = g.rc.hgetall(ik)
             n = data["filename"]
@@ -1218,6 +1223,17 @@ def upload():
                 sender=data[0]["sender"],
                 api=url_for("api.shamgr", sha=sha, _external=True),
                 sha=sha,
+                tpl=dict(
+                    URL="%s" % get_url_with_suffix(data[0], "url"),
+                    HTML="<img src='%s' title='%s' alt='%s'>" % (
+                        get_url_with_suffix(data[0], "html"),
+                        data[0].get("title", ""), filename
+                    ),
+                    rST=".. image:: %s" % get_url_with_suffix(data[0], "rst"),
+                    Markdown="![%s](%s)" % (
+                        filename, get_url_with_suffix(data[0], "markdown")
+                    )
+                ),
             )
             #: format指定图片地址的显示字段，默认src，可以用点号指定
             #: 比如data.src，那么返回格式{code, filename..., data:{src}, ...}
