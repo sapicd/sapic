@@ -70,10 +70,10 @@ def auto_copy(content):
     if ost == "windows":
         return system("echo %s | clip" % content)
     elif ost == "macos":
-        return system("echo %s | pbcopy" % content)
+        return system('echo "%s" | pbcopy' % content)
     elif ost == "linux":
         #: install xclip with `apt/yum install xclip`
-        return system("echo %s | xclip -selection clipboard" % content)
+        return system('echo "%s" | xclip -selection clipboard' % content)
 
 
 def copy_parse_result(copy_type, result):
@@ -176,7 +176,7 @@ def main(parser):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="picbed cli",
-        description='More docs to https://picbed.rtfd.vip/usage.html#cli-py',
+        description='More docs to https://picbed.rtfd.vip/cli.html',
         formatter_class=argparse.RawTextHelpFormatter
     )
     parser.add_argument(

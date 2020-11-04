@@ -8,6 +8,7 @@ picbed - 简约不小气的自建图床程序
     docker
     usage
     linktoken
+    cli
     admin
     hook
     api

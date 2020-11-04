@@ -1,8 +1,8 @@
 .. _picbed-usgae:
 
-============
-使用说明
-============
+===============
+使用说明 - 概述
+===============
 
 .. note::
 
@@ -289,6 +289,11 @@ LinkToken哪个接口，以及认证与授权结果。
 3. 上传
 ---------
 
+.. tip::
+
+    不论什么情况，上传总是通过HTTP API接口，基于此，内置了几种上传方式：
+    Web首页选择本地文件/粘贴上传、用户脚本采集上传、JS SDK集成上传、cli.py命令行上传。
+
 默认情况下，只有登录用户才允许上传图片，使用命令行创建用户后，
 就能登录（当然，管理员可以开启开放注册功能）。
 
@@ -375,92 +380,7 @@ Web中只有首页可以上传，同时最多选择10张，默认支持jpg、jpe
 3.2 cli.py上传
 +++++++++++++++
 
-.. versionadded:: 1.6.0
-
-位于源码仓库 `misc/cli.py <https://github.com/staugur/picbed/blob/master/misc/cli.py>`_
-脚本，可以单独使用，用以命令行形式上传本地图片，
-不依赖第三方模块，支持python2.7、3.x
-
-.. versionchanged:: 1.9.0
-    支持上传临时图片
-
-.. versionchanged:: 1.10.0
-    style允许自行扩展；默认输出由打印每个结果（json object）改为打印整体结果（json array）
-
-.. code-block:: bash
-
-    $ python cli.py -h
-    usage: picbed cli [-h] [-u PICBED_URL] [-t PICBED_TOKEN] [-a ALBUM] [-d DESC]
-                      [-e EXPIRE] [-s STYLE]
-                      file [file ...]
-
-    More docs to https://picbed.rtfd.vip/usage.html#cli-py
-
-    positional arguments:
-      file                  Local file
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      -u PICBED_URL, --picbed-url PICBED_URL
-                            The picbed upload api url.
-                            Or use environment variable: picbed_cli_apiurl
-      -t PICBED_TOKEN, --picbed-token PICBED_TOKEN
-                            The picbed LinkToken.
-                            Or use environment variable: picbed_cli_apitoken
-      -a ALBUM, --album ALBUM
-                            Set image album
-      -d DESC, --desc DESC  Set image title(description)
-      -e EXPIRE, --expire EXPIRE
-                            Set image expire(seconds)
-      -s STYLE, --style STYLE
-                            The upload result output style: { default, typora }.
-                            Or, allows the use of "module.function" to customize the output style.
-
--u: 指定图床的服务地址，http[s]://你的picbed域名
-    可以通过环境变量 **picbed_cli_apiurl** 设定
-
--t: 设置LinkToken用以认证、授权，要求拥有 ``api.upload`` 的 ``post`` 权限
-    可以通过环境变量 **picbed_cli_apitoken** 设定
-
--a: 设置相册名（可以覆盖LinkToken设置的默认相册）
-
--d: 设置图片描述
-
--e: 指定过期时间（秒），作为临时图片上传
-
--s: 指定输出风格，支持typora、default、{DIY}
-
-    - typora: 专为Typora编辑器上传图片准备的格式
-
-    - {DIY}: 编写Python实现自定义输出，其格式是: **module.function**
-        cli.py会尝试加载module模块，执行其function函数，
-        传参是result（列表，每个元素都是字典，是图片上传的响应结果）
-
-        示例：
-    
-        .. code-block:: bash
-
-            $ cat output.py
-            import json
-            def pretty(result):
-                for i in result:
-                    print(json.dumps(i))
-            $ python cli.py -s output.pretty upload_file...
-
-    - default: 默认值，打印JSON格式的整体结果（即result）
-
-**应用示例：作为自定义命令在使用Typora时上传图片到picbed**
-
-`Typora <https://typora.io>`_ 是一款跨平台的Markdown编辑器，
-在编写内容时可以对图片进行特殊处理，比如上传图片。
-
-打开Typora，定位到偏好设置-图像，选择插入图片时-上传图片，上传服务设定：
-
-上传服务：Custom Command
-
-自定义命令：python cli.py -u {picbed url} -t {LinkToken} -s typora
-
-测试：点击『验证图片上传选项』按钮，验证是否成功。
+cli命令行已经做了专项页面，请转到 :doc:`/cli`
 
 4. 其他页面
 --------------
