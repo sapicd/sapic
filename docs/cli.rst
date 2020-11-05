@@ -11,6 +11,8 @@
 脚本是 `cli.py <https://github.com/staugur/picbed/blob/master/cli/cli.py>`_ ，
 单独使用，用以命令行形式上传本地图片，不依赖第三方模块，支持python2.7、3.x
 
+Windows下可以使用cli/picbed-cli.exe，打包好的，无需本地安装Python环境。
+
 .. versionchanged:: 1.9.0
     支持上传临时图片
 
@@ -69,6 +71,8 @@
 
     - typora: 专为Typora编辑器上传图片准备的格式
 
+    - line: 跟typeora类似，只不过没有先打印upload success，仅打印每个图片url
+
     - {DIY}: 编写Python实现自定义输出，其格式是: **module.function**
         cli.py会尝试加载module模块，执行其function函数，
         传参是result（列表，每个元素都是字典，是图片上传的响应结果）
@@ -120,7 +124,7 @@
 
 测试：点击『验证图片上传选项』按钮，验证是否成功。
 
-Windows图片类型的文件添加右键菜单：upload to picbed
+Windows系统的图片文件添加右键菜单：upload to picbed
 -----------------------------------------------------
 
 如果你想在Windows资源管理器中，任意图片右键就能上传到picbed的话，OpenWithPlusPlus是个
@@ -128,10 +132,18 @@ Windows图片类型的文件添加右键菜单：upload to picbed
 
 github: `stax76/OpenWithPlusPlus <https://github.com/stax76/OpenWithPlusPlus>`_
 
-在release下载打包的zip压缩包解压，打开程序，先install，之后add按照下图示例填写：
+在release下载打包的zip压缩包解压，打开程序，先install（也许你需要重启下资源管理器或电脑），
+之后add按照下图示例填写：
 
 .. image:: https://static.saintic.com/picbed/staugur/2020/11/04/openwithpp.png
 
-Path：是python程序路径，如果你的Windows操作系统没有Python也可以，cli.py能打包成exe
+Path：是python程序路径，如果你的Windows操作系统没有Python也可以，cli.py已经打包成exe，
+位于cli/picbed-cli.exe
 
-Arguments: cli.py文件路径及参数，如果是打包的exe，就不要cli.py，只需要后面参数
+Arguments: cli.py文件路径及参数，如果是打包的exe，就不要cli.py，只需要后面参数，其中
+`-ct` 参数是复制的类型，默认url，可选md（markdown）、rst（reStructuredText）
+
+MacOS系统添加右键菜单
+-----------------------
+
+个人还在研究，不过uPic是个不错的图床客户端，它可以在Finder中添加这个功能
