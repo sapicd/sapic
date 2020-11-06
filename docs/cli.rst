@@ -26,7 +26,7 @@ Windows下可以使用cli/picbed-cli.exe，打包好的，无需本地安装Pyth
 
     $ python cli.py -h
     usage: picbed cli [-h] [-u PICBED_URL] [-t PICBED_TOKEN] [-a ALBUM] [-d DESC]
-                      [-e EXPIRE] [-s STYLE] [-c] [-ct {url,md,rst}]
+                      [-e EXPIRE] [-s STYLE] [-c {url,md,rst}]
                       file [file ...]
 
     More docs to https://picbed.rtfd.vip/cli.html
@@ -50,9 +50,8 @@ Windows下可以使用cli/picbed-cli.exe，打包好的，无需本地安装Pyth
       -s STYLE, --style STYLE
                             The upload result output style: { default, typora, line }.
                             Or, allows the use of "module.function" to customize the output style.
-      -c, --copy            Copy the uploaded image url to the clipboard for different operating systems.
-      -ct {url,md,rst}, --copy-type {url,md,rst}
-                            Copy uploaded image url type.
+      -c {url,md,rst}, --copy {url,md,rst}
+                            Copy the uploaded image url type to the clipboard for win/mac/linux.
                             By the way, md=makrdown, rst=reStructuredText
 
 -u: 指定图床的服务地址，http[s]://你的picbed域名
@@ -98,11 +97,11 @@ Windows下可以使用cli/picbed-cli.exe，打包好的，无需本地安装Pyth
 
     - Linux下使用xclip，需要自行安装，但是字符终端测试失败，预计仅用于图形模式。
 
-    部分情况会复制失败，比如没有上传成功的图片、上传前就出错了等
+    部分情况会复制失败，比如没有上传成功的图片、上传前就出错了等。
 
--ct: copy type，设定复制图片上传地址的格式，允许url、md、rst
+    copy允许设定复制图片上传地址的格式，支持url、md、rst格式
 
-    比如上传1.png，上传后返回url是http://cdn.com/1.png，那么ct默认就是这个url，
+    比如上传1.png，上传后返回url是http://cdn.com/1.png，那么ct=url会直接复制这个url，
     ct=md，复制的是：`![1.png](http://cdn.com/1.png)`
 
     可以上传多个文件，复制的结果会用 **\\n** 连接。
@@ -133,15 +132,22 @@ Windows系统的图片文件添加右键菜单：upload to picbed
 github: `stax76/OpenWithPlusPlus <https://github.com/stax76/OpenWithPlusPlus>`_
 
 在release下载打包的zip压缩包解压，打开程序，先install（也许你需要重启下资源管理器或电脑），
-之后add按照下图示例填写：
-
-.. image:: https://static.saintic.com/picbed/staugur/2020/11/04/openwithpp.png
+之后添加add新增右键菜单，部分参数解释如下：
 
 Path：是python程序路径，如果你的Windows操作系统没有Python也可以，cli.py已经打包成exe，
 位于cli/picbed-cli.exe
 
 Arguments: cli.py文件路径及参数，如果是打包的exe，就不要cli.py，只需要后面参数，其中
 `-ct` 参数是复制的类型，默认url，可选md（markdown）、rst（reStructuredText）
+
+- 如果本地有python环境，参照下图示例填写：
+
+.. image:: https://static.saintic.com/picbed/staugur/2020/11/06/openwithpp-1.png
+
+- 如果本地无python环境，参照下图示例填写：
+
+.. image:: https://static.saintic.com/picbed/staugur/2020/11/06/openwithpp-2.png
+
 
 MacOS系统添加右键菜单
 -----------------------

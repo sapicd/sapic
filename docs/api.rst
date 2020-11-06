@@ -371,6 +371,7 @@ RESTful API
   :resjson string sender: 保存图片的钩子名
   :resjson string api: 图片详情接口的地址 
   :resjson string src: 图片地址
+  :resjson object tpl: 复制模板
   :statuscode 403: 管理员不允许匿名上传且用户未登录时
 
   .. tip::

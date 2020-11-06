@@ -124,7 +124,6 @@ def main(parser):
             return
     style = args.style
     copy = args.copy
-    copy_type = args.copy_type
     files = args.file
     result = []
     for f in files:
@@ -143,7 +142,10 @@ def main(parser):
                     expire=expire,
                     origin="cli/{}".format(__version__),
                 )).encode("utf-8"),
-                headers=dict(Authorization="LinkToken {}".format(token)),
+                headers={
+                    "Authorization": "LinkToken {}".format(token),
+                    "User-Agent": "picbed-cli/{}".format(__version__),
+                },
             )
             res = urllib2.urlopen(req)
             res = loads(res.read())
@@ -168,8 +170,8 @@ def main(parser):
             print(dumps(result))
 
         #: auto copy
-        if copy is True:
-            contents = copy_parse_result(copy_type, result)
+        if copy:
+            contents = copy_parse_result(copy, result)
             return auto_copy("\\n".join(contents))
 
 
@@ -205,17 +207,10 @@ if __name__ == "__main__":
             "customize the output style."
         ) % ", ".join(allowed_style))
     parser.add_argument(
-        "-c", "--copy", default=False, action='store_true',
+        "-c", "--copy", choices=["url", "md", "rst"],
         help=(
-            "Copy the uploaded image url to the clipboard for"
-            " different operating systems."
-        )
-    )
-    parser.add_argument(
-        "-ct", "--copy-type", default="url",
-        choices=["url", "md", "rst"],
-        help=(
-            "Copy uploaded image url type.\n"
+            "Copy the uploaded image url type to the clipboard "
+            "for win/mac/linux.\n"
             "By the way, md=makrdown, rst=reStructuredText"
         )
     )
