@@ -25,9 +25,9 @@
 
     比如：`picbed_redis_url=redis://@localhost`
 
-5. 启动： 
+5. 启动：
 
-    ```
+    ```bash
     $ cd /path/to/picbed/src/
 
     // 首先创建一个管理员账号 -h/--help显示帮助
@@ -45,7 +45,7 @@
 
 6. Nginx:
 
-    ```
+    ```nginx
     // 默认配置下，picbed启动监听127.0.0.1:9514，nginx配置示例：
     server {
         listen 80;
@@ -71,7 +71,7 @@
 
   源码中已经编写了Dockerfile文件，可以藉此构建picbed镜像。
 
-  ```
+  ```bash
   $ git clone https://github.com/staugur/picbed && cd picbed
   $ docker build -t staugur/picbed .
   ```
@@ -80,13 +80,13 @@
 
   已设置CI实现提交代码自动构建并推送到官方Docker仓库中，直接pull即可：
 
-  ```
+  ```bash
   $ docker pull staugur/picbed  # 或者加上tag拉取某稳定版本的镜像(1.4.0开始)
   ```
 
 - 启动镜像
 
-  ```
+  ```bash
   $ docker run -tdi --name picbed --restart=always --net=host \
       -e picbed_redis_url="Your Redis URL" \
       -e 其他配置=值 \
@@ -107,17 +107,15 @@
 
 使用前，创建用户：
 
+```bash
+$ cd /path/to/picbed
+$ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmin
 ```
-  $ cd /path/to/picbed
-  $ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmin
-```
 
-ps:
+- Dockerfile采用分阶段构建，推送到Docker hub，latest标签是master分支，
+  dev标签是dev分支，其他标签是已发布的版本。
 
-  - Dockerfile采用分阶段构建，推送到Docker hub，latest标签是master分支，
-    dev标签是dev分支，其他标签是已发布的版本。
-
-  - docker-compose.yml仅为简单定义，可以自行修改，比如加上nginx、redis挂载数据(/data)。
+- docker-compose.yml仅为简单定义，可以自行修改，比如加上nginx、redis挂载数据(/data)。
 
 ## 文档
 
@@ -162,7 +160,7 @@ customBody: {"album: "相册名或留空"}
 
 ```
 API地址：http[s]://你的picbed域名/api/upload
- 
+
 请求方式：POST
 
 文件字段名：picbed

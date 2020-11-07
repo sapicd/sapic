@@ -93,7 +93,7 @@ Windows下可以使用cli/picbed-cli.exe，打包好的，无需本地安装Pyth
 
     - Windows下使用DOS命令clip
 
-    - MacOS下使用pbcopy命令
+    - MacOS下使用pbcopy命令，执行成功，有消息通知
 
     - Linux下使用xclip，需要自行安装，但是字符终端测试失败，预计仅用于图形模式。
 
@@ -148,8 +148,30 @@ Arguments: cli.py文件路径及参数，如果是打包的exe，就不要cli.py
 
 .. image:: https://static.saintic.com/picbed/staugur/2020/11/06/openwithpp-2.png
 
+ps: 图片名以中文开头上传失败，但允许在其他位置。
 
 MacOS系统添加右键菜单
 -----------------------
 
-个人还在研究，不过uPic是个不错的图床客户端，它可以在Finder中添加这个功能
+环境：macOS Cataline 10.15
+
+打开启动台-自动操作，新建文稿，类型是快速操作，选取确定后，按照如下示例填写：
+
+.. image:: https://static.saintic.com/picbed/staugur/2020/11/06/automator-rightmenu.png
+
+工作流程收到当前：**图像文件**
+
+位于：**访达**
+
+图像/颜色：随便
+
+下面的工作流程，拖拽资源库-实用工具-运行shell脚本，
+shell选择 **/bin/bash** ，传递输入选择 **作为自变量** ，脚本内容：
+
+.. code-block:: bash
+
+    python ~/code/picbed/cli/cli.py -u https://picbed.pro -t xxx -c md "$@"
+
+ps: cli.py需要下载到本地，路径自适应修改。
+
+ps: 图片名以中文开头上传失败，但允许在其他位置。

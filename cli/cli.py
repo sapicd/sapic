@@ -70,7 +70,13 @@ def auto_copy(content):
     if ost == "windows":
         return system("echo %s | clip" % content)
     elif ost == "macos":
-        return system('echo "%s" | pbcopy' % content)
+        code = system('echo "%s" | pbcopy' % content)
+        if code == 0:
+            system(
+                'osascript -e \'display notification "已复制到剪贴板"'
+                ' with title "上传成功"  sound name "default"\''
+            )
+        return code
     elif ost == "linux":
         #: install xclip with `apt/yum install xclip`
         return system('echo "%s" | xclip -selection clipboard' % content)

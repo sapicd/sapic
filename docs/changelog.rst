@@ -4,6 +4,15 @@
 更新日志
 =========
 
+v1.10.5
+-------
+
+Released in 2020-1-07
+
+- api.upload返回字段增加tpl：url、md、rst、html模板
+
+- cli.py增加上传后复制，支持win/mac/可选tpl模板类型
+
 v1.10.4
 -------
 
