@@ -91,7 +91,7 @@ Windows下可以使用cli/picbed-cli.exe，打包好的，无需本地安装Pyth
 
 -c: 即开启复制，脚本会识别操作系统，复制上传后的图片url到系统剪贴板
 
-    - Windows下使用DOS命令clip
+    - Windows下使用DOS命令clip，执行成功，有消息通知（仅win10）
 
     - MacOS下使用pbcopy命令，执行成功，有消息通知
 

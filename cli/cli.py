@@ -10,15 +10,17 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __author__ = "staugur <me@tcw.im>"
 
 import argparse
 from json import loads, dumps
 from base64 import b64encode
 from sys import version_info, platform
-from os import getenv, system
+from os import getenv, system, remove
 from os.path import abspath, basename, isfile
+from tempfile import NamedTemporaryFile
+
 
 PY2 = version_info[0] == 2
 
@@ -63,12 +65,55 @@ def get_os_type():
         return "unknown"
 
 
+def gen_tmp_ps():
+    tpl = '''
+param(
+    [String] $Title = 'Upload successfully',
+    [String] $SubTitle = 'Copied to clipboard'
+)
+
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+[Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
+
+$APP_ID = '110366bd-56e2-47ed-9bdf-3ce1fa408b6c'
+
+$template = @"
+<toast>
+    <visual>
+        <binding template="ToastText02">
+            <text id="1">$($Title)</text>
+            <text id="2">$($SubTitle)</text>
+        </binding>
+    </visual>
+</toast>
+"@
+
+$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+$xml.LoadXml($template)
+$toast = New-Object Windows.UI.Notifications.ToastNotification $xml
+[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($APP_ID).Show($toast)
+'''
+    with NamedTemporaryFile(mode='w', suffix='.ps1', delete=False) as fp:
+        fp.write(tpl)
+        return fp.name
+
+
 def auto_copy(content):
     ost = get_os_type()
     if PY2 and not isinstance(content, str):
         content = content.encode("utf-8")
     if ost == "windows":
-        return system("echo %s | clip" % content)
+        code = system("echo %s | clip" % content)
+        if code == 0:
+            sf = gen_tmp_ps()
+            if isfile(sf):
+                cmd = "powershell -ExecutionPolicy Unrestricted {}".format(sf)
+                if not PY2:
+                    cmd = "%s %s %s" % (cmd, "上传成功", "已复制到剪贴板")
+                system(cmd)
+                remove(sf)
+
     elif ost == "macos":
         code = system('echo "%s" | pbcopy' % content)
         if code == 0:
@@ -77,6 +122,7 @@ def auto_copy(content):
                 ' with title "上传成功"  sound name "default"\''
             )
         return code
+
     elif ost == "linux":
         #: install xclip with `apt/yum install xclip`
         return system('echo "%s" | xclip -selection clipboard' % content)
@@ -125,9 +171,6 @@ def main(parser):
         api = "{}/api/upload".format(api.rstrip("/"))
     if not token:
         token = getenv("picbed_cli_apitoken")
-        if not token:
-            print("Please enter picbed api LinkToken")
-            return
     style = args.style
     copy = args.copy
     files = args.file
@@ -178,7 +221,8 @@ def main(parser):
         #: auto copy
         if copy:
             contents = copy_parse_result(copy, result)
-            return auto_copy("\\n".join(contents))
+            if contents:
+                return auto_copy("\\n".join(contents))
 
 
 if __name__ == "__main__":
