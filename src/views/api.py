@@ -57,6 +57,9 @@ def api_after_handler(res):
     if res.is_json:
         data = res.get_json()
         if isinstance(data, dict):
+            #: go type system
+            if data.get("msg") is None:
+                data["msg"] = ""
             res.set_data(json.dumps(change_res_format(dfr(data))))
     return res
 

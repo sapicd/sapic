@@ -207,6 +207,8 @@ URL路径：["src"]
 
 当然，`cli.py`还支持很多首页不支持的API选项，参考[cli文档](https://picbed.rtfd.vip/cli.html)
 
+> tip: cli.py正在用go改写
+
 ## 预览图
 
 ![首页上传](./Snapshot/homepage.png)
