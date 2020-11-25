@@ -82,7 +82,7 @@ layui.define(["layer", "util", "element"], function (exports) {
                 @param url string: 请求路径
                 @param success function: success为成功后回调函数
                 @param options object:
-                    async是否异步; 
+                    async是否异步;
                     post,put,delete等方法所需data;
                     error为发生异常时或success返回中code不为0时回调函数;
                     beforeSend为请求前回调函数;
@@ -280,6 +280,7 @@ layui.define(["layer", "util", "element"], function (exports) {
                 windows: '<i class="saintic-icon saintic-icon-windows"></i>',
                 linux: '<i class="saintic-icon saintic-icon-linux"></i>',
                 apple: '<i class="saintic-icon saintic-icon-apple"></i>',
+                darwin: '<i class="saintic-icon saintic-icon-apple"></i>',
                 android: '<i class="saintic-icon saintic-icon-andriod"></i>'
             },
             deviceMap = {

@@ -407,7 +407,8 @@ def parse_ua(user_agent):
     else:
         platform = "other"
     if user_agent.startswith("picbed-cli") and user_agent.endswith("amd64"):
-        family, _, ua_os, device = user_agent.split(" ")
+        _, _, ua_os, device = user_agent.split(" ")
+        family = "picbed-cli"
     return dict(platform=platform, device=device, os=ua_os, family=family)
 
 
