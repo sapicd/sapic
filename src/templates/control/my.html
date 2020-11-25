@@ -1507,8 +1507,10 @@
                             item = "sogou"
                         } else if (picbed.isContains(browser, "uc") === true) {
                             item = "uc"
-                        } else if (picbed.isContains(browser, "bidu") === true) {
+                        } else if (picbed.isContains(browser, "baidu") === true) {
                             item = "baidu"
+                        } else if (picbed.isContains(browser, "picbed-cli") === true) {
+                            item = "cli"
                         }
                         var icon = picbed.ITChangeMapping(item, "browser")
                         return "<attr title='" + d.uap.family + '&#10;' + d.agent + "'>" + icon + "</attr>";

@@ -41,12 +41,12 @@ class Logger(object):
         LEVEL = GLOBAL.get('LogLevel', 'INFO').upper()
         if LEVEL == "DEBUG":
             LOGFMT = (
-                '[ %(levelname)s ] %(threadName)s %(asctime)s'
+                '[ %(levelname)s ] %(threadName)s %(asctime)s '
                 '%(filename)s:%(lineno)d %(message)s'
             )
         else:
             LOGFMT = (
-                '[ %(levelname)s ] %(asctime)s'
+                '[ %(levelname)s ] %(asctime)s '
                 '%(filename)s:%(lineno)d %(message)s'
             )
         handler = logging.handlers.TimedRotatingFileHandler(

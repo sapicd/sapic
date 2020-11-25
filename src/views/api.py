@@ -663,6 +663,7 @@ def github():
                 if not r.ok:
                     raise ValueError("Not Found")
             except (ValueError, Exception) as e:
+                logger.error(e, exc_info=True)
                 res.update(msg=str(e))
             else:
                 fields = ["tag_name", "published_at", "html_url"]

@@ -273,7 +273,8 @@ layui.define(["layer", "util", "element"], function (exports) {
                 qq: '<i class="saintic-icon saintic-icon-qq-browser"></i>',
                 sogou: '<i class="saintic-icon saintic-icon-sogou-browser"></i>',
                 uc: '<i class="saintic-icon saintic-icon-uc-browser"></i>',
-                baidu: '<i class="saintic-icon saintic-icon-baidu-browser"></i>'
+                baidu: '<i class="saintic-icon saintic-icon-baidu-browser"></i>',
+                cli: '<i class="saintic-icon saintic-icon-cli"></i>'
             },
             systemMap = {
                 windows: '<i class="saintic-icon saintic-icon-windows"></i>',
