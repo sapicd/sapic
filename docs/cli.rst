@@ -241,7 +241,7 @@ MacOS系统添加右键菜单
 
 打开启动台-自动操作，新建文稿，类型是快速操作，选取确定后，按照如下示例填写：
 
-.. image:: https://static.saintic.com/picbed/staugur/2020/11/06/automator-rightmenu.png
+.. image:: https://static.saintic.com/picbed/staugur/2020/11/26/automator-rightmenu.png
 
 工作流程收到当前：**图像文件**
 

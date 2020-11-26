@@ -16,9 +16,9 @@ Bug
 
   ps：打印配置（SecretKey和Redis地址、密码可用星号代替）
 
-    ```
-    $ cd /path/to/picbed/src
-    $ python config.py
+    ```bash
+    cd /path/to/picbed/src
+    python config.py
     ```
 
 Feature
@@ -51,10 +51,10 @@ Pull Request
 
 - 如果可能，请编写文档，位于docs下，构建文档(py3)：
 
-  ```
-  $ cd /path/to/picbed/docs
-  $ python3 -m pip install -r ../requirements/docs.txt
-  $ make html
+  ```bash
+  cd /path/to/picbed/docs
+  python3 -m pip install -r ../requirements/docs.txt
+  make html
   ```
 
 **最后合并请求**

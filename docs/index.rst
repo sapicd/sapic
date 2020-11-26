@@ -59,7 +59,7 @@ Gitee：https://gitee.com/staugur/picbed
 
 7. 支持油猴脚本（用户脚本） ，使用它，几乎可以采集全网图片！
 
-8. 多种上传方式：用户脚本、JS SDK、命令行脚本（集成Windows右键）、支持HTTP API的图床客户端
+8. 多种上传方式：用户脚本、JS SDK、命令行脚本（可集成Windows、macOS右键）、支持HTTP API的图床客户端
 
 不足：
 -------

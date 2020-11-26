@@ -72,8 +72,8 @@
   源码中已经编写了Dockerfile文件，可以藉此构建picbed镜像。
 
   ```bash
-  $ git clone https://github.com/staugur/picbed && cd picbed
-  $ docker build -t staugur/picbed .
+  git clone https://github.com/staugur/picbed && cd picbed
+  docker build -t staugur/picbed .
   ```
 
 - 使用已上传镜像
@@ -81,7 +81,7 @@
   已设置CI实现提交代码自动构建并推送到官方Docker仓库中，直接pull即可：
 
   ```bash
-  $ docker pull staugur/picbed  # 或者加上tag拉取某稳定版本的镜像(1.4.0开始)
+  docker pull staugur/picbed  # 或者加上tag拉取某稳定版本的镜像(1.4.0开始)
   ```
 
 - 启动镜像
@@ -108,8 +108,8 @@
 使用前，创建用户：
 
 ```bash
-$ cd /path/to/picbed
-$ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmin
+cd /path/to/picbed
+docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmin
 ```
 
 - Dockerfile采用分阶段构建，推送到Docker hub，latest标签是master分支，
@@ -135,7 +135,7 @@ http://demo.picbed.pro
 
 [下载PicGo](https://github.com/Molunerfinn/PicGo/releases)并安装，打开主界面，在 **插件设置** 中搜索 **web-uploader** 并安装，然后在 **图床设置-自定义Web图床** 中按照如下方式填写：
 
-```
+```plain
 url: http[s]://你的picbed域名/api/upload
 
 paramName: picbed
@@ -158,7 +158,7 @@ customBody: {"album: "相册名或留空"}
 
 [下载uPic](https://github.com/gee1k/uPic)并安装，在 **偏好设置-图床** 中添加 **自定义**，信息如下：
 
-```
+```plain
 API地址：http[s]://你的picbed域名/api/upload
 
 请求方式：POST
@@ -186,14 +186,14 @@ URL路径：["src"]
 [Typora](https://typora.io)是一款跨平台的Markdown编辑器，
 在编写内容时可以对图片进行特殊处理，比如上传图片。
 
-有此需求故写了独立脚本（cli/cli.py）用以上传，支持Python2.7、3.x，
-可以把[cli.py](cli/cli.py)单独下载到本地，名称随意，无第三方模块依赖。
+使用 [picbed-cli](https://github.com/staugur/picbed-cli) 客户端
+命令行程序，使用golang编写，跨平台支持，重构完成了cli.py所有功能。
 
 打开Typora，定位到偏好设置-图像，选择插入图片时-上传图片，上传服务设定：
 
 上传服务：Custom Command
 
-自定义命令：python /{picbed repo}/misc/cli.py -u {picbed url} -t {LinkToken} -s typora
+自定义命令：picbed-cli -u {picbed url} -t {LinkToken} -s typora
 
 - {picbed repo}: 表示仓库，无需检出，只需cli.py一个文件放到本地即可
 
@@ -205,9 +205,7 @@ URL路径：["src"]
 
 测试：点击『验证图片上传选项』按钮，验证是否成功。
 
-当然，`cli.py`还支持很多首页不支持的API选项，参考[cli文档](https://picbed.rtfd.vip/cli.html)
-
-> tip: cli.py正在用go改写
+当然，picbed-cli还支持很多首页上传不支持的API选项，参考[cli文档](https://picbed.rtfd.vip/cli.html)
 
 ## 预览图
 
