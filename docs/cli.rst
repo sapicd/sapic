@@ -87,18 +87,18 @@ ps: 上述github页面如果访问速度不佳，可以点击下列文件名下�
 picbed-cli.0.4.0-linux-amd64.tar.gz_    82bf4fb8bd683336af782e85fef1dbf0
 picbed-cli.0.4.0-darwin-amd64.tar.gz_   128f9b94306764cdb902b153da9cdfdb
 picbed-cli.0.4.0-windows-amd64.zip_     d46702262048143b211839ed3d53a8a2
-picbed-cli.0.4.1-linux-amd64.tar.gz_    9c4a328a48ac8d0b6816623d790da560
-picbed-cli.0.4.1-darwin-amd64.tar.gz_   172ec08ec985f4a7bf4eb0c6ecfade09
-picbed-cli.0.4.1-windows-amd64.zip_     31797fe06f9d8231c570af238ad66254
+picbed-cli.0.4.2-linux-amd64.tar.gz_    2d95386da32ac1a7e81247f325468847
+picbed-cli.0.4.2-darwin-amd64.tar.gz_   f59a03443e70341fb925b63d3dcaf482
+picbed-cli.0.4.2-windows-amd64.zip_     d70185370d6658e9a8b37fcd9323ef74
 ======================================= ================================
 
 .. _picbed-cli.0.4.0-linux-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.0-linux-amd64.tar.gz
 .. _picbed-cli.0.4.0-darwin-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.0-darwin-amd64.tar.gz
 .. _picbed-cli.0.4.0-windows-amd64.zip: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.0-windows-amd64.zip
 
-.. _picbed-cli.0.4.1-linux-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.1-linux-amd64.tar.gz
-.. _picbed-cli.0.4.1-darwin-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.1-darwin-amd64.tar.gz
-.. _picbed-cli.0.4.1-windows-amd64.zip: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.1-windows-amd64.zip
+.. _picbed-cli.0.4.2-linux-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.2-linux-amd64.tar.gz
+.. _picbed-cli.0.4.2-darwin-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.2-darwin-amd64.tar.gz
+.. _picbed-cli.0.4.2-windows-amd64.zip: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.2-windows-amd64.zip
 
 .. tip::
 
