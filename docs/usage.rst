@@ -241,6 +241,8 @@ MacOS下使用Control/Option+点击，效果如下：
 
 图片详情中相册名是可以修改的，双击显示已有相册，点击后面的√即可提交更新。
 
+.. _picbed-chart:
+
 1.4 统计图表
 ++++++++++++++
 
@@ -286,6 +288,8 @@ LinkToken哪个接口，以及认证与授权结果。
 
 还有其他钩子，更多了解参考 :ref:`picbed-hook`
 
+.. _picbed-upload:
+
 3. 上传
 ---------
 
@@ -319,8 +323,12 @@ Web中只有首页可以上传，同时最多选择10张，默认支持jpg、jpe
   符合 `http://` 或 `https://` 的合法URL会进入图片链接上传模式，
   :ref:`参考Upload Api <picbed-api-upload>`
 
+.. _picbed-upload-example:
+
 3.1 以下是几个客户端(通过API)上传的示例：
 +++++++++++++++++++++++++++++++++++++++++++
+
+.. _picbed-upload-picgo:
 
 - 使用PicGo上传到自定义的picbed图床
 
@@ -346,6 +354,8 @@ Web中只有首页可以上传，同时最多选择10张，默认支持jpg、jpe
     customBody: {"album: "相册名或留空"}
 
   设置完之后选择自定义Web图床为默认图床即可。
+
+.. _picbed-upload-upic:
 
 - 使用uPic上传到自定义的picbed图床
 

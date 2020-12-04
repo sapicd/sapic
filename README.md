@@ -119,6 +119,18 @@ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmi
 
 ## 文档
 
+### 客户端上传示例
+
+- [使用PicGo上传到自定义的picbed图床](https://picbed.rtfd.vip/usage.html#picbed-upload-picgo)
+
+- [使用uPic上传到自定义的picbed图床](https://picbed.rtfd.vip/usage.html#picbed-upload-upic)
+
+- [作为自定义命令在使用Typora时上传图片到picbed](https://picbed.rtfd.vip/cli.html#picbed-upload-typora)
+
+- [Windows系统的图片文件添加右键菜单](https://picbed.rtfd.vip/cli.html#picbed-upload-rightmenu-windows)
+
+- [macOS系统的图片文件添加右键菜单](https://picbed.rtfd.vip/cli.html#picbed-upload-rightmenu-macos)
+
 详细文档请访问：[Picbed Docs](https://picbed.rtfd.vip)
 
 ## 演示站
@@ -128,84 +140,6 @@ http://demo.picbed.pro
 测试账号及密码：demo 123456（请勿修改）
 
 对外服务，为防止乱传已关闭匿名上传，随意注册，但不可用于非测试用途，图片保留删除权利！
-
-## 客户端上传
-
-#### - 使用PicGo上传到自定义的picbed图床
-
-[下载PicGo](https://github.com/Molunerfinn/PicGo/releases)并安装，打开主界面，在 **插件设置** 中搜索 **web-uploader** 并安装，然后在 **图床设置-自定义Web图床** 中按照如下方式填写：
-
-```plain
-url: http[s]://你的picbed域名/api/upload
-
-paramName: picbed
-
-jsonPath: src
-
-# 以上是匿名上传，仅在管理员开启匿名时才能上传成功
-## 如需登录上传，请使用token(在控制台-个人资料-Token查看)，以下两种任选:
-customHeader: {"Authorization": "Token 你的Token值"}
-customBody: {"token": "你的Token值", "album: "相册名或留空"}
-
-## 可用LinkToken替换Token(仅用于Header)：
-customHeader: {"Authorization": "LinkToken 你的LinkToken值"}
-customBody: {"album: "相册名或留空"}
-```
-
-设置完之后选择自定义Web图床为默认图床即可。
-
-#### - 使用uPic上传到自定义的picbed图床
-
-[下载uPic](https://github.com/gee1k/uPic)并安装，在 **偏好设置-图床** 中添加 **自定义**，信息如下：
-
-```plain
-API地址：http[s]://你的picbed域名/api/upload
-
-请求方式：POST
-
-文件字段名：picbed
-
-其他字段：增加Header字段 或 增加Body字段，任选一种方式：
-  - Headers数据
-    key: Authorization
-    value: Token 你的Token值
-    ## 可用LinkToken替换Token(仅用于Header)：
-    key: Authorization
-    value: LinkToken 你的LinkToken值
-
-  - Body数据
-    key: token
-    value: 你的Token值
-  # 如需设置相册，请增加Body字段，key为album，value即相册名
-
-URL路径：["src"]
-```
-
-#### - 作为自定义命令在使用Typora时上传图片到picbed
-
-[Typora](https://typora.io)是一款跨平台的Markdown编辑器，
-在编写内容时可以对图片进行特殊处理，比如上传图片。
-
-使用 [picbed-cli](https://github.com/staugur/picbed-cli) 客户端
-命令行程序，使用golang编写，跨平台支持，重构完成了cli.py所有功能。
-
-打开Typora，定位到偏好设置-图像，选择插入图片时-上传图片，上传服务设定：
-
-上传服务：Custom Command
-
-自定义命令：picbed-cli -u {picbed url} -t {LinkToken} -s typora
-
-- {picbed repo}: 表示仓库，无需检出，只需cli.py一个文件放到本地即可
-
-- {picbed url}: 指定图床的服务地址，http[s]://你的picbed域名
-
-- {LinkToken}: 设置LinkToken认证、授权，拥有api.upload的post权限
-
-- 其他参数：-s指定输出风格（保持typora），-a指定相册名称，-h查看帮助信息
-
-测试：点击『验证图片上传选项』按钮，验证是否成功。
-
-当然，picbed-cli还支持很多首页上传不支持的API选项，参考[cli文档](https://picbed.rtfd.vip/cli.html)
 
 ## 预览图
 

@@ -63,7 +63,7 @@ picbed-cli（golang）比之cli.py的细节差异
 
 - 设置上传属性，如相册、描述
 
-- 多种上传结果输出风格，default、typora、line及定制输出
+- 多种上传结果输出风格，default、typora、empty、line及定制输出
 
 - 上传结果跨平台复制，支持url、markdown、rST格式，macOS、Win10复制成功消息通知
 
@@ -87,11 +87,27 @@ ps: 上述github页面如果访问速度不佳，可以点击下列文件名下�
 picbed-cli.0.4.0-linux-amd64.tar.gz_    82bf4fb8bd683336af782e85fef1dbf0
 picbed-cli.0.4.0-darwin-amd64.tar.gz_   128f9b94306764cdb902b153da9cdfdb
 picbed-cli.0.4.0-windows-amd64.zip_     d46702262048143b211839ed3d53a8a2
+picbed-cli.0.4.1-linux-amd64.tar.gz_    9c4a328a48ac8d0b6816623d790da560
+picbed-cli.0.4.1-darwin-amd64.tar.gz_   172ec08ec985f4a7bf4eb0c6ecfade09
+picbed-cli.0.4.1-windows-amd64.zip_     31797fe06f9d8231c570af238ad66254
 ======================================= ================================
 
 .. _picbed-cli.0.4.0-linux-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.0-linux-amd64.tar.gz
 .. _picbed-cli.0.4.0-darwin-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.0-darwin-amd64.tar.gz
 .. _picbed-cli.0.4.0-windows-amd64.zip: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.0-windows-amd64.zip
+
+.. _picbed-cli.0.4.1-linux-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.1-linux-amd64.tar.gz
+.. _picbed-cli.0.4.1-darwin-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.1-darwin-amd64.tar.gz
+.. _picbed-cli.0.4.1-windows-amd64.zip: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.1-windows-amd64.zip
+
+.. tip::
+
+    如果您的操作系统支持homebrew（比如macOS），可以使用如下方式快速安装：
+
+    .. code-block:: bash
+
+        brew tap staugur/tap
+        brew install picbed-cli
 
 命令选项
 ----------
@@ -112,7 +128,7 @@ picbed-cli.0.4.0-windows-amd64.zip_     d46702262048143b211839ed3d53a8a2
     optional arguments:
       -h, --help            show this help message and exit
       -v, --version         show cli version and exit
-      -i, --info            show system version and exit
+      -i, --info            show full info and exit
       -u, --picbed-url PICBED_URL
                             The picbed upload api url.
                             Or use environment variable: picbed_cli_apiurl
@@ -122,7 +138,7 @@ picbed-cli.0.4.0-windows-amd64.zip_     d46702262048143b211839ed3d53a8a2
       -a, --album ALBUM     Set image album
       -d, --desc DESC       Set image title(description)
       -e, --expire EXPIRE   Set image expire(seconds)
-      -s, --style STYLE     The upload output style: { default, typora, line, <MOD> }.
+      -s, --style STYLE     The upload output style: { default, typora, line, empty, <MOD> }.
                             <MOD> allows to pass in a python module name, and use
                             "python -m py-mod-name" to customize the output style.
       -c, --copy {url,md,rst}
@@ -151,7 +167,9 @@ picbed-cli.0.4.0-windows-amd64.zip_     d46702262048143b211839ed3d53a8a2
 
     - line: 跟typeora类似，只不过没有先打印upload success，仅输出每个图片url
 
-    - {DIY}: 编写Python实现自定义输出，其格式是: **module** ，即模块名1
+    - empty: v0.4.1新增，不输出内容
+
+    - {DIY}: 编写Python实现自定义输出，其格式是: **module** ，即模块名
         picbed-cli会使用 `python -m module` 尝试直接执行module模块，通过位置参数
         传参是result（json格式，列表/数组格式，每个元素都是Hash字典，是图片上传的响应结果）
 
@@ -195,6 +213,8 @@ picbed-cli.0.4.0-windows-amd64.zip_     d46702262048143b211839ed3d53a8a2
 应用示例
 ==========
 
+.. _picbed-upload-typora:
+
 作为自定义命令在使用Typora时上传图片到picbed
 ----------------------------------------------
 
@@ -208,6 +228,8 @@ picbed-cli.0.4.0-windows-amd64.zip_     d46702262048143b211839ed3d53a8a2
 自定义命令：picbed-cli -u {picbed url} -t {LinkToken} -s typora
 
 测试：点击『验证图片上传选项』按钮，验证是否成功。
+
+.. _picbed-upload-rightmenu-windows:
 
 Windows系统的图片文件添加右键菜单：upload to picbed
 -----------------------------------------------------
@@ -234,8 +256,10 @@ Arguments: 设置picbed-cli命令行选项参数
 
 .. image:: https://static.saintic.com/picbed/staugur/2020/11/26/openwithpp-3.png
 
-MacOS系统添加右键菜单
------------------------
+.. _picbed-upload-rightmenu-macos:
+
+macOS系统的图片文件添加右键菜单：upload to picbed
+--------------------------------------------------
 
 环境：macOS Cataline 10.15
 
