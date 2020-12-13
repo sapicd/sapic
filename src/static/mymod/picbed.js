@@ -320,6 +320,38 @@ layui.define(["layer", "util", "element"], function (exports) {
                 return '用户名长度最少4位';
             }
         },
+        addCSS: function(href, id) {
+            //加载css文件
+            var link = document.createElement('link')
+            link.type = 'text/css'
+            link.rel = 'stylesheet'
+            link.href = href
+            if (id) link.id = id
+            document.getElementsByTagName('head')[0].appendChild(link)
+        },
+        addJS: function(src, id, cb) {
+            //加载js文件
+            var script = document.createElement('script')
+            script.type = 'text/javascript'
+            script.src = src
+            if (id) script.id = id
+            document.getElementsByTagName('head')[0].appendChild(script)
+            script.onload = typeof cb === 'function' ? cb : function () {}
+        },
+        initShare: function(cb) {
+            let cssID = "shareCSSTag",
+                cssURL = "/static/share.js/css/share.min.css",
+                jsID = "shareJSTag",
+                jsURL = "/static/share.js/js/social-share.min.js";
+            if (!this.hasId(cssID)) {
+                this.addCSS(cssURL, cssID)
+            }
+            if (!this.hasId(jsID)) {
+                this.addJS(jsURL, jsID, cb)
+            } else {
+                cb && cb()
+            }
+        },
     };
     //输出接口
     exports('picbed', api);

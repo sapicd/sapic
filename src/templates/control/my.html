@@ -56,6 +56,11 @@
         border-color: #01AAED;
         color: #fff;
     }
+    body .my-layer .layui-layer-btn .layui-layer-btn3 {
+        background: #009688;
+        border-color: #009688;
+        color: #fff;
+    }
     body .linktoken-layer .layui-layer-btn .layui-layer-btn0 {
         background: #01AAED;
         border-color: #01AAED;
@@ -621,7 +626,7 @@
                             skin: 'my-layer',
                             shade: 0.1,
                             shadeClose: true,
-                            btn: ['删除', '关闭', '原图'],
+                            btn: ['删除', '关闭', '原图', '分享'],
                             btnAlign: 'c',
                             content: html,
                             success: function(layero, indexo) {
@@ -671,6 +676,41 @@
                                 }
                                 a.click();
                                 return false;
+                            },
+                            btn4: function(index, layero) {
+                                //按钮【分享】的回调
+                                layer.close(index);
+                                let loadIndex = layer.load();
+                                picbed.initShare(function() {
+                                    let mySrc = shaDatas[sha].src;
+                                    layer.close(loadIndex);
+                                    var content = [
+                                        '<div style="padding: 15px;">',
+                                        '<center><img src="' + mySrc + '" width="300px"><br><br>',
+                                        '<p>点击下方按钮分享</p>',
+                                        '<div class="shorturl-social-share" data-mobile-sites="weibo,qq,qzone,wechat"></div></center>',
+                                        '</div>'
+                                    ].join("");
+                                    layer.open({
+                                        type: 1,
+                                        title: false,
+                                        area: "350px",
+                                        closeBtn: 0,
+                                        shadeClose: true,
+                                        content: content,
+                                        success: function(layero) {
+                                            //初始化分享
+                                            socialShare('.shorturl-social-share', {
+                                                url: mySrc,
+                                                source: location.origin,
+                                                title: shaDatas[sha].title || shaDatas[sha].filename,
+                                                disabled: ['google','diandian','facebook'],
+                                                wechatQrcodeTitle: '分享到微信',
+                                                wechatQrcodeHelper: '微信扫一扫，分享短网址'
+                                            });
+                                        }
+                                    });
+                                });
                             },
                         });
                     });
