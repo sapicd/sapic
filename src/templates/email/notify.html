@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block body %}
+<p style="line-height: 20px; margin: 0; margin-bottom: 10px; padding: 0;">
+    Hi，<em style="font-weight: 700;">{{ username }}</em>，{{ foreword }}：
+</p>
+<div>
+    {{ content }}
+</div>
+{% endblock %}

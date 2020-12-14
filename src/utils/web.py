@@ -34,6 +34,7 @@ from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     check_to_addr, is_all_fail, bleach_html, try_request, comma_pat, \
     create_redis_engine, allowed_file
 from ._compat import PY2, text_type, urlsplit, parse_qs
+from threading import Thread
 if not PY2:
     from functools import reduce
 
@@ -619,6 +620,16 @@ def sendmail(subject, message, to):
     else:
         res.update(msg="Parameter error")
     return res
+
+
+def async_sendmail(subject, message, to):
+    def send_async_email(app):
+        with app.test_request_context():
+            app.preprocess_request()
+            sendmail(subject, message, to)
+    app = current_app._get_current_object()
+    t = Thread(target=send_async_email, args=[app])
+    t.start()
 
 
 def make_email_tpl(tpl, **data):

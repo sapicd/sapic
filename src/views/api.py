@@ -31,7 +31,7 @@ from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
     generate_activate_token, check_activate_token, try_proxy_request, \
     sendmail, _pip_list, get_user_ip, has_image, guess_filename_from_url, \
-    allowed_suffix
+    allowed_suffix, async_sendmail
 from utils._compat import iteritems, thread
 from utils.exceptions import ApiError
 
@@ -172,11 +172,12 @@ def register():
                 if g.rc.sismember(ak, username):
                     res.update(msg="The username already exists")
                 else:
-                    #: 用户状态 -1待审核 0禁用 1启用 -2审核拒绝(权限同-1)
+                    #: 用户状态 -1待审核 0禁用 1启用 -2审核拒绝
                     #: 后台开启审核时默认是-1，否则是1
                     #: 禁用时无认证权限（无法登陆，无API权限）
                     #: 待审核仅无法上传，允许登录和API调用
-                    status = -1 if is_true(g.cfg.review) else 1
+                    review = is_true(g.cfg.review)
+                    status = -1 if review else 1
                     #: 参数校验通过，执行注册
                     options = dict(
                         username=username,
@@ -198,6 +199,23 @@ def register():
                         res.update(msg="Program data storage service error")
                     else:
                         res.update(code=0)
+                        #: send review email
+                        viewmail = g.cfg.review_email
+                        if review and viewmail:
+                            msg = (
+                                "新用户&nbsp;<b>%s</b>&nbsp;已经注册，请您尽快登录"
+                                "&nbsp;<a href='%s'>图床后台</a>&nbsp;审核！"
+                            ) % (
+                                username,
+                                url_for("front.admin", _external=True)
+                            )
+                            html = make_email_tpl(
+                                "notify.html",
+                                username="管理员",
+                                foreword="您好",
+                                content=msg
+                            )
+                            async_sendmail("叮咚，新用户审核通知", html, viewmail)
         else:
             res.update(
                 msg="The username is invalid or registration is not allowed"
@@ -473,6 +491,48 @@ def user():
                         res.update(msg="Program data storage service error")
                     else:
                         res.update(code=0)
+                        mret = g.rc.hmget(uk, "email_verified", "email")
+                        if is_true(mret[0]):
+                            if Action == "reviewOK":
+                                msg = (
+                                    "您的注册申请已审核通过，请点击下方链接登录：<br>"
+                                    "<a href='{link}'>{link}</a><br><br>"
+                                    "Enjoy yourself!"
+                                ).format(
+                                    link=url_for("front.index", _external=True)
+                                )
+                                html = make_email_tpl(
+                                    "notify.html",
+                                    username=username,
+                                    foreword="欢迎使用 %s 图床" % g.site_name,
+                                    content=msg
+                                )
+                                async_sendmail("图床账号审核通过", html, mret[1])
+                            elif Action == "reviewFail":
+                                msg = (
+                                    "很遗憾，您的注册申请经审核未通过！<br>"
+                                    "原因是：{reason}<br>"
+                                    "您可以登录留言再次审核：<br>"
+                                    "<a href='{link}'>{link}</a>"
+                                ).format(
+                                    reason=reason,
+                                    link=url_for("front.index", _external=True)
+                                )
+                                html = make_email_tpl(
+                                    "notify.html",
+                                    username=username,
+                                    foreword="感谢注册 %s 图床" % g.site_name,
+                                    content=msg
+                                )
+                                async_sendmail("图床账号审核拒绝", html, mret[1])
+                            elif Action == "disable":
+                                html = make_email_tpl(
+                                    "notify.html",
+                                    username=username,
+                                    foreword="感谢使用 %s 图床" % g.site_name,
+                                    content="很抱歉地通知您，您的账号已被禁用！"
+                                )
+                                async_sendmail("图床账号禁用通知", html, mret[1])
                 else:
                     res.update(code=3, msg="No valid username found")
             else:

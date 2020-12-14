@@ -12,15 +12,7 @@
         </tr>
         <tr style="margin: 0; padding: 0;">
             <td style="margin: 0; padding: 30px;">
-                <p style="line-height: 20px; margin: 0; margin-bottom: 10px; padding: 0;">
-                    Hi，<em style="font-weight: 700;">{{ username }}</em>，请完成以下操作（{{ max_time or 10 }}分钟内有效）：
-                </p>
-                <div>
-                    {% block action %}{% endblock %}
-                </div>
-                <p style="line-height: 20px; margin-top: 20px; padding: 10px; background-color: #f2f2f2; font-size: 12px;">
-                    点击无效？{% block action_fail %}{% endblock %}
-                </p>
+                {% block body %}{% endblock %}
             </td>
         </tr>
         <tr style="background-color: #fafafa; color: #999; height: 35px; margin: 0; padding: 0; text-align: center;">
