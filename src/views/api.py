@@ -203,16 +203,16 @@ def register():
                         viewmail = g.cfg.review_email
                         if review and viewmail:
                             msg = (
-                                "新用户&nbsp;<b>%s</b>&nbsp;已经注册，请您尽快登录"
-                                "&nbsp;<a href='%s'>图床后台</a>&nbsp;审核！"
-                            ) % (
+                                u"新用户&nbsp;<b>{}</b>&nbsp;已经注册，请您尽快登录"
+                                u"&nbsp;<a href='{}'>图床后台</a>&nbsp;审核！"
+                            ).format(
                                 username,
                                 url_for("front.admin", _external=True)
                             )
                             html = make_email_tpl(
                                 "notify.html",
-                                username="管理员",
-                                foreword="您好",
+                                username=u"管理员",
+                                foreword=u"您好",
                                 content=msg
                             )
                             async_sendmail("叮咚，新用户审核通知", html, viewmail)
@@ -495,25 +495,24 @@ def user():
                         if is_true(mret[0]):
                             if Action == "reviewOK":
                                 msg = (
-                                    "您的注册申请已审核通过，请点击下方链接登录：<br>"
-                                    "<a href='{link}'>{link}</a><br><br>"
-                                    "Enjoy yourself!"
+                                    u"您的注册申请已审核通过，请点击下方链接登录：<br>"
+                                    u"<a href='{link}'>{link}</a>"
                                 ).format(
                                     link=url_for("front.index", _external=True)
                                 )
                                 html = make_email_tpl(
                                     "notify.html",
                                     username=username,
-                                    foreword="欢迎使用 %s 图床" % g.site_name,
+                                    foreword=u"欢迎使用 %s 图床" % g.site_name,
                                     content=msg
                                 )
                                 async_sendmail("图床账号审核通过", html, mret[1])
                             elif Action == "reviewFail":
                                 msg = (
-                                    "很遗憾，您的注册申请经审核未通过！<br>"
-                                    "原因是：{reason}<br>"
-                                    "您可以登录留言再次审核：<br>"
-                                    "<a href='{link}'>{link}</a>"
+                                    u"很遗憾，您的注册申请经审核未通过！<br>"
+                                    u"原因是：{reason}<br>"
+                                    u"您可以登录留言再次审核：<br>"
+                                    u"<a href='{link}'>{link}</a>"
                                 ).format(
                                     reason=reason,
                                     link=url_for("front.index", _external=True)
@@ -521,7 +520,7 @@ def user():
                                 html = make_email_tpl(
                                     "notify.html",
                                     username=username,
-                                    foreword="感谢注册 %s 图床" % g.site_name,
+                                    foreword=u"感谢注册 %s 图床" % g.site_name,
                                     content=msg
                                 )
                                 async_sendmail("图床账号审核拒绝", html, mret[1])
@@ -529,8 +528,8 @@ def user():
                                 html = make_email_tpl(
                                     "notify.html",
                                     username=username,
-                                    foreword="感谢使用 %s 图床" % g.site_name,
-                                    content="很抱歉地通知您，您的账号已被禁用！"
+                                    foreword=u"感谢使用 %s 图床" % g.site_name,
+                                    content=u"很抱歉地通知您，您的账号已被禁用！"
                                 )
                                 async_sendmail("图床账号禁用通知", html, mret[1])
                 else:
