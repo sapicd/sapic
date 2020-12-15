@@ -11,7 +11,7 @@ picbed图床客户端上传工具cli.py，之前集成在
 `picbed源仓库 <https://github.com/staugur/picbed/tree/1.10.5/cli>`_ 中，使用
 python编写，其跨平台需要Python环境支持，相对麻烦。
 
-不过2020-11-26开始，picbed源仓库移除cli.py，且使用golang编写的
+不过2020-11-26开始（或者说自v1.11.0开始），picbed源仓库移除cli.py，且使用golang编写的
 `picbed-cli <https://github.com/staugur/picbed-cli>`_ 发布初始版本，凭借golang的
 特性，打包后的命令天然具有跨平台能力，且已打包win、mac、linux三端压缩包，可在release中
 直接下载，实现了cli.py所有功能！

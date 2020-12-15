@@ -597,7 +597,7 @@ def check_activate_token(token):
 
 
 def sendmail(subject, message, to):
-    """调用钩子中发送邮件函数（任意钩子发送成功即停止）
+    """调用钩子中发送邮件函数（任意钩子发送成功即停止），要求用于Web上下文环境
 
     :param str subject: 主题
     :param str message: 正文（支持HTML）
@@ -623,6 +623,7 @@ def sendmail(subject, message, to):
 
 
 def async_sendmail(subject, message, to):
+    """异步邮件发送，可用于多线程及非Web上下文环境"""
     def send_async_email(app):
         with app.test_request_context():
             app.preprocess_request()

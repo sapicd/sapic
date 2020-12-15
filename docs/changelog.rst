@@ -4,10 +4,35 @@
 更新日志
 =========
 
+v1.11.0
+--------
+
+Released in 2020-12-15
+
+功能：
+  - 命令行客户端更新：
+
+    - cli.py win10 通知功能
+    - emmmm, 然后cli.py就被废弃，全部功能用golang重写，命名为
+      `picbed-cli <https://github.com/staugur/picbed-cli>`_
+    - 命令行文档更新，cli.py文档仍然保留
+
+  - 图片分享功能
+
+  - 管理员控制台新增"注册审核邮箱"，开启注册审核并填写审核邮箱后，新用户注册会发送邮件提醒，
+    不过发送邮件依赖邮件服务。
+
+  - 新用户注册审核结果通知：无论拒绝还是通过，前提是用户验证了邮箱。
+    另外，发送邮件也依赖邮件服务。
+
+更改：
+  - 配合picbed-cli，api返回的msg字段None改为空字符串
+  - LinkToken统计的UserAgent解析picbed-cli专属头字段并进行图标显示
+
 v1.10.5
 -------
 
-Released in 2020-1-07
+Released in 2020-11-07
 
 - api.upload返回字段增加tpl：url、md、rst、html模板
 

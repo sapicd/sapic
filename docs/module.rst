@@ -94,6 +94,8 @@ Picbed Modules
 
 .. autofunction:: sendmail
 
+.. autofunction:: async_sendmail
+
 .. autofunction:: make_email_tpl
 
 .. autofunction:: try_proxy_request
