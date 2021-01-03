@@ -61,6 +61,11 @@
         border-color: #009688;
         color: #fff;
     }
+    body .my-layer .layui-layer-btn .layui-layer-btn4 {
+        background: #FFB800;
+        border-color: #FFB800;
+        color: #fff;
+    }
     body .linktoken-layer .layui-layer-btn .layui-layer-btn0 {
         background: #01AAED;
         border-color: #01AAED;
@@ -450,7 +455,7 @@
 {% endif %}
 {{ get_push_msg() }}
 <script>
-    layui.use(['picbed', 'laypage', 'flow', 'form', 'element', 'layer', 'laytpl', 'util', 'table', 'tableSelect', 'avatar'], function () {
+    layui.use(['picbed', 'laypage', 'flow', 'form', 'element', 'layer', 'laytpl', 'util', 'table', 'tableSelect', 'avatar', 'upload'], function () {
         var $ = layui.jquery,
             picbed = layui.picbed,
             util = layui.util,
@@ -462,6 +467,7 @@
             element = layui.element,
             laypage = layui.laypage,
             avatar = layui.avatar,
+            upload = layui.upload,
             tableSelect = layui.tableSelect;
 
         //显示当前tab
@@ -607,6 +613,8 @@
                         }
                         return img.src;
                     };
+                    //附加接口
+                    img["picbed"] = picbed;
                     shaDatas[img.sha] = img;
                     return '<div class="pin"><img src="' + img.get_src("loadmypic") + '" data-sha="' + img.sha + '" title="' + (img.title || '') + '"></div>';
                 }).join("");
@@ -626,7 +634,7 @@
                             skin: 'my-layer',
                             shade: 0.1,
                             shadeClose: true,
-                            btn: ['删除', '关闭', '原图', '分享'],
+                            btn: ['删除', '关闭', '原图', '分享', '覆盖上传'],
                             btnAlign: 'c',
                             content: html,
                             success: function(layero, indexo) {
@@ -634,14 +642,52 @@
                                 if (shaDatas[sha]["status"] === 'deleted') {
                                     layero.children(".layui-layer-btn").children(".layui-layer-btn0").text("已删除");
                                 }
+                                //图片URL模板复制
                                 $(layero).find('.upload_show_copy').on('click', function() {
                                     var copyId = $(this).data('copyid');
                                     picbed.Clipboard.copy($(copyId).text());
+                                });
+                                //复制sha
+                                $(layero).find('#copySha').on('click', function() {
+                                    picbed.Clipboard.copy(sha);
                                 });
                                 //album set datalist
                                 $("#list_user_albums").html(res.albums.map(function(a) {
                                     return '<option value="' + a + '">';
                                 }).join(""));
+                                //初始化覆盖上传
+                                let elem = $(layero).find('.layui-layer-btn4'),
+                                    exts = "{{ g.site.upload_exts or 'jpg|png|gif|bmp|jpeg|webp' }}",
+                                    size = parseInt("{{ g.site.upload_size or 10 }}"),
+                                    field = "{{ g.cfg.upload_field or 'picbed' }}",
+                                    oApi = "{{ url_for('api.shamgr', sha='') }}" + sha;
+                                upload.render({
+                                    elem: elem[0],
+                                    url: oApi,
+                                    method: 'POST',
+                                    data: {
+                                        origin: "override/{{ Version }}",
+                                        Action: "overrideUpload",
+                                    },
+                                    accept: 'images',
+                                    exts: exts,
+                                    auto: true,
+                                    drag: false,
+                                    field: field,
+                                    number: 1,
+                                    size: size * 1024,
+                                    done: function (res, index, upload) {
+                                        if (res.code === 0) {
+                                            layer.msg("上传成功，如图片未更新请强刷缓存！", {icon:1});
+                                            layer.close(indexo);
+                                        } else {
+                                            layer.msg("上传失败：" + res.msg, {icon:2});
+                                        }
+                                    },
+                                    error: function (index, upload, err_msg) {
+                                        layer.msg("上传错误：" + err_msg, {icon:2});
+                                    }
+                                });
                             },
                             yes: function(index, layero){
                                 //按钮【删除】的回调
@@ -711,6 +757,10 @@
                                         }
                                     });
                                 });
+                            },
+                            btn5: function(index, layero) {
+                                //按钮【覆盖上传】的回调
+                                return false;
                             },
                         });
                     });

@@ -98,6 +98,7 @@
             res["get_src"] = function() {
                 return res.src;
             };
+            res["picbed"] = picbed;
             laytpl(upload_show_tpl.innerHTML).render(res, function (html) {
                 layer.open({
                     type: 1,

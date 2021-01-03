@@ -3,7 +3,11 @@
 <div style="padding: 15px">
     {{# if (d.is_control === true) { }}
     <p>文件名：{{ d.filename }}</p>
-    <p>唯一标识：{{ d.sha }}</p>
+    <p>唯一标识：{{ d.picbed.str2star(d.sha, 5, -10) }} <sub>
+        <a href="javascript:;" title="复制" id="copySha" data-sha="{{ d.sha }}">
+            <i class="saintic-icon saintic-icon-copy"></i>
+        </a></sub>
+    </p>
     <p>上传时间：{{ d.ctime }}</p>
     <p>所属用户：{{ d.user }}</p>
     <p>

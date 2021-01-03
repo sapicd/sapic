@@ -17,11 +17,10 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask import Blueprint, request, g, url_for, current_app, abort, \
     make_response, jsonify, Response
-from functools import partial
 from redis.exceptions import RedisError
 from collections import Counter
-from utils.tool import allowed_file, parse_valid_comma, is_true, logger, sha1,\
-    parse_valid_verticaline, get_today, gen_rnd_filename, hmac_sha256, rsp, \
+from utils.tool import parse_valid_comma, is_true, logger, sha1,\
+    get_today, gen_rnd_filename, hmac_sha256, rsp, \
     sha256, get_current_timestamp, list_equal_split, generate_random, er_pat, \
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
     username_pat, ALLOWED_HTTP_METHOD, is_all_fail, parse_valid_colon, \
@@ -1004,7 +1003,7 @@ def waterfall():
     return res
 
 
-@bp.route("/sha/<sha>", methods=["GET", "DELETE", "PUT"])
+@bp.route("/sha/<sha>", methods=["GET", "DELETE", "PUT", "POST"])
 def shamgr(sha):
     """图片查询、删除接口"""
     res = dict(code=1, msg=None)
@@ -1092,6 +1091,38 @@ def shamgr(sha):
                     res.update(code=0)
             else:
                 return abort(403)
+    elif request.method == "POST":
+        Action = request.args.get("Action") or request.form.get("Action")
+        if Action == "overrideUpload":
+            if not g.signin:
+                return abort(403)
+            if not has_image(sha):
+                return abort(404)
+            data = g.rc.hgetall(ik)
+            sender = data["sender"]
+            proxy = g.hm.proxy(sender)
+            if proxy:
+                fp = request.files.get(g.cfg.upload_field or "picbed")
+                if fp and allowed_suffix(fp.filename):
+                    stream = fp.stream.read()
+                    res = proxy.upimg_save(
+                        filename=data["filename"],
+                        stream=stream,
+                        upload_path=data["upload_path"],
+                    )
+                    if res["code"] == 0:
+                        g.rc.hmset(ik, dict(
+                            mtime=get_current_timestamp(),
+                            senders=json.dumps([res]),
+                            origin=request.form.get(
+                                "origin", "UA: %s" % request.headers.get(
+                                    'User-Agent', '')
+                            ),
+                        ))
+                else:
+                    res.update(msg="No file or image format error")
+            else:
+                res.update(msg="The upload hook does not exist or is disabled")
     else:
         return abort(405)
     return res
@@ -1135,11 +1166,6 @@ def upload():
             g, "up_album", g.userinfo.ucfg_default_upload_album
         ) or ""
     ) if g.signin else 'anonymous'
-    #: 实时获取后台配置中允许上传的后缀，如: jpg|jpeg|png
-    allowed_suffix = partial(
-        allowed_file,
-        suffix=parse_valid_verticaline(g.cfg.upload_exts)
-    )
     #: 图片过期（单位：秒）
     try:
         expire = int(request.form.get("expire", 0))

@@ -263,6 +263,7 @@ def dfr(res, default='en-US'):
             "Request fail": "请求失败",
             "Invalid expire param": "无效的expire参数",
             "Users also have pictures that cannot be deleted": "用户还有图片，不能删除",
+            "The upload hook does not exist or is disabled": "上传钩子不存在或被禁用",
         },
     }
     if isinstance(res, dict) and "en" not in language:
