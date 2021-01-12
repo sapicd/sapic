@@ -5,7 +5,7 @@ WORKDIR /picbed
 
 # -- build dependencies with alpine --
 #FROM python:3.7-alpine AS build
-#ARG ALPINEMIRROR=mirrors.tuna.tsinghua.edu.cn
+#ARG ALPINEMIRROR=dl-cdn.alpinelinux.org
 #ARG PIPMIRROR=https://pypi.tuna.tsinghua.edu.cn/simple
 #RUN sed -i "s/dl-cdn.alpinelinux.org/$ALPINEMIRROR/g" /etc/apk/repositories && \
 #    apk add --no-cache gcc musl-dev libffi-dev make && \
@@ -15,7 +15,7 @@ WORKDIR /picbed
 
 # -- build dependencies with debian --
 FROM python:3.7-slim AS build
-ARG PIPMIRROR=https://pypi.tuna.tsinghua.edu.cn/simple
+ARG PIPMIRROR=https://pypi.org/simple
 COPY requirements /requirements
 RUN pip install --timeout 30 --index $PIPMIRROR --user --no-cache-dir --no-warn-script-location -r /requirements/all.txt
 
