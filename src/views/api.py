@@ -19,12 +19,13 @@ from flask import Blueprint, request, g, url_for, current_app, abort, \
     make_response, jsonify, Response
 from redis.exceptions import RedisError
 from collections import Counter
+from itertools import chain
 from utils.tool import parse_valid_comma, is_true, logger, sha1,\
     get_today, gen_rnd_filename, hmac_sha256, rsp, \
     sha256, get_current_timestamp, list_equal_split, generate_random, er_pat, \
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
     username_pat, ALLOWED_HTTP_METHOD, is_all_fail, parse_valid_colon, \
-    check_ir, less_latest_tag, check_url
+    check_ir, less_latest_tag, check_url, parse_label
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
@@ -398,12 +399,17 @@ def user():
                         d["status"] = 1
                     if d.get("email_verified") is None:
                         d["email_verified"] = 0
+                    #: .. versionchanged:: 1.12.0
+                    #:
+                    #: 用户允许多label，以逗号分隔
+                    label = parse_label(d.get("label"))
                     d.update(
                         is_admin=is_true(d["is_admin"]),
                         ctime=int(d["ctime"]),
                         status=int(d.get("status", 1)),
                         email_verified=int(d.get("email_verified", 1)),
                         login_at=int(d.get("login_at") or 0),
+                        label=label,
                     )
                     if d.get("mtime"):
                         d["mtime"] = int(d["mtime"])
@@ -574,7 +580,9 @@ def user():
             except RedisError:
                 res.update(msg="Program data storage service error")
             else:
-                res.update(code=0, data=list(set([l for l in data if l])))
+                labels = [parse_label(lb) for lb in data]
+                labels = list(chain.from_iterable(labels))
+                res.update(code=0, data=list(set(labels)))
     return res
 
 
@@ -1244,11 +1252,17 @@ def upload():
             includes = [choice(includes)]
         #: 当用户有标签且定义了用户上传分组则尝试覆盖默认includes
         up_grp = g.cfg.upload_group
-        usr_label = g.userinfo.label if g.signin else "anonymous"
-        if up_grp and usr_label:
-            up_grp_rule = parse_valid_colon(up_grp) or {}
-            if usr_label in up_grp_rule:
-                includes = [up_grp_rule[usr_label]]
+        up_grp_rule = parse_valid_colon(up_grp) or {}
+        if g.signin:
+            usr_label = g.userinfo.label
+            if up_grp and usr_label:
+                for label in usr_label:
+                    if label in up_grp_rule:
+                        includes = [up_grp_rule[label]]
+                        break
+        else:
+            if up_grp:
+                includes = [up_grp_rule["anonymous"]]
         #: TODO 定义保存图片时排除某些钩子，如: up2local, up2other
         #: excludes = parse_valid_comma(g.cfg.upload_excludes or '')
         #: 调用钩子中upimg_save方法（目前版本最终结果中应该最多只有1条数据）

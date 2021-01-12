@@ -32,7 +32,7 @@ from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
     parse_valid_verticaline, parse_valid_colon, is_true, is_venv, gen_ua, \
     check_to_addr, is_all_fail, bleach_html, try_request, comma_pat, \
-    create_redis_engine, allowed_file
+    create_redis_engine, allowed_file, parse_label
 from ._compat import PY2, text_type, urlsplit, parse_qs
 from threading import Thread
 if not PY2:
@@ -306,6 +306,9 @@ def change_userinfo(userinfo):
             #: ..versionadded:: 1.7.0
             #: 用户状态默认是1启用，-2、-1待审核仅无法上传，0禁用无任何权限
             status=int(userinfo.get("status", 1)),
+            #: .. versionadded:: 1.12.0
+            #: 转换标签
+            label=parse_label(userinfo.get("label")),
         )
     return userinfo
 

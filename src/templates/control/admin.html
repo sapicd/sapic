@@ -978,6 +978,9 @@
                         title: '标签',
                         edit: 'text',
                         width: 80,
+                        templet: function(d) {
+                            return d.label.join(",");
+                        }
                     },
                     {
                         field: 'is_admin',

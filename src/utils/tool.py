@@ -115,13 +115,9 @@ def timestamp_to_timestring(timestamp, fmt='%Y-%m-%d %H:%M:%S'):
     if not isinstance(timestamp, (int, float)):
         try:
             timestamp = int(timestamp)
-        except:
+        except (ValueError, TypeError):
             raise
-    # timestamp为传入的值为时间戳(10位整数)，如：1332888820
     timestamp = localtime(timestamp)
-    # 经过localtime转换后变成
-    ## time.struct_time(tm_year=2012, tm_mon=3, tm_mday=28, tm_hour=6, tm_min=53, tm_sec=40, tm_wday=2, tm_yday=88, tm_isdst=0)
-    # 最后再经过strftime函数转换为正常日期格式。
     return strftime(fmt, timestamp)
 
 
@@ -208,8 +204,8 @@ def is_true(value):
     return False
 
 
-def list_equal_split(l, n=5):
-    return [l[i:i+n] for i in range(0, len(l), n)]
+def list_equal_split(alist, n=5):
+    return [alist[i:i+n] for i in range(0, len(alist), n)]
 
 
 def generate_random(length=6):
@@ -493,9 +489,9 @@ def is_venv():
             (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix))
 
 
-def is_all_fail(l):
+def is_all_fail(alist):
     """从list下的dict拿出code!=0的(执行失败)数量"""
-    return len(l) == len(list(filter(lambda x: x.get('code') != 0, l)))
+    return len(alist) == len(list(filter(lambda x: x.get('code') != 0, alist)))
 
 
 def check_to_addr(to):
@@ -659,3 +655,13 @@ def parse_author_mail(author):
     """从形如 ``author <author-mail>`` 中分离author与mail"""
     pat = author_mail_re.search(author)
     return (pat.group(1), pat.group(2)) if pat else (author, None)
+
+
+def parse_label(label):
+    if label:
+        label = parse_valid_comma(label)
+    else:
+        label = []
+    if isinstance(label, (list, tuple)):
+        return label
+    return []

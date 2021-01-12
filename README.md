@@ -23,7 +23,7 @@
     也可以写入到 /path/to/picbed/src/ 下的 **.cfg** 文件里，这是推荐的方式，
     它不会被提交到仓库，格式是k=v，每行一条，注意：v是所见即所得！
 
-    比如：`picbed_redis_url=redis://@localhost`
+    比如：`picbed_redis_url=redis://localhost`
 
 5. 启动：
 

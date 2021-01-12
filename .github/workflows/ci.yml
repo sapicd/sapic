@@ -29,14 +29,10 @@ jobs:
         pip install codecov Flask==${{ matrix.flask-version }}
         pip install -r requirements/all.txt
 
-    # 您可以打印当前 Python 版本以测试矩阵
-    - name: Display Python version
-      run: python -c "import sys; print(sys.version)" && pip show Flask
-
     - name: Start Redis
       uses: supercharge/redis-github-action@1.2.0
       with:
-        redis-version: ${{ matrix.redis-version }}
+        redis-version: 4
   
     - name: Test with coverage
       run: |

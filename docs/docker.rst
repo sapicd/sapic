@@ -25,7 +25,7 @@ Dockerfile仅包含源码及其依赖的Python模块，不包含redis和nginx环
 
 -  master分支即latest，dev分支标签是dev，其他已发布版本其版本号即标签
 
-  这是利用了travis-ci在提交代码后自动构建镜像并上传，所以latest总是构建
+  这是利用了dockerhub在提交代码后自动构建镜像并上传，所以latest总是构建
   master分支，dev标签构建dev分支，而其他tag则是已发布版本的代码（1.4.0+）
 
   拉取master分支（尝鲜版）镜像： `docker pull staugur/picbed`
@@ -59,23 +59,16 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
 
 打包步骤如下：
 
-- 国内环境
-
-  使用国内的软件源安装依赖（默认）
-
   .. code-block:: bash
 
     $ git clone https://github.com/staugur/picbed && cd picbed
     $ docker build -t staugur/picbed .
 
-- 国外环境
-
-  切换到国外官方软件源
+构建镜像支持一个ARG：PIPMIRROR，用以指定pip源（默认是官方源），比如在国内使用清华源：
 
   .. code-block:: bash
 
-    $ git clone https://github.com/staugur/picbed && cd picbed
-    $ docker build -t staugur/picbed . --build-arg PIPMIRROR=https://pypi.org/simple
+    $ docker build -t staugur/picbed . --build-arg PIPMIRROR=https://pypi.tuna.tsinghua.edu.cn/simple
 
 .. tip::
 
