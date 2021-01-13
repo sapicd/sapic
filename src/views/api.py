@@ -1255,11 +1255,32 @@ def upload():
         up_grp_rule = parse_valid_colon(up_grp) or {}
         if g.signin:
             usr_label = g.userinfo.label
-            if up_grp and usr_label:
+            if up_grp_rule and usr_label:
                 for label in usr_label:
                     if label in up_grp_rule:
                         includes = [up_grp_rule[label]]
                         break
+            #: 按照上传标签限制用户上传数量 小于0直接禁止上传 0不限制 大于0即为限制数量
+            up_limit_rule = parse_valid_colon(g.cfg.upload_limit) or {}
+            if up_limit_rule and usr_label:
+                #: TODO Fix homepage 并发数量读取
+                usr_current_upsize = g.rc.scard(
+                    rsp("index", "user", g.userinfo.username)
+                )
+                for label in usr_label:
+                    if label in up_limit_rule:
+                        #: 进入此处表明用户存在标签被限制
+                        limit_num = up_limit_rule[label]
+                        try:
+                            limit_num = int(limit_num)
+                        except (ValueError, TypeError):
+                            pass
+                        else:
+                            if limit_num < 0:
+                                raise ApiError("User uploads are limited")
+                            elif limit_num > 0:
+                                if usr_current_upsize > limit_num:
+                                    raise ApiError("User uploads are limited")
         else:
             if up_grp:
                 includes = [up_grp_rule["anonymous"]]

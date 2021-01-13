@@ -264,6 +264,7 @@ def dfr(res, default='en-US'):
             "Invalid expire param": "无效的expire参数",
             "Users also have pictures that cannot be deleted": "用户还有图片，不能删除",
             "The upload hook does not exist or is disabled": "上传钩子不存在或被禁用",
+            "User uploads are limited": "用户上传数量限制",
         },
     }
     if isinstance(res, dict) and "en" not in language:

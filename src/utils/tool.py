@@ -189,6 +189,7 @@ def parse_valid_verticaline(s):
 
 
 def parse_valid_colon(s):
+    """解析形如 a:b,x:y 字符串为 dict(a=b, x=y)"""
     if s:
         return dict([
             i.split(":")

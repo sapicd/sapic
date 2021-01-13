@@ -18,8 +18,11 @@
     .layui-inline, img {
         display: inline;
     }
+    .upload-textarea {
+        min-height: 60px;
+    }
     .my-textarea {
-        min-height: 50px;
+        min-height: 80px;
     }
 </style>
 {% endblock %}
@@ -174,7 +177,7 @@
                                                 id="tip-uploadbeforehtml"></i> 首页上传区域提示</label>
                                         <div class="layui-input-block">
                                             <textarea name="upload_beforehtml" placeholder="首页上传区域上方文字提示" value=""
-                                                class="layui-textarea"></textarea>
+                                                class="layui-textarea upload-textarea"></textarea>
                                         </div>
                                     </div>
                                     <div class="layui-form-item">
@@ -216,6 +219,14 @@
                                         <div class="layui-input-block">
                                             <input type="text" name="upload_group" value="{{ g.site.upload_group }}"
                                                 placeholder="按用户标签设置上传后端，格式是label:sender，半角逗号分隔" autocomplete="off"
+                                                class="layui-input">
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">分组上传限制</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="upload_limit" value="{{ g.site.upload_limit }}"
+                                                placeholder="按标签限制上传数量，格式是label:number，半角逗号分隔" autocomplete="off"
                                                 class="layui-input">
                                         </div>
                                     </div>
@@ -977,7 +988,7 @@
                         field: 'label',
                         title: '标签',
                         edit: 'text',
-                        width: 80,
+                        width: 90,
                         templet: function(d) {
                             return d.label.join(",");
                         }
