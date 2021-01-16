@@ -1263,10 +1263,11 @@ def upload():
             #: 按照上传标签限制用户上传数量 小于0直接禁止上传 0不限制 大于0即为限制数量
             up_limit_rule = parse_valid_colon(g.cfg.upload_limit) or {}
             if up_limit_rule and usr_label:
-                #: TODO Fix homepage 并发数量读取
+                #: TODO Fix homepage 多线程并发上传数量读取错误（读完但未写入redis）
                 usr_current_upsize = g.rc.scard(
                     rsp("index", "user", g.userinfo.username)
                 )
+                logger.debug("usr_current_upsize: %d" % usr_current_upsize)
                 for label in usr_label:
                     if label in up_limit_rule:
                         #: 进入此处表明用户存在标签被限制
@@ -1279,7 +1280,7 @@ def upload():
                             if limit_num < 0:
                                 raise ApiError("User uploads are limited")
                             elif limit_num > 0:
-                                if usr_current_upsize > limit_num:
+                                if usr_current_upsize >= limit_num:
                                     raise ApiError("User uploads are limited")
         else:
             if up_grp:
