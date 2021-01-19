@@ -17,7 +17,7 @@ from version import __version__ as version
 
 # -- Project information -----------------------------------------------------
 
-project = 'SaintIC Picbed'
+project = 'sapic'
 copyright = '2020, staugur'
 author = 'staugur'
 release = version

@@ -1,4 +1,4 @@
-picbed - 简约不小气的自建图床程序
+sapic - 简约不小气的自建图床程序
 ====================================
 
 .. toctree::
@@ -22,6 +22,10 @@ picbed - 简约不小气的自建图床程序
 概述
 ======
 
+.. image:: /_static/images/sapic.png
+
+自 v1.12.0 正式命名：**sapic**
+
 基于Flask的Web自建图床，默认存储在本地，内置支持又拍云、七牛云、阿里云OSS、腾讯云COS等对象存储，支持GitHub、Gitee（码云）。
 
 GitHub：https://github.com/staugur/picbed
@@ -31,6 +35,22 @@ Gitee：https://gitee.com/staugur/picbed
 语言：Python
 
 框架：Flask
+
+.. note::
+
+    关于名称那些事：
+    
+    一开始没想好如何给这个自建图床命名，索性就直接用 picbed 了，但这个有“统称”的意思，
+    有时候难以“特指”某个开源项目，在搜索、查询方面会让人模糊、诧异。
+
+    大概在 1.10 - 1.11 版本之间，我准备用 Vue.js + ElementUI 重构前端（和后端），即
+    2.0，为此准备了 **sapic** 这个名称，其含义就是 *SA Picbed* ，SA表示系统管理员。
+
+    如今先改成sapic，更新搜索引擎记录，顺道，把项目地址也迁移到了GitHub组命名空间下：
+    `sapicd <https://github.com/sapicd>`_
+
+    要问的话，就是个人账号下有很多 picbed-xxx 扩展项目感觉碍事，而且sapic被注册，
+    所以加了个d，表示“的” --- ^_^
 
 .. _picbed-features:
 

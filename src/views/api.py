@@ -647,7 +647,7 @@ def github():
             res.update(code=0, data=json.loads(data))
         else:
             url = "https://api.github.com/repos/{}/contents/{}".format(
-                "staugur/picbed-awesome", "list.json",
+                "sapicd/picbed-awesome", "list.json",
             )
             headers = dict(Accept='application/vnd.github.v3.raw')
             try:
@@ -763,6 +763,7 @@ def token():
                 hmac_sha256(key, usr)
             )).encode("utf-8")
         ).decode("utf-8")
+
     Action = request.args.get("Action")
     if Action == "create":
         if g.rc.hget(ak, "token"):
@@ -1107,6 +1108,9 @@ def shamgr(sha):
             if not has_image(sha):
                 return abort(404)
             data = g.rc.hgetall(ik)
+            #: 限制只有图片所属用户可以覆盖上传
+            if g.userinfo.username != data["user"]:
+                return abort(403)
             sender = data["sender"]
             proxy = g.hm.proxy(sender)
             if proxy:
@@ -1373,6 +1377,7 @@ def upload():
 @bp.route("/extendpoint", methods=["POST"])
 def ep():
     """专用于钩子扩展API方法"""
+    #: TODO 接口随意可访问扩展内方法，存在安全风险
     Object = request.args.get("Object")
     Action = request.args.get("Action")
     if Object and Action:

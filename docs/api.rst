@@ -293,6 +293,29 @@ RESTful API
 
     album=newName
 
+.. http:post:: /api/shamgr/<string:sha>
+
+  与PUT类似，也是图片更新接口，要求登录，只有图片所属用户允许操作。
+
+  :param sha: 图片的唯一标识
+  :type sha: string
+  :query string Action: 更新指令，目前仅支持一个overrideUpload（覆盖上传）
+  :form picbed: 上传字段，表单图片文件
+  :statuscode 404: 没有对应图片时
+  :statuscode 403: 未登录或图片所属用户与请求用户不匹配
+
+  **示例：**
+
+  .. http:example:: curl python-requests
+
+    POST /api/shamgr/sha1.xxxxxxx HTTP/1.0
+    Host: 127.0.0.1:9514
+    Authorization: LinkToken Your-LinkToken-Value
+    Content-Type: multipart/form-data
+
+    :query Action: overrideUpload
+
+    picbed=@new-image-path
 
 6. api.album
 -----------------
