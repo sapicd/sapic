@@ -28,7 +28,7 @@ sapic - 简约不小气的自建图床程序
 
 基于Flask的Web自建图床，默认存储在本地，内置支持又拍云、七牛云、阿里云OSS、腾讯云COS等对象存储，支持GitHub、Gitee（码云）。
 
-GitHub：https://github.com/staugur/picbed
+GitHub：https://github.com/sapicd/sapic
 
 Gitee：https://gitee.com/staugur/picbed
 
@@ -46,11 +46,14 @@ Gitee：https://gitee.com/staugur/picbed
     大概在 1.10 - 1.11 版本之间，我准备用 Vue.js + ElementUI 重构前端（和后端），即
     2.0，为此准备了 **sapic** 这个名称，其含义就是 *SA Picbed* ，SA表示系统管理员。
 
-    如今先改成sapic，更新搜索引擎记录，顺道，把项目地址也迁移到了GitHub组命名空间下：
+    如今先改成sapic，更新搜索引擎记录，顺道，把相关项目也迁移到了GitHub组命名空间下：
     `sapicd <https://github.com/sapicd>`_
 
     要问的话，就是个人账号下有很多 picbed-xxx 扩展项目感觉碍事，而且sapic被注册，
     所以加了个d，表示“的” --- ^_^
+
+    本次仅为项目正式命名，仅更改进程名、对外显示名和git源码地址，不变更文档地址，
+    不更改配置字段，不更改Docker镜像名和内部目录结构！
 
 .. _picbed-features:
 
@@ -94,7 +97,7 @@ Gitee：https://gitee.com/staugur/picbed
 ------------
 
 1. 要求： Python2.7（3.5+）和Redis
-2. 下载： ``git clone https://github.com/staugur/picbed && cd picbed``
+2. 下载： ``git clone https://github.com/sapicd/sapic && cd sapic``
 3. 依赖： ``pip install -r requirements/all.txt``
 4. 配置： ``config.py`` 即配置文件，可从 `.cfg` 文件或环境变量读取配置信息。
 5. 启动： make start 或 sh online\_gunicorn.sh start

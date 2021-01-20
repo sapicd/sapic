@@ -7,13 +7,13 @@
 .. warning::
 
     cli.py已经废弃，picbed源仓库在v1.10.5后续版本移除，请使用
-    `picbed-cli with golang <https://github.com/staugur/picbed-cli>`_ 代替。
+    `picbed-cli with golang <https://github.com/sapicd/cli>`_ 代替。
 
 .. versionadded:: 1.6.0
 
-相关代码在源仓库的 `cli目录下 <https://github.com/staugur/picbed/tree/1.10.5/cli>`_
+相关代码在源仓库的 `cli目录下 <https://github.com/staugur/sapic/tree/1.10.5/cli>`_
 
-脚本是 `cli.py <https://github.com/staugur/picbed/tree/1.10.5/cli/cli.py>`_ ，
+脚本是 `cli.py <https://github.com/staugur/sapic/tree/1.10.5/cli/cli.py>`_ ，
 单独使用，用以命令行形式上传本地图片，不依赖第三方模块，支持python2.7、3.x
 
 Windows下可以使用cli/picbed-cli.exe，打包好的，无需本地安装Python环境。

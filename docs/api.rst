@@ -61,7 +61,7 @@ RESTful API
 
   Api首页，仅用来表明登录态，允许 :http:method:`post` :http:method:`get` 方法
 
-  返回: Hello picbed(未登录)/<username>(已登录)
+  返回: Hello sapic(未登录)/<username>(已登录)
 
 2. api.login
 -------------

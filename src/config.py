@@ -18,7 +18,7 @@ envs = Properties(join(dirname(__file__), ".cfg"), from_env=True)
 
 GLOBAL = {
 
-    "ProcessName": "picbed",
+    "ProcessName": "sapic",
     # 自定义进程名(setproctitle)
 
     "Host": envs.get("picbed_host", "127.0.0.1"),

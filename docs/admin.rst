@@ -156,7 +156,7 @@ sendmail提供三种邮件发送方式：本地、诏预开放平台（自用）
 
   这里需要提供一个API_USER及对应的API_KEY，还一个可选的发件人（最近发件人邮箱后缀是API_USER对应的发信域）
 
-ps：可以通过安装 `picbed-smtp <https://github.com/staugur/picbed-smtp>`_
+ps：可以通过安装 `picbed-smtp <https://github.com/sapicd/smtp>`_
 扩展钩子发送邮件，它通过邮箱SMTP服务发送，所以例如QQ、腾讯企业邮、网易、
 新浪、阿里云等邮箱都可作为发送者。
 
@@ -175,7 +175,7 @@ ps：可以通过安装 `picbed-smtp <https://github.com/staugur/picbed-smtp>`_
 注意，如果程序在virtualenv、venv虚拟环境下启动，则会安装到其环境下，否则
 安装到用户家目录下。
 
-此功能可从 `Awesome for picbed <https://github.com/staugur/picbed-awesome/>`_
+此功能可从 `Awesome for sapic <https://github.com/sapicd/awesome/>`_
 获取经过审核且开源的第三方列表，像应用商店似的进行安装，不过也保留了
 原来的方式。
 

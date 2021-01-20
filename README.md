@@ -1,16 +1,15 @@
-# picbed
+# sapic
 
-基于Flask的Web自建图床，支持存储到本地、又拍云、七牛云、阿里云OSS、腾讯云COS、GitHub、Gitee(码云)等。
+即picbed，基于Flask的Web自建图床，支持存储到本地、又拍云、七牛云、阿里云OSS、腾讯云COS、GitHub、Gitee(码云)等。
 
-[![Actions Status: ci](https://github.com/staugur/picbed/workflows/ci/badge.svg)](https://github.com/staugur/picbed/actions?query=workflow%3A%22build+and+test%22)
-[![codecov](https://codecov.io/gh/staugur/picbed/branch/master/graph/badge.svg)](https://codecov.io/gh/staugur/picbed)
-![Last Release](https://img.shields.io/github/release/staugur/picbed.svg?style=flat-square)
+[![Actions Status: ci](https://github.com/sapicd/sapic/workflows/ci/badge.svg)](https://github.com/sapicd/sapic/actions?query=workflow%3A%22build+and+test%22)
+![Last Release](https://img.shields.io/github/release/sapicd/sapic.svg?style=flat-square)
 
 ## 手动部署
 
 1. 要求： Python2.7、Python3.5+（或PyPy）和Redis
 
-2. 下载： `git clone https://github.com/staugur/picbed && cd picbed`
+2. 下载： `git clone https://github.com/sapicd/sapic && cd sapic`
 
 3. 依赖： `pip install -r requirements/all.txt` # 也可以参考详情文档如何按需安装依赖包
 
@@ -20,7 +19,7 @@
     无法找到时加载环境变量，最后使用默认值，**必需设置picbed_redis_url**
 
     所以可以把配置项写到 `.bash_profile` 或 `.bashrc` 此类文件中在登录时加载，
-    也可以写入到 /path/to/picbed/src/ 下的 **.cfg** 文件里，这是推荐的方式，
+    也可以写入到 /path/to/sapic/src/ 下的 **.cfg** 文件里，这是推荐的方式，
     它不会被提交到仓库，格式是k=v，每行一条，注意：v是所见即所得！
 
     比如：`picbed_redis_url=redis://localhost`
@@ -28,7 +27,7 @@
 5. 启动：
 
     ```bash
-    $ cd /path/to/picbed/src/
+    $ cd /path/to/sapic/src/
 
     // 首先创建一个管理员账号 -h/--help显示帮助
     $ flask sa create -u USER -p PASSWORD --isAdmin
@@ -46,14 +45,14 @@
 6. Nginx:
 
     ```nginx
-    // 默认配置下，picbed启动监听127.0.0.1:9514，nginx配置示例：
+    // 默认配置下，sapic启动监听127.0.0.1:9514，nginx配置示例：
     server {
         listen 80;
-        server_name your-picbed.domain.name;
+        server_name your-sapic.domain.name;
         charset utf-8;
         client_max_body_size 20M;
         location ~ ^\/static\/.*$ {
-            root /path/to/picbed/src/;
+            root /path/to/sapic/src/;
         }
         location / {
            proxy_pass http://127.0.0.1:9514;
@@ -69,11 +68,11 @@
 
 - 手动构建镜像
 
-  源码中已经编写了Dockerfile文件，可以藉此构建picbed镜像。
+  源码中已经编写了Dockerfile文件，可以藉此构建镜像。
 
   ```bash
-  git clone https://github.com/staugur/picbed && cd picbed
-  docker build -t staugur/picbed .
+  git clone https://github.com/sapicd/sapic && cd sapic
+  docker build -t stagur/picbed .
   ```
 
 - 使用已上传镜像
@@ -87,14 +86,14 @@
 - 启动镜像
 
   ```bash
-  $ docker run -tdi --name picbed --restart=always --net=host \
+  $ docker run -tdi --name sapic --restart=always --net=host \
       -e picbed_redis_url="Your Redis URL" \
       -e 其他配置=值 \
       staugur/picbed
-  $ docker exec -i picbed flask sa create -u 管理员账号 -p 密码 --isAdmin
+  $ docker exec -i sapic flask sa create -u 管理员账号 -p 密码 --isAdmin
   ```
 
-  使用 *docker run* 启动镜像的命令仅供参考，picbed所用配置可以使用-e设置
+  使用 *docker run* 启动镜像的命令仅供参考，sapic所用配置可以使用-e设置
   环境变量，必需项picbed_redis_url，其他请参考文档。
 
   此单一启动镜像方式不包括redis，所以还需要提前准备好redis才行。
@@ -102,13 +101,13 @@
 ------
 
 如果有docker-compose的使用经验，可以使用命令 ``docker-compose up -d``
-在后台启动项目，它会直接启动一个redis、并构建启动picbed应用，redis开启AOF，
+在后台启动项目，它会直接启动一个redis、并构建启动应用，redis开启AOF，
 宿主机映射9514端口以供外部访问，且使用数据卷挂载静态资源、挂载上传目录。
 
 使用前，创建用户：
 
 ```bash
-cd /path/to/picbed
+cd /path/to/sapic
 docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmin
 ```
 
@@ -121,17 +120,17 @@ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmi
 
 ### 客户端上传示例
 
-- [使用PicGo上传到自定义的picbed图床](https://picbed.rtfd.vip/usage.html#picbed-upload-picgo)
+- [使用PicGo上传到自定义的 sapic 图床](https://picbed.rtfd.vip/usage.html#picbed-upload-picgo)
 
-- [使用uPic上传到自定义的picbed图床](https://picbed.rtfd.vip/usage.html#picbed-upload-upic)
+- [使用uPic上传到自定义的 sapic 图床](https://picbed.rtfd.vip/usage.html#picbed-upload-upic)
 
-- [作为自定义命令在使用Typora时上传图片到picbed](https://picbed.rtfd.vip/cli.html#picbed-upload-typora)
+- [作为自定义命令在使用Typora时上传图片到sapic](https://picbed.rtfd.vip/cli.html#picbed-upload-typora)
 
 - [Windows系统的图片文件添加右键菜单](https://picbed.rtfd.vip/cli.html#picbed-upload-rightmenu-windows)
 
 - [macOS系统的图片文件添加右键菜单](https://picbed.rtfd.vip/cli.html#picbed-upload-rightmenu-macos)
 
-详细文档请访问：[Picbed Docs](https://picbed.rtfd.vip)
+详细文档请访问：[Sapic Docs](https://picbed.rtfd.vip)
 
 ## 演示站
 

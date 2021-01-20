@@ -52,7 +52,7 @@
     中拿到；允许使用RAM子用户的密钥（允许编程访问），要求拥有OSS管理权限即可。
 
     .. deprecated:: 1.8.0
-        请使用 `staugur/picbed-up2oss <https://github.com/staugur/picbed-up2oss>`_ 代替！
+        请使用 `sapicd/up2oss <https://github.com/sapicd/up2oss>`_ 代替！
 
 - up2cos
     用来将上传的图片保存到腾讯云 `COS对象存储 <https://cloud.tencent.com/product/cos>`_
@@ -60,7 +60,7 @@
     使用方法：同上，配置加速域名、Bucket、SecretID及Key等（在腾讯云控制台-访问管理-访问密钥-API密钥管理中可以拿到SecretId、SecretKey；允许使用子用户的密钥，要求拥有COS管理权限即可）。
 
     .. deprecated:: 1.8.0
-        请使用 `staugur/picbed-up2cos <https://github.com/staugur/picbed-up2cos>`_ 代替！
+        请使用 `sapicd/up2cos <https://github.com/sapicd/up2cos>`_ 代替！
 
 .. versionadded:: 1.5.0
 
@@ -114,7 +114,7 @@
 ----------------
 
 非内置的钩子所属均为第三方，我发布的第三方已经整理在
-`Awesome for picbed <https://github.com/staugur/picbed-awesome/>`_ ，
+`Awesome for picbed <https://github.com/sapicd/awesome/>`_ ，
 其内容（管理员）可以在安装第三方钩子时，通过类似“应用商店”的形式进行显示，
 并在线安装！
 
@@ -313,7 +313,7 @@ profile_update
   .. tip::
 
     可以结合profile_update方法更新一些字段。另外可以参考现有案例
-    `picbed-ssoclient <https://github.com/staugur/picbed-ssoclient>`_ 。
+    `picbed-ssoclient <https://github.com/sapicd/ssoclient>`_ 。
 
   .. warning::
 

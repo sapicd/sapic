@@ -61,7 +61,7 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
 
   .. code-block:: bash
 
-    $ git clone https://github.com/staugur/picbed && cd picbed
+    $ git clone https://github.com/sapicd/sapic && cd sapic
     $ docker build -t staugur/picbed .
 
 构建镜像支持一个ARG：PIPMIRROR，用以指定pip源（默认是官方源），比如在国内使用清华源：
@@ -131,12 +131,12 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
     CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
     fa3b592f6ae5        picbed              "gunicorn app:app -c…"   2 hours ago         Up 2 hours                              picbed
 
-    $ ps aux|grep picbed
-    root   23546  -- gunicorn: master [picbed]
-    root   23548  -- gunicorn: worker [picbed]
+    $ ps aux|grep -E "picbed|sapic"
+    root   23546  -- gunicorn: master [sapic]
+    root   23548  -- gunicorn: worker [sapic]
     // 以上是使用setproctitle模块设置了优雅的进程名的效果，下面是未使用效果
-    root  - {gunicorn} /python /bin/gunicorn app:app -c picbed.py
-    root  - {gunicorn} /python /bin/gunicorn app:app -c picbed.py
+    root  - {gunicorn} /python /bin/gunicorn app:app -c sapicd.py
+    root  - {gunicorn} /python /bin/gunicorn app:app -c sapicd.py
 
 3.2 使用docker-compose启动
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

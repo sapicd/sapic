@@ -49,7 +49,7 @@ redis配置格式是 ``redis://[:password]@host:port/db``
 随机生成的原因，多进程之间没有共享，所以会出现登录后，刷新页面又不是登录
 状态了。
 
-解决：1.8修复此问题，固定了密钥，之前的版本可以在环境变量或配置文件.cfg中
+解决：v1.8修复此问题，固定了密钥，之前的版本可以在环境变量或配置文件.cfg中
 设置 ``picbed_secretkey`` 为一个固定复杂的值。
 
 ps：docker-compose用户可以在docker-compose.yml中添加以下变量再构建启动（大概是第10行picbed_redis_url下面）：

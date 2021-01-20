@@ -11,9 +11,9 @@
 
 --------------
 
-源码地址： https://github.com/staugur/picbed
+源码地址： https://github.com/sapicd/sapic
 
-正式版本： https://github.com/staugur/picbed/releases
+正式版本： https://github.com/sapicd/sapic/releases
 
 内容说明： 以下部署文档适用于有一点linux基础的同学，大概涉及到yum、git、docker等命令，以及redis、nginx等服务。
 
@@ -90,21 +90,21 @@ dev分支的功能完成后会合并到master分支；
 一阶段功能完成会从master分支发版。
 
 - 开发版（dev）
-    ! 建议，如果你有git，可以：\ ``git clone -b dev https://github.com/staugur/picbed``
+    ! 建议，如果你有git，可以：\ ``git clone -b dev https://github.com/sapicd/sapic picbed``
 
     ! 也可以下载压缩包：
 
     .. code-block:: bash
 
-        $ wget -O picbed.zip https://codeload.github.com/staugur/picbed/zip/dev
+        $ wget -O picbed.zip https://codeload.github.com/sapicd/sapic/zip/dev
         $ unzip picbed.zip 
         $ mv picbed-dev picbed
 
 - 尝鲜版（master）
-    ``git clone https://github.com/staugur/picbed``
+    ``git clone https://github.com/sapicd/sapic picbed``
 
 - 正式版（release）
-    ! 到 `release <https://github.com/staugur/picbed/releases>`_ 页面下载正式版本的包。
+    ! 到 `release <https://github.com/sapicd/sapic/releases>`_ 页面下载正式版本的包。
 
 2.2 安装依赖
 ^^^^^^^^^^^^^^
@@ -202,7 +202,7 @@ SecretKey         picbed_secretkey             (大长串)         App应用秘�
 MaxUpload         picbed_maxupload             20               设定程序最大上传容量，单位MB
 ================  ==========================  ===============   ====================================================================
 
-更多参数请参考config.py配置文件中的注释。
+更多参数请参考 config.py 配置文件中的注释。
 
 !!!以上参数 **REDIS** 无默认值，必须根据实际情况手动设置，
 示例如下（可以写入.bash\_profile中）：
@@ -275,7 +275,7 @@ Nginx配置示例如下，您也可以配置使其支持HTTPS:
         #可以设置不允许搜索引擎抓取信息
         #处理静态资源，root路径根据实际情况修改
         location ~ ^\/static\/.*$ {
-            root /path/to/picbed/src/;
+            root /path/to/<程序目录>/src/;
         }
         location / {
             #9514是默认端口，根据实际情况修改
@@ -383,6 +383,6 @@ NO.5 程序升级
     .. warning::
 
         up2cos、up2oss两个钩子从内置移除了，独立成第三方，分别是：
-        `staugur/picbed-up2cos <https://github.com/staugur/picbed-up2cos>`_ 、
-        `staugur/picbed-up2oss <https://github.com/staugur/picbed-up2oss>`_
+        `staugur/picbed-up2cos <https://github.com/sapicd/up2cos>`_ 、
+        `staugur/picbed-up2oss <https://github.com/sapicd/up2oss>`_
 

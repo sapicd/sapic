@@ -34,6 +34,7 @@ from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     allowed_suffix, async_sendmail
 from utils._compat import iteritems, thread
 from utils.exceptions import ApiError
+from config import GLOBAL
 
 bp = Blueprint("api", "api")
 
@@ -68,7 +69,9 @@ def api_after_handler(res):
 @bp.route("/index", methods=["GET", "POST"])
 def index():
     return jsonify(
-        "Hello %s" % (g.userinfo.username if g.signin else "picbed")
+        "Hello %s" % (
+            g.userinfo.username if g.signin else GLOBAL["ProcessName"]
+        )
     )
 
 
@@ -647,7 +650,7 @@ def github():
             res.update(code=0, data=json.loads(data))
         else:
             url = "https://api.github.com/repos/{}/contents/{}".format(
-                "sapicd/picbed-awesome", "list.json",
+                "sapicd/awesome", "list.json",
             )
             headers = dict(Accept='application/vnd.github.v3.raw')
             try:

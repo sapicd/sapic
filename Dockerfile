@@ -28,4 +28,4 @@ RUN ln -sf ${LOCAL_PKG}/bin/flask ${LOCAL_PKG}/bin/gunicorn /bin/ && \
     ln -sf $(which python) /python && \
     sed -i "s#$(which python)#/python#" /bin/gunicorn
 COPY src /picbed
-ENTRYPOINT ["gunicorn", "app:app", "-c", "picbed.py"]
+ENTRYPOINT ["gunicorn", "app:app", "-c", "sapicd.py"]

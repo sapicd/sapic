@@ -1,7 +1,7 @@
 .. _picbed-modules:
 
 ==============
-Picbed Modules
+Modules API
 ==============
 
 下面仅列出可能有用的部分
