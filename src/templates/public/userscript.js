@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Upload to picbed <{{ request.host }}@{{ g.userinfo.username }}>
-// @version     0.2.1
-// @description 上传图片到picbed
+// @version     0.2.2
+// @description 上传图片到 picbed/sapic
 // @author      staugur
 // @namespace   https://www.saintic.com/
 // @include     http://*
@@ -10,9 +10,9 @@
 // @exclude     https://*.aliyun.com/*
 // @grant       GM_info
 // @created     2020-05-27
-// @modified    2020-08-18
-// @github      https://github.com/staugur/picbed
-// @supportURL  https://github.com/staugur/picbed/issues/
+// @modified    2021-01-20
+// @github      https://github.com/sapicd/sapic
+// @supportURL  https://github.com/sapicd/sapic/issues/
 // @updateURL   {{ url_for('front.userscript', LinkToken=g.userinfo.ucfg_userscript_token, _external=True) }}
 // @icon        {{ g.site.favicon or url_for('static', filename='img/favicon.png', _external=True) }}
 // ==/UserScript==

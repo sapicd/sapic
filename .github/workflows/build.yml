@@ -4,7 +4,6 @@ on:
     branches:
       - master
       - dev
-      - test
 jobs:
   push_to_registry:
     name: Push Docker image to Docker Hub
