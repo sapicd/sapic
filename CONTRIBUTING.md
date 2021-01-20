@@ -47,9 +47,9 @@ Pull Request
 
 - 如果可能，编写测试用例，建议的吆。
 
-- 如果可能，分别使用py2.7、py3.5+运行测试: ``make test``
+- 如果可能，分别使用py2.7、py3.5+运行测试（位于src）: ``make test``
 
-- 如果可能，请编写文档，位于docs下，构建文档(py3)：
+- 如果可能，请编写或更新文档，位于docs下，构建文档(py3)：
 
   ```bash
   cd /path/to/sapic/docs
@@ -66,4 +66,4 @@ Pull Request
 钩子扩展
 ---------
 
-如果您开发了一个钩子扩展，欢迎提交到[Awesome for sapic](https://github.com/sapicd/picbed-awesome)
+如果您开发了一个钩子扩展，欢迎提交到[Awesome for sapic](https://github.com/sapicd/awesome)

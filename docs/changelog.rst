@@ -34,7 +34,7 @@ Released in 2021-01-20
 
     - 源码仓库统一放入 `sapicd <https://github.com/sapicd>`_ 组织中
 
-    - picbed-cli命令行客户端发布新版（可执行程序名）改为 **sapicli**
+    - picbed-cli命令行客户端发布新版v0.5.0，可执行程序名改为 **sapicli**
 
 v1.11.0
 --------

@@ -1,6 +1,6 @@
 # -- base python --
 FROM python:3.7-alpine AS base
-LABEL maintainer=staugur@saintic.com
+LABEL maintainer=me@tcw.im
 WORKDIR /picbed
 
 # -- build dependencies with alpine --

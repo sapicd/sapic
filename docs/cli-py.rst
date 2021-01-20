@@ -7,7 +7,7 @@
 .. warning::
 
     cli.py已经废弃，picbed源仓库在v1.10.5后续版本移除，请使用
-    `picbed-cli with golang <https://github.com/sapicd/cli>`_ 代替。
+    `picbed-cli/sapicli with golang <https://github.com/sapicd/cli>`_ 代替。
 
 .. versionadded:: 1.6.0
 

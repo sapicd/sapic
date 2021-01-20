@@ -22,7 +22,7 @@ from config import GLOBAL
 from version import __version__
 
 __author__ = 'staugur'
-__email__ = 'staugur@saintic.com'
+__email__ = 'me@tcw.im'
 __date__ = '2019-12-20'
 __doc__ = 'Flask-based web self-built pictures bed'
 

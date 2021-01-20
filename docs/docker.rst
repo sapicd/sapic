@@ -19,7 +19,7 @@ Dockerfile仅包含源码及其依赖的Python模块，不包含redis和nginx环
 1. 官方镜像
 =================
 
--  镜像地址：`docker@staugur/picbed <https://hub.docker.com/r/staugur/picbed>`_ 
+-  镜像地址：`dockerhub@staugur/picbed <https://hub.docker.com/r/staugur/picbed>`_ 
 
   位于Docker官方仓库，可以点击查看公开信息。
 

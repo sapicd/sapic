@@ -34,6 +34,6 @@ jobs:
       with:
         redis-version: 4
   
-    - name: Test with coverage
+    - name: Test & upload report to coverage
       run: |
         cd src && coverage run -m unittest discover -p "test_*.py" && codecov -t ${{ secrets.CODECOV_TOKEN }}
