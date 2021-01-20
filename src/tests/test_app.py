@@ -37,7 +37,7 @@ class AppTest(unittest.TestCase):
         self.logout()
 
         rv = self.client.get("/api", follow_redirects=True)
-        self.assertIn(b"Hello picbed", rv.data)
+        self.assertIn(b"Hello sapic", rv.data)
 
         rv = self.client.get("/api/login")
         self.assertEqual(405, rv.status_code)

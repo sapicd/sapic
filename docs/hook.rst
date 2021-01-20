@@ -114,11 +114,11 @@
 ----------------
 
 非内置的钩子所属均为第三方，我发布的第三方已经整理在
-`Awesome for picbed <https://github.com/sapicd/awesome/>`_ ，
+`Awesome for sapic <https://github.com/sapicd/awesome/>`_ ，
 其内容（管理员）可以在安装第三方钩子时，通过类似“应用商店”的形式进行显示，
 并在线安装！
 
-Awesome for picbed 收藏的第三方经过审核，可放心食用。
+Awesome for sapic 收藏的第三方经过审核，可放心食用。
 
 -------------
 

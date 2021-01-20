@@ -1274,7 +1274,6 @@ def upload():
                 usr_current_upsize = g.rc.scard(
                     rsp("index", "user", g.userinfo.username)
                 )
-                logger.debug("usr_current_upsize: %d" % usr_current_upsize)
                 for label in usr_label:
                     if label in up_limit_rule:
                         #: 进入此处表明用户存在标签被限制

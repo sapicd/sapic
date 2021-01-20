@@ -18,9 +18,9 @@ python编写，其跨平台需要Python环境支持，相对麻烦。
 
 cli.py的使用说明仍然可以 :doc:`在这里 <cli-py>` 找到。
 
-.. versionchanged:: 0.4.3
+.. versionchanged:: 0.5.0
 
-    为适应 v1.12.0 正式名称 sapic ，此 picbed-cli 命令行客户端程序自 v0.4.3 同步改名
+    为适应 v1.12.0 正式名称 sapic ，此 picbed-cli 命令行客户端程序自 v0.5 同步改名
     为 sapicli ，源码仓库是： https://github.com/sapicd/cli
 
 不同点
