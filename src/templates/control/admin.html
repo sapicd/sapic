@@ -423,7 +423,7 @@
                         <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
                             <div class="layui-form-item">
                                 <div class="layui-input-block">
-                                    <button class="layui-btn" lay-submit lay-filter="*">立即提交</button>
+                                    <button class="layui-btn" lay-submit lay-filter="*" id="saveSetting">立即提交</button>
                                     <button type="reset" class="layui-btn layui-btn-primary">重置</button>
                                 </div>
                             </div>
@@ -651,6 +651,13 @@
                 data: data.field
             });
             return false;
+        });
+        //js监听键盘ctrl+s快捷键保存
+        document.addEventListener('keydown', function(e){
+            if (location.hash === "#setting" && e.keyCode == 83 && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)){
+                e.preventDefault();
+                document.getElementById("saveSetting").click();
+            }
         });
         //钩子扩展管理
         var tableIns = table.render({
