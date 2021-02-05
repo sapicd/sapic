@@ -616,10 +616,10 @@
                     //附加接口
                     img["picbed"] = picbed;
                     shaDatas[img.sha] = img;
-                    return '<div class="pin"><img src="' + img.get_src("loadmypic") + '" data-sha="' + img.sha + '" title="' + (img.title || '') + '"></div>';
+                    return '<div class="pin"><img lay-src="' + img.get_src("loadmypic") + '" data-sha="' + img.sha + '" title="' + (img.title || '') + '"></div>';
                 }).join("");
                 $("#waterfall").html(html);
-                //flow.lazyimg();
+                flow.lazyimg();
                 typeof success === "function" && success(res);
                 $("#waterfall").find(".pin img").on("click", function() {
                     var sha = $(this).data("sha");
