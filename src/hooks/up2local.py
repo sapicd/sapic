@@ -9,14 +9,14 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 __author__ = 'staugur'
 __description__ = '将图片保存到本地'
 __catalog__ = 'upload'
 
 from os import makedirs, remove
 from os.path import exists, join, isfile
-from flask import current_app, url_for
+from flask import current_app, url_for, request
 from posixpath import join as posixjoin
 from utils._compat import string_types
 
@@ -57,6 +57,8 @@ def upimg_save(**kwargs):
                         upload_path,
                         filename
                     ),
+                    _scheme="https" if request.headers.get(
+                        "X-Forwarded-Proto") == "https" else None,
                     _external=True
                 ))
         else:

@@ -39,7 +39,7 @@ GLOBAL = {
     # Web应用固定密钥
 
     "MaxUpload": int(envs.get("picbed_maxupload", 20)),
-    # 上传最大尺寸，单位MB
+    # 上传最大容量限制，单位MB
 }
 
 

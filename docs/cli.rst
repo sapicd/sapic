@@ -261,9 +261,9 @@ Name: 右键菜单名称，随便写，比如 upload to sapic
 
 File Type: 设置为 `%image%` ，预设的变量
 
-Path：浏览选择 sapicli程序路径
+Path：浏览选择 sapicli 程序路径
 
-Arguments: 设置 sapicli 命令行选项参数
+Arguments: 设置 sapicli 命令行选项参数，如 `-u https://Your-Sapic-URL -t xxx -c md "$@"`
 
 其他选项自定义，建议底部勾选上 `Run hidden`
 
