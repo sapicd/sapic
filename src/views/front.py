@@ -72,6 +72,7 @@ def admin():
 
 
 @bp.route("/picbed.user.js")
+@bp.route("/sapic.user.js")
 def userscript():
     if g.signin and is_true(g.userinfo.ucfg_userscript):
         resp = make_response(render_template("public/userscript.js"))
@@ -155,4 +156,18 @@ def feed():
     )[:10])
     response = make_response(xml)
     response.headers['Content-Type'] = 'application/xml'
+    return response
+
+
+@bp.route("/publish")
+def publish():
+    gfs = [
+        dict(field="title_name", name=u"站点名称", default=g.site_name),
+        dict(field="beian", name=u"备案", default=""),
+        dict(field="upload_field", name=u"上传字段", default="picbed"),
+        dict(field="cors", name=u"跨域共享源站", default=""),
+    ]
+    tpl = render_template("public/publish.html", gfs=gfs)
+    response = make_response(tpl)
+    response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
     return response

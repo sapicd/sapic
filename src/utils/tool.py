@@ -446,7 +446,7 @@ def try_request(
     """
     headers = headers or {}
     if "User-Agent" not in headers:
-        headers["User-Agent"] = "picbed/v%s" % PICBED_VERSION
+        headers["User-Agent"] = "sapic/v%s" % PICBED_VERSION
     method = method.lower()
     if method == 'get':
         method_func = requests.get

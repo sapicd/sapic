@@ -9,7 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __author__ = 'staugur <staugur@saintic.com>'
 __hookname__ = 'up2github'
 __description__ = '将图片保存到GitHub'
@@ -109,13 +109,13 @@ def upimg_save(**kwargs):
             filepath = join(saveto, filename)
             #: 通过API上传图片
             data = dict(
-                message="Create %s by picbed" % filepath,
+                message="Create %s by sapic" % filepath,
                 content=b64encode(stream).decode("utf-8"),
             )
             if branch:
                 data["branch"] = branch
             headers = {
-                "User-Agent": "picbed-up2github/%s" % __version__,
+                "User-Agent": "sapic-up2github/%s" % __version__,
                 "Authorization": "token %s" % token
             }
             try:
@@ -179,13 +179,13 @@ def upimg_delete(sha, upload_path, filename, basedir, save_result):
             github_basedir = github_basedir.lstrip('/')
         filepath = join(basedir or github_basedir, upload_path, filename)
         data = dict(
-            message="Delete %s by picbed" % filepath,
+            message="Delete %s by sapic" % filepath,
             sha=content_sha,
         )
         if branch:
             data["branch"] = branch
         headers = {
-            "User-Agent": "picbed-up2github/%s" % __version__,
+            "User-Agent": "sapic-up2github/%s" % __version__,
             "Authorization": "token %s" % token
         }
         try_proxy_request(

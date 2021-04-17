@@ -9,7 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __author__ = 'staugur <staugur@saintic.com>'
 __hookname__ = 'up2gitee'
 __description__ = '将图片保存到Gitee'
@@ -98,14 +98,14 @@ def upimg_save(**kwargs):
             filepath = join(saveto, filename)
             #: 通过API上传图片
             data = dict(
-                message="Create %s by picbed" % filepath,
+                message="Create %s by sapic" % filepath,
                 content=b64encode(stream).decode("utf-8"),
                 access_token=token,
             )
             if branch:
                 data["branch"] = branch
             headers = {
-                "User-Agent": "picbed-up2gitee/%s" % __version__,
+                "User-Agent": "sapic-up2gitee/%s" % __version__,
             }
             try:
                 r = try_request(
@@ -162,14 +162,14 @@ def upimg_delete(sha, upload_path, filename, basedir, save_result):
             gitee_basedir = gitee_basedir.lstrip('/')
         filepath = join(basedir or gitee_basedir, upload_path, filename)
         params = dict(
-            message="Delete %s by picbed" % filepath,
+            message="Delete %s by sapic" % filepath,
             sha=content_sha,
             access_token=token,
         )
         if branch:
             params["branch"] = branch
         headers = {
-            "User-Agent": "picbed-up2gitee/%s" % __version__,
+            "User-Agent": "sapic-up2gitee/%s" % __version__,
         }
         try_request(
             "https://gitee.com/api/v5/repos/%s/contents/%s" % (

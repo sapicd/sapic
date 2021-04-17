@@ -8,6 +8,7 @@ from utils.tool import Attribution, md5, sha1, rsp, get_current_timestamp, \
     is_valid_verion, is_match_appversion, bleach_html, parse_author_mail
 from version import __version__ as VER
 
+
 class UtilsTest(unittest.TestCase):
 
     def test_attrclass(self):
@@ -107,7 +108,8 @@ class UtilsTest(unittest.TestCase):
         self.assertIn("Mozilla/5.0", gen_ua())
         # bleach
         self.assertEqual(bleach_html("<i>abc</i>"), '<i>abc</i>')
-        self.assertEqual(bleach_html('<script>var abc</script>'), '&lt;script&gt;var abc&lt;/script&gt;')
+        self.assertEqual(bleach_html('<script>var abc</script>'),
+                         '&lt;script&gt;var abc&lt;/script&gt;')
         # re
         self.assertEqual(parse_author_mail("staugur"), ('staugur', None))
         self.assertEqual(

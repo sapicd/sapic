@@ -9,7 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __author__ = 'staugur'
 __description__ = '多方式发送邮件'
 
@@ -101,7 +101,7 @@ def _saintic_open(TOKEN, subject, html, to, from_name=""):
 def sendmail(subject, message, to_addr):
     """Web环境下发送邮件"""
     #: from_addr建议设置发件人邮箱，否则基本会被拦截或进入垃圾邮箱
-    from_addr = "picbed@{}".format(request.host)
+    from_addr = "sapic@{}".format(request.host)
     from_name = g.cfg.email_from_name or g.site_name
     #: 关闭通过本地服务器发送邮件
     no_local = g.cfg.email_nolocal

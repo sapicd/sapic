@@ -1,0 +1,5 @@
+# global exporter
+{% for i in gfs %}
+# {{ i.field }} {{ i.name }}
+{{ i.field }} = {{ g.site.get(i.field) or i.default }}
+{% endfor %}

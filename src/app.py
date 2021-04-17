@@ -32,7 +32,7 @@ app.config.update(
     SECRET_KEY=GLOBAL["SecretKey"],
     MAX_UPLOAD=GLOBAL["MaxUpload"],
     MAX_CONTENT_LENGTH=GLOBAL["MaxUpload"] * 1024 * 1024,
-    DOCS_BASE_URL="https://picbed.rtfd.vip",
+    DOCS_BASE_URL="https://sapic.rtfd.vip",
     UPLOAD_FOLDER="upload",
 )
 
