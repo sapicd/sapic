@@ -21,30 +21,40 @@ GLOBAL = {
     "ProcessName": "sapic",
     # 自定义进程名(setproctitle)
 
-    "Host": envs.get("picbed_host", "127.0.0.1"),
+    "Host": envs.get("picbed_host", envs.get("sapic_host", "127.0.0.1")),
     # 监听地址
 
-    "Port": int(envs.get("picbed_port", 9514)),
+    "Port": int(envs.get("picbed_port", envs.get("sapic_port", 9514))),
     # 监听端口
 
-    "LogLevel": envs.get("picbed_loglevel", "DEBUG"),
+    "LogLevel": envs.get(
+        "picbed_loglevel", envs.get("sapic_loglevel", "DEBUG")
+    ),
     # 应用日志记录级别, 依次为 DEBUG, INFO, WARNING, ERROR, CRITICAL.
 
-    "HookReloadTime": int(envs.get("picbed_hookreloadtime", 600)),
+    "HookReloadTime": int(envs.get(
+        "picbed_hookreloadtime",
+        envs.get("sapic_hookreloadtime", 600)
+    )),
     # 钩子管理器默认重载时间，单位：秒
 
     "SecretKey": envs.get(
-        "picbed_secretkey", "BD1E2CF7DF9CD6971D641C115EE72871BEDA2806"
+        "picbed_secretkey",
+        envs.get(
+            "sapic_secretkey", "BD1E2CF7DF9CD6971D641C115EE72871BEDA2806"
+        )
     ),
     # Web应用固定密钥
 
-    "MaxUpload": int(envs.get("picbed_maxupload", 20)),
+    "MaxUpload": int(envs.get(
+        "picbed_maxupload", envs.get("sapic_maxupload", 20)
+    )),
     # 上传最大容量限制，单位MB
 }
 
 
 #: 存储核心数据，使用redis单实例，请开启AOF持久化!
-REDIS = envs.get("picbed_redis_url")
+REDIS = envs.get("picbed_redis_url", envs.get("sapic_redis_url"))
 # Redis数据库连接信息，格式:
 # redis://[:password]@host:port/db
 # host,port必填项,如有密码,记得密码前加冒号

@@ -150,7 +150,23 @@
     layui.config({
         base: "/static/mymod/",
         version: "{{ Version }}"
-    }).use('picbed');
+    }).use('picbed', function() {
+        var $ = layui.jquery,
+            layer = layui.layer;
+        $("#about").on("click",function(){
+            layer.open({
+                type: 2,
+                title: "关于本站",
+                closeBtn: false,
+                area: ['350px', '400px'],
+                btn: '关闭',
+                btnAlign: 'c',
+                shade: 0.1,
+                shadeClose: true,
+                content: ["{{ url_for('front.publish') }}"]
+            });
+        });
+    });
 </script>
 {% block LayoutScript %}{% endblock %}
 </body>

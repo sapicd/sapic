@@ -167,7 +167,4 @@ def publish():
         dict(field="upload_field", name=u"上传字段", default="picbed"),
         dict(field="cors", name=u"跨域共享源站", default=""),
     ]
-    tpl = render_template("public/publish.html", gfs=gfs)
-    response = make_response(tpl)
-    response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
-    return response
+    return render_template("public/publish.html", gfs=gfs)

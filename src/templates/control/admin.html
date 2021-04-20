@@ -156,6 +156,13 @@
                                                 class="layui-textarea my-textarea"></textarea>
                                         </div>
                                     </div>
+                                    <div class="layui-form-item layui-form-text">
+                                        <label class="layui-form-label">关于本站</label>
+                                        <div class="layui-input-block">
+                                            <textarea name="about" placeholder="本站的额外说明，通过页脚About展示" value=""
+                                                class="layui-textarea my-textarea"></textarea>
+                                        </div>
+                                    </div>
                                     {{ intpl("sitesetting") }}
                                 </div>
                             </fieldset>
@@ -617,6 +624,7 @@
         form.val("setting", {
             upload_beforehtml: picbed.escape2Html(`{{ g.site.upload_beforehtml }}`),
             bulletin: picbed.escape2Html(`{{ g.site.bulletin }}`),
+            about: picbed.escape2Html(`{{ g.site.about }}`),
         });
         //提交系统设置
         form.on('submit(*)', function(data){

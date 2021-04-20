@@ -333,6 +333,7 @@ def set_site_config(mapping):
         ALLOWED_STYLES = ['color']
         upload_beforehtml = mapping.get("upload_beforehtml") or ""
         bulletin = mapping.get("bulletin") or ""
+        about = mapping.get("about") or ""
         if upload_beforehtml:
             mapping["upload_beforehtml"] = bleach_html(
                 upload_beforehtml,
@@ -346,6 +347,10 @@ def set_site_config(mapping):
             mapping["bulletin"] = bleach_html(
                 bulletin,
                 ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
+            )
+        if about:
+            mapping["about"] = bleach_html(
+                about, ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
             )
         s = get_storage()
         cfg = s.get("siteconfig") or {}
