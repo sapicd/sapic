@@ -6,8 +6,8 @@ services:
     ports:
       - "9514:9514"
     environment:
-      - picbed_host=0.0.0.0
-      - picbed_redis_url=redis://@redis:6379
+      - sapic_host=0.0.0.0
+      - sapic_redis_url=redis://@redis:6379
     volumes:
       - static:/picbed/static/
       - /data/picbed/:/picbed/static/upload/

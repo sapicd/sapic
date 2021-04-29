@@ -726,7 +726,7 @@ def github():
         if no_fresh and data:
             res.update(code=0, data=json.loads(data))
         else:
-            url = "https://api.github.com/repos/staugur/picbed/releases/latest"
+            url = "https://api.github.com/repos/sapicd/sapic/releases/latest"
             try:
                 r = try_proxy_request(url, method='GET')
                 if not r.ok:

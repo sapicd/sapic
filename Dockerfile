@@ -22,10 +22,11 @@ RUN pip install --timeout 30 --index $PIPMIRROR --user --no-cache-dir --no-warn-
 # -- app environment --
 FROM base
 ENV LOCAL_PKG="/root/.local"
-ENV picbed_isrun=true
+ENV sapic_isrun=true
 COPY --from=build ${LOCAL_PKG} ${LOCAL_PKG}
 RUN ln -sf ${LOCAL_PKG}/bin/flask ${LOCAL_PKG}/bin/gunicorn /bin/ && \
     ln -sf $(which python) /python && \
     sed -i "s#$(which python)#/python#" /bin/gunicorn
 COPY src /picbed
+WORKDIR /picbed
 ENTRYPOINT ["gunicorn", "app:app", "-c", "sapicd.py"]
