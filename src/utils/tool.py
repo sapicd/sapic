@@ -67,6 +67,7 @@ ir_pat = re.compile(r'^(in|not in|\s|ip|ep|origin|method|,|:)+$')
 ALLOWED_RULES = ("ip", "ep", "method", "origin")
 ALLOWED_EXTS = ("png", "jpg", "jpeg", "gif", "bmp", "webp")
 ALLOWED_HTTP_METHOD = ("GET", "POST", "PUT", "DELETE", "HEAD")
+ALLOWED_VIDEO = ("mp4", "ogg", "ogv", "webm", "3gp", "mov")
 
 
 def rsp(*args):

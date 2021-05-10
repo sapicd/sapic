@@ -291,6 +291,15 @@
                                                 {% endif %} autocomplete="off" value="1">
                                         </div>
                                     </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">视频上传</label>
+                                        <div class="layui-input-block" style="width: auto;">
+                                            <input type="checkbox" name="upload_video" lay-skin="switch"
+                                                lay-text="ON|OFF"
+                                                {% if is_true(g.site.upload_video) %}checked="checked"
+                                                {% endif %} autocomplete="off" value="1">
+                                        </div>
+                                    </div>
                                 </div>
                             </fieldset>
                         </div>

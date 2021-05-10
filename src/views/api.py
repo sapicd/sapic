@@ -25,7 +25,8 @@ from utils.tool import parse_valid_comma, is_true, logger, sha1,\
     sha256, get_current_timestamp, list_equal_split, generate_random, er_pat, \
     format_upload_src, check_origin, get_origin, check_ip, gen_uuid, ir_pat, \
     username_pat, ALLOWED_HTTP_METHOD, is_all_fail, parse_valid_colon, \
-    check_ir, less_latest_tag, check_url, parse_label
+    check_ir, less_latest_tag, check_url, parse_label, allowed_file, \
+    ALLOWED_VIDEO
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
     set_site_config, check_username, Base64FileStorage, change_res_format, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
@@ -986,6 +987,7 @@ def waterfall():
                         i.update(
                             senders=json.loads(i["senders"]),
                             ctime=int(i["ctime"]),
+                            is_video=is_true(i.get("is_video")),
                         )
                         if ask_albums:
                             if i.get("album") in ask_albums:
@@ -1038,7 +1040,8 @@ def shamgr(sha):
                     Markdown="![%s](%s)" % (
                         n, get_url_with_suffix(data, "markdown")
                     )
-                )
+                ),
+                is_video=is_true(data.get("is_video")),
             )
             res.update(code=0, data=data)
         else:
@@ -1207,6 +1210,7 @@ def upload():
     if fp and allowed_suffix(fp.filename):
         stream = fp.stream.read()
         suffix = splitext(fp.filename)[-1]
+        is_video = 1 if allowed_file(fp.filename, ALLOWED_VIDEO) else 0
         #: 处理图片二进制的钩子
         for h in g.hm.get_call_list(
             "upimg_stream_processor", _type="func"
@@ -1339,6 +1343,7 @@ def upload():
             ),
             method=get_upload_method(fp.__class__.__name__),
             title=request.form.get("title") or "",
+            is_video=is_video,
         ))
         if expire > 0:
             pipe.expire(rsp("image", sha), expire)

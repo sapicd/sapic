@@ -15,6 +15,7 @@ def delete_hookloadtime():
 IS_RUN = True if (
     getenv("sapic_isrun") or getenv("picbed_isrun")
 ) == "true" else False
+
 CPU_COUNT = int(
     getenv("sapic_cpucount") or getenv("picbed_cpucount") or cpu_count()
 )

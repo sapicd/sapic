@@ -32,7 +32,7 @@ from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
     parse_valid_verticaline, parse_valid_colon, is_true, is_venv, gen_ua, \
     check_to_addr, is_all_fail, bleach_html, try_request, comma_pat, \
-    create_redis_engine, allowed_file, parse_label
+    create_redis_engine, allowed_file, parse_label, ALLOWED_VIDEO
 from ._compat import PY2, text_type, urlsplit, parse_qs
 from threading import Thread
 if not PY2:
@@ -798,7 +798,7 @@ def allowed_suffix(filename):
 
     .. versionadded:: 1.10.0
     """
-    return partial(
-        allowed_file,
-        suffix=parse_valid_verticaline(g.cfg.upload_exts)
-    )(filename)
+    allowed = parse_valid_verticaline(g.cfg.upload_exts)
+    if is_true(g.cfg.upload_video):
+        allowed += ALLOWED_VIDEO
+    return partial(allowed_file, suffix=allowed)(filename)

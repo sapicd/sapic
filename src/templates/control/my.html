@@ -603,6 +603,9 @@
                 url = "{{ url_for('api.waterfall', sort='desc', is_mgr=request.args.is_mgr, album=load_album)|safe }}&limit=" + limit + "&page=" + page;
             picbed.ajax(url, function (res) {
                 var html = res.data.map(function (img) {
+                    if (img.is_video) {
+                        return '<video src="' + img.src + '" autoplay controls style="top:0; left:0; width:100%; height:100%">抱歉，您的浏览器不支持内嵌视频！</video>';
+                    }
                     img["ctime"] = util.toDateString(img.ctime * 1000);
                     img["is_control"] = true;
                     img["get_src"] = function(_type) {
@@ -616,7 +619,7 @@
                     //附加接口
                     img["picbed"] = picbed;
                     shaDatas[img.sha] = img;
-                    return '<div class="pin"><img lay-src="' + img.get_src("loadmypic") + '" data-sha="' + img.sha + '" title="' + (img.title || '') + '"></div>';
+                    return '<div class="pin"><img src="' + img.get_src("loadmypic") + '" data-sha="' + img.sha + '" title="' + (img.title || '') + '"></div>';
                 }).join("");
                 $("#waterfall").html(html);
                 flow.lazyimg();
