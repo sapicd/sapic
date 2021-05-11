@@ -99,13 +99,13 @@
             upVideo = parseInt("{{ g.cfg.upload_video }}") === 1,
             accept =  upVideo ? "file" : "images",
             acceptMime = "image/*",
+            videoMimes = ["video/mp4","video/ogg","video/webm","video/3gpp","video/quicktime"],
             imgUrlRe = /(http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/;
 
         if (upVideo) {
-            acceptMime += ",video/mp4,video/ogg,video/webm,video/3gpp,video/quicktime"
+            acceptMime += "," + videoMimes.join(",")
             exts += "|mp4|ogg|ogv|webm|3gp|mov"
         }
-        console.log(upVideo,accept,acceptMime,exts)
 
         var showUploadCopy = function (res) {
             res["get_src"] = function() {
@@ -218,9 +218,14 @@
                 $("#action").removeClass("layui-hide");
                 $(".layui-table:first").removeClass("layui-hide");
                 obj.preview(function (index, file, result) {
+                    let isVideo = videoMimes.includes(file.type),
+                        preview = '<img src="' + result + '" style="max-width:50px" class="layui-upload-img">';
+                    if (isVideo) {
+                        preview = '<i class="saintic-icon saintic-icon-video-1"></i>';
+                    }
                     var tr = $([
                         '<tr id="upload-' + index + '">',
-                        '<td class="a"><img src="' + result + '" style="max-width:50px" class="layui-upload-img"></td>',
+                        '<td class="a">' + preview + '</td>',
                         '<td class="b">' + (picbed.isMobile ? file.type.replace(/^image\//, '') : file.name) + '</td>',
                         '<td class="c">' + (file.size / 1024).toFixed(1) + '</td>',
                         '<td class="d">等待</td>',

@@ -1370,6 +1370,7 @@ def upload():
                         filename, get_url_with_suffix(data[0], "markdown")
                     )
                 ),
+                is_video=is_video == 1,
             )
             #: format指定图片地址的显示字段，默认src，可以用点号指定
             #: 比如data.src，那么返回格式{code, filename..., data:{src}, ...}

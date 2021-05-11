@@ -32,13 +32,17 @@
     <div class="layui-row layui-col-space2">
         <div class="layui-col-xs12 layui-col-sm2 layui-col-md2">
             <a href="{{ d.src }}" target="_blank" {{# if (d.is_control === true){ }}download="{{ d.filename }}"{{# } }}>
+                {{# if (d.is_video){ }}
+                <video src="{{ d.src }}" controls style="top:0; left:0; max-width:80px;padding-top:61px;">抱歉，您的浏览器不支持内嵌视频！</video>
+                {{# } else { }}
                 <img src="{{ d.get_src('loadmypic') }}" style="max-width:80px;padding-top:61px;">
+                {{# } }}
             </a>
         </div>
         <div class="layui-col-xs12 layui-col-sm10 layui-col-md10">
             <div class="layui-tab layui-tab-brief">
                 <ul class="layui-tab-title">
-                    <li class="layui-this">URL</li>
+                    <li class="layui-this"><i class="saintic-icon {{# if (d.is_video === true){ }}saintic-icon-video{{# } else { }}saintic-icon-picture{{# } }}"></i> URL</li>
                     <li>HTML</li>
                     <li>rST</li>
                     <li>Markdown</li>
