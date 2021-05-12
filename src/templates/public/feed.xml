@@ -9,7 +9,11 @@
         <title>{{ i.title or i.filename }}</title>
         <link>{{ i.src }}</link>
         <description>
+            {% if is_true(i.is_video) -%}
+            <![CDATA[<video src="{{ i.src }}" controls style="top:0; left:0; max-width:80px;padding-top:61px;">抱歉，您的浏览器不支持内嵌视频！</video>]]>
+            {% else %}
             <![CDATA[<img src="{{ i.src }}">]]>
+            {% endif %}
         </description>
         <pubDate>{{ timestamp_to_timestring(i.ctime) }}</pubDate>
     </item>

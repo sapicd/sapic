@@ -352,6 +352,15 @@ layui.define(["layer", "util", "element"], function (exports) {
                 cb && cb()
             }
         },
+        resize_window: function() {
+            if(document.createEvent) {
+                var event = document.createEvent("HTMLEvents");
+                event.initEvent("resize", true, true);
+                window.dispatchEvent(event);
+            } else if(document.createEventObject) {
+                window.fireEvent("onresize");
+            }
+        },
     };
     //输出接口
     exports('picbed', api);
