@@ -180,26 +180,26 @@ optional.txt是系统可选功能依赖的模块（可选）。
 ^^^^^^^^^^^^^^
 
 配置文件是源码src目录下的config.py，它会加载同级目录 **.cfg** 文件读取配置信息，
-无法找到时再加载环境变量，最后使用默认值，必需的配置项是picbed_redis_url。
+无法找到时再加载环境变量，最后使用默认值，必需的配置项是sapic_redis_url。
 
 所以可以把配置项写到 `.bash_profile` 或 `.bashrc` 此类文件中在登录时作为环境变量加载，
-也可以写入到 `.cfg` 文件里（picbed/src/目录下），这是推荐的方式，
+也可以写入到 `.cfg` 文件里（源码 src 目录下），这是推荐的方式，
 它不会被提交到仓库，格式是k=v，每行一条，注意：
 v是所见即所得（不要有多余的引号等，除非真的需要）！
 
-比如: `picbed_redis_url=redis://@localhost`
+比如: `sapic_redis_url=redis://@localhost`
 
 可设置列表如下：
 
 ================  ==========================  ===============   ====================================================================
     配置              [环境]变量名                默认值                                       说明
 ================  ==========================  ===============   ====================================================================
-HOST              picbed_host                 127.0.0.1         监听地址
-PORT              picbed_port                  9514             监听端口
-LOGLEVEL          picbed_loglevel              DEBUG            日志级别，可选DEBUG, INFO, WARNING, ERROR, CRITICAL
-**REDIS**         picbed_redis_url             无               核心数据存储（redis连接串，格式是：redis://[:password]@host:port/db）
-SecretKey         picbed_secretkey             (大长串)         App应用秘钥(默认有固定值)
-MaxUpload         picbed_maxupload             20               设定程序最大上传容量，单位MB
+HOST              sapic_host                  127.0.0.1         监听地址
+PORT              sapic_port                  9514              监听端口
+LOGLEVEL          sapic_loglevel              DEBUG             日志级别，可选DEBUG, INFO, WARNING, ERROR, CRITICAL
+**REDIS**         sapic_redis_url             无                核心数据存储（redis连接串，格式是：redis://[:password]@host:port/db）
+SecretKey         sapic_secretkey             (大长串)          App应用秘钥(默认有固定值)
+MaxUpload         sapic_maxupload             20                设定程序最大上传容量，单位MB
 ================  ==========================  ===============   ====================================================================
 
 更多参数请参考 config.py 配置文件中的注释。
@@ -209,10 +209,10 @@ MaxUpload         picbed_maxupload             20               设定程序最�
 
 .. code-block:: bash
 
-    $ export picbed_redis_url="redis://:password@127.0.0.1:6379/1"
+    $ export sapic_redis_url="redis://:password@127.0.0.1:6379/1"
     或者写入文件
     $ cat .cfg
-    picbed_redis_url=redis://:password@127.0.0.1:6379/1
+    sapic_redis_url=redis://:password@127.0.0.1:6379/1
 
 .. versionchanged:: 1.6.0
 

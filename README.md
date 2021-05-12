@@ -17,13 +17,13 @@
 4. 配置：
 
     src目录下的config.py即配置文件，它会加载中 `.cfg` 文件读取配置信息，
-    无法找到时加载环境变量，最后使用默认值，**必需设置picbed_redis_url**
+    无法找到时加载环境变量，最后使用默认值，**必需设置sapic_redis_url**
 
     所以可以把配置项写到 `.bash_profile` 或 `.bashrc` 此类文件中在登录时加载，
     也可以写入到 /path/to/sapic/src/ 下的 **.cfg** 文件里，这是推荐的方式，
     它不会被提交到仓库，格式是k=v，每行一条，注意：v是所见即所得！
 
-    比如：`picbed_redis_url=redis://localhost`
+    比如：`sapic_redis_url=redis://localhost`
 
 5. 启动：
 
@@ -73,7 +73,7 @@
 
   ```bash
   git clone https://github.com/sapicd/sapic && cd sapic
-  docker build -t stagur/picbed .
+  docker build -t stagur/sapic .
   ```
 
 - 使用已上传镜像
@@ -81,21 +81,21 @@
   已设置CI实现提交代码自动构建并推送到官方Docker仓库中，直接pull即可：
 
   ```bash
-  docker pull staugur/picbed  # 或者加上tag拉取某稳定版本的镜像(1.4.0开始)
+  docker pull staugur/sapic  # 或者加上tag拉取某稳定版本的镜像(1.4.0开始)
   ```
 
 - 启动镜像
 
   ```bash
   $ docker run -tdi --name sapic --restart=always --net=host \
-      -e picbed_redis_url="Your Redis URL" \
+      -e sapic_redis_url="Your Redis URL" \
       -e 其他配置=值 \
-      staugur/picbed
+      staugur/sapic
   $ docker exec -i sapic flask sa create -u 管理员账号 -p 密码 --isAdmin
   ```
 
   使用 *docker run* 启动镜像的命令仅供参考，sapic所用配置可以使用-e设置
-  环境变量，必需项picbed_redis_url，其他请参考文档。
+  环境变量，必需项sapic_redis_url，其他请参考文档。
 
   此单一启动镜像方式不包括redis，所以还需要提前准备好redis才行。
 
@@ -121,17 +121,17 @@ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmi
 
 ### 客户端上传示例
 
-- [使用PicGo上传到自定义的 sapic 图床](https://picbed.rtfd.vip/usage.html#picbed-upload-picgo)
+- [使用PicGo上传到自定义的 sapic 图床](https://sapic.rtfd.vip/usage.html#picbed-upload-picgo)
 
-- [使用uPic上传到自定义的 sapic 图床](https://picbed.rtfd.vip/usage.html#picbed-upload-upic)
+- [使用uPic上传到自定义的 sapic 图床](https://sapic.rtfd.vip/usage.html#picbed-upload-upic)
 
-- [作为自定义命令在使用Typora时上传图片到sapic](https://picbed.rtfd.vip/cli.html#picbed-upload-typora)
+- [作为自定义命令在使用Typora时上传图片到sapic](https://sapic.rtfd.vip/cli.html#picbed-upload-typora)
 
-- [Windows系统的图片文件添加右键菜单](https://picbed.rtfd.vip/cli.html#picbed-upload-rightmenu-windows)
+- [Windows系统的图片文件添加右键菜单](https://sapic.rtfd.vip/cli.html#picbed-upload-rightmenu-windows)
 
-- [macOS系统的图片文件添加右键菜单](https://picbed.rtfd.vip/cli.html#picbed-upload-rightmenu-macos)
+- [macOS系统的图片文件添加右键菜单](https://sapic.rtfd.vip/cli.html#picbed-upload-rightmenu-macos)
 
-详细文档请访问：[Sapic Docs](https://picbed.rtfd.vip)
+详细文档请访问：[Sapic Docs](https://sapic.rtfd.vip)
 
 ## 演示站
 

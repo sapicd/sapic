@@ -626,9 +626,11 @@
                 typeof success === "function" && success(res);
                 $("#waterfall").find(".pin .item").on("click", function() {
                     let sha = $(this).data("sha"),
-                        btns = ['删除', '关闭'];
-                    if (shaDatas[sha].is_video) {
+                        btns = ['删除', '关闭'],
+                        isVideo = shaDatas[sha].is_video;
+                    if (isVideo) {
                         btns.push('视频源')
+                        btns.push('播放')
                     } else {
                         btns.push('原图')
                         btns.push('分享')
@@ -666,6 +668,7 @@
                                 $("#list_user_albums").html(res.albums.map(function(a) {
                                     return '<option value="' + a + '">';
                                 }).join(""));
+                                if (isVideo) return;
                                 //初始化覆盖上传
                                 let elem = $(layero).find('.layui-layer-btn4'),
                                     exts = "{{ g.site.upload_exts or 'jpg|png|gif|bmp|jpeg|webp' }}",
@@ -722,7 +725,7 @@
                                 layer.close(index);
                             },
                             btn3: function(index, layero) {
-                                //按钮【原图】的回调
+                                //按钮【原图】或【视频源】的回调
                                 var id = "jump-" + sha,
                                     a = document.createElement("a");
                                 a.style.display='none';
@@ -736,39 +739,75 @@
                                 return false;
                             },
                             btn4: function(index, layero) {
-                                //按钮【分享】的回调
-                                layer.close(index);
+                                //按钮【分享】或【播放】的回调
                                 let loadIndex = layer.load();
-                                picbed.initShare(function() {
-                                    let mySrc = shaDatas[sha].src;
-                                    layer.close(loadIndex);
-                                    var content = [
-                                        '<div style="padding: 15px;">',
-                                        '<center><img src="' + mySrc + '" width="300px"><br><br>',
-                                        '<p>点击下方按钮分享</p>',
-                                        '<div class="shorturl-social-share"></div></center>',
-                                        '</div>'
-                                    ].join("");
+                                if (isVideo) {
                                     layer.open({
                                         type: 1,
                                         title: false,
-                                        area: "350px",
-                                        closeBtn: 0,
+                                        area: '400px',
+                                        maxHeight: parseInt(document.documentElement.clientHeight * 0.8) + 'px',
+                                        maxmin: true,
+                                        shade: 0.1,
+                                        closeBtn: false,
                                         shadeClose: true,
-                                        content: content,
-                                        success: function(layero) {
-                                            //初始化分享
-                                            socialShare('.shorturl-social-share', {
-                                                url: mySrc,
-                                                source: location.origin,
-                                                title: shaDatas[sha].title || shaDatas[sha].filename,
-                                                disabled: ['google','diandian','facebook'],
-                                                wechatQrcodeTitle: '分享到微信',
-                                                wechatQrcodeHelper: '微信扫一扫，分享短网址'
-                                            });
+                                        scrollbar: true,
+                                        resize: false,
+                                        content: '<video src="' + shaDatas[sha].src + '" autoplay controls style="top:0; left:0; width:100%; height:100%">抱歉，您的浏览器不支持内嵌视频！</video>',
+                                        success: function (layero, index) {
+                                            layer.close(loadIndex);
+                                            layero[0].querySelector(".layui-layer-setwin .layui-layer-min").remove();
+                                            layero[0].querySelector(".layui-layer-content").style.overflowY = "hidden";
+                                            var v = layero[0].querySelector('video');
+                                            v.onloadedmetadata = function(e) {
+                                                var vWidth = v.videoWidth,
+                                                vHieght = v.videoHeight;
+                                                if (vWidth > 800) {
+                                                    vWidth = vWidth / 2;
+                                                    vHieght = vHieght / 2;
+                                                }
+                                                layer.style(index, {
+                                                    width: vWidth + 'px',
+                                                    height: vHieght + 'px',
+                                                });
+                                                picbed.resize_window();
+                                            }
                                         }
                                     });
-                                });
+                                    return false;
+                                } else {
+                                    layer.close(index);
+                                    picbed.initShare(function() {
+                                        let mySrc = shaDatas[sha].src;
+                                        layer.close(loadIndex);
+                                        var content = [
+                                            '<div style="padding: 15px;">',
+                                            '<center><img src="' + mySrc + '" width="300px"><br><br>',
+                                            '<p>点击下方按钮分享</p>',
+                                            '<div class="shorturl-social-share"></div></center>',
+                                            '</div>'
+                                        ].join("");
+                                        layer.open({
+                                            type: 1,
+                                            title: false,
+                                            area: "350px",
+                                            closeBtn: 0,
+                                            shadeClose: true,
+                                            content: content,
+                                            success: function(layero) {
+                                                //初始化分享
+                                                socialShare('.shorturl-social-share', {
+                                                    url: mySrc,
+                                                    source: location.origin,
+                                                    title: shaDatas[sha].title || shaDatas[sha].filename,
+                                                    disabled: ['google','diandian','facebook'],
+                                                    wechatQrcodeTitle: '分享到微信',
+                                                    wechatQrcodeHelper: '微信扫一扫，分享短网址'
+                                                });
+                                            }
+                                        });
+                                    });
+                                }
                             },
                             btn5: function(index, layero) {
                                 //按钮【覆盖上传】的回调
