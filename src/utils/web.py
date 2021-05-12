@@ -798,7 +798,7 @@ def allowed_suffix(filename):
 
     .. versionadded:: 1.10.0
     """
-    allowed = parse_valid_verticaline(g.cfg.upload_exts)
+    allowed = parse_valid_verticaline(g.cfg.upload_exts) or ALLOWED_EXTS
     if is_true(g.cfg.upload_video):
         allowed += ALLOWED_VIDEO
     return partial(allowed_file, suffix=allowed)(filename)
