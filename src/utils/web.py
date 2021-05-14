@@ -11,6 +11,7 @@
 
 import json
 import imghdr
+from logging import log
 from posixpath import basename, splitext
 from os.path import join as pathjoin
 from io import BytesIO
@@ -32,7 +33,7 @@ from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
     parse_valid_verticaline, parse_valid_colon, is_true, is_venv, gen_ua, \
     check_to_addr, is_all_fail, bleach_html, try_request, comma_pat, \
-    create_redis_engine, allowed_file, parse_label, ALLOWED_VIDEO
+    create_redis_engine, allowed_file, parse_label, ALLOWED_VIDEO, b64size
 from ._compat import PY2, text_type, urlsplit, parse_qs
 from threading import Thread
 if not PY2:
@@ -265,6 +266,7 @@ def dfr(res, default='en-US'):
             "Users also have pictures that cannot be deleted": "用户还有图片，不能删除",
             "The upload hook does not exist or is disabled": "上传钩子不存在或被禁用",
             "User uploads are limited": "用户上传数量限制",
+            "the uploaded file exceeds the limit": "上传文件超出限制",
         },
     }
     if isinstance(res, dict) and "en" not in language:
@@ -324,6 +326,18 @@ def get_site_config():
 def set_site_config(mapping):
     """设置站点信息"""
     if mapping and isinstance(mapping, dict):
+        #: update app config
+        up_size = mapping.get("upload_size")
+        if up_size:
+            try:
+                up_size = int(up_size)
+            except (ValueError, TypeError) as e:
+                logger.error(e)
+                raise
+            else:
+                current_app.config.update(
+                    MAX_CONTENT_LENGTH=up_size * 1024 * 1024
+                )
         ALLOWED_TAGS = ['a', 'abbr', 'b', 'i', 'code', 'p', 'br', 'h3', 'h4']
         ALLOWED_ATTRIBUTES = {
             'a': ['href', 'title', 'target'],
@@ -385,12 +399,9 @@ def guess_filename_from_url(url, allowed_exts=None):
     """
     _allowed_exts = [
         ".{}".format(e)
-        for e in (
-            allowed_exts or parse_valid_verticaline(
-                g.cfg.upload_exts
-            ) or ALLOWED_EXTS
-        )
+        for e in get_allowed_suffix()
     ]
+
     ufn = basename(urlsplit(url).path)
     if splitext(ufn)[-1] in _allowed_exts:
         return ufn
@@ -462,21 +473,20 @@ class Base64FileStorage(object):
         if self.is_base64:
             return BytesIO(self._parse.data)
 
+    @property
+    def size(self):
+        """return bytes"""
+        if self.is_base64:
+            return b64size(self._parse.data)
+
 
 class ImgUrlFileStorage(object):
     """上传接口中接受远程图片地址，会自动调用代理下载图片。"""
 
-    def __init__(self, imgurl, filename=None, allowed_exts=None):
+    def __init__(self, imgurl, filename=None):
         self._imgurl = imgurl
         self._filename = filename
-        self._allowed_exts = [
-            ".{}".format(e)
-            for e in (
-                allowed_exts or [] or parse_valid_verticaline(
-                    g.cfg.upload_exts
-                ) or ALLOWED_EXTS
-            )
-        ]
+        self._allowed_exts = [".{}".format(e) for e in get_allowed_suffix()]
         self._imgobj = self.__download()
 
     @property
@@ -490,13 +500,14 @@ class ImgUrlFileStorage(object):
                     self._imgurl,
                     method='get',
                     headers=self.Headers,
-                    timeout=15,
+                    timeout=30,
                 )
                 resp.raise_for_status()
             except (RequestException, Exception) as e:
                 logger.debug(e, exc_info=True)
             else:
-                if resp.headers["Content-Type"].split("/")[0] == "image":
+                mime = resp.headers["Content-Type"].split("/")[0]
+                if mime in ("image", "video"):
                     return resp
 
     @property
@@ -505,7 +516,7 @@ class ImgUrlFileStorage(object):
         如果给定文件名，则用，否则从url path猜测。
         猜测失败，从url query查找filename参数。
         未果，则读取图片二进制猜测格式。
-        未果，从返回标头Content-Type解析image类型。
+        未果，从返回标头Content-Type判断。
         未果，文件名后缀可能是None，将不合要求。
         """
         if not self._filename and self._imgobj:
@@ -516,7 +527,7 @@ class ImgUrlFileStorage(object):
             ext = imghdr.what(None, self._imgobj.content)
             if not ext:
                 mType, sType = self._imgobj.headers["Content-Type"].split("/")
-                if mType == "image":
+                if mType in ("image", "video"):
                     ext = sType
             self._filename = "{}.{}".format(get_current_timestamp(), ext)
         return self._filename
@@ -531,6 +542,12 @@ class ImgUrlFileStorage(object):
         f = self.filename
         if f and splitext(f)[-1] in self._allowed_exts:
             return self if self._imgobj else None
+
+    @property
+    def size(self):
+        """return bytes"""
+        if self._imgobj:
+            return int(self._imgobj.headers.get("Content-Length", 0))
 
 
 def get_upload_method(class_name):
@@ -790,6 +807,14 @@ def has_image(sha):
     return result == [True, 1]
 
 
+def get_allowed_suffix():
+    """获取允许上传的后缀（允许视频，后缀无点）"""
+    allowed = parse_valid_verticaline(g.cfg.upload_exts) or ALLOWED_EXTS
+    if is_true(g.cfg.upload_video):
+        allowed += ALLOWED_VIDEO
+    return allowed
+
+
 def allowed_suffix(filename):
     """判断filename是否匹配控制台配置的上传后缀（及默认）
 
@@ -798,7 +823,4 @@ def allowed_suffix(filename):
 
     .. versionadded:: 1.10.0
     """
-    allowed = parse_valid_verticaline(g.cfg.upload_exts) or ALLOWED_EXTS
-    if is_true(g.cfg.upload_video):
-        allowed += ALLOWED_VIDEO
-    return partial(allowed_file, suffix=allowed)(filename)
+    return partial(allowed_file, suffix=get_allowed_suffix())(filename)

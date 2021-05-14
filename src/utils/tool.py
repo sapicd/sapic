@@ -404,9 +404,11 @@ def parse_ua(user_agent):
         platform = "bot"
     else:
         platform = "other"
-    if user_agent.startswith("picbed-cli") and user_agent.endswith("amd64"):
+    if (
+        user_agent.startswith("picbed-cli") or user_agent.startswith("sapicli")
+    ) and user_agent.endswith("amd64"):
         _, _, ua_os, device = user_agent.split(" ")
-        family = "picbed-cli"
+        family = "sapicli"
     return dict(platform=platform, device=device, os=ua_os, family=family)
 
 
@@ -667,3 +669,8 @@ def parse_label(label):
     if isinstance(label, (list, tuple)):
         return label
     return []
+
+
+def b64size(b64string):
+    """获取base64内容大小，单位bytes"""
+    return (len(b64string) * 3) / 4 - b64string.count('=', -2)

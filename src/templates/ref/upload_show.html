@@ -49,24 +49,24 @@
                 </ul>
                 <div class="layui-tab-content">
                     <div class="layui-tab-item layui-show">
-                        <textarea class="layui-textarea" readonly id="url">{{ d.get_src('url') }}</textarea>
+                        <textarea class="layui-textarea" readonly id="url">{{ d.tpl.URL }}</textarea>
                         <button type="button" class="layui-btn layui-btn-sm layui-btn-fluid upload_show_copy"
                             data-copyid="#url">复制</button>
                     </div>
                     <div class="layui-tab-item">
                         <textarea class="layui-textarea" readonly
-                            id="html">&lt;img src="{{ d.get_src('html') }}" title="{{ d.title }}" alt="{{ d.filename }}"&gt;</textarea>
+                            id="html">{{ d.tpl.HTML }}</textarea>
                         <button type="button" class="layui-btn layui-btn-sm layui-btn-fluid upload_show_copy"
                             data-copyid="#html">复制</button>
                     </div>
                     <div class="layui-tab-item">
-                        <textarea class="layui-textarea" readonly id="rst">.. image:: {{ d.get_src('rst') }}</textarea>
+                        <textarea class="layui-textarea" readonly id="rst">{{ d.tpl.rST }}</textarea>
                         <button type="button" class="layui-btn layui-btn-sm layui-btn-fluid upload_show_copy"
                             data-copyid="#rst">复制</button>
                     </div>
                     <div class="layui-tab-item">
                         <textarea class="layui-textarea" readonly
-                            id="markdown">![{{ d.filename }}]({{ d.get_src('markdown') }})</textarea>
+                            id="markdown">{{ d.tpl.Markdown }}</textarea>
                         <button type="button" class="layui-btn layui-btn-sm layui-btn-fluid upload_show_copy"
                             data-copyid="#markdown">复制</button>
                     </div>

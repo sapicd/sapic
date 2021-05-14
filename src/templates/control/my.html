@@ -1652,6 +1652,8 @@
                             item = "baidu"
                         } else if (picbed.isContains(browser, "picbed-cli") === true) {
                             item = "cli"
+                        } else if (picbed.isContains(browser, "sapicli") === true) {
+                            item = "cli"
                         }
                         var icon = picbed.ITChangeMapping(item, "browser")
                         return "<attr title='" + d.uap.family + '&#10;' + d.agent + "'>" + icon + "</attr>";

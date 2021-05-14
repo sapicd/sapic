@@ -14,6 +14,7 @@ from random import choice, randint
 from posixpath import join, splitext
 from base64 import urlsafe_b64encode as b64encode
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask import Blueprint, request, g, url_for, current_app, abort, \
     make_response, jsonify, Response
@@ -52,6 +53,45 @@ def get_url_with_suffix(d, _type):
             g.userinfo.parsed_ucfg_url_rule.get(d["sender"], "")
         )
     return d["src"]
+
+
+def gen_url_tpl(data):
+    """根据图片数据返回src各种模板
+    :param dict data: image data
+    """
+    def get_video(src):
+        return (
+            "<figure>"
+            "<iframe src='%s' frameborder=0 allow='allowfullscreen'></iframe>"
+            "</figure>"
+        ) % src
+    n = data["filename"]
+    tpl = dict(
+        URL="%s" % get_url_with_suffix(data, "url"),
+    )
+    if is_true(data.get("is_video")):
+        tpl.update(
+            HTML="<video src='%s' title='%s' controls></video>" % (
+                get_url_with_suffix(data, "html"),
+                data.get("title", "")
+            ),
+            rST=".. raw:: html\n\n\t%s" % get_video(
+                get_url_with_suffix(data, "rst")
+            ),
+            Markdown=get_video(get_url_with_suffix(data, "rst")),
+        )
+    else:
+        tpl.update(
+            HTML="<img src='%s' title='%s' alt='%s'>" % (
+                get_url_with_suffix(data, "html"),
+                data.get("title", ""), n
+            ),
+            rST=".. image:: %s" % get_url_with_suffix(data, "rst"),
+            Markdown="![%s](%s)" % (
+                n, get_url_with_suffix(data, "markdown")
+            ),
+        )
+    return tpl
 
 
 @bp.after_request
@@ -988,6 +1028,7 @@ def waterfall():
                             senders=json.loads(i["senders"]),
                             ctime=int(i["ctime"]),
                             is_video=is_true(i.get("is_video")),
+                            tpl=gen_url_tpl(i),
                         )
                         if ask_albums:
                             if i.get("album") in ask_albums:
@@ -1026,21 +1067,10 @@ def shamgr(sha):
     if request.method == "GET":
         if has_image(sha):
             data = g.rc.hgetall(ik)
-            n = data["filename"]
             data.update(
                 senders=json.loads(data["senders"]) if g.is_admin else None,
                 ctime=int(data["ctime"]),
-                tpl=dict(
-                    URL="%s" % get_url_with_suffix(data, "url"),
-                    HTML="<img src='%s' title='%s' alt='%s'>" % (
-                        get_url_with_suffix(data, "html"),
-                        data.get("title", ""), n
-                    ),
-                    rST=".. image:: %s" % get_url_with_suffix(data, "rst"),
-                    Markdown="![%s](%s)" % (
-                        n, get_url_with_suffix(data, "markdown")
-                    )
-                ),
+                tpl=gen_url_tpl(data),
                 is_video=is_true(data.get("is_video")),
             )
             res.update(code=0, data=data)
@@ -1191,6 +1221,13 @@ def upload():
             raise ValueError
     except (ValueError, TypeError):
         raise ApiError("Invalid expire param")
+    #: 更新限制
+    up_size = g.cfg.upload_size
+    if up_size:
+        up_size = int(up_size)
+        current_app.config.update(
+            MAX_CONTENT_LENGTH=up_size * 1024 * 1024
+        )
     #: 尝试读取上传数据
     fp = request.files.get(FIELD_NAME)
     #: 当fp无效时尝试读取base64或url
@@ -1206,33 +1243,40 @@ def upload():
                     #: base64在部分场景发起http请求时，+可能会换成空格导致异常
                     fp = Base64FileStorage(picstrurl, filename)
                 except ValueError as e:
-                    logger.debug(e)
+                    raise ApiError(e)
+            #: check size(form is restricted by Flask)
+            size = fp.size
+            if size and size > current_app.config["MAX_CONTENT_LENGTH"]:
+                raise ApiError("the uploaded file exceeds the limit")
     if fp and allowed_suffix(fp.filename):
         stream = fp.stream.read()
         suffix = splitext(fp.filename)[-1]
         is_video = 1 if allowed_file(fp.filename, ALLOWED_VIDEO) else 0
         #: 处理图片二进制的钩子
-        for h in g.hm.get_call_list(
-            "upimg_stream_processor", _type="func"
-        ):
-            rst = g.hm.proxy(h["name"]).upimg_stream_processor(stream, suffix)
-            if isinstance(rst, dict) and rst.get("code") == 0 and \
-                    isinstance(rst.get("data"), dict) and \
-                    rst["data"].get("stream"):
-                stream = rst["data"]["stream"]
-        for h in g.hm.call(
-            "upimg_stream_interceptor",
-            _args=(stream, suffix),
-            _mode="any_false",
-        ):
-            if h.get("code") != 0:
-                res.update(
-                    msg="Interceptor processing rejection, upload aborted",
-                    errors={
-                        h["sender"]: h.get("msg")
-                    }
+        if not is_video:
+            for h in g.hm.get_call_list(
+                "upimg_stream_processor", _type="func"
+            ):
+                rst = g.hm.proxy(h["name"]).upimg_stream_processor(
+                    stream, suffix
                 )
-                return res
+                if isinstance(rst, dict) and rst.get("code") == 0 and \
+                        isinstance(rst.get("data"), dict) and \
+                        rst["data"].get("stream"):
+                    stream = rst["data"]["stream"]
+            for h in g.hm.call(
+                "upimg_stream_interceptor",
+                _args=(stream, suffix),
+                _mode="any_false",
+            ):
+                if h.get("code") != 0:
+                    res.update(
+                        msg="Interceptor processing rejection, upload aborted",
+                        errors={
+                            h["sender"]: h.get("msg")
+                        }
+                    )
+                    return res
         #: 定义图片文件名
         filename = secure_filename(fp.filename)
         if "." not in filename:
@@ -1323,11 +1367,7 @@ def upload():
             return res
         #: 存储数据
         defaultSrc = data[0]["src"]
-        pipe = g.rc.pipeline()
-        pipe.sadd(rsp("index", "global"), sha)
-        if g.signin and g.userinfo.username:
-            pipe.sadd(rsp("index", "user", g.userinfo.username), sha)
-        pipe.hmset(rsp("image", sha), dict(
+        meta = dict(
             sha=sha,
             album=album.strip(),
             filename=filename,
@@ -1344,7 +1384,12 @@ def upload():
             method=get_upload_method(fp.__class__.__name__),
             title=request.form.get("title") or "",
             is_video=is_video,
-        ))
+        )
+        pipe = g.rc.pipeline()
+        pipe.sadd(rsp("index", "global"), sha)
+        if g.signin and g.userinfo.username:
+            pipe.sadd(rsp("index", "user", g.userinfo.username), sha)
+        pipe.hmset(rsp("image", sha), meta)
         if expire > 0:
             pipe.expire(rsp("image", sha), expire)
         try:
@@ -1356,20 +1401,10 @@ def upload():
             res.update(
                 code=0,
                 filename=filename,
-                sender=data[0]["sender"],
+                sender=meta["sender"],
                 api=url_for("api.shamgr", sha=sha, _external=True),
                 sha=sha,
-                tpl=dict(
-                    URL="%s" % get_url_with_suffix(data[0], "url"),
-                    HTML="<img src='%s' title='%s' alt='%s'>" % (
-                        get_url_with_suffix(data[0], "html"),
-                        data[0].get("title", ""), filename
-                    ),
-                    rST=".. image:: %s" % get_url_with_suffix(data[0], "rst"),
-                    Markdown="![%s](%s)" % (
-                        filename, get_url_with_suffix(data[0], "markdown")
-                    )
-                ),
+                tpl=gen_url_tpl(meta),
                 is_video=is_video == 1,
             )
             #: format指定图片地址的显示字段，默认src，可以用点号指定

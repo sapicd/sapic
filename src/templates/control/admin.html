@@ -196,10 +196,10 @@
                                         </div>
                                     </div>
                                     <div class="layui-form-item">
-                                        <label class="layui-form-label">大小限制</label>
+                                        <label class="layui-form-label" title="{{ g.site.upload_size or 20 }}MB">大小限制</label>
                                         <div class="layui-input-block">
                                             <input type="number" step=1 name="upload_size" max="{{ config.MAX_UPLOAD }}" min="1"
-                                                value="{{ g.site.upload_size }}" placeholder="上传允许的大小，单位MB，默认是10"
+                                                value="{{ g.site.upload_size }}" placeholder="上传允许的大小，单位MB，默认是20"
                                                 autocomplete="off" class="layui-input">
                                         </div>
                                     </div>
@@ -671,7 +671,7 @@
         });
         //js监听键盘ctrl+s快捷键保存
         document.addEventListener('keydown', function(e){
-            if (location.hash === "#setting" && e.keyCode == 83 && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)){
+            if ((location.hash === "#setting" || location.hash === "") && e.keyCode == 83 && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)){
                 e.preventDefault();
                 document.getElementById("saveSetting").click();
             }
