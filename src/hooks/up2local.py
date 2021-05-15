@@ -9,7 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 __author__ = 'staugur'
 __description__ = '将图片保存到本地'
 __catalog__ = 'upload'
@@ -37,7 +37,7 @@ def upimg_save(**kwargs):
         upload_path = kwargs.get("upload_path") or ""
         local_basedir = get_basedir()
         if not filename or not stream or not local_basedir:
-            return ValueError
+            raise ValueError
     except (KeyError, ValueError):
         res.update(msg="Parameter error")
     else:

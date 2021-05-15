@@ -14,7 +14,6 @@ from random import choice, randint
 from posixpath import join, splitext
 from base64 import urlsafe_b64encode as b64encode
 from werkzeug.utils import secure_filename
-from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask import Blueprint, request, g, url_for, current_app, abort, \
     make_response, jsonify, Response
@@ -29,11 +28,11 @@ from utils.tool import parse_valid_comma, is_true, logger, sha1,\
     check_ir, less_latest_tag, check_url, parse_label, allowed_file, \
     ALLOWED_VIDEO
 from utils.web import dfr, admin_apilogin_required, apilogin_required, \
-    set_site_config, check_username, Base64FileStorage, change_res_format, \
+    set_site_config, check_username, Base64FileStorage, FormFileStorage, \
     ImgUrlFileStorage, get_upload_method, _pip_install, make_email_tpl, \
     generate_activate_token, check_activate_token, try_proxy_request, \
     sendmail, _pip_list, get_user_ip, has_image, guess_filename_from_url, \
-    allowed_suffix, async_sendmail
+    allowed_suffix, async_sendmail, change_res_format, up_size_limit
 from utils._compat import iteritems, thread
 from utils.exceptions import ApiError
 from config import GLOBAL
@@ -1196,7 +1195,9 @@ def upload():
     """
     res = dict(code=1, msg=None)
     #: 文件域或base64上传字段
-    FIELD_NAME = g.cfg.upload_field or "picbed"
+    FIELD_NAME = g.cfg.upload_field or request.form.get(
+        "_upload_field"
+    ) or "picbed"
     #: 匿名上传开关检测
     if not is_true(g.cfg.anonymous) and not g.signin:
         raise ApiError("Anonymous user is not sign in", 403)
@@ -1221,15 +1222,8 @@ def upload():
             raise ValueError
     except (ValueError, TypeError):
         raise ApiError("Invalid expire param")
-    #: 更新限制
-    up_size = g.cfg.upload_size
-    if up_size:
-        up_size = int(up_size)
-        current_app.config.update(
-            MAX_CONTENT_LENGTH=up_size * 1024 * 1024
-        )
     #: 尝试读取上传数据
-    fp = request.files.get(FIELD_NAME)
+    fp = FormFileStorage(request.files.get(FIELD_NAME))
     #: 当fp无效时尝试读取base64或url
     if not fp:
         picstrurl = request.form.get(FIELD_NAME)
@@ -1244,11 +1238,10 @@ def upload():
                     fp = Base64FileStorage(picstrurl, filename)
                 except ValueError as e:
                     raise ApiError(e)
-            #: check size(form is restricted by Flask)
-            size = fp.size
-            if size and size > current_app.config["MAX_CONTENT_LENGTH"]:
-                raise ApiError("the uploaded file exceeds the limit")
     if fp and allowed_suffix(fp.filename):
+        size = fp.size
+        if size and size > up_size_limit():
+            raise ApiError("the uploaded file exceeds the limit", 413)
         stream = fp.stream.read()
         suffix = splitext(fp.filename)[-1]
         is_video = 1 if allowed_file(fp.filename, ALLOWED_VIDEO) else 0

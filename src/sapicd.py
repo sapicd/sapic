@@ -3,7 +3,7 @@
 from os.path import abspath, dirname, join, exists, isdir
 from os import getenv, mkdir
 from multiprocessing import cpu_count
-from config import GLOBAL
+from config import GLOBAL, envs
 
 
 def delete_hookloadtime():
@@ -17,7 +17,7 @@ IS_RUN = True if (
 ) == "true" else False
 
 CPU_COUNT = int(
-    getenv("sapic_cpucount") or getenv("picbed_cpucount") or cpu_count()
+    envs.get("sapic_cpucount") or envs.get("picbed_cpucount") or cpu_count()
 )
 
 LOGSDIR = join(dirname(abspath(__file__)), "logs")

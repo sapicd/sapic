@@ -97,7 +97,8 @@ def handle_error(e):
     name = e.name
     if request.path.startswith("/api/"):
         return jsonify(dict(msg=name, code=code)), code
-    return render_template("public/error.html", code=code, name=name), code
+    else:
+        return render_template("public/error.html", code=code, name=name), code
 
 
 @app.errorhandler(ApiError)

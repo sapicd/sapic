@@ -11,9 +11,9 @@
 
 import json
 import imghdr
-from logging import log
 from posixpath import basename, splitext
-from os.path import join as pathjoin
+from os import remove
+from os.path import join as pathjoin, getsize
 from io import BytesIO
 from functools import wraps
 from base64 import urlsafe_b64decode as b64decode, b64decode as pic64decode
@@ -28,6 +28,7 @@ from functools import partial
 from subprocess import call, check_output
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, \
     SignatureExpired, BadSignature
+from tempfile import NamedTemporaryFile
 from libs.storage import get_storage
 from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
     parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
@@ -326,18 +327,6 @@ def get_site_config():
 def set_site_config(mapping):
     """设置站点信息"""
     if mapping and isinstance(mapping, dict):
-        #: update app config
-        up_size = mapping.get("upload_size")
-        if up_size:
-            try:
-                up_size = int(up_size)
-            except (ValueError, TypeError) as e:
-                logger.error(e)
-                raise
-            else:
-                current_app.config.update(
-                    MAX_CONTENT_LENGTH=up_size * 1024 * 1024
-                )
         ALLOWED_TAGS = ['a', 'abbr', 'b', 'i', 'code', 'p', 'br', 'h3', 'h4']
         ALLOWED_ATTRIBUTES = {
             'a': ['href', 'title', 'target'],
@@ -422,6 +411,56 @@ class JsonResponse(Response):
         return super(JsonResponse, cls).force_type(rv, environ)
 
 
+class FormFileStorage(object):
+
+    def __init__(self, fp):
+        self._fp = fp
+        self._filename = None
+        self._tmppath = None
+        self._stream = None
+        self._size = 0
+        self.__parse()
+
+    def __parse(self):
+        if self._fp:
+            self._filename = self._fp.filename
+            with NamedTemporaryFile(prefix="sapic", delete=False) as fp:
+                self._tmppath = fp.name
+                self._fp.save(fp.name)
+            self._size = getsize(self._tmppath)
+            with open(self._tmppath, "rb") as fp:
+                self._stream = BytesIO(fp.read())
+            remove(self._tmppath)
+
+    @property
+    def mimetype(self):
+        if self._fp:
+            return self._fp.mimetype
+
+    @property
+    def filename(self):
+        return self._filename
+
+    @property
+    def stream(self):
+        return self._stream
+
+    @property
+    def size(self):
+        """return bytes"""
+        return self._size
+
+    def __bool__(self):
+        return bool(self._filename)
+
+    def __repr__(self):
+        return "<%s: %r (%d)>" % (
+            self.__class__.__name__,
+            self._filename,
+            self._size,
+        )
+
+
 class Base64FileStorage(object):
     """上传接口中接受base64编码的图片。
 
@@ -478,6 +517,9 @@ class Base64FileStorage(object):
         """return bytes"""
         if self.is_base64:
             return b64size(self._parse.data)
+
+    def __bool__(self):
+        return self.is_base64
 
 
 class ImgUrlFileStorage(object):
@@ -549,9 +591,12 @@ class ImgUrlFileStorage(object):
         if self._imgobj:
             return int(self._imgobj.headers.get("Content-Length", 0))
 
+    def __bool__(self):
+        return True if self._imgobj else False
+
 
 def get_upload_method(class_name):
-    if class_name == "FileStorage":
+    if class_name in ("FileStorage", "FormFileStorage"):
         return "file"
     elif class_name == "ImgUrlFileStorage":
         return "url"
@@ -788,12 +833,14 @@ def get_push_msg():
 
 def get_user_ip():
     """首先从HTTP标头的X-Forwarded-For获取代理IP，其次获取X-Real-IP，最后是客户端IP"""
+    ip = None
     if request.headers.get('X-Forwarded-For'):
-        return request.headers['X-Forwarded-For']
+        ip = request.headers['X-Forwarded-For']
     elif request.headers.get('X-Real-IP'):
-        return request.headers.get('X-Real-IP')
+        ip = request.headers.get('X-Real-IP')
     else:
-        return request.remote_addr
+        ip = request.remote_addr
+    return ip or ""
 
 
 def has_image(sha):
@@ -824,3 +871,16 @@ def allowed_suffix(filename):
     .. versionadded:: 1.10.0
     """
     return partial(allowed_file, suffix=get_allowed_suffix())(filename)
+
+
+def up_size_limit():
+    limit = current_app.config["MAX_UPLOAD"]
+    up_size = g.cfg.upload_size
+    if up_size:
+        try:
+            up_size = int(up_size)
+        except (ValueError, TypeError):
+            pass
+        else:
+            limit = up_size
+    return limit * 1024 * 1024

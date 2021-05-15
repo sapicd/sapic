@@ -9,7 +9,7 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 __author__ = 'staugur <staugur@saintic.com>'
 __hookname__ = 'up2github'
 __description__ = '将图片保存到GitHub'
@@ -88,7 +88,7 @@ def upimg_save(**kwargs):
         stream = kwargs["stream"]
         upload_path = kwargs.get("upload_path") or ""
         if not filename or not stream:
-            return ValueError
+            raise ValueError
     except (KeyError, ValueError):
         res.update(msg="Parameter error")
     else:
