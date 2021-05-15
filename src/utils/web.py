@@ -412,6 +412,7 @@ class JsonResponse(Response):
 
 
 class FormFileStorage(object):
+    """通过表单上传文件"""
 
     def __init__(self, fp):
         self._fp = fp
@@ -475,6 +476,7 @@ class Base64FileStorage(object):
         self._parse = parse_data_uri(self._b64str)
         if self.is_base64:
             try:
+                #: now data change to binary
                 self._parse["data"] = pic64decode(self._parse.data)
             except (BaseDecodeError, TypeError, ValueError):
                 raise ValueError("The attempt to decode the image failed")
@@ -498,7 +500,7 @@ class Base64FileStorage(object):
             ext = imghdr.what(None, self._parse.data)
             if not ext and self.mimetype:
                 mType, sType = self.mimetype.split("/")
-                if mType == "image":
+                if mType == "image":  # without parse video
                     ext = sType
             self._filename = "{}.{}".format(get_current_timestamp(), ext)
         return self._filename
@@ -516,7 +518,7 @@ class Base64FileStorage(object):
     def size(self):
         """return bytes"""
         if self.is_base64:
-            return b64size(self._parse.data)
+            return b64size(self._b64str)
 
     def __bool__(self):
         return self.is_base64

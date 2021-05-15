@@ -69,7 +69,7 @@ Gitee：https://gitee.com/staugur/picbed
 
 3. API
 
-  - 基于api的上传接口，支持通过文件域、base64（允许Data URI形式）、Image URL上传
+  - 基于api的上传接口，支持通过文件域、base64（允许Data URI形式）、URL上传
   - 可定制的api响应数据[及字段]及中英错误消息提示
   - 支持Token以及更安全的基于Token的LinkToken调用api
   - 外部网站通过按钮一键上传的插件

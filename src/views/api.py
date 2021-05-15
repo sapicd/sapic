@@ -1223,9 +1223,11 @@ def upload():
     except (ValueError, TypeError):
         raise ApiError("Invalid expire param")
     #: 尝试读取上传数据
-    fp = FormFileStorage(request.files.get(FIELD_NAME))
+    fp = request.files.get(FIELD_NAME)
     #: 当fp无效时尝试读取base64或url
-    if not fp:
+    if fp:
+        fp = FormFileStorage(fp)
+    else:
         picstrurl = request.form.get(FIELD_NAME)
         filename = secure_filename(request.form.get("filename") or "")
         if picstrurl:

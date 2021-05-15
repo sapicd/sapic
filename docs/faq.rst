@@ -57,3 +57,8 @@ ps：docker-compose用户可以在docker-compose.yml中添加以下变量再构�
 .. code-block::
 
     - picbed_secretkey = abcdefg
+
+6. 能上传视频吗
+-----------------
+
+v1.13.0支持，进入beta，可由后台开启。

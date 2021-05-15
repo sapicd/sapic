@@ -4,6 +4,31 @@
 更新日志
 =========
 
+v1.13.0
+--------
+
+Released in 2021-05-15
+
+功能：
+  - 管理员控制台 `Ctrl/Command + S` 快捷键保存配置
+  - 关于本站：公开了部分公共信息
+  - 上传字段用户可由 `_upload_field` 自行指定。
+  - 上传视频功能（及周边兼容），api、cli、homepage均支持
+
+优化：
+  - 上传大小限制，后端接口实现
+
+更改：
+  - 部分picbed字样更改为sapic
+    - 更新文档
+    - 更新hook
+    - 配置读取环境变量时兼容sapic前缀
+    - docker镜像同时上传 staugur/picbed 和 staugur/sapic
+  - cli客户端命令行工具兼容
+
+修复：
+  - 尝试性修复 nginx with docker 模式下 local 生成 https url 问题（感谢@Nestle）
+
 v1.12.0
 --------
 

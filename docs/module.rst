@@ -26,6 +26,10 @@ Modules API
 
     默认允许上传的图片后缀
 
+.. data:: ALLOWED_VIDEO
+
+    允许上传的视频后缀
+
 .. autofunction:: rsp
 
 .. autofunction:: md5
@@ -65,6 +69,8 @@ Modules API
 .. autofunction:: bleach_html
 
 .. autofunction:: is_valid_verion
+
+.. autofunction:: b64size
 
 .. autoclass:: Mailbox
     :members:
@@ -114,6 +120,8 @@ Modules API
 
 .. autofunction:: guess_filename_from_url
 
+.. autofunction:: get_allowed_suffix
+
 .. autofunction:: allowed_suffix
 
 .. autoclass:: Base64FileStorage
@@ -121,6 +129,10 @@ Modules API
     :undoc-members:
 
 .. autoclass:: ImgUrlFileStorage
+    :members:
+    :undoc-members:
+
+.. autoclass:: FormFileStorage
     :members:
     :undoc-members:
 

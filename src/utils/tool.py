@@ -174,6 +174,8 @@ def get_today(fmt="%Y/%m/%d"):
 
 
 def allowed_file(filename, suffix=None):
+    if not filename:
+        return False
     suffix = set(suffix or ALLOWED_EXTS)
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in suffix

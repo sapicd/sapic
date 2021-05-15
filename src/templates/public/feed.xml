@@ -10,7 +10,7 @@
         <link>{{ i.src }}</link>
         <description>
             {% if is_true(i.is_video) -%}
-            <![CDATA[<video src="{{ i.src }}" controls style="top:0; left:0; max-width:80px;padding-top:61px;"></video>]]>
+            <![CDATA[<video src="{{ i.src }}" controls></video>]]>
             {% else %}
             <![CDATA[<img src="{{ i.src }}">]]>
             {% endif %}

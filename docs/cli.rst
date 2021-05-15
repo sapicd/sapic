@@ -23,6 +23,10 @@ cli.py的使用说明仍然可以 :doc:`在这里 <cli-py>` 找到。
     为适应 v1.12.0 正式名称 sapic ，此 picbed-cli 命令行客户端程序自 v0.5 同步改名
     为 sapicli ，源码仓库是： https://github.com/sapicd/cli
 
+.. versionchanged:: 0.5.2
+
+    发版时tag增加 `v` 前缀，以便 go module 使用。
+
 不同点
 -------
 
@@ -89,26 +93,26 @@ ps: 上述github页面如果访问速度不佳，可以点击下列文件名下�
 ======================================= ================================
 文件名                                   MD5
 ======================================= ================================
-picbed-cli.0.4.0-linux-amd64.tar.gz_    82bf4fb8bd683336af782e85fef1dbf0
-picbed-cli.0.4.0-darwin-amd64.tar.gz_   128f9b94306764cdb902b153da9cdfdb
-picbed-cli.0.4.0-windows-amd64.zip_     d46702262048143b211839ed3d53a8a2
+sapicli.0.5.2-linux-amd64.tar.gz_       9f0d49c7bee77ac2b631f8aba006a3a5
+sapicli.0.5.2-darwin-amd64.tar.gz_      ea51cfe839d64b9189ce1e2ddf42dde6
+sapicli.0.5.2-windows-amd64.zip_        88bb1637c10afed5d974e73bc0e36b13
 
-picbed-cli.0.4.2-linux-amd64.tar.gz_    2d95386da32ac1a7e81247f325468847
-picbed-cli.0.4.2-darwin-amd64.tar.gz_   f59a03443e70341fb925b63d3dcaf482
-picbed-cli.0.4.2-windows-amd64.zip_     d70185370d6658e9a8b37fcd9323ef74
+sapicli.0.5.1-linux-amd64.tar.gz_       f105234f5b229cbde29401a63a992d4f
+sapicli.0.5.1-darwin-amd64.tar.gz_      41712bcf7b0f31c4bdb3446d7643a850
+sapicli.0.5.1-windows-amd64.zip_        a7185dc5a514d0a436fe7dc7db499230
 
 sapicli.0.5.0-linux-amd64.tar.gz_       fc02ddd2276f0d099c9b8419f6ff1ceb
 sapicli.0.5.0-darwin-amd64.tar.gz_      e92461ae95c8bd8050b06bb94e14d44f
 sapicli.0.5.0-windows-amd64.zip_        5058890071c24e121f6109d3087eccaf
 ======================================= ================================
 
-.. _picbed-cli.0.4.0-linux-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.0-linux-amd64.tar.gz
-.. _picbed-cli.0.4.0-darwin-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.0-darwin-amd64.tar.gz
-.. _picbed-cli.0.4.0-windows-amd64.zip: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.0-windows-amd64.zip
+.. _sapicli.0.5.2-linux-amd64.tar.gz: https://static.saintic.com/download/sapicli/sapicli.0.5.2-linux-amd64.tar.gz
+.. _sapicli.0.5.2-darwin-amd64.tar.gz: https://static.saintic.com/download/sapicli/sapicli.0.5.2-darwin-amd64.tar.gz
+.. _sapicli.0.5.2-windows-amd64.zip: https://static.saintic.com/download/sapicli/sapicli.0.5.2-windows-amd64.zip
 
-.. _picbed-cli.0.4.2-linux-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.2-linux-amd64.tar.gz
-.. _picbed-cli.0.4.2-darwin-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.2-darwin-amd64.tar.gz
-.. _picbed-cli.0.4.2-windows-amd64.zip: https://static.saintic.com/download/picbed-cli/picbed-cli.0.4.2-windows-amd64.zip
+.. _sapicli.0.5.1-linux-amd64.tar.gz: https://static.saintic.com/download/sapicli/sapicli.0.5.1-linux-amd64.tar.gz
+.. _sapicli.0.5.1-darwin-amd64.tar.gz: https://static.saintic.com/download/sapicli/sapicli.0.5.1-darwin-amd64.tar.gz
+.. _sapicli.0.5.1-windows-amd64.zip: https://static.saintic.com/download/sapicli/sapicli.0.5.1-windows-amd64.zip
 
 .. _sapicli.0.5.0-linux-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/sapicli.0.5.0-linux-amd64.tar.gz
 .. _sapicli.0.5.0-darwin-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/sapicli.0.5.0-darwin-amd64.tar.gz
@@ -133,7 +137,7 @@ sapicli.0.5.0-windows-amd64.zip_        5058890071c24e121f6109d3087eccaf
                       [-d DESC] [-e EXPIRE] [-s STYLE] [-c {url,md,rst}]
                       file [file ...]
 
-    Doc to https://picbed.rtfd.vip/cli.html
+    Doc to https://sapic.rtfd.vip/cli.html
     Git to https://github.com/sapicd/cli
 
     positional arguments:
@@ -143,12 +147,12 @@ sapicli.0.5.0-windows-amd64.zip_        5058890071c24e121f6109d3087eccaf
       -h, --help            show this help message and exit
       -v, --version         show cli version and exit
       -i, --info            show full info and exit
-      -u, --picbed-url PICBED_URL
-                            The picbed upload api url.
-                            Or use environment variable: picbed_cli_apiurl
-      -t, --picbed-token PICBED_TOKEN
-                            The picbed LinkToken.
-                            Or use environment variable: picbed_cli_apitoken
+      -u, --sapic-url SAPIC_URL
+                            The sapic upload api url.
+                            Or use environment variable: sapicli_apiurl
+      -t, --sapic-token SAPIC_TOKEN
+                            The sapic LinkToken.
+                            Or use environment variable: sapicli_apitoken
       -a, --album ALBUM     Set image album
       -d, --desc DESC       Set image title(description)
       -e, --expire EXPIRE   Set image expire(seconds)
@@ -160,12 +164,12 @@ sapicli.0.5.0-windows-amd64.zip_        5058890071c24e121f6109d3087eccaf
                             for win/mac/linux.
                             By the way, md=markdown, rst=reStructuredText
 
--u: 指定图床的服务地址，http[s]://你的picbed域名[/api/upload]
-    - 可以通过环境变量 **picbed_cli_apiurl** 设定
+-u: 指定图床的服务地址，http[s]://你的picbed(sapic)域名[/api/upload]
+    - 可以通过环境变量 **picbed_cli_apiurl** 或 **sapicli_apiurl** 设定
     - 可以省略http，可以省略末尾/api/upload
 
 -t: 设置LinkToken用以认证、授权，要求拥有 ``api.upload`` 的 ``post`` 权限
-    可以通过环境变量 **picbed_cli_apitoken** 设定
+    可以通过环境变量 **picbed_cli_apitoken** 或 **sapicli_apitoken** 设定
 
 -a: 设置相册名（可以覆盖LinkToken设置的默认相册）
 
