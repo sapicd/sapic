@@ -597,6 +597,10 @@ RESTful API
 
   目前仅支持通过接口方式，提交JSON数组。
 
+  .. versionchanged:: 1.13.1
+
+    兼容了视频导入
+
   :reqjsonarr str url: 图片地址
   :reqjsonarr str filename: 图片文件名[建议填写]
   :reqjsonarr str title: 描述[可选]

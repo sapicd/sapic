@@ -1726,7 +1726,7 @@ def report(classify):
 @bp.route("/load", methods=["POST"])
 @apilogin_required
 def load():
-    """把图片导入系统"""
+    """把图片/视频导入系统"""
     res = dict(code=1)
     #: 应该提交JSON数据，是一个数组，元素是字典对象
     #: 其字段必须有url，建议filename，可选title、album
@@ -1773,6 +1773,7 @@ def load():
                 ),
                 method="load",
                 title=img.get("title") or "",
+                is_video=1 if allowed_file(filename, ALLOWED_VIDEO) else 0,
             ))
             try:
                 pipe.execute()

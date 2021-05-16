@@ -178,12 +178,12 @@ def before_request():
                     #: 权限校验规则
                     if verify_rule(Ld):
                         authorization = "ok"
-                        logger.info("LinkToken ok and permission pass")
+                        logger.debug("LinkToken ok and permission pass")
                         g.up_album = Ld.get("album")
                         token = userinfo[0]
                     else:
                         authorization = "fail"
-                        logger.info("LinkToken ok and permission deny")
+                        logger.debug("LinkToken ok and permission deny")
                 else:
                     authentication = "fail"
                     authorization = "fail"

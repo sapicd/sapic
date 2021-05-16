@@ -1,8 +1,3 @@
-# -- base python --
-FROM python:3.7-alpine AS base
-LABEL maintainer=me@tcw.im
-WORKDIR /picbed
-
 # -- build dependencies with alpine --
 #FROM python:3.7-alpine AS build
 #ARG ALPINEMIRROR=dl-cdn.alpinelinux.org
@@ -15,12 +10,13 @@ WORKDIR /picbed
 
 # -- build dependencies with debian --
 FROM python:3.7-slim AS build
+LABEL maintainer=me@tcw.im
 ARG PIPMIRROR=https://pypi.org/simple
 COPY requirements /requirements
 RUN pip install --timeout 30 --index $PIPMIRROR --user --no-cache-dir --no-warn-script-location -r /requirements/all.txt
 
 # -- app environment --
-FROM base
+FROM python:3.7-alpine
 ENV LOCAL_PKG="/root/.local"
 ENV sapic_isrun=true
 COPY --from=build ${LOCAL_PKG} ${LOCAL_PKG}
