@@ -135,7 +135,7 @@ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmi
 
 ## 演示站
 
-http://demo.picbed.pro
+http://demo.sapicd.com
 
 测试账号及密码：demo 123456（请勿修改）
 

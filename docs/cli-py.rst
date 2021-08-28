@@ -175,7 +175,7 @@ shell选择 **/bin/bash** ，传递输入选择 **作为自变量** ，脚本内
 
 .. code-block:: bash
 
-    python ~/code/picbed/cli/cli.py -u https://picbed.pro -t xxx -c md "$@"
+    python ~/code/picbed/cli/cli.py -u https://sapicd.com -t xxx -c md "$@"
 
 ps: cli.py需要下载到本地，路径自适应修改。
 

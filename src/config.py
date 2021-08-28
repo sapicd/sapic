@@ -17,38 +17,32 @@ envs = Properties(join(dirname(__file__), ".cfg"), from_env=True)
 
 
 GLOBAL = {
-
     "ProcessName": "sapic",
     # 自定义进程名(setproctitle)
-
-    "Host": envs.get("sapic_host", envs.get("picbed_host", "127.0.0.1")),
+    "Host": envs.get("sapic_host", envs.get("picbed_host", "0.0.0.0")),
     # 监听地址
-
     "Port": int(envs.get("sapic_port", envs.get("picbed_port", 9514))),
     # 监听端口
-
     "LogLevel": envs.get(
         "sapic_loglevel", envs.get("picbed_loglevel", "DEBUG")
     ),
     # 应用日志记录级别, 依次为 DEBUG, INFO, WARNING, ERROR, CRITICAL.
-
-    "HookReloadTime": int(envs.get(
-        "sapic_hookreloadtime",
-        envs.get("picbed_hookreloadtime", 600)
-    )),
+    "HookReloadTime": int(
+        envs.get(
+            "sapic_hookreloadtime", envs.get("picbed_hookreloadtime", 600)
+        )
+    ),
     # 钩子管理器默认重载时间，单位：秒
-
     "SecretKey": envs.get(
         "sapic_secretkey",
         envs.get(
             "picbed_secretkey", "BD1E2CF7DF9CD6971D641C115EE72871BEDA2806"
-        )
+        ),
     ),
     # Web应用固定密钥
-
-    "MaxUpload": int(envs.get(
-        "sapic_maxupload", envs.get("picbed_maxupload", 20)
-    )),
+    "MaxUpload": int(
+        envs.get("sapic_maxupload", envs.get("picbed_maxupload", 20))
+    ),
     # 上传最大容量限制，单位MB
 }
 
@@ -65,10 +59,13 @@ REDIS = envs.get("sapic_redis_url", envs.get("picbed_redis_url"))
 
 if __name__ == "__main__":
     from json import dumps
-    print(dumps(
-        {
-            "global": GLOBAL,
-            "redis": REDIS,
-        },
-        indent=4
-    ))
+
+    print(
+        dumps(
+            {
+                "global": GLOBAL,
+                "redis": REDIS,
+            },
+            indent=4,
+        )
+    )

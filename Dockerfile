@@ -23,6 +23,7 @@ COPY --from=build ${LOCAL_PKG} ${LOCAL_PKG}
 RUN ln -sf ${LOCAL_PKG}/bin/flask ${LOCAL_PKG}/bin/gunicorn /bin/ && \
     ln -sf $(which python) /python && \
     sed -i "s#$(which python)#/python#" /bin/gunicorn
-COPY src /picbed
 WORKDIR /picbed
+COPY src /picbed
+EXPOSE 9514
 ENTRYPOINT ["gunicorn", "app:app", "-c", "sapicd.py"]

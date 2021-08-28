@@ -300,7 +300,7 @@ NO.4 演示站
 
 目前在国内部署了一个演示站，使用最新代码测试新功能，服务地址是：
 
-    http://demo.picbed.pro
+    http://demo.sapicd.com
 
     测试账号及密码：demo 123456
 
