@@ -9,16 +9,25 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.3.4'
-__author__ = 'staugur'
-__description__ = '使用Token验证Api'
-__catalog__ = 'auth'
+__version__ = "0.3.4"
+__author__ = "staugur"
+__description__ = "使用Token验证Api"
+__catalog__ = "auth"
 
 import json
 from flask import request, g
 from base64 import urlsafe_b64decode as b64decode
-from utils.tool import rsp, hmac_sha256, logger, get_current_timestamp, \
-    parse_valid_comma, Attribution, ALLOWED_RULES, is_true, parse_ua
+from utils.tool import (
+    rsp,
+    hmac_sha256,
+    logger,
+    get_current_timestamp,
+    parse_valid_comma,
+    Attribution,
+    ALLOWED_RULES,
+    is_true,
+    parse_ua,
+)
 from utils._compat import PY2, text_type
 
 intpl_profile = """
@@ -59,11 +68,11 @@ def get_origin():
 
 
 def get_ip():
-    return request.headers.get('X-Real-Ip', request.remote_addr)
+    return request.headers.get("X-Real-Ip", request.remote_addr)
 
 
 def get_ua():
-    return request.headers.get('User-Agent', '')
+    return request.headers.get("User-Agent", "")
 
 
 def _parse_ir(ir):
@@ -89,7 +98,9 @@ def _allow_ir(ir, allow):
         #: 只有用户定义了参数的安全项时才判断访问合法性
         if allow[opt].secure:
             cmd[opt] = "('%s' %s %s)" % (
-                allow[opt].access, rules.get(opt, "in"), allow[opt].secure
+                allow[opt].access,
+                rules.get(opt, "in"),
+                allow[opt].secure,
             )
         else:
             cmd[opt] = "True"
@@ -98,28 +109,35 @@ def _allow_ir(ir, allow):
 
 def verify_rule(Ld):
     """根据er、ir规则判断是否放行请求"""
-    allow = Attribution(dict(
-        ip=Attribution(dict(
-            access=get_ip(),
-            secure=parse_valid_comma(Ld["allow_ip"]) or []
-        )),
-        origin=Attribution(dict(
-            access=get_origin(),
-            secure=parse_valid_comma(Ld["allow_origin"]) or []
-        )),
-        ep=Attribution(dict(
-            access=request.endpoint,
-            secure=parse_valid_comma(Ld["allow_ep"]) + ["api.index"]
-        )),
-        method=Attribution(dict(
-            access=request.method,
-            secure=[
-                m.upper()
-                for m in parse_valid_comma(Ld["allow_method"]) or []
-                if m
-            ]
-        ))
-    ))
+    allow = Attribution(
+        dict(
+            ip=Attribution(
+                dict(access=get_ip(), secure=parse_valid_comma(Ld["allow_ip"]) or [])
+            ),
+            origin=Attribution(
+                dict(
+                    access=get_origin(),
+                    secure=parse_valid_comma(Ld["allow_origin"]) or [],
+                )
+            ),
+            ep=Attribution(
+                dict(
+                    access=request.endpoint,
+                    secure=parse_valid_comma(Ld["allow_ep"]) + ["api.index"],
+                )
+            ),
+            method=Attribution(
+                dict(
+                    access=request.method,
+                    secure=[
+                        m.upper()
+                        for m in parse_valid_comma(Ld["allow_method"]) or []
+                        if m
+                    ],
+                )
+            ),
+        )
+    )
     #: 参数 逻辑运算符 参数 逻辑运算符 参数...
     #: 参数: origin and ip and ep and method
     #: 逻辑运算符: and or not in not in
@@ -191,19 +209,21 @@ def before_request():
                 if is_true(userinfo[1]):
                     g.rc.lpush(
                         rsp("report", "linktokens", usr),
-                        json.dumps(dict(
-                            LinkId=LinkId,
-                            user=usr,
-                            ctime=get_current_timestamp(),
-                            ip=get_ip(),
-                            agent=get_ua(),
-                            uap=parse_ua(get_ua()),
-                            referer=request.headers.get('Referer', ''),
-                            origin=get_origin(),
-                            ep=request.endpoint,
-                            authentication=authentication,
-                            authorization=authorization,
-                        ))
+                        json.dumps(
+                            dict(
+                                LinkId=LinkId,
+                                user=usr,
+                                ctime=get_current_timestamp(),
+                                ip=get_ip(),
+                                agent=get_ua(),
+                                uap=parse_ua(get_ua()),
+                                referer=request.headers.get("Referer", ""),
+                                origin=get_origin(),
+                                ep=request.endpoint,
+                                authentication=authentication,
+                                authorization=authorization,
+                            )
+                        ),
                     )
     if token:
         try:
@@ -228,13 +248,15 @@ def before_request():
                 if userinfo and userstatus != 0:
                     pwd = userinfo.pop("password", None)
                     tkey = userinfo.pop("token_key", None)
-                    if hmac_sha256(pwd, usr) == sig or \
-                            (tkey and hmac_sha256(tkey, usr) == sig):
+                    if hmac_sha256(pwd, usr) == sig or (
+                        tkey and hmac_sha256(tkey, usr) == sig
+                    ):
                         g.signin = True
                         g.userinfo = userinfo
                         #: token验证通过，判断是否禁止普通用户登录
-                        if is_true(g.cfg.disable_login) and \
-                                not is_true(userinfo.get("is_admin")):
+                        if is_true(g.cfg.disable_login) and not is_true(
+                            userinfo.get("is_admin")
+                        ):
                             g.signin = False
                             g.userinfo = {}
 

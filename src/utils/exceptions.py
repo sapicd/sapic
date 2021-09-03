@@ -12,6 +12,7 @@
 
 class PicbedError(Exception):
     """异常基类"""
+
     pass
 
 
@@ -52,4 +53,5 @@ class PageError(ApiError):
 
     .. versionadded:: 1.9.0
     """
+
     pass

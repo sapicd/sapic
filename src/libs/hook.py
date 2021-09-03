@@ -13,21 +13,29 @@ import warnings
 from time import time
 from sys import modules
 from os import listdir, getpid
-from os.path import join, dirname, abspath, isdir, isfile, splitext, basename,\
-    getmtime
+from os.path import join, dirname, abspath, isdir, isfile, splitext, basename, getmtime
 from jinja2 import ChoiceLoader, FileSystemLoader, PackageLoader
-from flask import render_template, render_template_string, Markup, abort, \
-    send_from_directory, url_for
-from utils.tool import Attribution, is_valid_verion, is_match_appversion, \
-    logger, parse_author_mail
-from utils._compat import string_types, integer_types, iteritems, text_type, \
-    PY2
+from flask import (
+    render_template,
+    render_template_string,
+    Markup,
+    abort,
+    send_from_directory,
+    url_for,
+)
+from utils.tool import (
+    Attribution,
+    is_valid_verion,
+    is_match_appversion,
+    logger,
+    parse_author_mail,
+)
+from utils._compat import string_types, integer_types, iteritems, text_type, PY2
 from config import GLOBAL
 from .storage import get_storage
 
 
 class HookManager(object):
-
     def __init__(
         self,
         app=None,
@@ -63,19 +71,21 @@ class HookManager(object):
             es=self.emit_assets,
         )
         #: Custom add multiple template folders.
-        app.jinja_loader = ChoiceLoader([
-            app.jinja_loader,
-            FileSystemLoader(self.__get_valid_tpl),
-        ])
+        app.jinja_loader = ChoiceLoader(
+            [
+                app.jinja_loader,
+                FileSystemLoader(self.__get_valid_tpl),
+            ]
+        )
         #: Add a static rule for plugins
         app.add_url_rule(
-            '{}/<hook_name>/<path:filename>'.format(self.__static_url_path),
+            "{}/<hook_name>/<path:filename>".format(self.__static_url_path),
             endpoint=self.__static_endpoint,
             view_func=self._send_static_file,
         )
         #: register extension with app
-        app.extensions = getattr(app, 'extensions', None) or {}
-        app.extensions['hookmanager'] = self
+        app.extensions = getattr(app, "extensions", None) or {}
+        app.extensions["hookmanager"] = self
         self.app = app
 
     @property
@@ -101,7 +111,7 @@ class HookManager(object):
     @__last_load_time.deleter
     def __last_load_time(self):
         if "hookloadtime" in self.__storage.list:
-            del self.__storage['hookloadtime']
+            del self.__storage["hookloadtime"]
 
     def __del__(self):
         del self.__last_load_time
@@ -142,9 +152,9 @@ class HookManager(object):
         d = "DISABLED.%s" % name
         e = "ENABLED.%s" % name
         if e in s:
-            return 'enabled'
+            return "enabled"
         elif d in s:
-            return 'disabled'
+            return "disabled"
         else:
             return None
 
@@ -185,15 +195,14 @@ class HookManager(object):
                     if fm in modules:
                         #: The mtime timestamp of the file when the module
                         #: was first imported.
-                        if getattr(modules[fm], '__mtime__', 0) < getmtime(fa):
+                        if getattr(modules[fm], "__mtime__", 0) < getmtime(fa):
                             del modules[fm]
                     try:
                         fo = __import__(fm, fromlist=[self.__hook_dir])
                     except ImportError as e:
                         logger.error(e, exc_info=True)
                         continue
-                    if hasattr(fo, "__version__") and \
-                            hasattr(fo, "__author__"):
+                    if hasattr(fo, "__version__") and hasattr(fo, "__author__"):
                         fo.__mtime__ = getmtime(fa)
                         fo.__family__ = "local"
                         self.__hooks[fm] = self.__get_meta(fo)
@@ -204,7 +213,7 @@ class HookManager(object):
                 #: hn: the name of the hook module that can be imported
                 if hn in modules:
                     hm = modules[hn]
-                    if getattr(hm, '__mtime__', 0) < getmtime(
+                    if getattr(hm, "__mtime__", 0) < getmtime(
                         self.__get_fileorparent(hm)
                     ):
                         del modules[hn]
@@ -234,34 +243,34 @@ class HookManager(object):
     def __get_meta(self, f_obj):
         #: 钩子友好的可见名，非模块名
         name = getattr(
-            f_obj, "__hookname__", f_obj.__name__.split('.')[-1],
+            f_obj,
+            "__hookname__",
+            f_obj.__name__.split(".")[-1],
         )
         state = self.__get_state_storage(name)
         if state is None:
             state = getattr(f_obj, "__state__", "enabled")
         (author, mail) = parse_author_mail(f_obj.__author__)
-        return Attribution({
-            "author": author,
-            "email": mail,
-            "version": f_obj.__version__,
-            "appversion": getattr(f_obj, "__appversion__", None),
-            "description": getattr(f_obj, "__description__", None),
-            "state": state,
-            "name": name,
-            "proxy": f_obj,
-            "time": time(),
-            "catalog": getattr(f_obj, "__catalog__", None),
-            "tplpath": join(self.__get_fileorparent(f_obj, True), "templates"),
-            "atspath": join(self.__get_fileorparent(f_obj, True), "static"),
-        })
+        return Attribution(
+            {
+                "author": author,
+                "email": mail,
+                "version": f_obj.__version__,
+                "appversion": getattr(f_obj, "__appversion__", None),
+                "description": getattr(f_obj, "__description__", None),
+                "state": state,
+                "name": name,
+                "proxy": f_obj,
+                "time": time(),
+                "catalog": getattr(f_obj, "__catalog__", None),
+                "tplpath": join(self.__get_fileorparent(f_obj, True), "templates"),
+                "atspath": join(self.__get_fileorparent(f_obj, True), "static"),
+            }
+        )
 
     @property
     def __get_valid_tpl(self):
-        return [
-            h.tplpath
-            for h in self.get_all_hooks
-            if isdir(h.tplpath)
-        ]
+        return [h.tplpath for h in self.get_all_hooks if isdir(h.tplpath)]
 
     @property
     def get_all_hooks(self):
@@ -309,19 +318,13 @@ class HookManager(object):
     @property
     def get_enabled_hooks(self):
         """Get all enabled hooks, return list"""
-        return [
-            h
-            for h in self.get_all_hooks
-            if h.state == 'enabled'
-        ]
+        return [h for h in self.get_all_hooks if h.state == "enabled"]
 
     @property
     def get_enabled_map_hooks(self):
         """Get map enabled hooks, return dict"""
         return {
-            name: h
-            for name, h in iteritems(self.get_map_hooks)
-            if h.state == 'enabled'
+            name: h for name, h in iteritems(self.get_map_hooks) if h.state == "enabled"
         }
 
     def disable(self, name):
@@ -346,7 +349,7 @@ class HookManager(object):
         """
         if third_hook_module_name:
             self.__third_hooks = third_hook_module_name
-            if hasattr(self, 'app'):
+            if hasattr(self, "app"):
                 self.app.jinja_loader.loaders.append(
                     PackageLoader(third_hook_module_name)
                 )
@@ -376,9 +379,7 @@ class HookManager(object):
             if name in self.get_map_hooks:
                 return self.get_map_hooks[name]["proxy"]
 
-    def get_call_list(
-        self, _callname, _include=None, _exclude=None, _type='all'
-    ):
+    def get_call_list(self, _callname, _include=None, _exclude=None, _type="all"):
         """获取所有启用钩子的某个类型对应的方法/变量"""
         hooks = []
         for h in sorted(self.get_enabled_hooks, key=lambda h: h.name):
@@ -444,8 +445,7 @@ class HookManager(object):
             func = getattr(h.proxy, _funcname, None)
             if callable(func):
                 try:
-                    if isinstance(_args, (list, tuple)) and \
-                            isinstance(_kwargs, dict):
+                    if isinstance(_args, (list, tuple)) and isinstance(_kwargs, dict):
                         result = func(*_args, **_kwargs)
                     elif isinstance(_kwargs, dict):
                         result = func(**_kwargs)

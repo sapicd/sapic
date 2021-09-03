@@ -9,18 +9,21 @@ from utils.cli import exec_createuser
 
 
 class AppTest(unittest.TestCase):
-
     def setUp(self):
-        app.config['TESTING'] = True
+        app.config["TESTING"] = True
         self.client = app.test_client()
         self.app = app
 
     def login(self, username, password):
-        return self.client.post('/api/login', data=dict(
-            username=username,
-            password=password,
-            set_state=True,
-        ), follow_redirects=False)
+        return self.client.post(
+            "/api/login",
+            data=dict(
+                username=username,
+                password=password,
+                set_state=True,
+            ),
+            follow_redirects=False,
+        )
 
     def logout(self):
         self.client.get("/logout", follow_redirects=True)
@@ -84,22 +87,18 @@ class AppTest(unittest.TestCase):
         rv = self.login(user, pwd)
         self.assertIn(b"sid", rv.data)
 
-        rv = self.client.post("/api/config", data=dict(hello='world'))
+        rv = self.client.post("/api/config", data=dict(hello="world"))
         self.assertEqual(200, rv.status_code)
         site = get_site_config()
         self.assertIn("hello", site)
         self.assertEqual(site["hello"], "world")
 
         hm = self.app.extensions["hookmanager"]
-        self.client.post("/api/hook?Action=disable", data=dict(
-            name='up2local'
-        ))
+        self.client.post("/api/hook?Action=disable", data=dict(name="up2local"))
         self.assertEqual(2, len(hm.get_enabled_hooks))
-        self.client.post("/api/hook?Action=enable", data=dict(
-            name='up2local'
-        ))
+        self.client.post("/api/hook?Action=enable", data=dict(name="up2local"))
         self.assertEqual(3, len(hm.get_enabled_hooks))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

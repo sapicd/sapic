@@ -8,13 +8,16 @@ from config import GLOBAL, envs
 
 def delete_hookloadtime():
     from libs.storage import get_storage
+
     s = get_storage()
-    del s['hookloadtime']
+    del s["hookloadtime"]
 
 
-IS_RUN = True if (
-    getenv("sapic_isrun") or getenv("picbed_isrun")
-) == "true" else False
+IS_RUN = (
+    True
+    if (getenv("sapic_isrun") or getenv("picbed_isrun")) == "true"
+    else False
+)
 
 CPU_COUNT = int(
     envs.get("sapic_cpucount") or envs.get("picbed_cpucount") or cpu_count()
@@ -24,8 +27,8 @@ LOGSDIR = join(dirname(abspath(__file__)), "logs")
 if not exists(LOGSDIR):
     mkdir(LOGSDIR)
 
-bind = "{}:{}".format(GLOBAL['Host'], GLOBAL['Port'])
-proc_name = GLOBAL['ProcessName']
+bind = "{}:{}".format(GLOBAL["Host"], GLOBAL["Port"])
+proc_name = GLOBAL["ProcessName"]
 workers = CPU_COUNT
 worker_class = "gevent"
 worker_connections = 1000
@@ -39,7 +42,7 @@ if IS_RUN:
 else:
     daemon = True
     pidfile = join(LOGSDIR, "{}.pid".format(proc_name))
-    loglevel = 'info'
+    loglevel = "info"
     errorlog = join(LOGSDIR, "gunicorn.log")
     accesslog = None
 

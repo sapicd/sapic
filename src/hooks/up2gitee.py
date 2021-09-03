@@ -9,12 +9,12 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.1.2'
-__author__ = 'staugur <staugur@saintic.com>'
-__hookname__ = 'up2gitee'
-__description__ = '将图片保存到Gitee'
-__state__ = 'disabled'
-__catalog__ = 'upload'
+__version__ = "0.1.2"
+__author__ = "staugur <staugur@saintic.com>"
+__hookname__ = "up2gitee"
+__description__ = "将图片保存到Gitee"
+__state__ = "disabled"
+__catalog__ = "upload"
 
 import requests
 from flask import g
@@ -24,7 +24,7 @@ from utils.tool import slash_join, try_request
 from utils._compat import string_types
 
 
-intpl_localhooksetting = '''
+intpl_localhooksetting = """
 <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
 <fieldset class="layui-elem-field layui-field-title">
     <legend>Gitee版本库（{% if "up2gitee" in g.site.upload_includes %}使用中{% else %}未使用{% endif %}）</legend>
@@ -67,7 +67,7 @@ intpl_localhooksetting = '''
     </div>
 </fieldset>
 </div>
-'''
+"""
 
 
 def upimg_save(**kwargs):
@@ -85,15 +85,15 @@ def upimg_save(**kwargs):
         repo = g.cfg.gitee_repo
         branch = g.cfg.gitee_branch
         dn = g.cfg.gitee_dn
-        gitee_basedir = g.cfg.gitee_basedir or '/'
+        gitee_basedir = g.cfg.gitee_basedir or "/"
         if not token or not repo or "/" not in repo:
             res.update(msg="The gitee parameter error")
             return res
         if isinstance(upload_path, string_types):
             if upload_path.startswith("/"):
-                upload_path = upload_path.lstrip('/')
+                upload_path = upload_path.lstrip("/")
             if gitee_basedir.startswith("/"):
-                gitee_basedir = gitee_basedir.lstrip('/')
+                gitee_basedir = gitee_basedir.lstrip("/")
             saveto = join(gitee_basedir, upload_path)
             filepath = join(saveto, filename)
             #: 通过API上传图片
@@ -109,13 +109,11 @@ def upimg_save(**kwargs):
             }
             try:
                 r = try_request(
-                    "https://gitee.com/api/v5/repos/%s/contents/%s" % (
-                        repo, filepath
-                    ),
+                    "https://gitee.com/api/v5/repos/%s/contents/%s" % (repo, filepath),
                     data=data,
                     headers=headers,
                     timeout=30,
-                    method="post"
+                    method="post",
                 )
             except requests.exceptions.RequestException as e:
                 res.update(msg=e)
@@ -139,11 +137,11 @@ def upimg_save(**kwargs):
                 else:
                     res.update(
                         code=r.status_code,
-                        msg=result.get("message", "").replace(
-                            '"', '\''
-                        ).replace('\n\n', ' ').replace('\n', '').replace(
-                            '\\', ''
-                        ),
+                        msg=result.get("message", "")
+                        .replace('"', "'")
+                        .replace("\n\n", " ")
+                        .replace("\n", "")
+                        .replace("\\", ""),
                     )
         else:
             res.update(msg="The upload_path type error")
@@ -157,9 +155,9 @@ def upimg_delete(sha, upload_path, filename, basedir, save_result):
     repo = save_result["repo"]
     if content_sha:
         token = g.cfg.gitee_token
-        gitee_basedir = g.cfg.gitee_basedir or '/'
+        gitee_basedir = g.cfg.gitee_basedir or "/"
         if gitee_basedir.startswith("/"):
-            gitee_basedir = gitee_basedir.lstrip('/')
+            gitee_basedir = gitee_basedir.lstrip("/")
         filepath = join(basedir or gitee_basedir, upload_path, filename)
         params = dict(
             message="Delete %s by sapic" % filepath,
@@ -172,9 +170,7 @@ def upimg_delete(sha, upload_path, filename, basedir, save_result):
             "User-Agent": "sapic-up2gitee/%s" % __version__,
         }
         try_request(
-            "https://gitee.com/api/v5/repos/%s/contents/%s" % (
-                repo, filepath
-            ),
+            "https://gitee.com/api/v5/repos/%s/contents/%s" % (repo, filepath),
             params=params,
             headers=headers,
             timeout=10,

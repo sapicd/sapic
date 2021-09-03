@@ -9,16 +9,16 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.1.2'
-__author__ = 'staugur'
-__description__ = '多方式发送邮件'
+__version__ = "0.1.2"
+__author__ = "staugur"
+__description__ = "多方式发送邮件"
 
 
 from flask import request, g
 from utils.tool import Mailbox, try_request, logger, is_true
 
 
-intpl_emailsetting = '''
+intpl_emailsetting = """
 <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
     <div class="layui-form-item">
         <div class="layui-inline">
@@ -67,7 +67,7 @@ intpl_emailsetting = '''
         </div>
     </fieldset>
 </div>
-'''
+"""
 
 
 def _sendcloud(API_USER, API_KEY, subject, html, to, from_addr, from_name=""):
@@ -126,8 +126,13 @@ def sendmail(subject, message, to_addr):
         if res["code"] != 0 and API_USER and API_KEY:
             #: See docs: https://www.sendcloud.net/doc/email_v2/
             _sr = _sendcloud(
-                API_USER, API_KEY, subject, message, to_addr,
-                g.cfg.email_sendcloud_from or from_addr, from_name
+                API_USER,
+                API_KEY,
+                subject,
+                message,
+                to_addr,
+                g.cfg.email_sendcloud_from or from_addr,
+                from_name,
             )
             if is_true(_sr.get("result")):
                 res = dict(code=0, data=_sr.get("info"))

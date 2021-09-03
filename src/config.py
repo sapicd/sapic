@@ -11,7 +11,7 @@
 """
 
 from os.path import dirname, join
-from utils._compat import Properties
+from utils._compat import Properties, is_true
 
 envs = Properties(join(dirname(__file__), ".cfg"), from_env=True)
 
@@ -44,6 +44,8 @@ GLOBAL = {
         envs.get("sapic_maxupload", envs.get("picbed_maxupload", 20))
     ),
     # 上传最大容量限制，单位MB
+    "ProxyFix": is_true(envs.get("sapic_proxyfix")),
+    # 信任代理标头
 }
 
 

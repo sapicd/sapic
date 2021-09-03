@@ -11,20 +11,39 @@
 
 from flask import Flask, g, request, render_template, jsonify
 from views import front_bp, api_bp
-from utils.tool import Attribute, is_true, parse_valid_comma, err_logger, \
-    timestamp_to_timestring
-from utils.web import get_site_config, JsonResponse, default_login_auth, \
-    get_redirect_url, change_userinfo, rc, get_page_msg, get_push_msg, dfr
+from utils.tool import (
+    Attribute,
+    is_true,
+    parse_valid_comma,
+    err_logger,
+    timestamp_to_timestring,
+)
+from utils.web import (
+    get_site_config,
+    JsonResponse,
+    default_login_auth,
+    get_redirect_url,
+    change_userinfo,
+    rc,
+    get_page_msg,
+    get_push_msg,
+    dfr,
+)
 from utils.exceptions import ApiError, PageError
 from utils.cli import sa_cli
 from libs.hook import HookManager
 from config import GLOBAL
 from version import __version__
 
-__author__ = 'staugur'
-__email__ = 'me@tcw.im'
-__date__ = '2019-12-20'
-__doc__ = 'Flask-based web self-built pictures bed'
+try:
+    from werkzeug.contrib.fixers import ProxyFix
+except ImportError:
+    from werkzeug.middleware.proxy_fix import ProxyFix
+
+__author__ = "staugur"
+__email__ = "me@tcw.im"
+__date__ = "2019-12-20"
+__doc__ = "Flask-based web self-built pictures bed"
 
 app = Flask(__name__)
 app.response_class = JsonResponse
@@ -35,6 +54,8 @@ app.config.update(
     DOCS_BASE_URL="https://sapic.rtfd.vip",
     UPLOAD_FOLDER="upload",
 )
+if GLOBAL["ProxyFix"]:
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 hm = HookManager(app)
 app.register_blueprint(front_bp)
@@ -45,9 +66,12 @@ app.cli.add_command(sa_cli)
 @app.context_processor
 def gtv():
     return {
-        "Version": __version__, "Doc": __doc__, "is_true": is_true,
+        "Version": __version__,
+        "Doc": __doc__,
+        "is_true": is_true,
         "timestamp_to_timestring": timestamp_to_timestring,
-        "get_page_msg": get_page_msg, "get_push_msg": get_push_msg,
+        "get_page_msg": get_page_msg,
+        "get_push_msg": get_push_msg,
     }
 
 
@@ -79,8 +103,8 @@ def after_request(res):
             origin = request.headers.get("Origin")
             if origin in cors:
                 res.headers.add("Access-Control-Allow-Origin", origin)
-    res.headers['X-Content-Type-Options'] = 'nosniff'
-    res.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    res.headers["X-Content-Type-Options"] = "nosniff"
+    res.headers["X-Frame-Options"] = "SAMEORIGIN"
     return res
 
 
@@ -111,6 +135,9 @@ def handle_api_error(e):
 @app.errorhandler(PageError)
 def handle_page_error(e):
     resp = dfr(e.to_dict())
-    return render_template(
-        "public/error.html", code=resp["code"], name=resp["msg"]
-    ), e.status_code
+    return (
+        render_template(
+            "public/error.html", code=resp["code"], name=resp["msg"]
+        ),
+        e.status_code,
+    )

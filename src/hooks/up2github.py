@@ -9,12 +9,12 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.1.3'
-__author__ = 'staugur <staugur@saintic.com>'
-__hookname__ = 'up2github'
-__description__ = '将图片保存到GitHub'
-__state__ = 'disabled'
-__catalog__ = 'upload'
+__version__ = "0.1.3"
+__author__ = "staugur <staugur@saintic.com>"
+__hookname__ = "up2github"
+__description__ = "将图片保存到GitHub"
+__state__ = "disabled"
+__catalog__ = "upload"
 
 import json
 import requests
@@ -26,7 +26,7 @@ from utils.web import try_proxy_request
 from utils._compat import string_types
 
 
-intpl_localhooksetting = '''
+intpl_localhooksetting = """
 <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
 <fieldset class="layui-elem-field layui-field-title">
     <legend>GitHub版本库（{% if "up2github" in g.site.upload_includes %}使用中{% else %}未使用{% endif %}）</legend>
@@ -78,7 +78,7 @@ intpl_localhooksetting = '''
     </div>
 </fieldset>
 </div>
-'''
+"""
 
 
 def upimg_save(**kwargs):
@@ -96,15 +96,15 @@ def upimg_save(**kwargs):
         repo = g.cfg.github_repo
         branch = g.cfg.github_branch
         dn = g.cfg.github_dn
-        github_basedir = g.cfg.github_basedir or '/'
+        github_basedir = g.cfg.github_basedir or "/"
         if not token or not repo or "/" not in repo:
             res.update(msg="The github parameter error")
             return res
         if isinstance(upload_path, string_types):
             if upload_path.startswith("/"):
-                upload_path = upload_path.lstrip('/')
+                upload_path = upload_path.lstrip("/")
             if github_basedir.startswith("/"):
-                github_basedir = github_basedir.lstrip('/')
+                github_basedir = github_basedir.lstrip("/")
             saveto = join(github_basedir, upload_path)
             filepath = join(saveto, filename)
             #: 通过API上传图片
@@ -116,17 +116,15 @@ def upimg_save(**kwargs):
                 data["branch"] = branch
             headers = {
                 "User-Agent": "sapic-up2github/%s" % __version__,
-                "Authorization": "token %s" % token
+                "Authorization": "token %s" % token,
             }
             try:
                 r = try_proxy_request(
-                    "https://api.github.com/repos/%s/contents/%s" % (
-                        repo, filepath
-                    ),
+                    "https://api.github.com/repos/%s/contents/%s" % (repo, filepath),
                     data=json.dumps(data),
                     headers=headers,
                     timeout=30,
-                    method="put"
+                    method="put",
                 )
             except requests.exceptions.RequestException as e:
                 res.update(msg=e)
@@ -138,11 +136,7 @@ def upimg_save(**kwargs):
                     if dn:
                         src = slash_join(dn, filepath)
                     elif is_true(g.cfg.github_jsdelivr):
-                        src = slash_join(
-                            "https://cdn.jsdelivr.net/gh/",
-                            repo,
-                            filepath
-                        )
+                        src = slash_join("https://cdn.jsdelivr.net/gh/", repo, filepath)
                     res.update(
                         code=0,
                         src=src,
@@ -156,11 +150,11 @@ def upimg_save(**kwargs):
                 else:
                     res.update(
                         code=r.status_code,
-                        msg=result.get("message", "").replace(
-                            '"', '\''
-                        ).replace('\n\n', ' ').replace('\n', '').replace(
-                            '\\', ''
-                        ),
+                        msg=result.get("message", "")
+                        .replace('"', "'")
+                        .replace("\n\n", " ")
+                        .replace("\n", "")
+                        .replace("\\", ""),
                     )
         else:
             res.update(msg="The upload_path type error")
@@ -174,9 +168,9 @@ def upimg_delete(sha, upload_path, filename, basedir, save_result):
     repo = save_result["repo"]
     if content_sha:
         token = g.cfg.github_token
-        github_basedir = g.cfg.github_basedir or '/'
+        github_basedir = g.cfg.github_basedir or "/"
         if github_basedir.startswith("/"):
-            github_basedir = github_basedir.lstrip('/')
+            github_basedir = github_basedir.lstrip("/")
         filepath = join(basedir or github_basedir, upload_path, filename)
         data = dict(
             message="Delete %s by sapic" % filepath,
@@ -186,12 +180,10 @@ def upimg_delete(sha, upload_path, filename, basedir, save_result):
             data["branch"] = branch
         headers = {
             "User-Agent": "sapic-up2github/%s" % __version__,
-            "Authorization": "token %s" % token
+            "Authorization": "token %s" % token,
         }
         try_proxy_request(
-            "https://api.github.com/repos/%s/contents/%s" % (
-                repo, filepath
-            ),
+            "https://api.github.com/repos/%s/contents/%s" % (repo, filepath),
             data=json.dumps(data),
             headers=headers,
             timeout=10,

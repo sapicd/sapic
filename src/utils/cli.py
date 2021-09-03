@@ -15,8 +15,13 @@ from flask.cli import AppGroup
 from redis.exceptions import RedisError
 from werkzeug.security import generate_password_hash
 from libs.storage import get_storage
-from .tool import rsp, get_current_timestamp, create_redis_engine, is_true, \
-    parse_ua
+from .tool import (
+    rsp,
+    get_current_timestamp,
+    create_redis_engine,
+    is_true,
+    parse_ua,
+)
 from .web import check_username, _pip_install
 
 
@@ -42,13 +47,16 @@ def exec_createuser(username, password, **kwargs):
                 pipe.sadd(ak, username)
                 if kwargs:
                     pipe.hmset(uk, kwargs)
-                pipe.hmset(uk, dict(
-                    username=username,
-                    password=generate_password_hash(password),
-                    is_admin=1 if is_true(is_admin) else 0,
-                    ctime=get_current_timestamp(),
-                    status=1,
-                ))
+                pipe.hmset(
+                    uk,
+                    dict(
+                        username=username,
+                        password=generate_password_hash(password),
+                        is_admin=1 if is_true(is_admin) else 0,
+                        ctime=get_current_timestamp(),
+                        status=1,
+                    ),
+                )
                 try:
                     pipe.execute()
                 except RedisError as e:
@@ -62,19 +70,20 @@ def exec_createuser(username, password, **kwargs):
 
 
 sa_cli = AppGroup(
-    'sa',
-    help='Administrator commands',
-    context_settings={'help_option_names': ['-h', '--help']},
+    "sa",
+    help="Administrator commands",
+    context_settings={"help_option_names": ["-h", "--help"]},
 )
 
 
 @sa_cli.command()
-@click.option('--username', '-u', type=str, required=True, help=u'用户名')
-@click.option('--password', '-p', type=str, required=True, help=u'用户密码')
-@click.option('--isAdmin/--no-isAdmin', default=False,
-              help=u'是否为管理员', show_default=True)
-@click.option('--avatar', '-a', type=str, default='', help=u'头像地址')
-@click.option('--nickname', '-n', type=str, default='', help=u'昵称')
+@click.option("--username", "-u", type=str, required=True, help=u"用户名")
+@click.option("--password", "-p", type=str, required=True, help=u"用户密码")
+@click.option(
+    "--isAdmin/--no-isAdmin", default=False, help=u"是否为管理员", show_default=True
+)
+@click.option("--avatar", "-a", type=str, default="", help=u"头像地址")
+@click.option("--nickname", "-n", type=str, default="", help=u"昵称")
 def create(username, password, isadmin, avatar, nickname):
     """创建账号"""
     exec_createuser(
@@ -87,20 +96,32 @@ def create(username, password, isadmin, avatar, nickname):
 
 
 @sa_cli.command()
-@click.option('--HookLoadTime/--no-HookLoadTime', default=False,
-              help=u'删除钩子加载时间', show_default=True)
-@click.option('--HookThirds/--no-HookThirds', default=False,
-              help=u'删除已加载的第三方钩子', show_default=True)
-@click.option('--InvalidKey/--no-InvalidKey', default=False,
-              help=u'删除无效的Redis键', show_default=True)
+@click.option(
+    "--HookLoadTime/--no-HookLoadTime",
+    default=False,
+    help=u"删除钩子加载时间",
+    show_default=True,
+)
+@click.option(
+    "--HookThirds/--no-HookThirds",
+    default=False,
+    help=u"删除已加载的第三方钩子",
+    show_default=True,
+)
+@click.option(
+    "--InvalidKey/--no-InvalidKey",
+    default=False,
+    help=u"删除无效的Redis键",
+    show_default=True,
+)
 def clean(hookloadtime, hookthirds, invalidkey):
     """清理系统"""
     if hookloadtime:
         s = get_storage()
-        del s['hookloadtime']
+        del s["hookloadtime"]
     if hookthirds:
         s = get_storage()
-        del s['hookthirds']
+        del s["hookthirds"]
     if invalidkey:
         rc = create_redis_engine()
         ius = rc.keys(rsp("index", "user", "*"))
@@ -117,8 +138,8 @@ def clean(hookloadtime, hookthirds, invalidkey):
 
 
 @sa_cli.command()
-@click.confirmation_option(prompt=u'确定要升级更新吗？')
-@click.argument('v2v', type=click.Choice(['1.6-1.7', '1.7-1.8']))
+@click.confirmation_option(prompt=u"确定要升级更新吗？")
+@click.argument("v2v", type=click.Choice(["1.6-1.7", "1.7-1.8"]))
 def upgrade(v2v):
     """版本升级助手"""
     #: 处理更新版本时数据迁移、数据结构变更、其他修改

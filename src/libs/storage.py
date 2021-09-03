@@ -16,8 +16,10 @@ from utils.tool import rsp, create_redis_engine
 try:
     from synchronize import make_synchronized
 except ImportError:
+
     def make_synchronized(func):
         import threading
+
         func.__lock__ = threading.Lock()
 
         def synced_func(*args, **kws):
@@ -50,10 +52,7 @@ class RedisStorage(object):
     @property
     def list(self):
         """list redis hash data"""
-        return {
-            k: json.loads(v)
-            for k, v in iteritems(self._db.hgetall(self.index))
-        }
+        return {k: json.loads(v) for k, v in iteritems(self._db.hgetall(self.index))}
 
     def set(self, key, value):
         """set key data"""
@@ -93,7 +92,9 @@ class RedisStorage(object):
 
     def __str__(self):
         return "<%s object at %s, index is %s>" % (
-            self.__class__.__name__, hex(id(self)), self.index
+            self.__class__.__name__,
+            hex(id(self)),
+            self.index,
         )
 
     __repr__ = __str__

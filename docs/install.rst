@@ -200,6 +200,7 @@ LOGLEVEL          sapic_loglevel              DEBUG             日志级别，�
 **REDIS**         sapic_redis_url             无                核心数据存储（redis连接串，格式是：redis://[:password]@host:port/db）
 SecretKey         sapic_secretkey             (大长串)          App应用秘钥(默认有固定值)
 MaxUpload         sapic_maxupload             20                设定程序最大上传容量，单位MB
+ProxyFix          sapic_proxyfix              无                信任代理标头
 ================  ==========================  ===============   ====================================================================
 
 更多参数请参考 config.py 配置文件中的注释。
@@ -339,7 +340,7 @@ NO.5 程序升级
     
     此依赖已写到requirements/optional.txt文件中
 
-    2. LinkToken统计功能设计更改
+    1. LinkToken统计功能设计更改
     
     旧版本调用统计写入到redis的 `picbed:report:linktokens` 中，此版本改为
     `picbed:report:linktokens:{username}`

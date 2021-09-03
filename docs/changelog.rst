@@ -4,6 +4,20 @@
 更新日志
 =========
 
+v1.13.2
+--------
+
+Released in 2021-09-03
+
+fix: nginx -> docker(https/http)
+
+v1.13.1
+--------
+
+Released in 2021-05-16
+
+fix: api load video compatible
+
 v1.13.0
 --------
 

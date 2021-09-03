@@ -41,15 +41,20 @@ else:  # pragma: nocover
 
     text_type = str
     string_types = (str,)
-    integer_types = (int, )
+    integer_types = (int,)
     from urllib.parse import urlencode, urlparse, urlsplit, parse_qs
     from urllib.request import Request, urlopen
     import configparser as ConfigParser
     import _thread as thread
 
 
-class Properties(object):
+def is_true(value):
+    if value and value in (True, "True", "true", "on", 1, "1", "yes"):
+        return True
+    return False
 
+
+class Properties(object):
     def __init__(self, filename, from_env=False):
         #: 读取配置文件
         self.filename = filename
@@ -60,28 +65,25 @@ class Properties(object):
 
     def __getDict(self, str_name, dict_name, value):
 
-        if(str_name.find('.') > 0):
-            k = str_name.split('.')[0]
+        if str_name.find(".") > 0:
+            k = str_name.split(".")[0]
             dict_name.setdefault(k, {})
-            return self.__getDict(str_name[len(k)+1:], dict_name[k], value)
+            return self.__getDict(str_name[len(k) + 1 :], dict_name[k], value)
         else:
             dict_name[str_name] = value
             return
 
     def _getProperties(self):
         try:
-            pro_file = open(self.filename, 'Ur')
+            pro_file = open(self.filename, "Ur")
             for line in pro_file.readlines():
-                line = line.strip().replace('\n', '')
+                line = line.strip().replace("\n", "")
                 if line.find("#") != -1:
-                    line = line[0:line.find('#')]
-                if line.find('=') > 0:
-                    strs = line.split('=')
-                    strs[1] = line[len(strs[0])+1:]
-                    self.__getDict(
-                        strs[0].strip(),
-                        self.properties, strs[1].strip()
-                    )
+                    line = line[0 : line.find("#")]
+                if line.find("=") > 0:
+                    strs = line.split("=")
+                    strs[1] = line[len(strs[0]) + 1 :]
+                    self.__getDict(strs[0].strip(), self.properties, strs[1].strip())
         except IOError:
             pass
         else:

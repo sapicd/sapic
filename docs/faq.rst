@@ -62,3 +62,13 @@ ps：docker-compose用户可以在docker-compose.yml中添加以下变量再构�
 -----------------
 
 v1.13.0支持，进入beta，可由后台开启。
+
+7. Nginx反向代理Docker中的sapic时，https显示异常变成http
+----------------------------------------------------------
+
+我记得之前有人邮件我这个问题，up2local遇到的，应该是v1.13.0试了个方法，不过后来我在k8s中
+发现同样问题，所以使用了flask官方方案。
+
+启动前先配置ProxyFix，请看安装篇，可以设置环境 `sapic_proxyfix=true` 开启信任代理标头。
+
+.. versionadded:: 1.13.2

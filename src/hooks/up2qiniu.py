@@ -9,19 +9,19 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.2.3'
-__author__ = 'staugur <staugur@saintic.com>'
-__hookname__ = 'up2qiniu'
-__description__ = '将图片保存到七牛云'
-__state__ = 'disabled'
-__catalog__ = 'upload'
+__version__ = "0.2.3"
+__author__ = "staugur <staugur@saintic.com>"
+__hookname__ = "up2qiniu"
+__description__ = "将图片保存到七牛云"
+__state__ = "disabled"
+__catalog__ = "upload"
 
 from flask import g
 from posixpath import join
 from utils._compat import string_types
 from utils.tool import slash_join
 
-intpl_localhooksetting = '''
+intpl_localhooksetting = """
 <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
 <fieldset class="layui-elem-field layui-field-title">
     <legend>七牛云存储（{% if "up2qiniu" in g.site.upload_includes %}使用中{% else %}未使用{% endif %}）</legend>
@@ -64,7 +64,7 @@ intpl_localhooksetting = '''
     </div>
 </fieldset>
 </div>
-'''
+"""
 
 
 def upimg_save(**kwargs):
@@ -87,15 +87,15 @@ def upimg_save(**kwargs):
         bucket = g.cfg.qiniu_bucket
         ak = g.cfg.qiniu_ak
         sk = g.cfg.qiniu_sk
-        qiniu_basedir = g.cfg.qiniu_basedir or ''
+        qiniu_basedir = g.cfg.qiniu_basedir or ""
         if not dn or not bucket or not ak or not sk:
             res.update(msg="The qiniu parameter error")
             return res
         if isinstance(upload_path, string_types):
             if upload_path.startswith("/"):
-                upload_path = upload_path.lstrip('/')
+                upload_path = upload_path.lstrip("/")
             if qiniu_basedir.startswith("/"):
-                qiniu_basedir = qiniu_basedir.lstrip('/')
+                qiniu_basedir = qiniu_basedir.lstrip("/")
             saveto = join(qiniu_basedir, upload_path)
             filepath = join(saveto, filename)
             #: 使用七牛云SDK上传
@@ -125,8 +125,8 @@ def upimg_delete(sha, upload_path, filename, basedir, save_result):
         qn = Auth(ak, sk)
         bm = BucketManager(qn)
         bucket = g.cfg.qiniu_bucket
-        qiniu_basedir = g.cfg.qiniu_basedir or ''
+        qiniu_basedir = g.cfg.qiniu_basedir or ""
         if qiniu_basedir.startswith("/"):
-            qiniu_basedir = qiniu_basedir.lstrip('/')
+            qiniu_basedir = qiniu_basedir.lstrip("/")
         filepath = join(basedir or qiniu_basedir, upload_path, filename)
         bm.delete(bucket, filepath)

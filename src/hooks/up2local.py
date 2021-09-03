@@ -9,10 +9,10 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.2.4'
-__author__ = 'staugur'
-__description__ = '将图片保存到本地'
-__catalog__ = 'upload'
+__version__ = "0.2.4"
+__author__ = "staugur"
+__description__ = "将图片保存到本地"
+__catalog__ = "upload"
 
 from os import makedirs, remove
 from os.path import exists, join, isfile
@@ -25,7 +25,7 @@ def get_basedir():
     return join(
         current_app.root_path,
         current_app.static_folder,
-        current_app.config["UPLOAD_FOLDER"]
+        current_app.config["UPLOAD_FOLDER"],
     )
 
 
@@ -43,24 +43,26 @@ def upimg_save(**kwargs):
     else:
         if isinstance(upload_path, string_types):
             if upload_path.startswith("/"):
-                upload_path = upload_path.lstrip('/')
+                upload_path = upload_path.lstrip("/")
             saveto = join(local_basedir, upload_path)
             if not exists(saveto):
                 makedirs(saveto)
             filepath = join(saveto, filename)
             with open(filepath, "wb") as fp:
                 fp.write(stream)
-                res.update(code=0, src=url_for(
-                    "static",
-                    filename=posixjoin(
-                        current_app.config['UPLOAD_FOLDER'],
-                        upload_path,
-                        filename
+                res.update(
+                    code=0,
+                    src=url_for(
+                        "static",
+                        filename=posixjoin(
+                            current_app.config["UPLOAD_FOLDER"], upload_path, filename
+                        ),
+                        _scheme="https"
+                        if request.headers.get("X-Forwarded-Proto") == "https"
+                        else None,
+                        _external=True,
                     ),
-                    _scheme="https" if request.headers.get(
-                        "X-Forwarded-Proto") == "https" else None,
-                    _external=True
-                ))
+                )
         else:
             res.update(msg="The upload_path type error")
     return res

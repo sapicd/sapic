@@ -9,10 +9,24 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-from flask import Blueprint, render_template, make_response, redirect, \
-    url_for, current_app, Response, g, abort
-from utils.web import admin_apilogin_required, anonymous_required, \
-    login_required, check_activate_token, dfr
+from flask import (
+    Blueprint,
+    render_template,
+    make_response,
+    redirect,
+    url_for,
+    current_app,
+    Response,
+    g,
+    abort,
+)
+from utils.web import (
+    admin_apilogin_required,
+    anonymous_required,
+    login_required,
+    check_activate_token,
+    dfr,
+)
 from utils.tool import is_true, rsp, string_types
 from utils._compat import PY2, text_type
 
@@ -46,7 +60,7 @@ def logout():
             if result and isinstance(result, Response):
                 return result
     res = make_response(redirect(url_for("front.index")))
-    res.set_cookie(key='dSid',  value='', expires=0)
+    res.set_cookie(key="dSid", value="", expires=0)
     return res
 
 
@@ -76,7 +90,7 @@ def admin():
 def userscript():
     if g.signin and is_true(g.userinfo.ucfg_userscript):
         resp = make_response(render_template("public/userscript.js"))
-        resp.headers['Content-type'] = 'application/javascript; charset=utf-8'
+        resp.headers["Content-type"] = "application/javascript; charset=utf-8"
         return resp
     else:
         return abort(404)
@@ -111,9 +125,7 @@ def activate(token):
         name = res["msg"]
         if PY2 and not isinstance(name, text_type):
             name = name.decode("utf-8")
-        return render_template(
-            "public/error.html", code=res["code"], name=name
-        )
+        return render_template("public/error.html", code=res["code"], name=name)
 
 
 @bp.route("/forgot")
@@ -149,13 +161,12 @@ def feed():
         pipe.hmget(rsp("image", sha), *fields)
     result = pipe.execute()
     data = [dict(zip(fields, i)) for i in result if i]
-    xml = render_template('public/feed.xml', items=sorted(
-        data,
-        key=lambda k: int(k.get('ctime') or 0),
-        reverse=True
-    )[:10])
+    xml = render_template(
+        "public/feed.xml",
+        items=sorted(data, key=lambda k: int(k.get("ctime") or 0), reverse=True)[:10],
+    )
     response = make_response(xml)
-    response.headers['Content-Type'] = 'application/xml'
+    response.headers["Content-Type"] = "application/xml"
     return response
 
 

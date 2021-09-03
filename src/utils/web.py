@@ -20,23 +20,59 @@ from base64 import urlsafe_b64decode as b64decode, b64decode as pic64decode
 from binascii import Error as BaseDecodeError
 from redis.exceptions import RedisError
 from requests.exceptions import RequestException
-from flask import g, redirect, request, url_for, abort, Response, jsonify,\
-    current_app, make_response, Markup
+from flask import (
+    g,
+    redirect,
+    request,
+    url_for,
+    abort,
+    Response,
+    jsonify,
+    current_app,
+    make_response,
+    Markup,
+)
 from jinja2 import Environment, FileSystemLoader
 from sys import executable
 from functools import partial
 from subprocess import call, check_output
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, \
-    SignatureExpired, BadSignature
+from itsdangerous import (
+    TimedJSONWebSignatureSerializer as Serializer,
+    SignatureExpired,
+    BadSignature,
+)
 from tempfile import NamedTemporaryFile
 from libs.storage import get_storage
-from .tool import logger, get_current_timestamp, rsp, sha256, username_pat, \
-    parse_valid_comma, parse_data_uri, format_apires, url_pat, ALLOWED_EXTS, \
-    parse_valid_verticaline, parse_valid_colon, is_true, is_venv, gen_ua, \
-    check_to_addr, is_all_fail, bleach_html, try_request, comma_pat, \
-    create_redis_engine, allowed_file, parse_label, ALLOWED_VIDEO, b64size
+from .tool import (
+    logger,
+    get_current_timestamp,
+    rsp,
+    sha256,
+    username_pat,
+    parse_valid_comma,
+    parse_data_uri,
+    format_apires,
+    url_pat,
+    ALLOWED_EXTS,
+    parse_valid_verticaline,
+    parse_valid_colon,
+    is_true,
+    is_venv,
+    gen_ua,
+    check_to_addr,
+    is_all_fail,
+    bleach_html,
+    try_request,
+    comma_pat,
+    create_redis_engine,
+    allowed_file,
+    parse_label,
+    ALLOWED_VIDEO,
+    b64size,
+)
 from ._compat import PY2, text_type, urlsplit, parse_qs
 from threading import Thread
+
 if not PY2:
     from functools import reduce
 
@@ -47,10 +83,14 @@ no_jump_ep = ("front.login", "front.logout", "front.register")
 
 def get_referrer_url():
     """获取上一页地址"""
-    if request.method == "GET" and request.referrer and \
-            request.referrer.startswith(request.host_url) and \
-            request.endpoint and "api." not in request.endpoint and \
-            request.endpoint not in no_jump_ep:
+    if (
+        request.method == "GET"
+        and request.referrer
+        and request.referrer.startswith(request.host_url)
+        and request.endpoint
+        and "api." not in request.endpoint
+        and request.endpoint not in no_jump_ep
+    ):
         url = request.referrer
     else:
         url = None
@@ -59,15 +99,16 @@ def get_referrer_url():
 
 def get_redirect_url(endpoint="front.index"):
     """获取重定向地址"""
-    url = request.args.get('next')
+    url = request.args.get("next")
     if not url:
         if endpoint != "front.index":
             url = url_for(endpoint)
         else:
-            url = get_referrer_url() or (
-                request.full_path if request.endpoint not in no_jump_ep
-                else None
-            ) or url_for(endpoint)
+            url = (
+                get_referrer_url()
+                or (request.full_path if request.endpoint not in no_jump_ep else None)
+                or url_for(endpoint)
+            )
     return url
 
 
@@ -106,9 +147,13 @@ def default_login_auth(dSid=None):
                     has_usr, userinfo = result
                     if has_usr and userinfo and isinstance(userinfo, dict):
                         pwd = userinfo.pop("password", None)
-                        if sha256("%s:%s:%s:%s" % (
-                            usr, pwd, expire, current_app.config["SECRET_KEY"]
-                        )) == sha:
+                        if (
+                            sha256(
+                                "%s:%s:%s:%s"
+                                % (usr, pwd, expire, current_app.config["SECRET_KEY"])
+                            )
+                            == sha
+                        ):
                             signin = True
     if not signin:
         userinfo = {}
@@ -117,47 +162,53 @@ def default_login_auth(dSid=None):
 
 def login_required(f):
     """页面要求登录装饰器"""
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not g.signin:
             nu = get_redirect_url()
-            if nu and (
-                nu.startswith("/") or nu.startswith(request.url_root)
-            ):
-                return redirect(url_for('front.login', next=nu))
+            if nu and (nu.startswith("/") or nu.startswith(request.url_root)):
+                return redirect(url_for("front.login", next=nu))
             else:
-                return redirect(url_for('front.login'))
+                return redirect(url_for("front.login"))
         return f(*args, **kwargs)
+
     return decorated_function
 
 
 def anonymous_required(f):
     """页面要求匿名装饰器"""
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if g.signin:
-            return redirect(url_for('front.index'))
+            return redirect(url_for("front.index"))
         return f(*args, **kwargs)
+
     return decorated_function
 
 
 def apilogin_required(f):
     """接口要求登录装饰器"""
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not g.signin:
             return abort(403)
         if g.signin and g.userinfo.status == 0:
-            return abort(make_response(jsonify(
-                msg="The user is disabled, no operation",
-                code=403
-            ), 403))
+            return abort(
+                make_response(
+                    jsonify(msg="The user is disabled, no operation", code=403), 403
+                )
+            )
         return f(*args, **kwargs)
+
     return decorated_function
 
 
 def admin_apilogin_required(f):
     """接口要求管理员级别登录装饰器"""
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if g.signin:
@@ -167,6 +218,7 @@ def admin_apilogin_required(f):
                 return abort(403)
         else:
             return abort(404)
+
     return decorated_function
 
 
@@ -183,14 +235,13 @@ def parse_accept_language(acceptLanguage, default_language="zh-CN"):
             locale = language.split(";")[0].strip()
             q = language.split(";")[1].split("=")[1]
             locale_q_pairs.append((locale, q))
-    return sorted(
-        locale_q_pairs,
-        key=lambda x: x[-1],
-        reverse=True
-    )[0][0] or default_language
+    return (
+        sorted(locale_q_pairs, key=lambda x: x[-1], reverse=True)[0][0]
+        or default_language
+    )
 
 
-def dfr(res, default='en-US'):
+def dfr(res, default="en-US"):
     """定义前端返回，将res中msg字段转换语言
 
     :param dict res: 例如 {"msg": "翻译内容(英文)", "other": "xx"}
@@ -199,10 +250,9 @@ def dfr(res, default='en-US'):
     try:
         language = parse_accept_language(
             request.cookies.get(
-                "locale",
-                request.headers.get('Accept-Language', default)
+                "locale", request.headers.get("Accept-Language", default)
             ),
-            default
+            default,
         )
         if language == "zh-Hans-CN":
             language = "zh-CN"
@@ -284,9 +334,7 @@ def dfr(res, default='en-US'):
 
 def change_res_format(res):
     if isinstance(res, dict) and "code" in res:
-        sn = request.form.get(
-            "status_name", request.args.get("status_name")
-        ) or "code"
+        sn = request.form.get("status_name", request.args.get("status_name")) or "code"
         oc = request.form.get("ok_code", request.args.get("ok_code"))
         mn = request.form.get("msg_name", request.args.get("msg_name"))
         return format_apires(res, sn, oc, mn)
@@ -297,9 +345,7 @@ def change_userinfo(userinfo):
     """解析用户信息userinfo部分字段数据"""
     if userinfo and isinstance(userinfo, dict):
         userinfo.update(
-            parsed_ucfg_url_rule=parse_valid_colon(
-                userinfo.get("ucfg_url_rule")
-            ) or {},
+            parsed_ucfg_url_rule=parse_valid_colon(userinfo.get("ucfg_url_rule")) or {},
             parsed_ucfg_url_rule_switch=dict(
                 loadmypic=is_true(g.userinfo.get("ucfg_urlrule_inloadmypic")),
                 url=is_true(g.userinfo.get("ucfg_urlrule_incopyurl")),
@@ -327,29 +373,25 @@ def get_site_config():
 def set_site_config(mapping):
     """设置站点信息"""
     if mapping and isinstance(mapping, dict):
-        ALLOWED_TAGS = ['a', 'abbr', 'b', 'i', 'code', 'p', 'br', 'h3', 'h4']
+        ALLOWED_TAGS = ["a", "abbr", "b", "i", "code", "p", "br", "h3", "h4"]
         ALLOWED_ATTRIBUTES = {
-            'a': ['href', 'title', 'target'],
-            'abbr': ['title'],
-            '*': ['style'],
+            "a": ["href", "title", "target"],
+            "abbr": ["title"],
+            "*": ["style"],
         }
-        ALLOWED_STYLES = ['color']
+        ALLOWED_STYLES = ["color"]
         upload_beforehtml = mapping.get("upload_beforehtml") or ""
         bulletin = mapping.get("bulletin") or ""
         about = mapping.get("about") or ""
         if upload_beforehtml:
             mapping["upload_beforehtml"] = bleach_html(
-                upload_beforehtml,
-                ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
+                upload_beforehtml, ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
             )
         if bulletin:
             ALLOWED_TAGS.append("img")
-            ALLOWED_ATTRIBUTES["img"] = [
-                'title', 'alt', 'src', 'width', 'height'
-            ]
+            ALLOWED_ATTRIBUTES["img"] = ["title", "alt", "src", "width", "height"]
             mapping["bulletin"] = bleach_html(
-                bulletin,
-                ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
+                bulletin, ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
             )
         if about:
             mapping["about"] = bleach_html(
@@ -365,7 +407,7 @@ def check_username(usr):
     """检测用户名是否合法、是否可以注册"""
     if usr and username_pat.match(usr):
         cfg = get_site_config()
-        fus = set(parse_valid_comma(cfg.get("forbidden_username") or ''))
+        fus = set(parse_valid_comma(cfg.get("forbidden_username") or ""))
         fus.add("anonymous")
         if usr not in fus:
             return True
@@ -386,10 +428,7 @@ def guess_filename_from_url(url, allowed_exts=None):
 
     .. versionadded:: 1.10.0
     """
-    _allowed_exts = [
-        ".{}".format(e)
-        for e in get_allowed_suffix()
-    ]
+    _allowed_exts = [".{}".format(e) for e in get_allowed_suffix()]
 
     ufn = basename(urlsplit(url).path)
     if splitext(ufn)[-1] in _allowed_exts:
@@ -403,7 +442,6 @@ def guess_filename_from_url(url, allowed_exts=None):
 
 
 class JsonResponse(Response):
-
     @classmethod
     def force_type(cls, rv, environ=None):
         if isinstance(rv, dict):
@@ -542,7 +580,7 @@ class ImgUrlFileStorage(object):
             try:
                 resp = try_proxy_request(
                     self._imgurl,
-                    method='get',
+                    method="get",
                     headers=self.Headers,
                     timeout=30,
                 )
@@ -648,7 +686,7 @@ def _pip_list(fmt=None, no_fresh=True):
 
 def generate_activate_token(dump_data, max_age=600):
     if dump_data and isinstance(dump_data, dict):
-        s = Serializer(current_app.config['SECRET_KEY'], expires_in=max_age)
+        s = Serializer(current_app.config["SECRET_KEY"], expires_in=max_age)
         data = s.dumps(dump_data)
         return data.decode()
 
@@ -656,17 +694,17 @@ def generate_activate_token(dump_data, max_age=600):
 def check_activate_token(token):
     res = dict(code=400)
     if token:
-        s = Serializer(current_app.config['SECRET_KEY'])
+        s = Serializer(current_app.config["SECRET_KEY"])
         try:
             data = s.loads(token)
         except SignatureExpired:
-            res.update(code=403, msg='expired token')
+            res.update(code=403, msg="expired token")
         except BadSignature:
-            res.update(code=404, msg='useless token')
+            res.update(code=404, msg="useless token")
         else:
             res.update(code=0, data=data)
     else:
-        res.update(msg='Parameter error')
+        res.update(msg="Parameter error")
     return res
 
 
@@ -698,10 +736,12 @@ def sendmail(subject, message, to):
 
 def async_sendmail(subject, message, to):
     """异步邮件发送，可用于多线程及非Web上下文环境"""
+
     def send_async_email(app):
         with app.test_request_context():
             app.preprocess_request()
             sendmail(subject, message, to)
+
     app = current_app._get_current_object()
     t = Thread(target=send_async_email, args=[app])
     t.start()
@@ -715,9 +755,9 @@ def make_email_tpl(tpl, **data):
     :returns: jinja2渲染好的html内容
     """
     je = Environment(
-        loader=FileSystemLoader(pathjoin(
-            current_app.root_path, current_app.template_folder, "email"
-        ))
+        loader=FileSystemLoader(
+            pathjoin(current_app.root_path, current_app.template_folder, "email")
+        )
     )
     if "site_name" not in data:
         data["site_name"] = g.site_name
@@ -736,15 +776,17 @@ def try_proxy_request(url, **kwargs):
 
     .. versionadded:: 1.9.0
     """
-    kwargs["proxy"] = dict([
-        ps.split("=")
-        for ps in comma_pat.split(g.cfg.proxies)
-        if ps and "=" in ps
-    ]) if g.cfg.proxies else None
+    kwargs["proxy"] = (
+        dict(
+            [ps.split("=") for ps in comma_pat.split(g.cfg.proxies) if ps and "=" in ps]
+        )
+        if g.cfg.proxies
+        else None
+    )
     return try_request(url, **kwargs)
 
 
-def set_page_msg(text, level='info'):
+def set_page_msg(text, level="info"):
     """给管理员的控制台消息（任意环境均可）
 
     :param str text: 消息内容
@@ -754,9 +796,10 @@ def set_page_msg(text, level='info'):
     """
     levels = dict(info=-1, warn=0, success=1, error=2)
     if text and level in levels.keys():
-        return rc.rpush(rsp("msg", "admin", "control"), json.dumps(dict(
-            text=text, icon=levels[level]
-        )))
+        return rc.rpush(
+            rsp("msg", "admin", "control"),
+            json.dumps(dict(text=text, icon=levels[level])),
+        )
 
 
 def get_page_msg():
@@ -764,23 +807,25 @@ def get_page_msg():
     key = rsp("msg", "admin", "control")
     msgs = rc.lrange(key, 0, -1)
     if msgs:
+
         def tpl_plus(total, new):
             return total % new
 
         def make_layer(msg):
             return (
-                'layer.alert("@1",{icon:@2,offset:"rt",shade:0,'
-                'title:false,btn:"我知道了",btnAlign:"c",closeBtn:0},'
-                'function(index){layer.close(index);%s});'
-            ).replace('@1', msg["text"]).replace('@2', str(msg["icon"]))
+                (
+                    'layer.alert("@1",{icon:@2,offset:"rt",shade:0,'
+                    'title:false,btn:"我知道了",btnAlign:"c",closeBtn:0},'
+                    "function(index){layer.close(index);%s});"
+                )
+                .replace("@1", msg["text"])
+                .replace("@2", str(msg["icon"]))
+            )
 
         html = (
-            '<script>',
-            reduce(
-                tpl_plus,
-                map(make_layer, [json.loads(i) for i in msgs])
-            ) % '',
-            '</script>',
+            "<script>",
+            reduce(tpl_plus, map(make_layer, [json.loads(i) for i in msgs])) % "",
+            "</script>",
         )
         rc.delete(key)
         return Markup("".join(html))
@@ -788,7 +833,7 @@ def get_page_msg():
         return ""
 
 
-def push_user_msg(to, text, level='info', time=3, align='right'):
+def push_user_msg(to, text, level="info", time=3, align="right"):
     """给用户推送消息（任意环境均可）
 
     :param str to: 用户名
@@ -799,12 +844,18 @@ def push_user_msg(to, text, level='info', time=3, align='right'):
 
     .. versionadded:: 1.10.0
     """
-    if to and text and level in ('info', 'warn', 'success', 'error') and \
-            isinstance(time, int) and align in ('left', 'center', 'right'):
+    if (
+        to
+        and text
+        and level in ("info", "warn", "success", "error")
+        and isinstance(time, int)
+        and align in ("left", "center", "right")
+    ):
         if rc.exists(rsp("account", to)):
-            return rc.rpush(rsp("msg", to), json.dumps(dict(
-                text=text, level=level, time=time * 1000, align=align
-            )))
+            return rc.rpush(
+                rsp("msg", to),
+                json.dumps(dict(text=text, level=level, time=time * 1000, align=align)),
+            )
 
 
 def get_push_msg():
@@ -812,10 +863,9 @@ def get_push_msg():
     key = rsp("msg", g.userinfo.username)
     msgs = rc.lrange(key, 0, -1)
     if msgs:
+
         def make_layer(data):
-            return (
-                'message.push("{text}","{level}","{align}",{time});'
-            ).format(
+            return ('message.push("{text}","{level}","{align}",{time});').format(
                 text=data["text"],
                 level=data["level"],
                 align=data["align"],
@@ -823,10 +873,10 @@ def get_push_msg():
             )
 
         html = (
-            '<script>'
+            "<script>"
             'layui.use("message",function(){var message = layui.message;%s});'
-            '</script>'
-        ) % ''.join(map(make_layer, [json.loads(i) for i in msgs]))
+            "</script>"
+        ) % "".join(map(make_layer, [json.loads(i) for i in msgs]))
         rc.delete(key)
         return Markup(html)
     else:
@@ -836,10 +886,10 @@ def get_push_msg():
 def get_user_ip():
     """首先从HTTP标头的X-Forwarded-For获取代理IP，其次获取X-Real-IP，最后是客户端IP"""
     ip = None
-    if request.headers.get('X-Forwarded-For'):
-        ip = request.headers['X-Forwarded-For']
-    elif request.headers.get('X-Real-IP'):
-        ip = request.headers.get('X-Real-IP')
+    if request.headers.get("X-Forwarded-For"):
+        ip = request.headers["X-Forwarded-For"]
+    elif request.headers.get("X-Real-IP"):
+        ip = request.headers.get("X-Real-IP")
     else:
         ip = request.remote_addr
     return ip or ""

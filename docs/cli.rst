@@ -271,7 +271,7 @@ Arguments: 设置 sapicli 命令行选项参数，如 `-u https://Your-Sapic-URL
 
 其他选项自定义，建议底部勾选上 `Run hidden`
 
-参考示例：
+参考示例（图示为老版本）：
 
 .. image:: https://static.saintic.com/picbed/staugur/2020/11/26/openwithpp-3.png
 
@@ -301,6 +301,6 @@ ps: sapicli 需要下载到本地（brew或git），使用绝对路径或放入P
 
 填写完成后，保存，保存的文件名随便，比如 upload to sapic
 
-参考示例：
+参考示例（图示为老版本）：
 
 .. image:: https://static.saintic.com/picbed/staugur/2020/11/26/automator-rightmenu.png

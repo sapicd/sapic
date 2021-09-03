@@ -9,19 +9,19 @@
     :license: BSD 3-Clause, see LICENSE for more details.
 """
 
-__version__ = '0.2.2'
-__author__ = 'staugur <staugur@saintic.com>'
-__hookname__ = 'up2upyun'
-__description__ = '将图片保存到又拍云'
-__state__ = 'disabled'
-__catalog__ = 'upload'
+__version__ = "0.2.2"
+__author__ = "staugur <staugur@saintic.com>"
+__hookname__ = "up2upyun"
+__description__ = "将图片保存到又拍云"
+__state__ = "disabled"
+__catalog__ = "upload"
 
 from os.path import join
 from flask import g
 from utils._compat import string_types
 from utils.tool import slash_join
 
-intpl_localhooksetting = '''
+intpl_localhooksetting = """
 <div class="layui-col-xs12 layui-col-sm12 layui-col-md6">
 <fieldset class="layui-elem-field layui-field-title">
     <legend>又拍云存储（{% if "up2upyun" in g.site.upload_includes %}使用中{% else %}未使用{% endif %}）</legend>
@@ -64,7 +64,7 @@ intpl_localhooksetting = '''
     </div>
 </fieldset>
 </div>
-'''
+"""
 
 
 def upimg_save(**kwargs):
@@ -87,13 +87,13 @@ def upimg_save(**kwargs):
         bucket = g.cfg.upyun_bucket
         user = g.cfg.upyun_username
         passwd = g.cfg.upyun_password
-        upyun_basedir = g.cfg.upyun_basedir or '/'
+        upyun_basedir = g.cfg.upyun_basedir or "/"
         if not dn or not bucket or not user or not passwd:
             res.update(msg="The upyun parameter error")
             return res
         if isinstance(upload_path, string_types):
             if upload_path.startswith("/"):
-                upload_path = upload_path.lstrip('/')
+                upload_path = upload_path.lstrip("/")
             if not upyun_basedir.startswith("/"):
                 upyun_basedir = "/%s" % upyun_basedir
             saveto = join(upyun_basedir, upload_path)
@@ -119,7 +119,7 @@ def upimg_delete(sha, upload_path, filename, basedir, save_result):
         bucket = g.cfg.upyun_bucket
         user = g.cfg.upyun_username
         passwd = g.cfg.upyun_password
-        upyun_basedir = g.cfg.upyun_basedir or '/'
+        upyun_basedir = g.cfg.upyun_basedir or "/"
         if not upyun_basedir.startswith("/"):
             upyun_basedir = "/%s" % upyun_basedir
         up = UpYun(bucket, user, passwd, timeout=10, endpoint=ED_AUTO)

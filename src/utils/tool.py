@@ -29,7 +29,8 @@ from bleach import clean as bleach_clean
 from bleach.sanitizer import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
 from version import __version__ as PICBED_VERSION
 from .log import Logger
-from ._compat import string_types, text_type, PY2, urlparse
+from ._compat import string_types, text_type, PY2, urlparse, is_true
+
 if PY2:
     from socket import error as ConnectionRefusedError
 
@@ -39,31 +40,34 @@ err_logger = Logger("error").getLogger
 comma_pat = re.compile(r"\s*,\s*")
 colon_pat = re.compile(r"\s*:\s*")
 verticaline_pat = re.compile(r"\s*\|\s*")
-username_pat = re.compile(r'^[a-zA-Z][0-9a-zA-Z\_]{3,31}$')
-point_pat = re.compile(r'^\w{1,9}\.?\w{1,9}$')
-mail_pat = re.compile(
-    r'([0-9a-zA-Z\_*\.*\-*]+)@([a-zA-Z0-9\-*\_*\.*]+)\.([a-zA-Z]+$)'
-)
-author_mail_re = re.compile(r'(.*)\s<(.*)>')
+username_pat = re.compile(r"^[a-zA-Z][0-9a-zA-Z\_]{3,31}$")
+point_pat = re.compile(r"^\w{1,9}\.?\w{1,9}$")
+mail_pat = re.compile(r"([0-9a-zA-Z\_*\.*\-*]+)@([a-zA-Z0-9\-*\_*\.*]+)\.([a-zA-Z]+$)")
+author_mail_re = re.compile(r"(.*)\s<(.*)>")
 url_pat = re.compile(
-    r'^(?:http)s?://'
-    r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+'
-    r'(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'
-    r'localhost|'
-    r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
-    r'(?::\d+)?'
-    r'(?:/?|[/?]\S+)$', re.IGNORECASE
+    r"^(?:http)s?://"
+    r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+"
+    r"(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|"
+    r"localhost|"
+    r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+    r"(?::\d+)?"
+    r"(?:/?|[/?]\S+)$",
+    re.IGNORECASE,
 )
-data_uri_pat = re.compile(r'^{}$'.format((
-    r'data:' +
-    r'(?P<mimetype>[\w]+\/[\w\-\+\.]+)?' +
-    r'(?:\;charset\=(?P<charset>[\w\-\+\.]+))?' +
-    r'(?P<base64>\;base64)?' +
-    r',(?P<data>.*)')),
-    re.DOTALL
+data_uri_pat = re.compile(
+    r"^{}$".format(
+        (
+            r"data:"
+            + r"(?P<mimetype>[\w]+\/[\w\-\+\.]+)?"
+            + r"(?:\;charset\=(?P<charset>[\w\-\+\.]+))?"
+            + r"(?P<base64>\;base64)?"
+            + r",(?P<data>.*)"
+        )
+    ),
+    re.DOTALL,
 )
-er_pat = re.compile(r'^(and|or|not|\s|ip|ep|origin|method|\(|\))+$')
-ir_pat = re.compile(r'^(in|not in|\s|ip|ep|origin|method|,|:)+$')
+er_pat = re.compile(r"^(and|or|not|\s|ip|ep|origin|method|\(|\))+$")
+ir_pat = re.compile(r"^(in|not in|\s|ip|ep|origin|method|,|:)+$")
 ALLOWED_RULES = ("ip", "ep", "method", "origin")
 ALLOWED_EXTS = ("png", "jpg", "jpeg", "gif", "bmp", "webp")
 ALLOWED_HTTP_METHOD = ("GET", "POST", "PUT", "DELETE", "HEAD")
@@ -111,8 +115,8 @@ def get_current_timestamp(is_float=False):
     return time() if is_float else int(time())
 
 
-def timestamp_to_timestring(timestamp, fmt='%Y-%m-%d %H:%M:%S'):
-    """ 将时间戳(10位)转换为可读性的时间 """
+def timestamp_to_timestring(timestamp, fmt="%Y-%m-%d %H:%M:%S"):
+    """将时间戳(10位)转换为可读性的时间"""
     if not isinstance(timestamp, (int, float)):
         try:
             timestamp = int(timestamp)
@@ -129,6 +133,7 @@ def create_redis_engine(redis_url=None):
         支持rediscluster
     """
     from config import REDIS
+
     url = redis_url or REDIS
     if not url:
         return
@@ -146,10 +151,7 @@ def create_redis_engine(redis_url=None):
                 if hp and len(hp.split(":")) == 2
             ]
             if startup_nodes:
-                return RedisCluster(
-                    startup_nodes=startup_nodes,
-                    decode_responses=True
-                )
+                return RedisCluster(startup_nodes=startup_nodes, decode_responses=True)
             else:
                 raise ValueError("Invalid redis url")
     return from_url(url, decode_responses=True)
@@ -160,12 +162,13 @@ def gen_rnd_filename(fmt):
         return int(round(time() * 1000))
     elif fmt == "time2":
         return "%s%s" % (
-            int(round(time() * 1000)), str(randrange(1000, 10000))
+            int(round(time() * 1000)),
+            str(randrange(1000, 10000)),
         )
     elif fmt == "time3":
         return "%s%s" % (
-            datetime.now().strftime('%Y%m%d%H%M%S'),
-            str(randrange(1000, 10000))
+            datetime.now().strftime("%Y%m%d%H%M%S"),
+            str(randrange(1000, 10000)),
         )
 
 
@@ -177,8 +180,7 @@ def allowed_file(filename, suffix=None):
     if not filename:
         return False
     suffix = set(suffix or ALLOWED_EXTS)
-    return '.' in filename and \
-        filename.rsplit('.', 1)[1].lower() in suffix
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in suffix
 
 
 def parse_valid_comma(s):
@@ -194,22 +196,21 @@ def parse_valid_verticaline(s):
 def parse_valid_colon(s):
     """解析形如 a:b,x:y 字符串为 dict(a=b, x=y)"""
     if s:
-        return dict([
-            i.split(":")
-            for i in comma_pat.split(s)
-            if i and ":" in i and len(i.split(":")) == 2
-            and i.split(":")[0] and i.split(":")[1]
-        ])
-
-
-def is_true(value):
-    if value and value in (True, "True", "true", "on", 1, "1", "yes"):
-        return True
-    return False
+        return dict(
+            [
+                i.split(":")
+                for i in comma_pat.split(s)
+                if i
+                and ":" in i
+                and len(i.split(":")) == 2
+                and i.split(":")[0]
+                and i.split(":")[1]
+            ]
+        )
 
 
 def list_equal_split(alist, n=5):
-    return [alist[i:i+n] for i in range(0, len(alist), n)]
+    return [alist[i : i + n] for i in range(0, len(alist), n)]
 
 
 def generate_random(length=6):
@@ -221,7 +222,7 @@ def generate_random(length=6):
     for i in range(97, 123):  # a-z
         code_list.append(chr(i))
     myslice = sample(code_list, length)
-    return ''.join(myslice)
+    return "".join(myslice)
 
 
 def format_upload_src(fmt, value):
@@ -229,7 +230,7 @@ def format_upload_src(fmt, value):
     if fmt and isinstance(fmt, string_types):
         if point_pat.match(fmt):
             if "." in fmt:
-                fmts = fmt.split('.')
+                fmts = fmt.split(".")
                 return {fmts[0]: {fmts[1]: value}}
             else:
                 return {fmt: value}
@@ -267,7 +268,6 @@ def format_apires(res, sn="code", oc=None, mn=None):
 
 
 class Attribution(dict):
-
     def __getattr__(self, name):
         try:
             return self[name]
@@ -276,18 +276,17 @@ class Attribution(dict):
 
 
 class Attribute(dict):
-
     def __getattr__(self, name):
         try:
             return self[name]
         except KeyError:
-            return ''
+            return ""
 
 
 def get_origin(url):
     """从url提取出符合CORS格式的origin地址"""
     parsed_uri = urlparse(url)
-    return '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
+    return "{uri.scheme}://{uri.netloc}".format(uri=parsed_uri)
 
 
 def check_origin(addr):
@@ -317,7 +316,7 @@ def check_url(addr):
 
 
 def check_ip(ip_str):
-    sep = ip_str.split('.')
+    sep = ip_str.split(".")
     if len(sep) != 4:
         return False
     for x in sep:
@@ -349,20 +348,22 @@ def parse_data_uri(datauri):
         datauri = datauri.decode("utf-8")
     match = data_uri_pat.match(datauri)
     if match:
-        mimetype = match.group('mimetype') or None
-        charset = match.group('charset') or None
-        is_base64 = bool(match.group('base64'))
-        data = match.group('data')
+        mimetype = match.group("mimetype") or None
+        charset = match.group("charset") or None
+        is_base64 = bool(match.group("base64"))
+        data = match.group("data")
     else:
         mimetype = charset = data = None
         is_base64 = False
 
-    return Attribution(dict(
-        mimetype=mimetype,
-        charset=charset,
-        is_base64=is_base64,
-        data=data,
-    ))
+    return Attribution(
+        dict(
+            mimetype=mimetype,
+            charset=charset,
+            is_base64=is_base64,
+            data=data,
+        )
+    )
 
 
 def gen_ua():
@@ -371,22 +372,20 @@ def gen_ua():
     third_num = randint(0, 3200)
     fourth_num = randint(0, 140)
     os_type = [
-        '(Windows NT 6.1; WOW64)',
-        '(Windows NT 10.0; WOW64)',
-        '(X11; Linux x86_64)',
-        '(Macintosh; Intel Mac OS X 10_12_6)'
+        "(Windows NT 6.1; WOW64)",
+        "(Windows NT 10.0; WOW64)",
+        "(X11; Linux x86_64)",
+        "(Macintosh; Intel Mac OS X 10_12_6)",
     ]
-    chrome_version = 'Chrome/{}.0.{}.{}'.format(
-        first_num, third_num, fourth_num
-    )
-    ua = ' '.join(
+    chrome_version = "Chrome/{}.0.{}.{}".format(first_num, third_num, fourth_num)
+    ua = " ".join(
         [
-            'Mozilla/5.0',
+            "Mozilla/5.0",
             choice(os_type),
-            'AppleWebKit/537.36',
-            '(KHTML, like Gecko)',
+            "AppleWebKit/537.36",
+            "(KHTML, like Gecko)",
             chrome_version,
-            'Safari/537.36'
+            "Safari/537.36",
         ]
     )
     return ua
@@ -395,7 +394,7 @@ def gen_ua():
 def parse_ua(user_agent):
     """解析用户代理，获取其操作系统、设备、版本"""
     uap = user_agents_parse(user_agent)
-    device, ua_os, family = str(uap).split(' / ')
+    device, ua_os, family = str(uap).split(" / ")
     if uap.is_mobile:
         platform = "mobile"
     elif uap.is_pc:
@@ -418,15 +417,15 @@ def slash_join(*args):
     """用 / 连接参数"""
     stripped_strings = []
     for a in args:
-        if a[0] == '/':
+        if a[0] == "/":
             start = 1
         else:
             start = 0
-        if a[-1] == '/':
+        if a[-1] == "/":
             stripped_strings.append(a[start:-1])
         else:
             stripped_strings.append(a[start:])
-    return '/'.join(stripped_strings)
+    return "/".join(stripped_strings)
 
 
 def try_request(
@@ -435,7 +434,7 @@ def try_request(
     data=None,
     headers=None,
     timeout=5,
-    method='post',
+    method="post",
     proxy=None,
     num_retries=1,
     _is_retry=False,
@@ -453,20 +452,24 @@ def try_request(
     if "User-Agent" not in headers:
         headers["User-Agent"] = "sapic/v%s" % PICBED_VERSION
     method = method.lower()
-    if method == 'get':
+    if method == "get":
         method_func = requests.get
-    elif method == 'post':
+    elif method == "post":
         method_func = requests.post
-    elif method == 'put':
+    elif method == "put":
         method_func = requests.put
-    elif method == 'delete':
+    elif method == "delete":
         method_func = requests.delete
     else:
         method_func = requests.post
     try:
         resp = method_func(
-            url, params=params, headers=headers, data=data, timeout=timeout,
-            proxies=proxy if _is_retry is True and proxy else None
+            url,
+            params=params,
+            headers=headers,
+            data=data,
+            timeout=timeout,
+            proxies=proxy if _is_retry is True and proxy else None,
         )
     except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
         if num_retries > 0:
@@ -478,7 +481,7 @@ def try_request(
                 timeout=timeout,
                 method=method,
                 proxy=proxy,
-                num_retries=num_retries-1,
+                num_retries=num_retries - 1,
                 _is_retry=True,
             )
         else:
@@ -491,13 +494,14 @@ def try_request(
 
 def is_venv():
     """判断当前环境是否在virtualenv、venv下"""
-    return (hasattr(sys, 'real_prefix') or
-            (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix))
+    return hasattr(sys, "real_prefix") or (
+        hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
+    )
 
 
 def is_all_fail(alist):
     """从list下的dict拿出code!=0的(执行失败)数量"""
-    return len(alist) == len(list(filter(lambda x: x.get('code') != 0, alist)))
+    return len(alist) == len(list(filter(lambda x: x.get("code") != 0, alist)))
 
 
 def check_to_addr(to):
@@ -511,7 +515,6 @@ def check_to_addr(to):
 
 
 class Mailbox(object):
-
     def __init__(self, user, passwd, smtp_server, smtp_port=25):
         """初始化邮箱客户端配置。
 
@@ -547,7 +550,7 @@ class Mailbox(object):
 
     def _format_addr(self, s):
         name, addr = parseaddr(s)
-        return formataddr((Header(name, 'utf-8').encode(), addr))
+        return formataddr((Header(name, "utf-8").encode(), addr))
 
     def send(self, subject, message, to_addrs, from_name=None):
         """Sendmail
@@ -561,13 +564,13 @@ class Mailbox(object):
         res = dict(code=1)
         if subject and message and to_addrs:
             if not isinstance(to_addrs, (list, tuple)):
-                to_addrs = (to_addrs, )
+                to_addrs = (to_addrs,)
             msg = MIMEText(message, "html", "utf-8")
-            msg['from'] = self._format_addr('{0} <{1}>'.format(
-                from_name or self._user.split('@')[0], self._user
-            ))
-            msg['to'] = ";".join(to_addrs)
-            msg['subject'] = Header(subject, 'utf-8').encode()
+            msg["from"] = self._format_addr(
+                "{0} <{1}>".format(from_name or self._user.split("@")[0], self._user)
+            )
+            msg["to"] = ";".join(to_addrs)
+            msg["subject"] = Header(subject, "utf-8").encode()
             try:
                 if self._ssl is True:
                     server = smtplib.SMTP_SSL(self._server, self._port)
@@ -675,4 +678,4 @@ def parse_label(label):
 
 def b64size(b64string):
     """获取base64内容大小，单位bytes"""
-    return (len(b64string) * 3) / 4 - b64string.count('=', -2)
+    return (len(b64string) * 3) / 4 - b64string.count("=", -2)
