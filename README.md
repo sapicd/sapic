@@ -57,11 +57,11 @@
             root /path/to/sapic/src/;
         }
         location / {
-           proxy_pass http://127.0.0.1:9514;
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-           proxy_set_header X-Forwarded-Proto $scheme;
-           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_pass http://127.0.0.1:9514;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         }
     }
     ```
@@ -79,16 +79,16 @@
 
 - 使用已上传镜像
 
-  已设置CI实现提交代码自动构建并推送到官方Docker仓库中，直接pull即可：
+  已设置CI实现提交代码自动构建并推送到官方Docker仓库中，直接pull即可（amd/arm）：
 
   ```bash
-  docker pull staugur/sapic  # 或者加上tag拉取某稳定版本的镜像(1.4.0开始)
+  docker pull staugur/sapic  # 或者加上tag拉取某稳定版本的镜像
   ```
 
 - 启动镜像
 
   ```bash
-  $ docker run -tdi --name sapic --restart=always --net=host \
+  $ docker run -d --name sapic --restart=always --net=host \
       -e sapic_redis_url="Your Redis URL" \
       -e 其他配置=值 \
       staugur/sapic

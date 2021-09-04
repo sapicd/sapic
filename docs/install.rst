@@ -74,11 +74,11 @@ NO.1 启动Redis
 NO.2 部署程序
 ---------------------
 
-这是一个基于Python Flask框架写的web应用，依赖redis，部署要求python2.7、3.5+
+这是一个基于Python Flask框架写的web应用，依赖redis，部署要求python2.7、3.6+
 
 .. note::
 
-    目前测试了CentOS、Ubuntu的py2.7、3.5、3.6、pypy、pypy3版本。
+    目前测试了CentOS、Ubuntu的py2.7、3.6、3.7、pypy、pypy3版本。
 
 2.1. 下载源码
 ^^^^^^^^^^^^^^^
