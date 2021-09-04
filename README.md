@@ -1,6 +1,7 @@
 # sapic
 
-即picbed，基于Flask的Web自建图床，支持存储到本地、又拍云、七牛云、阿里云OSS、腾讯云COS、GitHub、Gitee(码云)等。
+即picbed，基于Flask的Web自建图床，
+支持存储到本地、又拍云、七牛云、阿里云OSS、腾讯云COS、GitHub、Gitee(码云)、S3等。
 
 [![Actions Status: ci](https://github.com/sapicd/sapic/workflows/ci/badge.svg)](https://github.com/sapicd/sapic/actions?query=workflow%3A%22build+and+test%22)
 [![codecov](https://codecov.io/gh/sapicd/sapic/branch/master/graph/badge.svg)](https://codecov.io/gh/sapicd/sapic)
@@ -8,7 +9,7 @@
 
 ## 手动部署
 
-1. 要求： Python2.7、Python3.5+（或PyPy）和Redis
+1. 要求： Python2.7、Python3.6+（或PyPy）和Redis
 
 2. 下载： `git clone https://github.com/sapicd/sapic && cd sapic`
 

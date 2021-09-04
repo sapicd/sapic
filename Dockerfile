@@ -1,21 +1,11 @@
-# -- build dependencies with alpine --
-#FROM python:3.7-alpine AS build
-#ARG ALPINEMIRROR=dl-cdn.alpinelinux.org
-#ARG PIPMIRROR=https://pypi.tuna.tsinghua.edu.cn/simple
-#RUN sed -i "s/dl-cdn.alpinelinux.org/$ALPINEMIRROR/g" /etc/apk/repositories && \
-#    apk add --no-cache gcc musl-dev libffi-dev make && \
-#    rm -fr /var/cache/apk/*
-#COPY requirements /requirements
-#RUN pip install --timeout 30 --index $PIPMIRROR --user --no-cache-dir --no-warn-script-location -r /requirements/all.txt
-
-# -- build dependencies with debian --
+# -- build dependencies with debian(multiarch) --
 FROM python:3.7-slim AS build
 LABEL maintainer=me@tcw.im
 ARG PIPMIRROR=https://pypi.org/simple
 COPY requirements /requirements
 RUN pip install --timeout 30 --index $PIPMIRROR --user --no-cache-dir --no-warn-script-location -r /requirements/all.txt
 
-# -- app environment --
+# -- app environment(multiarch) --
 FROM python:3.7-alpine
 ENV LOCAL_PKG="/root/.local"
 ENV sapic_isrun=true
