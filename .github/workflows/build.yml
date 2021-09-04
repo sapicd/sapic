@@ -30,7 +30,7 @@ jobs:
       - name: Extract branch name
         id: branch
         shell: bash
-        run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/heads/} | sed 's/master/latest/')"
+        run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF##*/} | sed 's/master/latest/')"
 
       - name: Build and push
         uses: docker/build-push-action@v2

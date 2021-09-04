@@ -7,9 +7,13 @@
 v1.13.2
 --------
 
-Released in 2021-09-03
+Released in 2021-09-04
 
-fix: nginx -> docker(https/http)
+- fix: nginx -> docker(https/http)
+- chore: build docker image with amd64 and arm64
+- chore: format and update userscript
+- chore: change config: host(127.0.0.1 to 0.0.0.0)
+- chore: dockerfile add `EXPOSE`
 
 v1.13.1
 --------
