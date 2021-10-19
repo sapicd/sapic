@@ -367,6 +367,9 @@ def get_site_config():
     """获取站点配置"""
     s = get_storage()
     cfg = s.get("siteconfig") or {}
+    #: Maybe to fix None
+    if "upload_includes" not in cfg:
+        cfg["upload_includes"] = ""
     return cfg
 
 
