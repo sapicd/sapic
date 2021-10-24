@@ -15,7 +15,7 @@ FAQ
 
     ``AttributeError: 'NoneType' object has no attribute 'hget'``
 
-解决：配置redis即可，设置环境变量picbed_redis_url或写入.cfg配置文件
+解决：配置redis即可，设置环境变量sapic_redis_url或写入.cfg配置文件
 
 2. 配置了redis但未启动redis服务
 -----------------------------------------
@@ -52,7 +52,7 @@ redis配置格式是 ``redis://[:password]@host:port/db``
 解决：v1.8修复此问题，固定了密钥，之前的版本可以在环境变量或配置文件.cfg中
 设置 ``picbed_secretkey`` 为一个固定复杂的值。
 
-ps：docker-compose用户可以在docker-compose.yml中添加以下变量再构建启动（大概是第10行picbed_redis_url下面）：
+ps：docker-compose用户可以在docker-compose.yml中添加以下变量再构建启动（大概是第10行sapic_redis_url下面）：
 
 .. code-block::
 

@@ -28,7 +28,7 @@
     内置增加了4个，将我之前写的常用的对象存储内置集成了，不过默认是禁用的。
 
 - up2local
-    将上传的图片保存到本地（picbed源码目录src/static/upload），默认保存图片
+    将上传的图片保存到本地（sapic源码目录src/static/upload），默认保存图片
     的钩子。
 
 - up2upyun
@@ -443,11 +443,11 @@ Object：即钩子模块名；Action：钩子方法
     def just_dict():
         return dict(hello="world")
 
-上述钩子加入picbed，请求如下：
+上述钩子加入sapic，请求如下：
 
 .. code-block:: bash
 
-    $ curl -XPOST "http://your-picbed-url/api/extendpoint?Object=helloworld&Action=welcome"
+    $ curl -XPOST "http://your-sapic-url/api/extendpoint?Object=helloworld&Action=welcome"
     {"hello": "world"}
 
 .. tip::
@@ -485,10 +485,10 @@ route_name：路由名称，可选。
 
     .. code-block:: bash
 
-        $ curl http://your-picbed-url/extendpoint/test/
+        $ curl http://your-sapic-url/extendpoint/test/
         <b>hello world!</b>
 
-        $ curl http://your-picbed-url/extendpoint/test/xxxx
+        $ curl http://your-sapic-url/extendpoint/test/xxxx
         <b>hello world!</b>
 
 2. 返回的字典对象
@@ -517,16 +517,16 @@ route_name：路由名称，可选。
 
     .. code-block:: bash
 
-        $ curl http://your-picbed-url/extendpoint/test/
+        $ curl http://your-sapic-url/extendpoint/test/
         !404
 
-        $ curl http://your-picbed-url/extendpoint/test/s
+        $ curl http://your-sapic-url/extendpoint/test/s
         <b>hello world!</b>
 
-        $ curl http://your-picbed-url/extendpoint/test/j
+        $ curl http://your-sapic-url/extendpoint/test/j
         {"text": "hello world"}
 
-        $ curl http://your-picbed-url/extendpoint/test/f
+        $ curl http://your-sapic-url/extendpoint/test/f
         !403
 
 .. tip::
@@ -690,7 +690,7 @@ route_name：路由名称，可选。
     <op>是操作符（可选），允许使用 ``< <= > >= == !=`` 这六种符号，分别表示：
     小于、小于等于、大于、大于等于、等于、不等于，默认是 **>=**
 
-    version表示picbed图床程序的版本号。
+    version表示picbed(sapic)图床程序的版本号。
 
     另外，允许用半角逗号分组，表示匹配所有分组才允许加载。
 
@@ -698,14 +698,14 @@ route_name：路由名称，可选。
 
     - 1.8.0
 
-      说明此钩子要求的picbed图床程序版本最低是1.8.0，支持之后版本，不满足
+      说明此钩子要求的图床程序版本最低是1.8.0，支持之后版本，不满足
       要求则程序不会加载此钩子。
 
       ps：没有操作符，默认是大于等于(>=)
 
     - >1.8.0
 
-      要求picbed版本1.8.0之后（不包含1.8.0），如1.8.1、1.9.0
+      要求sapic版本1.8.0之后（不包含1.8.0），如1.8.1、1.9.0
 
     - <1.8.0
 
@@ -713,7 +713,7 @@ route_name：路由名称，可选。
 
     - 1.8.0,<=1.9.0
 
-      要求picbed图床版本最低是1.8.0，最高是1.9.0
+      要求sapic图床版本最低是1.8.0，最高是1.9.0
 
     - >1.8.0,<1.9.0,!=1.8.2
 

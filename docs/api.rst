@@ -208,7 +208,7 @@ RESTful API
   :type sha: string
   :resjson object data: 图片详情（上述接口的图片列表中包含的就是此详情数据）
   :resjson album: 相册（当前及下方字段位于data内）
-  :resjson src: 图片在picbed中的链接
+  :resjson src: 图片在sapic中的链接
   :resjson sender: 图片保存者（钩子名）
   :resjson object tpl: URL文本复制的模板
   :resjson agent: 上传来源UserAgent

@@ -26,11 +26,12 @@ sapic - 简约不小气的自建图床程序
 
 自 v1.12.0 正式命名：**sapic**
 
-基于Flask的Web自建图床，默认存储在本地，内置支持又拍云、七牛云、阿里云OSS、腾讯云COS等对象存储，支持GitHub、Gitee（码云）。
+基于Flask的Web自建图床，默认存储在本地，
+内置支持又拍云、七牛云、阿里云OSS、腾讯云COS、S3等对象存储，支持GitHub、Gitee（码云）。
 
-GitHub：https://github.com/sapicd/sapic
+GitHub：[sapicd/sapic](https://github.com/sapicd/sapic)
 
-Gitee：https://gitee.com/staugur/picbed
+Gitee：[staugur/picbed](https://gitee.com/staugur/picbed)
 
 语言：Python
 
@@ -57,6 +58,8 @@ Gitee：https://gitee.com/staugur/picbed
 
     已逐步更新配置字段，镜像同时支持sapic，请查看后续文档了解详情。
 
+    建议：普通环境使用python3.7+，Docker使用staugur/sapic镜像，配置使用sapic字样。
+
 .. _picbed-features:
 
 功能：
@@ -80,11 +83,13 @@ Gitee：https://gitee.com/staugur/picbed
 
 5. 管理员控制台可配置全局参数定制站点信息以及用户个性自定义覆盖全局参数
 
-6. 支持PyPy、Python2.7、3.6+（推荐），支持Docker且实时构建最新镜像传到官方仓库
+6. 支持PyPy、Python2.7、3.6+（强烈推荐），支持Docker且实时构建最新镜像传到官方仓库
 
 7. 支持油猴脚本（用户脚本） ，使用它，几乎可以采集全网图片！
 
 8. 多种上传方式：用户脚本、JS SDK、命令行工具（支持三端系统，可集成Windows、macOS右键菜单）、支持HTTP API的图床客户端
+
+9. 支持上传与显示、播放视频
 
 不足：
 -------

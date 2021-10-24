@@ -81,13 +81,13 @@ Token的使用也很简单，有两种方法：
 
   .. code-block:: bash
 
-    curl -XPOST -H "Authorization:Token xxx" http://picbed.example.ltd/api/upload
+    curl -XPOST -H "Authorization:Token xxx" http://sapic.example.ltd/api/upload
 
 - 二是post body中附带token字段，例如:
 
   .. code-block:: bash
 
-    curl -XPOST -d token=xxx -d other=xxx http://picbed.example.ltd/api/upload
+    curl -XPOST -d token=xxx -d other=xxx http://sapic.example.ltd/api/upload
 
 .. warning::
 

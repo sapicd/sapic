@@ -4,6 +4,15 @@
 更新日志
 =========
 
+v1.13.3
+--------
+
+Released in 2021-10-24
+
+- fix control page `upload_include` 500 error
+- update ICP link address
+- update docs picbed to sapic
+
 v1.13.2
 --------
 

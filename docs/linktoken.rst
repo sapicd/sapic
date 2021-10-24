@@ -85,7 +85,7 @@ LinkToken的使用类似Token，只不过只有一种方法，放到header中：
 
 - ip
 
-  来源IP，限制用户访问picbed的真实ip地址，若无则表示直接允许。
+  来源IP，限制用户访问sapic的真实ip地址，若无则表示直接允许。
 
 - ep
 
@@ -105,7 +105,7 @@ LinkToken的使用类似Token，只不过只有一种方法，放到header中：
   +-------------------+--------------------+------------+---------------------------------------------------------+
   | api.waterfall     | /api/waterfall     | POST       | 获取个人图片数据                                        |
   +-------------------+--------------------+------------+---------------------------------------------------------+
-  | front.userscript  | /picbed.user.js    | GET        | 并不是API接口，返回JS用户脚本                           |
+  | front.userscript  | /sapic.user.js     | GET        | 并不是API接口，返回JS用户脚本                           |
   +-------------------+--------------------+------------+---------------------------------------------------------+
   | front.feed        | /feed              | GET        | 用户本人的图片RSS                                       |
   +-------------------+--------------------+------------+---------------------------------------------------------+
@@ -200,11 +200,11 @@ ep内部判断也返回True才允许。
 关于LinkToken嘚吧嘚写了那么多，还是要用到真实场景的，其实也是为了实现这处的
 功能才首先实现LinkToken的。
 
-picbed是一个简单的图床程序，上传图片都是通过api.upload接口的，所以通过首页、
+sapic是一个简单的图床程序，上传图片都是通过api.upload接口的，所以通过首页、
 客户端、命令行等都是允许的，是也，就出现了一个应用场景：在个人/组织的其他
-网站下直接上传图片到picbed。
+网站下直接上传图片到sapic。
 
-但是上传到picbed这个独立图床，基本上都会出现跨域，而且管理员可能不允许匿名
+但是上传到sapic这个独立图床，基本上都会出现跨域，而且管理员可能不允许匿名
 上传，综合，就需要LinkToken了。
 
 如下图所示，实现的选择图片自动上传，成功后回调给页面。
@@ -217,7 +217,7 @@ NO.1 实现这个场景，首先创建一个LinkToken，根据自己的需求填
 |image6|
 
 弹框中复制手动引用和自动引用都是用JS和LinkToken的进一步封装，重要的是
-LinkToken值和JS地址。LinkToken是一长串编码后的字符串；JS地址固定，就是picbed
+LinkToken值和JS地址。LinkToken是一长串编码后的字符串；JS地址固定，就是sapic
 静态目录下的文件：**/static/sdk/uploader.min.js**，
 这个js文件（即uploader.js的压缩版）可以单独上传到CDN中以供加速。
 
@@ -279,7 +279,7 @@ NO.2 初始化
 
 - url
 
-  必需，picbed上传接口地址，例如http://picbed.demo.saintic.com/api/upload
+  必需，sapic上传接口地址，例如http://demo.sapicd.com/api/upload
 
 - elem
 
@@ -289,14 +289,14 @@ NO.2 初始化
 
 - name
 
-  上传文件域的字段名，默认是picbed，一般保持默认，除非管理员在控制台改动了
+  上传文件域的字段名，默认是sapic，一般保持默认，除非管理员在控制台改动了
   上传字段，此处可以随之修改。
 
   .. versionadded:: 1.2.0
 
 - token 
 
-  picbed上传所需的LinkToken值，如果为空则是匿名上传，如果存在且认证成功则是
+  sapic上传所需的LinkToken值，如果为空则是匿名上传，如果存在且认证成功则是
   登录状态上传。
 
 - album
@@ -326,7 +326,7 @@ NO.2 初始化
 - exts
 
   允许上传的图片后缀，默认是jpg|png|gif|bmp|jpeg|webp，用竖线分隔，也不能
-  超过picbed设置的允许后缀。
+  超过sapic设置的允许后缀。
 
 - auto
 
@@ -334,16 +334,16 @@ NO.2 初始化
 
 - success
 
-  上传成功的回调方法，传递一个picbed上传接口成功时返回的json数据，大概是：
+  上传成功的回调方法，传递一个sapic上传接口成功时返回的json数据，大概是：
 
   .. code-block:: json
   
     {
-        "src": "http://your-picbed-url/static/upload/anonymous/1588905202617.webp",
+        "src": "http://your-sapic-url/static/upload/anonymous/1588905202617.webp",
         "code": 0,
         "sender": "up2local",
         "filename": "1588905202617.webp",
-        "api": "http://your-picbed-url/api/sha/sha1.xxxxxxxxxx",
+        "api": "http://your-sapic-url/api/sha/sha1.xxxxxxxxxx",
         "msg": null
     }
 
@@ -385,7 +385,7 @@ NO.2 初始化
         user-select: none;
     }
 
-  这是蓝色边框、文字，白色背景的按钮，也是picbed默认附加的样式，可以藉此修改。
+  这是蓝色边框、文字，白色背景的按钮，也是sapic默认附加的样式，可以藉此修改。
 
   可以再加个悬浮效果，蓝底蓝框白色文字：
 

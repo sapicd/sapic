@@ -7,11 +7,11 @@
 变更说明
 ========
 
-picbed图床客户端上传工具cli.py，之前集成在
+sapic图床客户端上传工具cli.py，之前集成在
 `picbed源仓库 <https://github.com/sapicd/sapic/tree/1.10.5/cli>`_ 中，使用
 python编写，其跨平台需要Python环境支持，相对麻烦。
 
-不过2020-11-26开始（或者说自v1.11.0开始），picbed源仓库移除cli.py，且使用golang编写的
+不过2020-11-26开始（或者说自v1.11.0开始），sapic源仓库移除cli.py，且使用golang编写的
 `picbed-cli <https://github.com/sapicd/cli>`_ 发布初始版本，凭借golang的
 特性，打包后的命令天然具有跨平台能力，且已打包win、mac、linux三端压缩包，可在release中
 直接下载，实现了cli.py所有功能！
@@ -88,36 +88,6 @@ sapicli（golang）比之cli.py的细节差异
 压缩内只有一个可执行文件，可以使用绝对路径访问，或者复制/移动到 `PATH` 环境变量指定目录中
 即可。
 
-ps: 上述github页面如果访问速度不佳，可以点击下列文件名下载：
-
-======================================= ================================
-文件名                                   MD5
-======================================= ================================
-sapicli.0.5.2-linux-amd64.tar.gz_       9f0d49c7bee77ac2b631f8aba006a3a5
-sapicli.0.5.2-darwin-amd64.tar.gz_      ea51cfe839d64b9189ce1e2ddf42dde6
-sapicli.0.5.2-windows-amd64.zip_        88bb1637c10afed5d974e73bc0e36b13
-
-sapicli.0.5.1-linux-amd64.tar.gz_       f105234f5b229cbde29401a63a992d4f
-sapicli.0.5.1-darwin-amd64.tar.gz_      41712bcf7b0f31c4bdb3446d7643a850
-sapicli.0.5.1-windows-amd64.zip_        a7185dc5a514d0a436fe7dc7db499230
-
-sapicli.0.5.0-linux-amd64.tar.gz_       fc02ddd2276f0d099c9b8419f6ff1ceb
-sapicli.0.5.0-darwin-amd64.tar.gz_      e92461ae95c8bd8050b06bb94e14d44f
-sapicli.0.5.0-windows-amd64.zip_        5058890071c24e121f6109d3087eccaf
-======================================= ================================
-
-.. _sapicli.0.5.2-linux-amd64.tar.gz: https://static.saintic.com/download/sapicli/sapicli.0.5.2-linux-amd64.tar.gz
-.. _sapicli.0.5.2-darwin-amd64.tar.gz: https://static.saintic.com/download/sapicli/sapicli.0.5.2-darwin-amd64.tar.gz
-.. _sapicli.0.5.2-windows-amd64.zip: https://static.saintic.com/download/sapicli/sapicli.0.5.2-windows-amd64.zip
-
-.. _sapicli.0.5.1-linux-amd64.tar.gz: https://static.saintic.com/download/sapicli/sapicli.0.5.1-linux-amd64.tar.gz
-.. _sapicli.0.5.1-darwin-amd64.tar.gz: https://static.saintic.com/download/sapicli/sapicli.0.5.1-darwin-amd64.tar.gz
-.. _sapicli.0.5.1-windows-amd64.zip: https://static.saintic.com/download/sapicli/sapicli.0.5.1-windows-amd64.zip
-
-.. _sapicli.0.5.0-linux-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/sapicli.0.5.0-linux-amd64.tar.gz
-.. _sapicli.0.5.0-darwin-amd64.tar.gz: https://static.saintic.com/download/picbed-cli/sapicli.0.5.0-darwin-amd64.tar.gz
-.. _sapicli.0.5.0-windows-amd64.zip: https://static.saintic.com/download/picbed-cli/sapicli.0.5.0-windows-amd64.zip
-
 .. tip::
 
     如果您的操作系统支持homebrew（比如macOS），可以使用如下方式快速安装：
@@ -164,12 +134,12 @@ sapicli.0.5.0-windows-amd64.zip_        5058890071c24e121f6109d3087eccaf
                             for win/mac/linux.
                             By the way, md=markdown, rst=reStructuredText
 
--u: 指定图床的服务地址，http[s]://你的picbed(sapic)域名[/api/upload]
-    - 可以通过环境变量 **picbed_cli_apiurl** 或 **sapicli_apiurl** 设定
+-u: 指定图床的服务地址，http[s]://你的sapic域名[/api/upload]
+    - 可以通过环境变量 **sapicli_apiurl** 设定
     - 可以省略http，可以省略末尾/api/upload
 
 -t: 设置LinkToken用以认证、授权，要求拥有 ``api.upload`` 的 ``post`` 权限
-    可以通过环境变量 **picbed_cli_apitoken** 或 **sapicli_apitoken** 设定
+    可以通过环境变量 **sapicli_apitoken** 设定
 
 -a: 设置相册名（可以覆盖LinkToken设置的默认相册）
 
@@ -244,7 +214,7 @@ sapicli.0.5.0-windows-amd64.zip_        5058890071c24e121f6109d3087eccaf
 
 上传服务：Custom Command
 
-自定义命令：`sapicli -u {picbed url} -t {LinkToken} -s typora`
+自定义命令：`sapicli -u {sapic-url} -t {LinkToken} -s typora`
 
 测试：点击『验证图片上传选项』按钮，验证是否成功。
 
