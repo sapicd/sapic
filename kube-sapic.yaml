@@ -19,16 +19,12 @@ spec:
         python: "3.7"
         github: "sapicd/sapic"
     spec:
-      nodeSelector:
-        env: prod
       containers:
         - name: sapic
-          image: docker.io/staugur/sapic:dev
+          image: docker.io/staugur/sapic:latest
           env:
             - name: sapic_redis_url     # redis服务IP地址
               value: "redis://@redis"
-            - name: sapic_secretkey
-              value: "xxxx"
             #设置信任代理标头
             #- name: sapic_proxyfix      
             #  value: "true"

@@ -39,7 +39,7 @@ Pull Request
 
   请在dev分支编写代码。
 
-- 基础环境与安装过程参照 [sapic文档](https://picbed.rtfd.vip/install.html)
+- 基础环境与安装过程参照 [sapic文档](https://sapic.rtfd.vip/install.html)
 
 **接着是编码**
 

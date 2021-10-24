@@ -45,7 +45,7 @@ start)
 
 run)
     #前台运行
-    picbed_isrun=true gunicorn app:app -c $cfg
+    sapic_isrun=true gunicorn app:app -c $cfg
     ;;
 
 stop)

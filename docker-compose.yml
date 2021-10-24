@@ -6,7 +6,6 @@ services:
     ports:
       - "9514:9514"
     environment:
-      - sapic_host=0.0.0.0
       - sapic_redis_url=redis://@redis:6379
       # 设置信任代理标头
       #- sapic_proxyfix=true
