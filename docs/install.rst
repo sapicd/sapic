@@ -194,7 +194,7 @@ v是所见即所得（不要有多余的引号等，除非真的需要）！
 ================  ==========================  ===============   ====================================================================
     配置              [环境]变量名                默认值                                       说明
 ================  ==========================  ===============   ====================================================================
-HOST              sapic_host                  127.0.0.1         监听地址
+HOST              sapic_host                  0.0.0.0           监听地址
 PORT              sapic_port                  9514              监听端口
 LOGLEVEL          sapic_loglevel              DEBUG             日志级别，可选DEBUG, INFO, WARNING, ERROR, CRITICAL
 **REDIS**         sapic_redis_url             无                核心数据存储（redis连接串，格式是：redis://[:password]@host:port/db）
@@ -247,8 +247,6 @@ ProxyFix          sapic_proxyfix              无                信任代理标
 
 .. tip::
 
-    - 使用 ``picbed_host=0.0.0.0 make dev`` 启动开发环境，监听本机所有IP
-
     - 部署程序可以使用Docker，源码中已经写好了Dockerfile，您可以藉此构建或者
       使用构建好的 `picbed @ docker hub <https://hub.docker.com/r/staugur/picbed>`_ ，
       详情请看 :ref:`picbed-docker-deploy`
@@ -262,8 +260,6 @@ ProxyFix          sapic_proxyfix              无                信任代理标
 
 NO.3 Nginx配置
 -------------------
-
-在程序启动后，默认情况下，监听地址是127.0.0.1:9514
 
 Nginx配置示例如下，您也可以配置使其支持HTTPS:
 

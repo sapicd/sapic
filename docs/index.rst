@@ -55,6 +55,8 @@ Gitee：https://gitee.com/staugur/picbed
     本次仅为项目正式命名，仅更改进程名、对外显示名和git源码地址，不变更文档地址，
     不更改配置字段，不更改Docker镜像名和内部目录结构！
 
+    已逐步更新配置字段，镜像同时支持sapic，请查看后续文档了解详情。
+
 .. _picbed-features:
 
 功能：

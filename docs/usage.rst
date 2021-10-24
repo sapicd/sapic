@@ -23,7 +23,7 @@
 
 .. code-block:: bash
 
-    $ cd picbed/src
+    $ cd /path/to/sapic/src
     $ flask sa --help
     Usage: flask sa [OPTIONS] COMMAND [ARGS]...
 
@@ -111,7 +111,7 @@ Token的使用也很简单，有两种方法：
 用户唯一的Token，配合访问控制而实现，用于安全的API调用场景。
 
 出现LinkToken的初衷是因为我想在外部网站放置一个按钮，经过简单配置能一键上传
-图片到picbed，但是好像需要鉴权，而用Token呢，放到前端页面，基本等于裸奔，所
+图片到sapic，但是好像需要鉴权，而用Token呢，放到前端页面，基本等于裸奔，所
 以才有了这个以Token为基础的LinkToken。
 
 当然，也会有泄露风险，但是设定访问权限控制，能将成本大大降低。
@@ -127,7 +127,7 @@ Token的使用也很简单，有两种方法：
 图片处理的功能，在图片链接后加一个分隔符和处理指令，能实现裁剪、旋转、水印
 等高效处理。
 
-picbed的URL后缀选项，就是定义分隔符和处理指令，当然由于存储图片可以是本地、
+sapic的URL后缀选项，就是定义分隔符和处理指令，当然由于存储图片可以是本地、
 又拍云、七牛云等，且所有图片不一定保存在哪个里面，所以此处URL后缀的格式需要
 注意下：
 
@@ -180,7 +180,7 @@ v1.4.0之前上传图片只能根据全局设置保存图片的目录和文件�
 运行脚本需要浏览器扩展，早期Firefox的Greasemonkey，简称GM，中文俗称为“油猴子”，
 所以用户脚本通常也称为“油猴脚本”。
 
-不过picbed的油猴脚本支持的扩展是Tampermonkey。
+不过sapic的油猴脚本支持的扩展是Tampermonkey。
 
 Tampermonkey是一款免费的浏览器扩展和最为流行的用户脚本管理器，它适用于
 Chrome, Microsoft Edge, Safari, Opera Next, 和 Firefox。
@@ -191,7 +191,7 @@ Chrome, Microsoft Edge, Safari, Opera Next, 和 Firefox。
 
 |picbed_userscript|
 
-脚本地址： `Your Picbed URL/picbed.user.js` 或 `Your Sapic URL/sapic.user.js`
+脚本地址： `Your Sapic URL/sapic.user.js`
 
 只有开启用户脚本后才能产生脚本链接，不严格要求填写LinkToken，但是没有的话将
 会是匿名上传且不支持脚本更新。
@@ -216,7 +216,7 @@ MacOS下使用Control/Option+点击，效果如下：
 
   - 部分网站CSP限制导致无法上传
 
-  - picbed无https而采集https页面图片时无法上传
+  - sapic无https而采集https页面图片时无法上传
 
   - 但是，还有一条限制！
 
@@ -258,7 +258,7 @@ LinkToken哪个接口，以及认证与授权结果。
 
 .. _picbed-control:
 
-2. 控制台
+1. 控制台
 ---------------
 
 管理员功能，进行诸如站点设置、钩子扩展等管理（下图可能非最新内容）。
@@ -342,7 +342,7 @@ Web中只有首页可以上传，同时最多选择10张，默认支持jpg、jpe
 
   .. code-block:: text
 
-    url: http[s]://你的picbed域名/api/upload
+    url: http[s]://你的sapic域名/api/upload
 
     paramName: picbed
 
@@ -368,7 +368,7 @@ Web中只有首页可以上传，同时最多选择10张，默认支持jpg、jpe
 
   .. code-block:: text
 
-    API地址：http[s]://你的picbed域名/api/upload
+    API地址：http[s]://你的sapic域名/api/upload
 
     请求方式：POST
 

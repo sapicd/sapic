@@ -19,28 +19,26 @@ Dockerfile仅包含源码及其依赖的Python模块，不包含redis和nginx环
 1. 官方镜像
 =================
 
--  镜像地址：`dockerhub@staugur/picbed <https://hub.docker.com/r/staugur/picbed>`_ 
+-  镜像地址：`dockerhub@staugur/sapic <https://hub.docker.com/r/staugur/sapic>`_
 
   位于Docker官方仓库，可以点击查看公开信息。
+
+  之前镜像名是 `staugur/picbed`，v1.13同时增加了镜像 `staugur/sapic`
 
 -  master分支即latest，dev分支标签是dev，其他已发布版本其版本号即标签
 
   这是利用了dockerhub在提交代码后自动构建镜像并上传，所以latest总是构建
-  master分支，dev标签构建dev分支，而其他tag则是已发布版本的代码（1.4.0+）
+  master分支，dev标签构建dev分支，而其他tag则是已发布版本的代码。
 
-  拉取master分支（尝鲜版）镜像： `docker pull staugur/picbed`
+  拉取master分支（尝鲜版）镜像： `docker pull staugur/sapic`
 
-  拉取dev分支（开发版）镜像： `docker pull staugur/picbed:dev`
+  拉取dev分支（开发版）镜像： `docker pull staugur/sapic:dev`
 
-  拉取1.4.0镜像： `docker pull staugur/picbed:1.4.0`
-
-  拉取1.5.0镜像： `docker pull staugur/picbed:1.5.0`
-
-  其他诸如1.5.1、1.6.0、1.7.0等等，请参考镜像地址中的tag。
+  拉取v1.13.0镜像： `docker pull staugur/sapic:1.13.0`
 
 .. _picbed-self-build:
 
-2. 自行打包
+1. 自行打包
 =================
 
 v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成大概290M。
@@ -55,20 +53,20 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
     
 .. versionchanged:: 1.8.1
 
-    由于依赖的python基础镜像精简，目前构建完成仅75M左右。
+    由于依赖的python基础镜像精简，目前构建完成仅75M左右（非压缩情况）。
 
 打包步骤如下：
 
   .. code-block:: bash
 
     $ git clone https://github.com/sapicd/sapic && cd sapic
-    $ docker build -t staugur/picbed .
+    $ docker build -t staugur/sapic .
 
 构建镜像支持一个ARG：PIPMIRROR，用以指定pip源（默认是官方源），比如在国内使用清华源：
 
   .. code-block:: bash
 
-    $ docker build -t staugur/picbed . --build-arg PIPMIRROR=https://pypi.tuna.tsinghua.edu.cn/simple
+    $ docker build -t staugur/sapic . --build-arg PIPMIRROR=https://pypi.tuna.tsinghua.edu.cn/simple
 
 .. tip::
 
@@ -83,11 +81,11 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
 
 .. code-block:: bash
 
-    $ docker run -tdi --name picbed --net=host --restart=always \
-        -e picbed_redis_url=redis://xxx staugur/picbed
+    $ docker run -d --name sapic --net=host --restart=always \
+        -e sapic_redis_url=redis://xxx staugur/sapic
 
-这大概是最小的配置了，使用了宿主机网络，监听 `127.0.0.1:9514` ，picbed要求的
-配置必需有picbed_redis_url，设置redis连接信息。
+这大概是最小的配置了，使用了宿主机网络，监听 `0.0.0.0:9514` ，sapic要求的
+配置必需有sapic_redis_url，设置redis连接信息。
 其他的可选配置请参考 :ref:`picbed-config` 自行设置环境变量。
 
 查看我录制的使用docker单独启动的gif图: `picbed-alone-docker.gif <https://static.saintic.com/picbed/staugur/2020/07/24/picbed-alone-docker.gif>`_ 
@@ -104,11 +102,11 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
     .. code-block:: bash
 
         $ docker volume create picbed_static
-        $ docker run -tdi --name picbed --net=host --restart=always \
-            -e picbed_redis_url=redis://xxxx \
+        $ docker run -d --name sapic --net=host --restart=always \
+            -e sapic_redis_url=redis://xxxx \
             -v picbed_static:/picbed/static \
             -v /data/picbed:/picbed/static/upload \
-            staugur/picbed
+            staugur/sapic
 
     不过需要注意的是，数据卷持久化存储，后面如果更新了容器（静态资源）并
     不会更新宿主机的，所以如果重新启动容器（升级版本或更新代码后），建议
@@ -129,7 +127,7 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
 
     $ docker ps
     CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
-    fa3b592f6ae5        picbed              "gunicorn app:app -c…"   2 hours ago         Up 2 hours                              picbed
+    fa3b592f6ae5        sapic              "gunicorn app:app -c…"   2 hours ago         Up 2 hours                              sapic
 
     $ ps aux|grep -E "picbed|sapic"
     root   23546  -- gunicorn: master [sapic]
@@ -143,24 +141,24 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
 
 .. versionadded:: 1.6.0
 
-编写了一个简单docker-compose.yml，构建并启动picbed和redis，无nginx，
+编写了一个简单docker-compose.yml，构建并启动sapic和redis，无nginx，
 redis开启AOF，宿主机映射9514端口以供外部访问。
 
 .. code-block:: bash
 
-    $ cd picbed
+    $ cd sapic
     $ docker-compose up -d
     $ docker-compose ps
         Name                 Command               State           Ports         
     ---------------------------------------------------------------------------------
-    picbed_redis_1    docker-entrypoint.sh redis ...   Up      6379/tcp              
-    picbed_webapp_1   gunicorn app:app -c picbed ...   Up      0.0.0.0:9514->9514/tcp
+    sapic_redis_1    docker-entrypoint.sh redis ...   Up      6379/tcp
+    sapic_webapp_1   gunicorn app:app -c sapic ...   Up      0.0.0.0:9514->9514/tcp
 
     $ docker-compose images
         Container     Repository      Tag      Image Id       Size  
     ------------------------------------------------------------------
-    picbed_redis_1    redis           alpine   b546e82a6d0e   31.51 MB
-    picbed_webapp_1   picbed_webapp   latest   1f3c98af1c3a   105.9 MB
+    sapic_redis_1    redis           alpine   b546e82a6d0e   31.51 MB
+    sapic_webapp_1   sapic_webapp   latest   1f3c98af1c3a   105.9 MB
 
 .. versionchanged:: 1.8.0
 
@@ -176,7 +174,7 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
 
       .. code-block:: bash
 
-        $ cd picbed
+        $ cd sapic
         $ docker-compose down -v
         $ docker-compose up -d
 
@@ -185,7 +183,7 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
 
       查看我录制的使用docker-compose启动的gif图: `picbed-docker-compose.gif <https://static.saintic.com/picbed/staugur/2020/07/24/picbed-docker-compose.gif>`_
 
-4. nginx
+1. nginx
 =================
 
 上述不论是单独启动，还是使用docker-compose启动，对外接收请求的是gunicorn，
@@ -256,7 +254,7 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
 
 .. code-block:: bash
 
-    $ docker exec -i picbed flask sa create -u 管理员账号 -p 密码 --isAdmin
+    $ docker exec -i sapic flask sa create -u 管理员账号 -p 密码 --isAdmin
 
 如果使用docker-compose启动，命令如下：
 
