@@ -4,6 +4,13 @@
 更新日志
 =========
 
+v1.13.4
+--------
+
+Released in 2022-01-15
+
+- uploader.js set version 1.2.0, update style
+
 v1.13.3
 --------
 

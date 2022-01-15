@@ -1,18 +1,17 @@
 /*
- * uploader.js for picbed
+ * uploader.js for sapic(picbed)
  *
- * https://github.com/staugur/picbed
+ * https://github.com/sapicd/sapic
  *
- * picbed外部上传封装
+ * 图床外部上传封装
  *
  * PS：ES6模块，使用 https://github.com/babel/minify 仅压缩源文件
  *     minify uploader.js -o uploader.min.js
  */
-'use strict';
+'use strict'
 
 var up2picbed = (function () {
-
-    let version = '1.1.2';
+    let version = '1.2.0'
 
     /* 上传类，options配置项如下
      * @param url {String}:  [必需]上传接口
@@ -28,49 +27,52 @@ var up2picbed = (function () {
      * @param progress {Function}: 上传进度回调，传递百分比
      */
     class Uploader {
-
         constructor(options) {
             if (!options.elem || !options.url) {
-                this._alert("请完善参数");
-                return false;
+                this._alert('请完善参数')
+                return false
             }
-            options.size = parseInt(options.size || 10 * 1024);
-            options.exts = options.exts || "jpg|png|gif|bmp|jpeg|webp";
-            options.name = options.name || "picbed";
-            options.timeout = parseInt(options.timeout || 5000);
-            options.responseType = "json";
+            options.size = parseInt(options.size || 10 * 1024)
+            options.exts = options.exts || 'jpg|png|gif|bmp|jpeg|webp'
+            options.name = options.name || 'picbed'
+            options.timeout = parseInt(options.timeout || 5000)
+            options.responseType = 'json'
             //当返回数据中code字段为0才触发success回调
-            options.onSuccess = typeof options.success === "function" && options.success;
+            options.onSuccess =
+                typeof options.success === 'function' && options.success
             //返回数据code字段不为0或响应码不是2xx、304则触发fail回调
-            options.onFail = typeof options.fail === "function" && options.fail;
+            options.onFail = typeof options.fail === 'function' && options.fail
             //上传回调
-            options.onProgress = typeof options.progress === "function" && options.progress;
+            options.onProgress =
+                typeof options.progress === 'function' && options.progress
             //初始化
-            this.opt = options;
-            this._init();
+            this.opt = options
+            this._init()
         }
 
         _init() {
             //绑定元素对象
             let fobj = document.querySelector(this.opt.elem),
-                iname = this.opt.name;
+                iname = this.opt.name
 
             //构建文件域
-            let iobj = fobj.parentElement.querySelector(`input[name='${iname}']`);
+            let iobj = fobj.parentElement.querySelector(
+                `input[name='${iname}']`
+            )
             if (iobj) {
-                fobj.parentElement.removeChild(iobj);
+                fobj.parentElement.removeChild(iobj)
             }
-            iobj = document.createElement("input");
-            iobj.type = "file";
-            iobj.name = iname;
-            iobj.style.display = "none";
+            iobj = document.createElement('input')
+            iobj.type = 'file'
+            iobj.name = iname
+            iobj.style.display = 'none'
             iobj.onchange = e => {
-                return this._upload(this.opt, e);
+                return this._upload(this.opt, e)
             }
-            fobj.parentElement.appendChild(iobj);
+            fobj.parentElement.appendChild(iobj)
             fobj.onclick = () => {
-                let fi = fobj.parentElement.querySelector("input[type='file']");
-                fi.click();
+                let fi = fobj.parentElement.querySelector("input[type='file']")
+                fi.click()
             }
         }
 
@@ -81,120 +83,145 @@ var up2picbed = (function () {
              */
             let self = this,
                 size = o.size,
-                exts = o.exts;
+                exts = o.exts
 
             //选择图片的FileList对象
-            let files = e.target.files;
+            let files = e.target.files
             if (!files.length) return
-            const FILE = files[0];
+            const FILE = files[0]
 
             //判断上传图片大小
             if (size > 0) {
-                let s = FILE.size / 1024;
+                let s = FILE.size / 1024
                 if (s > size) {
-                    return self._alert("上传图片超过限制大小【" + size + "KB】");
+                    return self._alert('上传图片超过限制大小【' + size + 'KB】')
                 }
             }
             //判断上传图片后缀
             if (exts) {
-                let EXTRE = new RegExp("(" + exts + "$)", "i");
-                let ext = FILE.name.split(".");
-                ext = ext[ext.length - 1];
+                let EXTRE = new RegExp('(' + exts + '$)', 'i')
+                let ext = FILE.name.split('.')
+                ext = ext[ext.length - 1]
                 if (!EXTRE.test(ext)) {
-                    return self._alert("不支持的图片格式【" + ext + "】");
+                    return self._alert('不支持的图片格式【' + ext + '】')
                 }
             }
 
             //构建post数据并发送异步请求
-            let data = new FormData();
-            data.append(o.name, FILE, FILE.name);
+            let data = new FormData()
+            data.append(o.name, FILE, FILE.name)
             //添加额外数据
-            if (typeof o.data === 'object' && Object.keys(o.data).length !== 0) {
+            if (
+                typeof o.data === 'object' &&
+                Object.keys(o.data).length !== 0
+            ) {
                 for (let key in o.data) {
-                    data.append(key, o.data[key]);
+                    data.append(key, o.data[key])
                 }
             }
-            let xhr = new XMLHttpRequest();
-            xhr.timeout = o.timeout;
-            xhr.responseType = o.responseType;
-            xhr.open("POST", o.url, true);
+            let xhr = new XMLHttpRequest()
+            xhr.timeout = o.timeout
+            xhr.responseType = o.responseType
+            xhr.open('POST', o.url, true)
             //设置请求头
-            if (typeof o.headers === 'object' && Object.keys(o.headers).length !== 0) {
+            if (
+                typeof o.headers === 'object' &&
+                Object.keys(o.headers).length !== 0
+            ) {
                 for (let key in o.headers) {
-                    xhr.setRequestHeader(key, o.headers[key]);
+                    xhr.setRequestHeader(key, o.headers[key])
                 }
             }
             xhr.upload.onprogress = function (evt) {
-                let pro = Math.floor((evt.loaded / evt.total * 100));
-                let width = pro + "%";
+                let pro = Math.floor((evt.loaded / evt.total) * 100)
+                let width = pro + '%'
                 if (pro < 50) {
-                    width = ((5 - pro % 5) + pro) + "%";
+                    width = 5 - (pro % 5) + pro + '%'
                 } else if (pro >= 50 && pro < 90) {
-                    width = ((2 - pro % 2) + pro) + "%";
+                    width = 2 - (pro % 2) + pro + '%'
                 }
-                o.onProgress && o.onProgress(width);
-            };
+                o.onProgress && o.onProgress(width)
+            }
             xhr.onload = function () {
-                let res = xhr.response;
-                if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304) {
-                    if (typeof res === "object" && res.code === 0) {
-                        o.onSuccess && o.onSuccess(res);
+                let res = xhr.response
+                if (
+                    (xhr.status >= 200 && xhr.status < 300) ||
+                    xhr.status == 304
+                ) {
+                    if (typeof res === 'object' && res.code === 0) {
+                        o.onSuccess && o.onSuccess(res)
                     } else {
-                        o.onFail && o.onFail(res);
+                        o.onFail && o.onFail(res)
                     }
                 } else {
-                    o.onFail && o.onFail(res);
+                    o.onFail && o.onFail(res)
                 }
-            };
+            }
             try {
-                xhr.send(data);
+                xhr.send(data)
             } catch (e) {
-                self._alert(e.message);
+                self._alert(e.message)
             }
         }
 
         _alert(msg) {
-            let f = (typeof layer !== "undefined" && typeof layer === "object") && layer.alert;
+            let f =
+                typeof layer !== 'undefined' &&
+                typeof layer === 'object' &&
+                layer.alert
             if (!f) {
-                if (typeof layui !== "undefined" && typeof layui === "object") {
-                    layui.use("layer", function () {
-                        let layer = layui.layer;
+                if (typeof layui !== 'undefined' && typeof layui === 'object') {
+                    layui.use('layer', function () {
+                        let layer = layui.layer
                         layer.alert(msg, {
                             title: false,
                             shade: 0.1
-                        });
-                    });
+                        })
+                    })
                 } else {
-                    window.alert(msg);
+                    window.alert(msg)
                 }
             } else {
                 f(msg, {
                     title: false,
                     shade: 0.1
-                });
+                })
             }
         }
     }
     let hasElem = function (id_or_class) {
-        return document.querySelector(id_or_class) ? true : false;
-    };
+        return document.querySelector(id_or_class) ? true : false
+    }
+    let isTrue = function (v) {
+        if (!v) return false
+        return v && (v === 'true' || v === true)
+    }
     //获取js本身
-    let getSelf = function () {
-        let jsSelf = document.currentScript ? document.currentScript : document.getElementsByTagName('script')[document.getElementsByTagName('script').length - 1];
-        if (jsSelf && jsSelf.getAttribute("src") && jsSelf.getAttribute("src").indexOf("uploader.js") > -1) {
-            return jsSelf;
+    let getSelf = (function () {
+        let jsSelf = document.currentScript
+            ? document.currentScript
+            : document.getElementsByTagName('script')[
+                  document.getElementsByTagName('script').length - 1
+              ]
+        if (
+            jsSelf &&
+            jsSelf.getAttribute('src') &&
+            (jsSelf.getAttribute('src').indexOf('uploader.js') > -1 ||
+                jsSelf.getAttribute('src').indexOf('uploader.min.js') > -1)
+        ) {
+            return jsSelf
         } else {
             let js = document.scripts,
-                last = js.length - 1;
+                last = js.length - 1
             for (let i = last; i > 0; i--) {
                 if (js[i].readyState === 'interactive') {
                     jsSelf = js[i]
-                    break;
+                    break
                 }
             }
-            return jsSelf;
+            return jsSelf
         }
-    }();
+    })()
     /* opt选项用于构造Uploader类，无值时读取dataset自身的初始化参数，支持如下：
      * @param url: [必需]picbed上传接口地址
      * @param elem: [默认#up2picbed]绑定上传的button元素
@@ -203,51 +230,61 @@ var up2picbed = (function () {
      * @param token: [建议]picbed上传所需的LinkToken值，当然允许匿名可以省略
      * @param album: 定义上传图片所属相册，留空表示默认使用LinkToken设定值（仅当LinkToken认证成功此项才有效）
      * @param title: 定义图片的描述信息
-     * @param style: 仅当值为false时有效，会取消自动设置elem的内联样式
+     * @param style: 默认不设置样式，当值为true或包含逗号时会自动设置elem的内联样式
      * @param size: 允许上传的图片大小，单位Kb，最大10Mb
      * @param exts: 允许上传的图片后缀
      * @param success: 上传成功的回调（通过字符串映射函数，传递响应结果，在脚本执行之前全局要有此函数，否则不生效）
      * @param fail: 上传失败或错误的回调（同success）
      * @param progress: 上传进度回调，传递百分比
      */
-    let init = (opt) => {
-        if (!opt) opt = {};
+    let init = opt => {
+        if (!opt) opt = {}
         if (!(Object.prototype.toString.call(opt) === '[object Object]')) {
-            console.error("up2picbed配置项错误");
-            return false;
+            console.error('up2picbed配置项错误')
+            return false
         }
         let url = opt.url || getSelf.dataset.url,
-            elem = opt.elem || getSelf.dataset.elem || "#up2picbed",
+            elem = opt.elem || getSelf.dataset.elem || '#up2picbed',
             name = opt.name || getSelf.dataset.name,
             token = opt.token || getSelf.dataset.token,
             style = opt.style || getSelf.dataset.style,
             album = opt.album || getSelf.dataset.album,
             title = opt.title || getSelf.dataset.title,
-            progress = opt.progress || (getSelf.dataset.progress && window[getSelf.dataset.progress]),
-            success = opt.success || (getSelf.dataset.success && window[getSelf.dataset.success]),
-            fail = opt.fail || (getSelf.dataset.fail && window[getSelf.dataset.fail]),
-            data = {};
+            progress =
+                opt.progress ||
+                (getSelf.dataset.progress && window[getSelf.dataset.progress]),
+            success =
+                opt.success ||
+                (getSelf.dataset.success && window[getSelf.dataset.success]),
+            fail =
+                opt.fail ||
+                (getSelf.dataset.fail && window[getSelf.dataset.fail]),
+            data = {}
         if (!hasElem(elem)) {
-            console.error("up2picbed未发现有效的elem");
-            return false;
+            console.error('up2picbed未发现有效的elem')
+            return false
         }
         if (!url) {
-            console.error("up2picbed未发现有效的url");
-            return false;
+            console.error('up2picbed未发现有效的url')
+            return false
         }
-        //当style值不为false时即自动添加elem样式
-        if (!(style === "false" || style === false)) {
-            if (!style) style = '';
-            let [color, bgColor] = style.split(",");
-            if (!color) color = "#409eff";
-            if (!bgColor) bgColor = "#fff";
-            document.querySelector(elem).style = `display:inline-block;margin-right:10px;padding:9px 15px;font-size:12px;background-color:${bgColor};color:${color};border:1px ${color} solid;border-radius:3px;cursor:pointer;user-select:none;`;
+        //当style值有效时即自动添加elem样式
+        if (
+            isTrue(style) ||
+            (typeof style === 'string' && style.indexOf(',') > -1)
+        ) {
+            if (style === 'true' || style === true) style = ''
+            let [color, bgColor] = style.split(',')
+            if (!color) color = '#409eff'
+            if (!bgColor) bgColor = '#fff'
+            let css = `display:inline-block;margin-right:10px;padding:9px 15px;font-size:12px;background-color:${bgColor};color:${color};border:1px ${color} solid;border-radius:3px;cursor:pointer;user-select:none;`
+            document.querySelector(elem).style = css
         }
         if (album) {
-            data["album"] = album;
+            data['album'] = album
         }
-        data["origin"] = `uploader.js/${version}`;
-        data["title"] = title || "";
+        data['origin'] = `uploader.js/${version}`
+        data['title'] = title || ''
         return new Uploader({
             elem: elem,
             url: url,
@@ -256,16 +293,22 @@ var up2picbed = (function () {
             exts: opt.exts || getSelf.dataset.exts,
             data: data,
             headers: {
-                "Authorization": `LinkToken ${token}`
+                Authorization: `LinkToken ${token}`
             },
-            success: typeof success === "function" ? success : res => {
-                console.log(res);
-            },
-            fail: typeof fail === "function" ? fail : res => {
-                console.error(res);
-            },
+            success:
+                typeof success === 'function'
+                    ? success
+                    : res => {
+                          console.log(res)
+                      },
+            fail:
+                typeof fail === 'function'
+                    ? fail
+                    : res => {
+                          console.error(res)
+                      },
             progress: progress
-        });
-    };
-    return getSelf.dataset.auto === "true" ? init() : init;
-})();
+        })
+    }
+    return isTrue(getSelf.dataset.auto) ? init() : init
+})()
