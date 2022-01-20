@@ -175,6 +175,7 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
       .. code-block:: bash
 
         $ cd sapic
+        $ docker-compose build
         $ docker-compose down -v
         $ docker-compose up -d
 

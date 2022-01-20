@@ -351,11 +351,11 @@ Web中只有首页可以上传，同时最多选择10张，默认支持jpg、jpe
     # 以上是匿名上传，仅在管理员开启匿名时才能上传成功
     ## 如需登录上传，请使用token(在控制台-个人资料-Token查看)，以下两种任选:
     customHeader: {"Authorization": "Token 你的Token值"}
-    customBody: {"token": "你的Token值", "album: "相册名或留空"}
+    customBody: {"token": "你的Token值", "album": "相册名或留空"}
 
     ## 可用LinkToken替换Token(仅用于Header)：
     customHeader: {"Authorization": "LinkToken 你的LinkToken值"}
-    customBody: {"album: "相册名或留空"}
+    customBody: {"album": "相册名或留空"}
 
   设置完之后选择自定义Web图床为默认图床即可。
 
