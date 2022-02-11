@@ -94,9 +94,9 @@ Gitee：[staugur/picbed](https://gitee.com/staugur/picbed)
 不足：
 -------
 
-- 图床管理暂时不能批量化
+- 图床管理暂时不能批量化；
 
-- 基于redis的数据存储，虽响应快，但数据存储方面可能有些风险
+- 基于redis的数据存储，虽响应快，但数据存储方面可能有些风险，请注意持久化及备份数据！
 
 .. _picbed-deploy:
 

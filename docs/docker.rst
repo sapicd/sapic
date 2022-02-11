@@ -38,7 +38,7 @@ Dockerfile仅包含源码及其依赖的Python模块，不包含redis和nginx环
 
 .. _picbed-self-build:
 
-1. 自行打包
+2. 自行打包
 =================
 
 v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成大概290M。
@@ -184,7 +184,12 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
 
       查看我录制的使用docker-compose启动的gif图: `picbed-docker-compose.gif <https://static.saintic.com/picbed/staugur/2020/07/24/picbed-docker-compose.gif>`_
 
-1. nginx
+.. warning::
+
+    仓库中的 `docker-compose.yml` 并不是推荐的正式环境级别的配置文件，仅供快速体验使用，
+    正式环境更建议使用独立的redis服务器，并仔细配置 `docker-compose.yml`。
+
+4. nginx
 =================
 
 上述不论是单独启动，还是使用docker-compose启动，对外接收请求的是gunicorn，

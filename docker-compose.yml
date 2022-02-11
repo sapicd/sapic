@@ -17,5 +17,7 @@ services:
   redis:
     image: "redis:alpine"
     command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - /data/picbed/redis/data/:/data/
 volumes:
   static:
