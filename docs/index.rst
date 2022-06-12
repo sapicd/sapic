@@ -29,9 +29,9 @@ sapic - 简约不小气的自建图床程序
 基于Flask的Web自建图床，默认存储在本地，
 内置支持又拍云、七牛云、阿里云OSS、腾讯云COS、S3等对象存储，支持GitHub、Gitee（码云）。
 
-GitHub：[sapicd/sapic](https://github.com/sapicd/sapic)
+GitHub： `sapicd/sapic <https://github.com/sapicd/sapic>`_
 
-Gitee：[staugur/picbed](https://gitee.com/staugur/picbed)
+Gitee： `staugur/picbed <https://gitee.com/staugur/picbed>`_
 
 语言：Python
 
