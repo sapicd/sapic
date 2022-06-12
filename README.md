@@ -9,7 +9,7 @@
 
 ## 手动部署
 
-1. 要求： Python2.7、Python3.6+（或PyPy）和Redis
+1. 要求： Python2.7、Python3.6+（推荐）和Redis
 
 2. 下载： `git clone https://github.com/sapicd/sapic && cd sapic`
 

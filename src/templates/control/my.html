@@ -619,7 +619,7 @@
                     if (img.is_video) {
                         return '<div class="pin"><video class="item" src="' + img.src + '" data-sha="' + img.sha + '" style="top:0; left:0; width:100%; height:100%" title="' + (img.title || '') + '">抱歉，您的浏览器不支持内嵌视频！</video></div>';
                     }
-                    return '<div class="pin"><img class="item" src="' + img.get_src("loadmypic") + '" data-sha="' + img.sha + '" title="' + (img.title || '') + '"></div>';
+                    return '<div class="pin"><img class="item" src="' + img.get_src("loadmypic") + '" data-sha="' + img.sha + '" title="' + (img.title || '') + '" alt="' + (img.title || img.filename) + '"></div>';
                 }).join("");
                 $("#waterfall").html(html);
                 flow.lazyimg();
@@ -782,7 +782,7 @@
                                         layer.close(loadIndex);
                                         var content = [
                                             '<div style="padding: 15px;">',
-                                            '<center><img src="' + mySrc + '" width="300px"><br><br>',
+                                            '<center><img src="' + mySrc + '" width="300px" alt="显示失败"><br><br>',
                                             '<p>点击下方按钮分享</p>',
                                             '<div class="shorturl-social-share"></div></center>',
                                             '</div>'
