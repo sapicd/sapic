@@ -26,13 +26,10 @@ from email.mime.text import MIMEText
 from email.utils import parseaddr, formataddr
 from user_agents import parse as user_agents_parse
 from bleach import clean as bleach_clean
-from bleach.sanitizer import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
+from bleach.sanitizer import ALLOWED_TAGS, ALLOWED_ATTRIBUTES
 from version import __version__ as PICBED_VERSION
 from .log import Logger
-from ._compat import string_types, text_type, PY2, urlparse, is_true
-
-if PY2:
-    from socket import error as ConnectionRefusedError
+from ._compat import string_types, text_type, urlparse, is_true
 
 
 logger = Logger("sys").getLogger
@@ -42,7 +39,9 @@ colon_pat = re.compile(r"\s*:\s*")
 verticaline_pat = re.compile(r"\s*\|\s*")
 username_pat = re.compile(r"^[a-zA-Z][0-9a-zA-Z\_]{3,31}$")
 point_pat = re.compile(r"^\w{1,9}\.?\w{1,9}$")
-mail_pat = re.compile(r"([0-9a-zA-Z\_*\.*\-*]+)@([a-zA-Z0-9\-*\_*\.*]+)\.([a-zA-Z]+$)")
+mail_pat = re.compile(
+    r"([0-9a-zA-Z\_*\.*\-*]+)@([a-zA-Z0-9\-*\_*\.*]+)\.([a-zA-Z]+$)"
+)
 author_mail_re = re.compile(r"(.*)\s<(.*)>")
 url_pat = re.compile(
     r"^(?:http)s?://"
@@ -80,13 +79,13 @@ def rsp(*args):
 
 
 def md5(text):
-    if not PY2 and isinstance(text, text_type):
+    if isinstance(text, text_type):
         text = text.encode("utf-8")
     return hashlib.md5(text).hexdigest()
 
 
 def sha1(text):
-    if not PY2 and isinstance(text, text_type):
+    if isinstance(text, text_type):
         text = text.encode("utf-8")
     return hashlib.sha1(text).hexdigest()
 
@@ -98,11 +97,9 @@ def sha256(text):
 
 
 def hmac_sha256(key, text):
-    if PY2 and isinstance(key, text_type):
+    if isinstance(key, text_type):
         key = key.encode("utf-8")
-    if not PY2 and isinstance(key, text_type):
-        key = key.encode("utf-8")
-    if not PY2 and isinstance(text, text_type):
+    if isinstance(text, text_type):
         text = text.encode("utf-8")
     return hmac.new(key=key, msg=text, digestmod=hashlib.sha256).hexdigest()
 
@@ -127,33 +124,12 @@ def timestamp_to_timestring(timestamp, fmt="%Y-%m-%d %H:%M:%S"):
 
 
 def create_redis_engine(redis_url=None):
-    """创建redis连接的入口
-
-    .. versionchanged:: 1.6.0
-        支持rediscluster
-    """
+    """创建redis连接的入口"""
     from config import REDIS
 
     url = redis_url or REDIS
     if not url:
         return
-    if url.startswith("rediscluster://"):
-        try:
-            from rediscluster import RedisCluster
-        except ImportError:
-            raise ImportError(
-                "Please install module with `pip install redis-py-cluster`"
-            )
-        else:
-            startup_nodes = [
-                dict(host=hp.split(":")[0], port=hp.split(":")[1])
-                for hp in comma_pat.split(url.split("://")[-1])
-                if hp and len(hp.split(":")) == 2
-            ]
-            if startup_nodes:
-                return RedisCluster(startup_nodes=startup_nodes, decode_responses=True)
-            else:
-                raise ValueError("Invalid redis url")
     return from_url(url, decode_responses=True)
 
 
@@ -344,7 +320,7 @@ def check_ir(ir):
 
 def parse_data_uri(datauri):
     """Parse Data URLs: data:[<media type>][;base64],<data>"""
-    if not PY2 and not isinstance(datauri, text_type):
+    if not isinstance(datauri, text_type):
         datauri = datauri.decode("utf-8")
     match = data_uri_pat.match(datauri)
     if match:
@@ -377,7 +353,9 @@ def gen_ua():
         "(X11; Linux x86_64)",
         "(Macintosh; Intel Mac OS X 10_12_6)",
     ]
-    chrome_version = "Chrome/{}.0.{}.{}".format(first_num, third_num, fourth_num)
+    chrome_version = "Chrome/{}.0.{}.{}".format(
+        first_num, third_num, fourth_num
+    )
     ua = " ".join(
         [
             "Mozilla/5.0",
@@ -567,7 +545,9 @@ class Mailbox(object):
                 to_addrs = (to_addrs,)
             msg = MIMEText(message, "html", "utf-8")
             msg["from"] = self._format_addr(
-                "{0} <{1}>".format(from_name or self._user.split("@")[0], self._user)
+                "{0} <{1}>".format(
+                    from_name or self._user.split("@")[0], self._user
+                )
             )
             msg["to"] = ";".join(to_addrs)
             msg["subject"] = Header(subject, "utf-8").encode()
@@ -595,13 +575,13 @@ def bleach_html(
     html,
     tags=ALLOWED_TAGS,
     attrs=ALLOWED_ATTRIBUTES,
-    styles=ALLOWED_STYLES,
+    css=None,
 ):
     return bleach_clean(
         html,
         tags=tags,
         attributes=attrs,
-        styles=styles,
+        css_sanitizer=css,
     )
 
 
@@ -613,7 +593,7 @@ def is_valid_verion(version):
     """
     if not version:
         return False
-    if not PY2 and not isinstance(version, string_types):
+    if not isinstance(version, string_types):
         version = version.decode("utf-8")
 
     if hasattr(semver.VersionInfo, "isvalid"):
@@ -635,7 +615,7 @@ def is_match_appversion(appversion=None):
     #: 没有要求appversion则默认认为兼容所有版本
     if not appversion:
         return True
-    if not PY2 and not isinstance(appversion, string_types):
+    if not isinstance(appversion, string_types):
         appversion = appversion.decode("utf-8")
 
     sysver = semver.VersionInfo.parse(PICBED_VERSION)
@@ -679,3 +659,9 @@ def parse_label(label):
 def b64size(b64string):
     """获取base64内容大小，单位bytes"""
     return (len(b64string) * 3) / 4 - b64string.count("=", -2)
+
+
+def raise_version():
+    vs = sys.version_info
+    if (vs[0], vs[1]) < (3, 8):
+        raise RuntimeError("The system requires python version 3.8+")

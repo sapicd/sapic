@@ -28,7 +28,7 @@ from utils.web import (
     dfr,
 )
 from utils.tool import is_true, rsp, string_types
-from utils._compat import PY2, text_type
+from utils._compat import text_type
 
 bp = Blueprint("front", "front")
 
@@ -123,9 +123,9 @@ def activate(token):
 
     else:
         name = res["msg"]
-        if PY2 and not isinstance(name, text_type):
-            name = name.decode("utf-8")
-        return render_template("public/error.html", code=res["code"], name=name)
+        return render_template(
+            "public/error.html", code=res["code"], name=name
+        )
 
 
 @bp.route("/forgot")
@@ -163,7 +163,9 @@ def feed():
     data = [dict(zip(fields, i)) for i in result if i]
     xml = render_template(
         "public/feed.xml",
-        items=sorted(data, key=lambda k: int(k.get("ctime") or 0), reverse=True)[:10],
+        items=sorted(
+            data, key=lambda k: int(k.get("ctime") or 0), reverse=True
+        )[:10],
     )
     response = make_response(xml)
     response.headers["Content-Type"] = "application/xml"
@@ -173,9 +175,9 @@ def feed():
 @bp.route("/publish")
 def publish():
     gfs = [
-        dict(field="title_name", name=u"站点名称", default=g.site_name),
-        dict(field="beian", name=u"备案", default=""),
-        dict(field="upload_field", name=u"上传字段", default="picbed"),
-        dict(field="cors", name=u"跨域共享源站", default=""),
+        dict(field="title_name", name="站点名称", default=g.site_name),
+        dict(field="beian", name="备案", default=""),
+        dict(field="upload_field", name="上传字段", default="picbed"),
+        dict(field="cors", name="跨域共享源站", default=""),
     ]
     return render_template("public/publish.html", gfs=gfs)

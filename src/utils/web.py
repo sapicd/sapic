@@ -36,12 +36,10 @@ from jinja2 import Environment, FileSystemLoader
 from sys import executable
 from functools import partial
 from subprocess import call, check_output
-from itsdangerous import (
-    TimedJSONWebSignatureSerializer as Serializer,
-    SignatureExpired,
-    BadSignature,
-)
+from jwt import encode as Serializer, decode as Deserializer
+from jwt.exceptions import ExpiredSignatureError, DecodeError
 from tempfile import NamedTemporaryFile
+from bleach.css_sanitizer import CSSSanitizer
 from libs.storage import get_storage
 from .tool import (
     logger,
@@ -70,11 +68,9 @@ from .tool import (
     ALLOWED_VIDEO,
     b64size,
 )
-from ._compat import PY2, text_type, urlsplit, parse_qs
+from ._compat import text_type, urlsplit, parse_qs
 from threading import Thread
-
-if not PY2:
-    from functools import reduce
+from functools import reduce
 
 rc = create_redis_engine()
 
@@ -106,7 +102,11 @@ def get_redirect_url(endpoint="front.index"):
         else:
             url = (
                 get_referrer_url()
-                or (request.full_path if request.endpoint not in no_jump_ep else None)
+                or (
+                    request.full_path
+                    if request.endpoint not in no_jump_ep
+                    else None
+                )
                 or url_for(endpoint)
             )
     return url
@@ -123,10 +123,8 @@ def default_login_auth(dSid=None):
     try:
         if not sid:
             raise ValueError
-        if PY2 and isinstance(sid, text_type):
-            sid = sid.encode("utf-8")
         sid = b64decode(sid)
-        if not PY2 and not isinstance(sid, text_type):
+        if not isinstance(sid, text_type):
             sid = sid.decode("utf-8")
         usr, expire, sha = sid.split(".")
         expire = int(expire)
@@ -150,7 +148,12 @@ def default_login_auth(dSid=None):
                         if (
                             sha256(
                                 "%s:%s:%s:%s"
-                                % (usr, pwd, expire, current_app.config["SECRET_KEY"])
+                                % (
+                                    usr,
+                                    pwd,
+                                    expire,
+                                    current_app.config["SECRET_KEY"],
+                                )
                             )
                             == sha
                         ):
@@ -198,7 +201,10 @@ def apilogin_required(f):
         if g.signin and g.userinfo.status == 0:
             return abort(
                 make_response(
-                    jsonify(msg="The user is disabled, no operation", code=403), 403
+                    jsonify(
+                        msg="The user is disabled, no operation", code=403
+                    ),
+                    403,
                 )
             )
         return f(*args, **kwargs)
@@ -334,7 +340,10 @@ def dfr(res, default="en-US"):
 
 def change_res_format(res):
     if isinstance(res, dict) and "code" in res:
-        sn = request.form.get("status_name", request.args.get("status_name")) or "code"
+        sn = (
+            request.form.get("status_name", request.args.get("status_name"))
+            or "code"
+        )
         oc = request.form.get("ok_code", request.args.get("ok_code"))
         mn = request.form.get("msg_name", request.args.get("msg_name"))
         return format_apires(res, sn, oc, mn)
@@ -345,7 +354,10 @@ def change_userinfo(userinfo):
     """解析用户信息userinfo部分字段数据"""
     if userinfo and isinstance(userinfo, dict):
         userinfo.update(
-            parsed_ucfg_url_rule=parse_valid_colon(userinfo.get("ucfg_url_rule")) or {},
+            parsed_ucfg_url_rule=parse_valid_colon(
+                userinfo.get("ucfg_url_rule")
+            )
+            or {},
             parsed_ucfg_url_rule_switch=dict(
                 loadmypic=is_true(g.userinfo.get("ucfg_urlrule_inloadmypic")),
                 url=is_true(g.userinfo.get("ucfg_urlrule_incopyurl")),
@@ -376,23 +388,34 @@ def get_site_config():
 def set_site_config(mapping):
     """设置站点信息"""
     if mapping and isinstance(mapping, dict):
-        ALLOWED_TAGS = ["a", "abbr", "b", "i", "code", "p", "br", "h3", "h4"]
+        ALLOWED_TAGS = ["a", "abbr", "b", "i", "code", "p", "br", "center"]
         ALLOWED_ATTRIBUTES = {
             "a": ["href", "title", "target"],
             "abbr": ["title"],
             "*": ["style"],
         }
-        ALLOWED_STYLES = ["color"]
+        ALLOWED_STYLES = CSSSanitizer(
+            allowed_css_properties=["color", "font-weight", "font-size"]
+        )
         upload_beforehtml = mapping.get("upload_beforehtml") or ""
         bulletin = mapping.get("bulletin") or ""
         about = mapping.get("about") or ""
         if upload_beforehtml:
             mapping["upload_beforehtml"] = bleach_html(
-                upload_beforehtml, ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
+                upload_beforehtml,
+                ALLOWED_TAGS,
+                ALLOWED_ATTRIBUTES,
+                ALLOWED_STYLES,
             )
         if bulletin:
             ALLOWED_TAGS.append("img")
-            ALLOWED_ATTRIBUTES["img"] = ["title", "alt", "src", "width", "height"]
+            ALLOWED_ATTRIBUTES["img"] = [
+                "title",
+                "alt",
+                "src",
+                "width",
+                "height",
+            ]
             mapping["bulletin"] = bleach_html(
                 bulletin, ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
             )
@@ -519,13 +542,13 @@ class Base64FileStorage(object):
             try:
                 #: now data change to binary
                 self._parse["data"] = pic64decode(self._parse.data)
-            except (BaseDecodeError, TypeError, ValueError):
+            except (BaseDecodeError, ValueError, TypeError):
                 raise ValueError("The attempt to decode the image failed")
         else:
             raise ValueError("Not found base64")
 
     def __set_data_uri(self, b64str):
-        if not PY2 and not isinstance(b64str, text_type):
+        if not isinstance(b64str, text_type):
             b64str = b64str.decode("utf-8")
         if not b64str.startswith("data:"):
             b64str = "data:;base64,%s" % b64str
@@ -689,21 +712,25 @@ def _pip_list(fmt=None, no_fresh=True):
 
 def generate_activate_token(dump_data, max_age=600):
     if dump_data and isinstance(dump_data, dict):
-        s = Serializer(current_app.config["SECRET_KEY"], expires_in=max_age)
-        data = s.dumps(dump_data)
-        return data.decode()
+        payload = {"exp": get_current_timestamp() + max_age}
+        payload.update(dump_data)
+        return Serializer(
+            payload,
+            current_app.config["SECRET_KEY"],
+        )
 
 
 def check_activate_token(token):
     res = dict(code=400)
     if token:
-        s = Serializer(current_app.config["SECRET_KEY"])
         try:
-            data = s.loads(token)
-        except SignatureExpired:
+            data = Deserializer(
+                token, current_app.config["SECRET_KEY"], "HS256"
+            )
+        except ExpiredSignatureError:
             res.update(code=403, msg="expired token")
-        except BadSignature:
-            res.update(code=404, msg="useless token")
+        except DecodeError:
+            res.update(code=400, msg="invalid token")
         else:
             res.update(code=0, data=data)
     else:
@@ -759,7 +786,9 @@ def make_email_tpl(tpl, **data):
     """
     je = Environment(
         loader=FileSystemLoader(
-            pathjoin(current_app.root_path, current_app.template_folder, "email")
+            pathjoin(
+                current_app.root_path, current_app.template_folder, "email"
+            )
         )
     )
     if "site_name" not in data:
@@ -781,7 +810,11 @@ def try_proxy_request(url, **kwargs):
     """
     kwargs["proxy"] = (
         dict(
-            [ps.split("=") for ps in comma_pat.split(g.cfg.proxies) if ps and "=" in ps]
+            [
+                ps.split("=")
+                for ps in comma_pat.split(g.cfg.proxies)
+                if ps and "=" in ps
+            ]
         )
         if g.cfg.proxies
         else None
@@ -827,7 +860,8 @@ def get_page_msg():
 
         html = (
             "<script>",
-            reduce(tpl_plus, map(make_layer, [json.loads(i) for i in msgs])) % "",
+            reduce(tpl_plus, map(make_layer, [json.loads(i) for i in msgs]))
+            % "",
             "</script>",
         )
         rc.delete(key)
@@ -857,7 +891,9 @@ def push_user_msg(to, text, level="info", time=3, align="right"):
         if rc.exists(rsp("account", to)):
             return rc.rpush(
                 rsp("msg", to),
-                json.dumps(dict(text=text, level=level, time=time * 1000, align=align)),
+                json.dumps(
+                    dict(text=text, level=level, time=time * 1000, align=align)
+                ),
             )
 
 
@@ -868,7 +904,9 @@ def get_push_msg():
     if msgs:
 
         def make_layer(data):
-            return ('message.push("{text}","{level}","{align}",{time});').format(
+            return (
+                'message.push("{text}","{level}","{align}",{time});'
+            ).format(
                 text=data["text"],
                 level=data["level"],
                 align=data["align"],

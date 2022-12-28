@@ -17,6 +17,7 @@ from utils.tool import (
     parse_valid_comma,
     err_logger,
     timestamp_to_timestring,
+    raise_version,
 )
 from utils.web import (
     get_site_config,
@@ -34,16 +35,14 @@ from utils.cli import sa_cli
 from libs.hook import HookManager
 from config import GLOBAL
 from version import __version__
-
-try:
-    from werkzeug.contrib.fixers import ProxyFix
-except ImportError:
-    from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 __author__ = "staugur"
 __email__ = "me@tcw.im"
 __date__ = "2019-12-20"
 __doc__ = "Flask-based web self-built pictures bed"
+
+raise_version()
 
 app = Flask(__name__)
 app.response_class = JsonResponse

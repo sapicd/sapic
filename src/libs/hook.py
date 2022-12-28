@@ -13,7 +13,16 @@ import warnings
 from time import time
 from sys import modules
 from os import listdir, getpid
-from os.path import join, dirname, abspath, isdir, isfile, splitext, basename, getmtime
+from os.path import (
+    join,
+    dirname,
+    abspath,
+    isdir,
+    isfile,
+    splitext,
+    basename,
+    getmtime,
+)
 from jinja2 import ChoiceLoader, FileSystemLoader, PackageLoader
 from flask import (
     render_template,
@@ -30,7 +39,7 @@ from utils.tool import (
     logger,
     parse_author_mail,
 )
-from utils._compat import string_types, integer_types, iteritems, text_type, PY2
+from utils._compat import string_types, integer_types, iteritems, text_type
 from config import GLOBAL
 from .storage import get_storage
 
@@ -202,7 +211,9 @@ class HookManager(object):
                     except ImportError as e:
                         logger.error(e, exc_info=True)
                         continue
-                    if hasattr(fo, "__version__") and hasattr(fo, "__author__"):
+                    if hasattr(fo, "__version__") and hasattr(
+                        fo, "__author__"
+                    ):
                         fo.__mtime__ = getmtime(fa)
                         fo.__family__ = "local"
                         self.__hooks[fm] = self.__get_meta(fo)
@@ -263,8 +274,12 @@ class HookManager(object):
                 "proxy": f_obj,
                 "time": time(),
                 "catalog": getattr(f_obj, "__catalog__", None),
-                "tplpath": join(self.__get_fileorparent(f_obj, True), "templates"),
-                "atspath": join(self.__get_fileorparent(f_obj, True), "static"),
+                "tplpath": join(
+                    self.__get_fileorparent(f_obj, True), "templates"
+                ),
+                "atspath": join(
+                    self.__get_fileorparent(f_obj, True), "static"
+                ),
             }
         )
 
@@ -324,7 +339,9 @@ class HookManager(object):
     def get_enabled_map_hooks(self):
         """Get map enabled hooks, return dict"""
         return {
-            name: h for name, h in iteritems(self.get_map_hooks) if h.state == "enabled"
+            name: h
+            for name, h in iteritems(self.get_map_hooks)
+            if h.state == "enabled"
         }
 
     def disable(self, name):
@@ -379,7 +396,9 @@ class HookManager(object):
             if name in self.get_map_hooks:
                 return self.get_map_hooks[name]["proxy"]
 
-    def get_call_list(self, _callname, _include=None, _exclude=None, _type="all"):
+    def get_call_list(
+        self, _callname, _include=None, _exclude=None, _type="all"
+    ):
         """获取所有启用钩子的某个类型对应的方法/变量"""
         hooks = []
         for h in sorted(self.get_enabled_hooks, key=lambda h: h.name):
@@ -405,9 +424,6 @@ class HookManager(object):
                 if callable(cn) or tpl:
                     hin = True
             if hin:
-                if PY2 and h.description:
-                    if not isinstance(h.description, text_type):
-                        h["description"] = h.description.decode("utf-8")
                 hooks.append(dict(name=h.name, description=h.description))
         return hooks
 
@@ -445,7 +461,9 @@ class HookManager(object):
             func = getattr(h.proxy, _funcname, None)
             if callable(func):
                 try:
-                    if isinstance(_args, (list, tuple)) and isinstance(_kwargs, dict):
+                    if isinstance(_args, (list, tuple)) and isinstance(
+                        _kwargs, dict
+                    ):
                         result = func(*_args, **_kwargs)
                     elif isinstance(_kwargs, dict):
                         result = func(**_kwargs)
@@ -511,8 +529,6 @@ class HookManager(object):
             if tpl.split(".")[-1] in ("html", "htm", "xhtml"):
                 content = render_template(tpl, **context)
             else:
-                if PY2 and not isinstance(tpl, text_type):
-                    tpl = tpl.decode("utf-8")
                 content = render_template_string(tpl, **context)
             if content:
                 result.append(content)

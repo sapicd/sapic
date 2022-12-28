@@ -68,17 +68,16 @@ NO.1 启动Redis
 
     查看我录制的安装redis的gif图: `redis-install.gif <https://static.saintic.com/picbed/staugur/2020/07/24/redis-install.gif>`_
 
+    .. versionchanged:: 1.15.0
+
+        已经移除 redis cluster 集群支持！
+
 .. _picbed-install-no2:
 
 NO.2 部署程序
 ---------------------
 
-这是一个基于Python Flask框架写的web应用，依赖redis，部署要求python2.7、3.6+，
-推荐使用版本3.7及之后版本。
-
-.. note::
-
-    目前测试了CentOS、Ubuntu的py2.7、3.6、3.7、pypy、pypy3版本。
+这是一个基于Python Flask框架写的web应用，依赖redis，部署要求python3.8+
 
 2.1. 下载源码
 ^^^^^^^^^^^^^^^
@@ -223,6 +222,10 @@ ProxyFix          sapic_proxyfix              无                信任代理标
 .. versionchanged:: 1.13.0
 
     配置读取环境变量时支持sapic前缀，比如picbed_host，优先读取sapic_host
+
+.. versionchanged:: 1.15.0
+
+    配置读取环境变量时已移除支持picbed前缀的兼容性处理和redis集群支持。
 
 .. tip:: 
 

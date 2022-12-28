@@ -77,13 +77,13 @@ sa_cli = AppGroup(
 
 
 @sa_cli.command()
-@click.option("--username", "-u", type=str, required=True, help=u"用户名")
-@click.option("--password", "-p", type=str, required=True, help=u"用户密码")
+@click.option("--username", "-u", type=str, required=True, help="用户名")
+@click.option("--password", "-p", type=str, required=True, help="用户密码")
 @click.option(
-    "--isAdmin/--no-isAdmin", default=False, help=u"是否为管理员", show_default=True
+    "--isAdmin/--no-isAdmin", default=False, help="是否为管理员", show_default=True
 )
-@click.option("--avatar", "-a", type=str, default="", help=u"头像地址")
-@click.option("--nickname", "-n", type=str, default="", help=u"昵称")
+@click.option("--avatar", "-a", type=str, default="", help="头像地址")
+@click.option("--nickname", "-n", type=str, default="", help="昵称")
 def create(username, password, isadmin, avatar, nickname):
     """创建账号"""
     exec_createuser(
@@ -99,19 +99,19 @@ def create(username, password, isadmin, avatar, nickname):
 @click.option(
     "--HookLoadTime/--no-HookLoadTime",
     default=False,
-    help=u"删除钩子加载时间",
+    help="删除钩子加载时间",
     show_default=True,
 )
 @click.option(
     "--HookThirds/--no-HookThirds",
     default=False,
-    help=u"删除已加载的第三方钩子",
+    help="删除已加载的第三方钩子",
     show_default=True,
 )
 @click.option(
     "--InvalidKey/--no-InvalidKey",
     default=False,
-    help=u"删除无效的Redis键",
+    help="删除无效的Redis键",
     show_default=True,
 )
 def clean(hookloadtime, hookthirds, invalidkey):
@@ -138,7 +138,7 @@ def clean(hookloadtime, hookthirds, invalidkey):
 
 
 @sa_cli.command()
-@click.confirmation_option(prompt=u"确定要升级更新吗？")
+@click.confirmation_option(prompt="确定要升级更新吗？")
 @click.argument("v2v", type=click.Choice(["1.6-1.7", "1.7-1.8"]))
 def upgrade(v2v):
     """版本升级助手"""

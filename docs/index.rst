@@ -58,7 +58,11 @@ Gitee： `staugur/picbed <https://gitee.com/staugur/picbed>`_
 
     已逐步更新配置字段，镜像同时支持sapic，请查看后续文档了解详情。
 
-    建议：普通环境使用python3.7+，Docker使用staugur/sapic镜像，配置使用sapic字样。
+    建议：普通环境使用python3.8+，Docker使用staugur/sapic镜像，配置使用sapic字样。
+
+.. note::
+
+    自 v1.15.0 正式移除 Python 2 的支持！
 
 .. _picbed-features:
 
@@ -83,7 +87,7 @@ Gitee： `staugur/picbed <https://gitee.com/staugur/picbed>`_
 
 5. 管理员控制台可配置全局参数定制站点信息以及用户个性自定义覆盖全局参数
 
-6. 支持PyPy、Python2.7、3.6+（强烈推荐），支持Docker且实时构建最新镜像传到官方仓库
+6. 支持Py3.8+、PyPy3，支持Docker且实时构建最新镜像传到官方仓库
 
 7. 支持油猴脚本（用户脚本） ，使用它，几乎可以采集全网图片！
 
@@ -103,7 +107,7 @@ Gitee： `staugur/picbed <https://gitee.com/staugur/picbed>`_
 一句话部署：
 ------------
 
-1. 要求： Python2.7（3.6+，推荐，PyPy、PyPy3）和Redis
+1. 要求： Python3.8+ 和 Redis
 2. 下载： ``git clone https://github.com/sapicd/sapic && cd sapic``
 3. 依赖： ``pip install -r requirements/all.txt``
 4. 配置： ``config.py`` 即配置文件，可从 `.cfg` 文件或环境变量读取配置信息。
@@ -112,4 +116,4 @@ Gitee： `staugur/picbed <https://gitee.com/staugur/picbed>`_
 详细部署请看下一篇！
 --------------------
 
-文档中录制了一些操作过程，所用系统CentOS7.8最小化安装的纯净系统，Python2.7.5
+文档中录制了一些操作过程，所用系统CentOS7.8最小化安装的纯净系统。

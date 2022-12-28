@@ -28,7 +28,7 @@ from utils.tool import (
     is_true,
     parse_ua,
 )
-from utils._compat import PY2, text_type
+from utils._compat import text_type
 
 intpl_profile = """
 <div class="layui-form-item">
@@ -112,7 +112,10 @@ def verify_rule(Ld):
     allow = Attribution(
         dict(
             ip=Attribution(
-                dict(access=get_ip(), secure=parse_valid_comma(Ld["allow_ip"]) or [])
+                dict(
+                    access=get_ip(),
+                    secure=parse_valid_comma(Ld["allow_ip"]) or [],
+                )
             ),
             origin=Attribution(
                 dict(
@@ -166,10 +169,8 @@ def before_request():
     ) or parse_authorization("LinkToken")
     if not token and LinkToken:
         try:
-            if PY2 and isinstance(LinkToken, text_type):
-                LinkToken = LinkToken.encode("utf-8")
             LinkToken = b64decode(LinkToken)
-            if not PY2 and not isinstance(LinkToken, text_type):
+            if not isinstance(LinkToken, text_type):
                 LinkToken = LinkToken.decode("utf-8")
             ctime, LinkId, LinkSig = LinkToken.split(":")
             ctime = int(ctime)
@@ -228,10 +229,8 @@ def before_request():
     if token:
         try:
             oldToken = token
-            if PY2 and isinstance(token, text_type):
-                token = token.encode("utf-8")
             token = b64decode(token)
-            if not PY2 and not isinstance(token, text_type):
+            if not isinstance(token, text_type):
                 token = token.decode("utf-8")
             rdm, usr, ctime, sig = token.split(".")
             ctime = int(ctime)

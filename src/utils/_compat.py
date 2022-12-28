@@ -12,40 +12,22 @@
 from sys import version_info
 from os import getenv
 
-PY2 = version_info[0] == 2
 
-if PY2:  # pragma: nocover
+def iteritems(d):
+    return iter(d.items())
 
-    def iteritems(d):
-        return d.iteritems()
 
-    def itervalues(d):
-        return d.itervalues()
+def itervalues(d):
+    return iter(d.values())
 
-    text_type = unicode
-    string_types = (str, unicode)
-    integer_types = (int, long)
-    from urllib import urlencode
-    from urllib2 import Request, urlopen
-    from urlparse import urlparse, urlsplit, parse_qs
-    import ConfigParser
-    import thread
 
-else:  # pragma: nocover
-
-    def iteritems(d):
-        return iter(d.items())
-
-    def itervalues(d):
-        return iter(d.values())
-
-    text_type = str
-    string_types = (str,)
-    integer_types = (int,)
-    from urllib.parse import urlencode, urlparse, urlsplit, parse_qs
-    from urllib.request import Request, urlopen
-    import configparser as ConfigParser
-    import _thread as thread
+text_type = str
+string_types = (str,)
+integer_types = (int,)
+from urllib.parse import urlencode, urlparse, urlsplit, parse_qs
+from urllib.request import Request, urlopen
+import configparser as ConfigParser
+import _thread as thread
 
 
 def is_true(value):
@@ -83,7 +65,9 @@ class Properties(object):
                 if line.find("=") > 0:
                     strs = line.split("=")
                     strs[1] = line[len(strs[0]) + 1 :]
-                    self.__getDict(strs[0].strip(), self.properties, strs[1].strip())
+                    self.__getDict(
+                        strs[0].strip(), self.properties, strs[1].strip()
+                    )
         except IOError:
             pass
         else:

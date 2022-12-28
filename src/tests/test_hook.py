@@ -4,12 +4,13 @@ import unittest
 from os import remove
 from os.path import join, isfile, dirname, abspath
 from libs.hook import HookManager
-from utils._compat import PY2
 
 
 class HookTest(unittest.TestCase):
     def setUp(self):
-        self.tf = join(dirname(dirname(abspath(__file__))), "tests", "forTestHook.py")
+        self.tf = join(
+            dirname(dirname(abspath(__file__))), "tests", "forTestHook.py"
+        )
         self.hm = HookManager(hooks_dir="tests")
         if isfile(self.tf):
             remove(self.tf)
@@ -45,13 +46,11 @@ class HookTest(unittest.TestCase):
         self.assertIsInstance(res["args"], (list, tuple))
         self.assertIsInstance(res["kwargs"], dict)
 
-    @unittest.skipIf(PY2, "Damn py2 anomaly.")
     def test_initload(self):
         hooks = self.hm.get_all_hooks
         self.assertIsInstance(hooks, list)
         self.assertEqual(len(hooks), 0)
 
-    @unittest.skipIf(PY2, "Damn py2 anomaly.")
     def test_reload(self):
         self.write_testmodule()
         self.hm.enable("test")
@@ -65,7 +64,6 @@ class HookTest(unittest.TestCase):
         self.assertEqual(test.__version__, "0.1.0")
         self.hm.call("test_func", self.callback)
 
-    @unittest.skipIf(PY2, "Damn py2 anomaly.")
     def test_disable_enable(self):
         self.write_testmodule()
         self.hm.disable("test")

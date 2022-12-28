@@ -75,6 +75,8 @@ Modules API
 .. autoclass:: Mailbox
     :members:
 
+.. autofunction:: raise_version
+
 适用Web环境的方法
 -----------------
 
