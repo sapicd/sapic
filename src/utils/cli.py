@@ -46,10 +46,10 @@ def exec_createuser(username, password, **kwargs):
                 pipe = rc.pipeline()
                 pipe.sadd(ak, username)
                 if kwargs:
-                    pipe.hmset(uk, kwargs)
-                pipe.hmset(
+                    pipe.hset(uk, mapping=kwargs)
+                pipe.hset(
                     uk,
-                    dict(
+                    mapping=dict(
                         username=username,
                         password=generate_password_hash(password),
                         is_admin=1 if is_true(is_admin) else 0,

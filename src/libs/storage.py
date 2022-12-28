@@ -52,7 +52,10 @@ class RedisStorage(object):
     @property
     def list(self):
         """list redis hash data"""
-        return {k: json.loads(v) for k, v in iteritems(self._db.hgetall(self.index))}
+        return {
+            k: json.loads(v)
+            for k, v in iteritems(self._db.hgetall(self.index))
+        }
 
     def set(self, key, value):
         """set key data"""
@@ -61,7 +64,7 @@ class RedisStorage(object):
     def setmany(self, **mapping):
         if mapping and isinstance(mapping, dict):
             mapping = {k: json.dumps(v) for k, v in iteritems(mapping)}
-            return self._db.hmset(self.index, mapping)
+            return self._db.hset(self.index, mapping=mapping)
 
     def get(self, key, default=None):
         """get key data from redis"""

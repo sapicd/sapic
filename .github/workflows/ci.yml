@@ -3,7 +3,7 @@ name: ci
 on: [push, pull_request]
 
 env:
-  picbed_redis_url: "redis://localhost"
+  sapic_redis_url: "redis://localhost"
 
 jobs:
 
@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        flask-version: ["2.0.0", "2.1.0", "2.2.0"]
-        python-version: [3.8, 3.9, 3.10]
+        flask-version: ["2.1.0", "2.2.0"]
+        python-version: ["3.8", "3.9", "3.10"]
 
     steps:
     - uses: actions/checkout@v2
@@ -23,16 +23,15 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install codecov Flask==${{ matrix.flask-version }}
-        pip install -r requirements/all.txt
-
     - name: Start Redis
       uses: supercharge/redis-github-action@1.2.0
       with:
         redis-version: 4
+
+    - name: Install dependencies
+      run: |
+        pip install codecov Flask==${{ matrix.flask-version }}
+        pip install -r requirements/dev.txt
   
     - name: Test & upload report to coverage
       run: |
