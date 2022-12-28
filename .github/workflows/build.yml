@@ -39,5 +39,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            staugur/picbed:${{ steps.branch.outputs.tag }}
             staugur/sapic:${{ steps.branch.outputs.tag }}

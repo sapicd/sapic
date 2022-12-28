@@ -13,6 +13,7 @@ Released in 2023-1-1
 - 移除 Redis 集群模式支持。
 - 配置读取不再兼容picbed前缀。
 - 邮箱激活验证功能所用模块改为PyJWT。
+- 不再同时构建 staugur/picbed 的 Docker Hub 镜像。
 
 v1.13.6
 --------

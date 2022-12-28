@@ -1,12 +1,12 @@
 # -- build dependencies with debian(multiarch) --
-FROM python:3.7-slim AS build
+FROM python:3.8-slim AS build
 LABEL maintainer=me@tcw.im
 ARG PIPMIRROR=https://pypi.tuna.tsinghua.edu.cn/simple
 COPY requirements /requirements
 RUN pip install --timeout 30 --index $PIPMIRROR --user --no-cache-dir --no-warn-script-location -r /requirements/all.txt
 
 # -- app environment(multiarch) --
-FROM python:3.7-alpine
+FROM python:3.8-alpine
 ENV LOCAL_PKG="/root/.local"
 ENV sapic_isrun=true
 COPY --from=build ${LOCAL_PKG} ${LOCAL_PKG}
