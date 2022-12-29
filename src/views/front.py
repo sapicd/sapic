@@ -85,7 +85,6 @@ def admin():
     return render_template("control/admin.html")
 
 
-@bp.route("/picbed.user.js")
 @bp.route("/sapic.user.js")
 def userscript():
     if g.signin and is_true(g.userinfo.ucfg_userscript):

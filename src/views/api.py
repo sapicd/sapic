@@ -766,8 +766,10 @@ def github():
                     status_text = "预发布"
                 elif status in ("stable", "production", "ga"):
                     status_text = "正式版"
+                elif status == "archive":
+                    status_text = "已封存"
                 else:
-                    status_text = ""
+                    status_text = "未知"
                 if pkg:
                     pypi = "https://pypi.org/project/{}".format(pkg)
                 else:

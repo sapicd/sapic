@@ -514,8 +514,7 @@
 <script id="thirdhook_show_tpl" type="text/html">
 <div style="padding: 10px">
     <fieldset class="layui-elem-field layui-field-title" style="margin-bottom:0px">
-        <legend style="color:#009688;font-size:14px">已审核且开源的第三方钩子列表&nbsp;
-            <sub><a href="javascript:;" id="refreshThirdHookTable" style="color:#01AAED;font-size:0.85em">刷新缓存</a></sub></legend>
+        <legend style="color:#009688;font-size:14px">已审核且开源的第三方钩子列表</legend>
         <div class="layui-field-box">
             <table id="thid-hook-list" lay-filter="thid-hook-list" class="layui-table"></table>
         </div>
@@ -530,6 +529,11 @@
         </div>
     </fieldset>
 </div>
+</script>
+<script type="text/html" id="refreshThirdHookTable">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm layui-btn-primary layui-border-blue" lay-event="refresh">刷新缓存</button>
+    </div>
 </script>
 {% endraw %}
 {{ get_page_msg() }}
@@ -598,7 +602,7 @@
             var tip = [
                 '此代理用于程序请求外部HTTP[s]时(部分情况)，当首次请求超时、连接错误时自动调用代理。',
                 '<b>格式：</b>http[s]=proxy-server,scheme://hostname=proxy-server',
-                '详细请参考<a href="https://picbed.rtfd.vip/admin.html#picbed-admin-system" target="_blank" style="color:red">文档</a>！',
+                '详细请参考<a href="{{ config.DOCS_BASE_URL }}/admin.html#picbed-admin-system" target="_blank" style="color:red">文档</a>！',
             ];
             layer.tips(tip.join("<br>"), this, {tips: 1});
         });
@@ -831,7 +835,7 @@
                         closeBtn: false,
                         area: [
                             document.body.clientWidth > 580 ? '580px' : '95%',
-                            '470px'
+                            '490px'
                         ],
                         shade: 0.1,
                         shadeClose: true,
@@ -879,6 +883,7 @@
                                     {
                                         fixed: 'right',
                                         toolbar: '#thidhook_action',
+                                        title: '动作',
                                         width: 45
                                     }
                                 ]],
@@ -887,17 +892,14 @@
                                 page: true,
                                 limit: 5,
                                 limits: [5, 10, 20],
+                                toolbar: '#refreshThirdHookTable',
+                                defaultToolbar: ['filter', 'exports'], 
                                 width: document.body.clientWidth > 580 ? 560 : document.body.clientWidth * 0.9
                             });
-                            $('#refreshThirdHookTable').click(function() {
-                                thidHooksTable.reload({
-                                    where: {no_fresh:0}
-                                });
-                            });
                             table.on('tool(thid-hook-list)', function(obj){
-                                var data = obj.data;
-                                var layEvent = obj.event;
-                                var tr = obj.tr;
+                                let data = obj.data;
+                                let layEvent = obj.event;
+                                let tr = obj.tr;
                                 if(layEvent === 'install'){
                                     var pypiHide = data.pypi ? "" : "layui-hide";
                                     var content = [
@@ -931,12 +933,22 @@
                                         shadeClose: true,
                                         content: content,
                                         success: function(layero, index) {
-                                            var i = layero[0].querySelectorAll("input[name='index']");
+                                            let i = layero[0].querySelectorAll("input[name='index']");
                                             i[0].value = index;
                                             i[1].value = index;
                                         }
                                     });
                                 }
+                            });
+                            table.on('toolbar(thid-hook-list)', function(obj){
+                                let checkStatus = table.checkStatus(obj.config.id);
+                                switch(obj.event){
+                                    case 'refresh':
+                                    thidHooksTable.reload({
+                                        where: {no_fresh:0}
+                                    });
+                                    break;
+                                };
                             });
                         }
                     });
