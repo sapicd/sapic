@@ -36,6 +36,10 @@ GLOBAL = {
     # 上传最大容量限制，单位MB
     "ProxyFix": is_true(envs.get("sapic_proxyfix")),
     # 信任代理标头
+    "AllowTags": envs.get("sapic_allowtags", ""),
+    # 站点设置部分参数额外允许的HTML标签的属性
+    "AllowStyles": envs.get("sapic_allowstyles", ""),
+    # 站点设置部分参数额外允许的HTML标签的样式
 }
 
 

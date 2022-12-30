@@ -27,6 +27,8 @@ from email.utils import parseaddr, formataddr
 from user_agents import parse as user_agents_parse
 from bleach import clean as bleach_clean
 from bleach.sanitizer import ALLOWED_TAGS, ALLOWED_ATTRIBUTES
+from bleach.css_sanitizer import CSSSanitizer
+from typing import Optional, Dict, List
 from version import __version__ as PICBED_VERSION
 from .log import Logger
 from ._compat import string_types, text_type, urlparse, is_true
@@ -573,14 +575,23 @@ class Mailbox(object):
 
 def bleach_html(
     html,
-    tags=ALLOWED_TAGS,
-    attrs=ALLOWED_ATTRIBUTES,
-    css=None,
+    tags: Optional[List[str]] = None,
+    attrs: Optional[Dict[str, List[str]]] = None,
+    css: Optional[CSSSanitizer] = None,
 ):
+    """清洗HTML，设置中仅允许部分标签、属性和样式。"""
+    from config import GLOBAL
+
+    _tags = tags or ALLOWED_TAGS
+    _ext_tags = parse_valid_comma(GLOBAL["AllowTags"])
+    _ext_styles = parse_valid_comma(GLOBAL["AllowStyles"])
+    _tags.extend(_ext_tags)
+    if isinstance(css, CSSSanitizer) and _ext_styles:
+        css.allowed_css_properties.extend(_ext_styles)
     return bleach_clean(
         html,
-        tags=tags,
-        attributes=attrs,
+        tags=_tags,
+        attributes=attrs or ALLOWED_ATTRIBUTES,
         css_sanitizer=css,
     )
 
