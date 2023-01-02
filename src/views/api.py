@@ -1317,6 +1317,10 @@ def upload():
                     and rst["data"].get("stream")
                 ):
                     stream = rst["data"]["stream"]
+                    # 当处理后stream类型发生变化时，
+                    # 如jpg格式转为webp格式，更新后缀
+                    if rst.get("suffix") != suffix:
+                        suffix = rst.get("suffix")
             for h in g.hm.call(
                 "upimg_stream_interceptor",
                 _args=(stream, suffix),
@@ -1330,8 +1334,13 @@ def upload():
                     return res
         #: 定义图片文件名
         filename = secure_filename(fp.filename)
+        origin_suffix = splitext(filename)[-1]
         if "." not in filename:
             filename = "%s%s" % (generate_random(8), suffix)
+        elif suffix != origin_suffix:
+            # 钩子处理后stream类型可能变化，更新suffix
+            filename = "%s%s" % (filename[:-len(origin_suffix)], suffix)
+
         #: 根据文件名规则重定义图片名
         upload_file_rule = (
             (g.userinfo.ucfg_upload_file_rule or g.cfg.upload_file_rule)

@@ -1,3 +1,4 @@
 -r prod.txt
 -r up2upyun.txt
 -r up2qiniu.txt
+-r pic2webp.txt
