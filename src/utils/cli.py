@@ -139,7 +139,7 @@ def clean(hookloadtime, hookthirds, invalidkey):
 
 @sa_cli.command()
 @click.confirmation_option(prompt="确定要升级更新吗？")
-@click.argument("v2v", type=click.Choice(["1.6-1.7", "1.7-1.8"]))
+@click.argument("v2v", type=click.Choice(["1.6-1.7", "1.7-1.8", "1.16"]))
 def upgrade(v2v):
     """版本升级助手"""
     #: 处理更新版本时数据迁移、数据结构变更、其他修改
@@ -211,3 +211,6 @@ def upgrade(v2v):
                 pipe.delete(rsp("image", sha))
             pipe.delete(dk)
             pipe.execute()
+
+    elif v2v == "1.16":
+        _pip_install("pillow>=9.4.0")

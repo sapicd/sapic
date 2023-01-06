@@ -4,6 +4,14 @@
 更新日志
 =========
 
+v1.16.0
+--------
+
+Released in 2023-1-6
+
+- 优化：upimg_stream_processor钩子支持返回 `suffix` 字段指定新后缀。
+- 新增：jpg/png转换为webp内置扩展，默认禁用。
+
 v1.15.0
 --------
 

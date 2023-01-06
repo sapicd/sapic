@@ -390,3 +390,17 @@ NO.5 程序升级
         `staugur/picbed-up2cos <https://github.com/sapicd/up2cos>`_ 、
         `staugur/picbed-up2oss <https://github.com/sapicd/up2oss>`_
 
+- v1.16.0
+    - 增加了内置模块`pic2webp`，可以手动安装：
+
+    .. code-block:: bash
+
+        $ pip install -r requirements/pic2webp.txt
+
+    或通过命令行自动完成：
+
+    .. code-block:: bash
+
+        $ cd picbed/src
+        $ flask sa upgrade --yes 1.16
+
