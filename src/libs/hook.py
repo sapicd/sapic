@@ -367,9 +367,14 @@ class HookManager(object):
         if third_hook_module_name:
             self.__third_hooks = third_hook_module_name
             if hasattr(self, "app"):
-                self.app.jinja_loader.loaders.append(
-                    PackageLoader(third_hook_module_name)
-                )
+                try:
+                    self.app.jinja_loader.loaders.append(
+                        PackageLoader(third_hook_module_name)
+                    )
+                except ValueError:
+                    self.app.jinja_loader.loaders.append(
+                        PackageLoader(third_hook_module_name, "")
+                    )
             self.reload()
 
     def remove_third_hook(self, third_hook_name):

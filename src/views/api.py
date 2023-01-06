@@ -102,7 +102,10 @@ def get_url_with_suffix(d, _type):
         and "parsed_ucfg_url_rule_switch" in g.userinfo
         and is_true(g.userinfo.parsed_ucfg_url_rule_switch.get(_type))
     ):
-        return "%s%s" % (d["src"], g.userinfo.parsed_ucfg_url_rule.get(d["sender"], ""))
+        return "%s%s" % (
+            d["src"],
+            g.userinfo.parsed_ucfg_url_rule.get(d["sender"], ""),
+        )
     return d["src"]
 
 
@@ -126,7 +129,8 @@ def gen_url_tpl(data):
         tpl.update(
             HTML="<video src='%s' title='%s' controls></video>"
             % (get_url_with_suffix(data, "html"), data.get("title", "")),
-            rST=".. raw:: html\n\n\t%s" % get_video(get_url_with_suffix(data, "rst")),
+            rST=".. raw:: html\n\n\t%s"
+            % get_video(get_url_with_suffix(data, "rst")),
             Markdown=get_video(get_url_with_suffix(data, "rst")),
         )
     else:
@@ -155,7 +159,8 @@ def api_after_handler(res):
 @bp.route("/index", methods=["GET", "POST"])
 def index():
     return jsonify(
-        "Hello %s" % (g.userinfo.username if g.signin else GLOBAL["ProcessName"])
+        "Hello %s"
+        % (g.userinfo.username if g.signin else GLOBAL["ProcessName"])
     )
 
 
@@ -194,7 +199,9 @@ def login():
                 res.update(code=403, msg="The user is disabled, no operation")
                 return res
             #: 不允许普通用户登录
-            if is_true(g.cfg.disable_login) and not is_true(userinfo.get("is_admin")):
+            if is_true(g.cfg.disable_login) and not is_true(
+                userinfo.get("is_admin")
+            ):
                 res.update(msg="Normal user login has been disabled")
                 return res
             password = userinfo.get("password")
@@ -213,7 +220,12 @@ def login():
                     expire,
                     sha256(
                         "%s:%s:%s:%s"
-                        % (usr, password, expire, current_app.config["SECRET_KEY"])
+                        % (
+                            usr,
+                            password,
+                            expire,
+                            current_app.config["SECRET_KEY"],
+                        )
                     ),
                 )
                 sid = b64encode(sid.encode("utf-8")).decode("utf-8")
@@ -291,18 +303,23 @@ def register():
                         viewmail = g.cfg.review_email
                         if review and viewmail:
                             msg = (
-                                u"新用户&nbsp;<b>{}</b>&nbsp;已经注册，请您尽快登录"
-                                u"&nbsp;<a href='{}'>图床后台</a>&nbsp;审核！"
-                            ).format(username, url_for("front.admin", _external=True))
+                                "新用户&nbsp;<b>{}</b>&nbsp;已经注册，请您尽快登录"
+                                "&nbsp;<a href='{}'>图床后台</a>&nbsp;审核！"
+                            ).format(
+                                username,
+                                url_for("front.admin", _external=True),
+                            )
                             html = make_email_tpl(
                                 "notify.html",
-                                username=u"管理员",
-                                foreword=u"您好",
+                                username="管理员",
+                                foreword="您好",
                                 content=msg,
                             )
                             async_sendmail("叮咚，新用户审核通知", html, viewmail)
         else:
-            res.update(msg="The username is invalid or registration is not allowed")
+            res.update(
+                msg="The username is invalid or registration is not allowed"
+            )
     else:
         res.update(msg="Parameter error")
     return res
@@ -359,9 +376,13 @@ def forgot():
                 res = check_activate_token(token)
                 if res["code"] == 0:
                     try:
-                        g.rc.hset(uk, "password", generate_password_hash(password))
+                        g.rc.hset(
+                            uk, "password", generate_password_hash(password)
+                        )
                     except RedisError:
-                        res.update(code=1, msg="Program data storage service error")
+                        res.update(
+                            code=1, msg="Program data storage service error"
+                        )
                     else:
                         res.update(code=0)
         else:
@@ -419,9 +440,11 @@ def hook():
         try:
             __import__(name)
             g.hm.add_third_hook(name)
-        except ImportError:
+        except ImportError as e:
+            logger.debug(e, exc_info=True)
             res.update(msg="The third module not found")
-        except:
+        except Exception as e:
+            logger.debug(e, exc_info=True)
             res.update(msg="An unknown error occurred in the program")
         else:
             res.update(code=0)
@@ -594,30 +617,34 @@ def user():
                         if is_true(mret[0]):
                             if Action == "reviewOK":
                                 msg = (
-                                    u"您的注册申请已审核通过，请点击下方链接登录：<br>"
-                                    u"<a href='{link}'>{link}</a>"
-                                ).format(link=url_for("front.index", _external=True))
+                                    "您的注册申请已审核通过，请点击下方链接登录：<br>"
+                                    "<a href='{link}'>{link}</a>"
+                                ).format(
+                                    link=url_for("front.index", _external=True)
+                                )
                                 html = make_email_tpl(
                                     "notify.html",
                                     username=username,
-                                    foreword=u"欢迎使用 %s 图床" % g.site_name,
+                                    foreword="欢迎使用 %s 图床" % g.site_name,
                                     content=msg,
                                 )
                                 async_sendmail("图床账号审核通过", html, mret[1])
                             elif Action == "reviewFail":
                                 msg = (
-                                    u"很遗憾，您的注册申请经审核未通过！<br>"
-                                    u"原因是：{reason}<br>"
-                                    u"您可以登录留言再次审核：<br>"
-                                    u"<a href='{link}'>{link}</a>"
+                                    "很遗憾，您的注册申请经审核未通过！<br>"
+                                    "原因是：{reason}<br>"
+                                    "您可以登录留言再次审核：<br>"
+                                    "<a href='{link}'>{link}</a>"
                                 ).format(
                                     reason=reason,
-                                    link=url_for("front.index", _external=True),
+                                    link=url_for(
+                                        "front.index", _external=True
+                                    ),
                                 )
                                 html = make_email_tpl(
                                     "notify.html",
                                     username=username,
-                                    foreword=u"感谢注册 %s 图床" % g.site_name,
+                                    foreword="感谢注册 %s 图床" % g.site_name,
                                     content=msg,
                                 )
                                 async_sendmail("图床账号审核拒绝", html, mret[1])
@@ -625,8 +652,8 @@ def user():
                                 html = make_email_tpl(
                                     "notify.html",
                                     username=username,
-                                    foreword=u"感谢使用 %s 图床" % g.site_name,
-                                    content=u"很抱歉地通知您，您的账号已被禁用！",
+                                    foreword="感谢使用 %s 图床" % g.site_name,
+                                    content="很抱歉地通知您，您的账号已被禁用！",
                                 )
                                 async_sendmail("图床账号禁用通知", html, mret[1])
                 else:
@@ -637,7 +664,9 @@ def user():
             #: 设置/取消用户为管理员
             adm = 1 if is_true(request.form.get("is_admin")) else 0
             if username:
-                if username != g.userinfo.username and g.rc.sismember(ak, username):
+                if username != g.userinfo.username and g.rc.sismember(
+                    ak, username
+                ):
                     try:
                         g.rc.hset(rsp("account", username), "is_admin", adm)
                     except RedisError:
@@ -922,10 +951,15 @@ def my():
         #: 基于资料本身进行的统一更新
         allowed_fields = ["nickname", "avatar", "email"]
         data = {
-            k: v for k, v in iteritems(request.form.to_dict()) if k in allowed_fields
+            k: v
+            for k, v in iteritems(request.form.to_dict())
+            if k in allowed_fields
         }
         data.update(mtime=get_current_timestamp())
-        if is_true(g.userinfo.email_verified) and data.get("email") != g.userinfo.email:
+        if (
+            is_true(g.userinfo.email_verified)
+            and data.get("email") != g.userinfo.email
+        ):
             data["email_verified"] = 0
         try:
             g.rc.hmset(ak, data)
@@ -978,7 +1012,9 @@ def my():
             pipe = g.rc.pipeline()
             if Action == "againMessage":
                 if g.userinfo.status != -2:
-                    res.update(msg="Current state prohibits use of this method")
+                    res.update(
+                        msg="Current state prohibits use of this method"
+                    )
                     return res
                 pipe.hset(ak, "status", -1)
             pipe.hset(ak, "message", message)
@@ -1220,7 +1256,8 @@ def shamgr(sha):
                                 senders=json.dumps([res]),
                                 origin=request.form.get(
                                     "origin",
-                                    "UA: %s" % request.headers.get("User-Agent", ""),
+                                    "UA: %s"
+                                    % request.headers.get("User-Agent", ""),
                                 ),
                             ),
                         )
@@ -1253,7 +1290,9 @@ def upload():
     """
     res = dict(code=1, msg=None)
     #: 文件域或base64上传字段
-    FIELD_NAME = g.cfg.upload_field or request.form.get("_upload_field") or "picbed"
+    FIELD_NAME = (
+        g.cfg.upload_field or request.form.get("_upload_field") or "picbed"
+    )
     #: 匿名上传开关检测
     if not is_true(g.cfg.anonymous) and not g.signin:
         raise ApiError("Anonymous user is not sign in", 403)
@@ -1291,7 +1330,9 @@ def upload():
         picstrurl = request.form.get(FIELD_NAME)
         filename = secure_filename(request.form.get("filename") or "")
         if picstrurl:
-            if picstrurl.startswith("http://") or picstrurl.startswith("https://"):
+            if picstrurl.startswith("http://") or picstrurl.startswith(
+                "https://"
+            ):
                 fp = ImgUrlFileStorage(picstrurl, filename).getObj
             else:
                 try:
@@ -1308,19 +1349,23 @@ def upload():
         is_video = 1 if allowed_file(fp.filename, ALLOWED_VIDEO) else 0
         #: 处理图片二进制的钩子
         if not is_video:
-            for h in g.hm.get_call_list("upimg_stream_processor", _type="func"):
-                rst = g.hm.proxy(h["name"]).upimg_stream_processor(stream, suffix)
+            for h in g.hm.get_call_list(
+                "upimg_stream_processor", _type="func"
+            ):
+                rst = g.hm.proxy(h["name"]).upimg_stream_processor(
+                    stream, suffix
+                )
                 if (
                     isinstance(rst, dict)
                     and rst.get("code") == 0
                     and isinstance(rst.get("data"), dict)
-                    and rst["data"].get("stream")
+                    and "stream" in rst["data"]
                 ):
                     stream = rst["data"]["stream"]
                     # 当处理后stream类型发生变化时，
                     # 如jpg格式转为webp格式，更新后缀
-                    if rst.get("suffix") != suffix:
-                        suffix = rst.get("suffix")
+                    if rst.get("suffix") and rst["suffix"] != suffix:
+                        suffix = rst["suffix"]
             for h in g.hm.call(
                 "upimg_stream_interceptor",
                 _args=(stream, suffix),
@@ -1339,7 +1384,7 @@ def upload():
             filename = "%s%s" % (generate_random(8), suffix)
         elif suffix != origin_suffix:
             # 钩子处理后stream类型可能变化，更新suffix
-            filename = "%s%s" % (filename[:-len(origin_suffix)], suffix)
+            filename = "%s%s" % (filename[: -len(origin_suffix)], suffix)
 
         #: 根据文件名规则重定义图片名
         upload_file_rule = (
@@ -1422,7 +1467,9 @@ def upload():
             res.update(
                 code=1,
                 msg="All backend storage services failed to save pictures",
-                errors={i["sender"]: i["msg"] for i in data if i.get("code") != 0},
+                errors={
+                    i["sender"]: i["msg"] for i in data if i.get("code") != 0
+                },
             )
             return res
         #: 存储数据
@@ -1612,7 +1659,11 @@ def link():
             return res
         if allow_origin:
             allow_origin = ",".join(
-                [get_origin(url) for url in parse_valid_comma(allow_origin) if url]
+                [
+                    get_origin(url)
+                    for url in parse_valid_comma(allow_origin)
+                    if url
+                ]
             )
         #: 生成一个引用
         LinkId = gen_uuid()
@@ -1686,7 +1737,11 @@ def link():
                 return res
             if allow_origin:
                 allow_origin = ",".join(
-                    [get_origin(url) for url in parse_valid_comma(allow_origin) if url]
+                    [
+                        get_origin(url)
+                        for url in parse_valid_comma(allow_origin)
+                        if url
+                    ]
                 )
             pipe = g.rc.pipeline()
             pipe.hset(ltk, LinkId, username)
@@ -1797,7 +1852,9 @@ def load():
         for img in data:
             if img and isinstance(img, dict) and check_url(img.get("url")):
                 filename = secure_filename(
-                    img.get("filename") or guess_filename_from_url(img["url"]) or ""
+                    img.get("filename")
+                    or guess_filename_from_url(img["url"])
+                    or ""
                 )
                 if allowed_suffix(filename):
                     img["filename"] = filename
@@ -1828,7 +1885,8 @@ def load():
                     sender="load",
                     senders=json.dumps([]),
                     origin=request.form.get(
-                        "origin", "UA: %s" % request.headers.get("User-Agent", "")
+                        "origin",
+                        "UA: %s" % request.headers.get("User-Agent", ""),
                     ),
                     method="load",
                     title=img.get("title") or "",

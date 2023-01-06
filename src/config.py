@@ -40,6 +40,8 @@ GLOBAL = {
     # 站点设置部分参数额外允许的HTML标签的属性
     "AllowStyles": envs.get("sapic_allowstyles", ""),
     # 站点设置部分参数额外允许的HTML标签的样式
+    "HookPkgStorageDir": "",
+    # 第三方扩展包持久化目录
 }
 
 

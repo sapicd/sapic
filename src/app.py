@@ -10,6 +10,8 @@
 """
 
 from flask import Flask, g, request, render_template, jsonify
+from werkzeug.middleware.proxy_fix import ProxyFix
+from sys import path
 from views import front_bp, api_bp
 from utils.tool import (
     Attribute,
@@ -35,7 +37,6 @@ from utils.cli import sa_cli
 from libs.hook import HookManager
 from config import GLOBAL
 from version import __version__
-from werkzeug.middleware.proxy_fix import ProxyFix
 
 __author__ = "staugur"
 __email__ = "me@tcw.im"
@@ -55,6 +56,8 @@ app.config.update(
 )
 if GLOBAL["ProxyFix"]:
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+if GLOBAL["HookPkgStorageDir"]:
+    path.insert(1, GLOBAL["HookPkgStorageDir"])
 
 hm = HookManager(app)
 app.register_blueprint(front_bp)

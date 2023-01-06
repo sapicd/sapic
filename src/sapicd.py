@@ -13,15 +13,9 @@ def delete_hookloadtime():
     del s["hookloadtime"]
 
 
-IS_RUN = (
-    True
-    if (getenv("sapic_isrun") or getenv("picbed_isrun")) == "true"
-    else False
-)
+IS_RUN = True if getenv("sapic_isrun") == "true" else False
 
-CPU_COUNT = int(
-    envs.get("sapic_cpucount") or envs.get("picbed_cpucount") or cpu_count()
-)
+CPU_COUNT = int(envs.get("sapic_cpucount") or cpu_count())
 
 LOGSDIR = join(dirname(abspath(__file__)), "logs")
 if not exists(LOGSDIR):

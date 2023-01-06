@@ -13,7 +13,7 @@ import json
 import imghdr
 from posixpath import basename, splitext
 from os import remove
-from os.path import join as pathjoin, getsize
+from os.path import join as pathjoin, getsize, isdir
 from io import BytesIO
 from functools import wraps
 from base64 import urlsafe_b64decode as b64decode, b64decode as pic64decode
@@ -69,6 +69,7 @@ from .tool import (
     b64size,
 )
 from ._compat import text_type, urlsplit, parse_qs
+from config import GLOBAL
 from threading import Thread
 from functools import reduce
 
@@ -673,8 +674,11 @@ def get_upload_method(class_name):
 
 
 def _pip_install(pkg, index=None, upgrade=None):
-    """使用pip安装模块到用户目录$HOME/.local"""
+    """使用pip安装模块到指定目标或默认用户目录$HOME/.local"""
+    tgt = GLOBAL["HookPkgStorageDir"]
     cmd = [executable, "-m", "pip", "install", "-q"]
+    if tgt:
+        cmd.extend(("-t", tgt))
     if not is_venv():
         cmd.append("--user")
     if upgrade:
@@ -700,6 +704,10 @@ def _pip_list(fmt=None, no_fresh=True):
     else:
         cmd = [executable, "-m", "pip", "list", "--format", "json"]
         data = json.loads(check_output(cmd))
+        tgt = GLOBAL["HookPkgStorageDir"]
+        if tgt and isdir(tgt):
+            cmd.extend(("--path", tgt))
+            data.extend(json.loads(check_output(cmd)))
         pipe = rc.pipeline()
         pipe.set(key, json.dumps(data))
         pipe.expire(key, 3600)
