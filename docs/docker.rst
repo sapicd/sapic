@@ -23,7 +23,7 @@ Dockerfile仅包含源码及其依赖的Python模块，不包含redis和nginx环
 
   位于Docker官方仓库，可以点击查看公开信息。
 
-  之前镜像名是 `staugur/picbed`，v1.13同时增加了镜像 `staugur/sapic`
+  之前镜像名是 `staugur/picbed`，v1.13同时增加了镜像 `staugur/sapic`，v1.15不再同时构建。
 
 -  master分支即latest，dev分支标签是dev，其他已发布版本其版本号即标签
 
@@ -55,6 +55,10 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
 
     由于依赖的python基础镜像精简，目前构建完成仅75M左右（非压缩情况）。
 
+.. versionchanged:: 1.16.1
+
+    采用python3.8版本，取消多阶段构建。
+
 打包步骤如下：
 
   .. code-block:: bash
@@ -66,7 +70,7 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
 
   .. code-block:: bash
 
-    $ docker build -t staugur/sapic . --build-arg PIPMIRROR=https://pypi.tuna.tsinghua.edu.cn/simple
+    $ docker build -t staugur/sapic . --build-arg PIPMIRROR=https://pypi.tuna.tsinghua.edu.cn/simple --build-arg ALPINEMIRROR=mirrors.ustc.edu.cn
 
 .. tip::
 

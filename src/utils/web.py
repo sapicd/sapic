@@ -18,6 +18,7 @@ from io import BytesIO
 from functools import wraps
 from base64 import urlsafe_b64decode as b64decode, b64decode as pic64decode
 from binascii import Error as BaseDecodeError
+from redis import Redis
 from redis.exceptions import RedisError
 from requests.exceptions import RequestException
 from flask import (
@@ -73,7 +74,7 @@ from config import GLOBAL
 from threading import Thread
 from functools import reduce
 
-rc = create_redis_engine()
+rc: Redis = create_redis_engine()
 
 no_jump_ep = ("front.login", "front.logout", "front.register")
 
@@ -376,7 +377,7 @@ def change_userinfo(userinfo):
     return userinfo
 
 
-def get_site_config():
+def get_site_config() -> dict:
     """获取站点配置"""
     s = get_storage()
     cfg = s.get("siteconfig") or {}

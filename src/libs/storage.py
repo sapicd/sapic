@@ -12,6 +12,7 @@
 import json
 from utils._compat import iteritems
 from utils.tool import rsp, create_redis_engine
+from redis import Redis
 
 try:
     from synchronize import make_synchronized
@@ -29,11 +30,6 @@ except ImportError:
         return synced_func
 
 
-def get_storage():
-    """Project global definition data store backend"""
-    return RedisStorage()
-
-
 class RedisStorage(object):
     """Use redis stand-alone or cluster storage"""
 
@@ -47,10 +43,10 @@ class RedisStorage(object):
 
     def __init__(self):
         self.index = rsp("dat")
-        self._db = create_redis_engine()
+        self._db: Redis = create_redis_engine()
 
     @property
-    def list(self):
+    def list(self) -> dict:
         """list redis hash data"""
         return {
             k: json.loads(v)
@@ -63,8 +59,10 @@ class RedisStorage(object):
 
     def setmany(self, **mapping):
         if mapping and isinstance(mapping, dict):
-            mapping = {k: json.dumps(v) for k, v in iteritems(mapping)}
-            return self._db.hset(self.index, mapping=mapping)
+            pipe = self._db.pipeline()
+            for k, v in iteritems(mapping):
+                pipe.hset(self.index, k, json.dumps(v))
+            return pipe.execute()
 
     def get(self, key, default=None):
         """get key data from redis"""
@@ -101,3 +99,8 @@ class RedisStorage(object):
         )
 
     __repr__ = __str__
+
+
+def get_storage() -> RedisStorage:
+    """Project global definition data store backend"""
+    return RedisStorage()

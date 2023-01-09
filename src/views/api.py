@@ -26,6 +26,7 @@ from flask import (
     jsonify,
     Response,
 )
+from redis.client import Pipeline
 from redis.exceptions import RedisError
 from collections import Counter
 from itertools import chain
@@ -207,13 +208,11 @@ def login():
             password = userinfo.get("password")
             if password and check_password_hash(password, pwd):
                 #: 登录成功
-                g.rc.hmset(
-                    rsp("account", usr),
-                    dict(
-                        login_at=get_current_timestamp(),
-                        login_ip=get_user_ip(),
-                    ),
-                )
+                pipe: Pipeline = g.rc.pipeline()
+                pipe.hset(
+                    rsp("account", usr), "login_at", get_current_timestamp()
+                ).hset(rsp("account", usr), "login_ip", get_user_ip())
+                pipe.execute()
                 expire = get_current_timestamp() + max_age
                 sid = "%s.%s.%s" % (
                     usr,
@@ -290,9 +289,10 @@ def register():
                         label=g.cfg.default_userlabel,
                     )
                     uk = rsp("account", username)
-                    pipe = g.rc.pipeline()
+                    pipe: Pipeline = g.rc.pipeline()
                     pipe.sadd(ak, username)
-                    pipe.hmset(uk, options)
+                    for k, v in iteritems(options):
+                        pipe.hset(uk, k, v)
                     try:
                         pipe.execute()
                     except RedisError:
@@ -900,9 +900,10 @@ def token():
             tkey = generate_random(randint(6, 12))
             token = gen_token(tkey)
             try:
-                pipe = g.rc.pipeline()
-                pipe.hset(tk, token, usr)
-                pipe.hmset(ak, dict(token=token, token_key=tkey))
+                pipe: Pipeline = g.rc.pipeline()
+                pipe.hset(tk, token, usr).hset(ak, "token", token).hset(
+                    ak, "token_key", tkey
+                )
                 pipe.execute()
             except RedisError:
                 res.update(msg="Program data storage service error")
@@ -927,11 +928,12 @@ def token():
         tkey = generate_random(randint(6, 12))
         token = gen_token(tkey)
         try:
-            pipe = g.rc.pipeline()
+            pipe: Pipeline = g.rc.pipeline()
             if oldToken:
                 pipe.hdel(tk, oldToken)
-            pipe.hset(tk, token, usr)
-            pipe.hmset(ak, dict(token=token, token_key=tkey))
+            pipe.hset(tk, token, usr).hset(ak, "token", token).hset(
+                ak, "token_key", tkey
+            )
             pipe.execute()
         except RedisError:
             res.update(msg="Program data storage service error")
@@ -962,7 +964,10 @@ def my():
         ):
             data["email_verified"] = 0
         try:
-            g.rc.hmset(ak, data)
+            pipe: Pipeline = g.rc.pipeline()
+            for k, v in iteritems(data):
+                pipe.hset(ak, k, v)
+            pipe.execute()
         except RedisError:
             res.update(msg="Program data storage service error")
         else:
@@ -980,11 +985,10 @@ def my():
                     res.update(msg="Confirm passwords do not match")
                 else:
                     try:
-                        g.rc.hmset(
+                        g.rc.hset(
                             ak,
-                            dict(
-                                password=generate_password_hash(passwd),
-                            ),
+                            "password",
+                            generate_password_hash(passwd),
                         )
                     except RedisError:
                         res.update(msg="Program data storage service error")
@@ -1001,7 +1005,10 @@ def my():
                     res.update(msg="The user setting must start with `ucfg_`")
                     return res
             try:
-                g.rc.hmset(ak, cfgs)
+                pipe: Pipeline = g.rc.pipeline()
+                for k, v in iteritems(cfgs):
+                    pipe.hset(ak, k, v)
+                pipe.execute()
             except RedisError:
                 res.update(msg="Program data storage service error")
             else:
@@ -1249,16 +1256,16 @@ def shamgr(sha):
                         upload_path=data["upload_path"],
                     )
                     if res["code"] == 0:
-                        g.rc.hmset(
+                        pipe: Pipeline = g.rc.pipeline()
+                        pipe.hset(ik, "mtime", get_current_timestamp()).hset(
+                            ik, "senders", json.dumps([res])
+                        ).hset(
                             ik,
-                            dict(
-                                mtime=get_current_timestamp(),
-                                senders=json.dumps([res]),
-                                origin=request.form.get(
-                                    "origin",
-                                    "UA: %s"
-                                    % request.headers.get("User-Agent", ""),
-                                ),
+                            "origin",
+                            request.form.get(
+                                "origin",
+                                "UA: %s"
+                                % request.headers.get("User-Agent", ""),
                             ),
                         )
                 else:
@@ -1492,11 +1499,12 @@ def upload():
             title=request.form.get("title") or "",
             is_video=is_video,
         )
-        pipe = g.rc.pipeline()
+        pipe: Pipeline = g.rc.pipeline()
         pipe.sadd(rsp("index", "global"), sha)
         if g.signin and g.userinfo.username:
             pipe.sadd(rsp("index", "user", g.userinfo.username), sha)
-        pipe.hmset(rsp("image", sha), meta)
+        for k, v in iteritems(meta):
+            pipe.hset(rsp("image", sha), k, v)
         if expire > 0:
             pipe.expire(rsp("image", sha), expire)
         try:
@@ -1674,10 +1682,9 @@ def link():
             hmac_sha256(LinkId, LinkSecret),
         )
         LinkToken = b64encode(lid.encode("utf-8")).decode("utf-8")
-        pipe = g.rc.pipeline()
+        pipe: Pipeline = g.rc.pipeline()
         pipe.hset(ltk, LinkId, username)
-        pipe.hmset(
-            rsp("linktoken", LinkId),
+        for k, v in iteritems(
             dict(
                 LinkId=LinkId,
                 LinkSecret=LinkSecret,
@@ -1693,8 +1700,9 @@ def link():
                 allow_method=allow_method,
                 exterior_relation=er,
                 interior_relation=ir,
-            ),
-        )
+            )
+        ):
+            pipe.hset(rsp("linktoken", LinkId), k, v)
         try:
             pipe.execute()
         except RedisError:
@@ -1743,10 +1751,9 @@ def link():
                         if url
                     ]
                 )
-            pipe = g.rc.pipeline()
+            pipe: Pipeline = g.rc.pipeline()
             pipe.hset(ltk, LinkId, username)
-            pipe.hmset(
-                key,
+            for k, v in iteritems(
                 dict(
                     mtime=get_current_timestamp(),
                     comment=comment,
@@ -1757,8 +1764,9 @@ def link():
                     allow_method=allow_method,
                     exterior_relation=er,
                     interior_relation=ir,
-                ),
-            )
+                )
+            ):
+                pipe.hset(key, k, v)
             try:
                 pipe.execute()
             except RedisError:
@@ -1862,7 +1870,7 @@ def load():
                     continue
             fail.append(img)
         #: 处理
-        pipe = g.rc.pipeline()
+        pipe: Pipeline = g.rc.pipeline()
         success = []
         for img in todo:
             filename = img["filename"]
@@ -1871,8 +1879,7 @@ def load():
             #: 入库
             pipe.sadd(rsp("index", "global"), sha)
             pipe.sadd(rsp("index", "user", g.userinfo.username), sha)
-            pipe.hmset(
-                rsp("image", sha),
+            for k, v in iteritems(
                 dict(
                     sha=sha,
                     album=img.get("album") or "",
@@ -1891,8 +1898,9 @@ def load():
                     method="load",
                     title=img.get("title") or "",
                     is_video=1 if allowed_file(filename, ALLOWED_VIDEO) else 0,
-                ),
-            )
+                )
+            ):
+                pipe.hset(rsp("image", sha), k, v)
             try:
                 pipe.execute()
             except RedisError:

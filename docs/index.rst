@@ -87,7 +87,7 @@ Gitee： `staugur/picbed <https://gitee.com/staugur/picbed>`_
 
 5. 管理员控制台可配置全局参数定制站点信息以及用户个性自定义覆盖全局参数
 
-6. 支持Py3.8+、PyPy3，支持Docker且实时构建最新镜像传到官方仓库
+6. 支持Py3.8+、PyPy3，支持Docker（AMD/ARM）且实时构建最新镜像传到官方仓库
 
 7. 支持油猴脚本（用户脚本） ，使用它，几乎可以采集全网图片！
 

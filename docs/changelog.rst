@@ -4,6 +4,15 @@
 更新日志
 =========
 
+v1.16.1
+--------
+
+Released in 2023-1-9
+
+- 修复：redis 3.x版本，cli创建用户失败，感谢 @moria
+- 更改：redis hmset 命令更换为 hset
+- 更改：dockerfile取消分阶段构建（fix pillow import error）
+
 v1.16.0
 --------
 

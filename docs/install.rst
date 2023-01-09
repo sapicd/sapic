@@ -22,7 +22,7 @@
 NO.1 启动Redis
 -------------------
 
-部署redis很简单，版本要求2.8+、3.x、4.x，另外未测试过5.0+版本，不确保其正确性。
+部署redis很简单，版本要求3.x、4.x、5.x，未测试更高版本，请尽快废弃3.x版本，推荐至少4.x及以上版本。
 
 - CentOS/RHEL
 
@@ -43,7 +43,7 @@ NO.1 启动Redis
   .. code-block:: bash
 
     // version可替换为其他版本
-    $ version="3.2.0"
+    $ version="5.0.14"
     $ wget http://download.redis.io/releases/redis-${version}.tar.gz
     $ tar xzf redis-${version}.tar.gz
     $ cd redis-${version}
@@ -251,7 +251,7 @@ ProxyFix          sapic_proxyfix              无                信任代理标
 .. tip::
 
     - 部署程序可以使用Docker，源码中已经写好了Dockerfile，您可以藉此构建或者
-      使用构建好的 `picbed @ docker hub <https://hub.docker.com/r/staugur/picbed>`_ ，
+      使用构建好的 `sapic @ docker hub <https://hub.docker.com/r/staugur/sapic>`_ ，
       详情请看 :ref:`picbed-docker-deploy`
 
     - 刚启动的picbed是没有默认管理员用户的，需要使用命令行手动创建，
@@ -391,7 +391,7 @@ NO.5 程序升级
         `staugur/picbed-up2oss <https://github.com/sapicd/up2oss>`_
 
 - v1.16.0
-    - 增加了内置模块`pic2webp`，可以手动安装：
+    - 增加了内置模块 `pic2webp`，可以手动安装：
 
     .. code-block:: bash
 

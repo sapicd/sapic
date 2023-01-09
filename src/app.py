@@ -89,7 +89,7 @@ def before_request():
     g.userinfo = Attribute(change_userinfo(g.userinfo))
     g.is_admin = is_true(g.userinfo.is_admin)
     g.next = get_redirect_url()
-    g.site_name = g.cfg.title_name or "sapic"
+    g.site_name = g.cfg.title_name or GLOBAL["ProcessName"]
     g.hm = hm
 
 

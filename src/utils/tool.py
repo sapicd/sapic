@@ -20,7 +20,7 @@ from uuid import uuid4
 from time import time, localtime, strftime
 from datetime import datetime
 from random import randrange, sample, randint, choice
-from redis import from_url
+from redis import from_url, Redis
 from email.header import Header
 from email.mime.text import MIMEText
 from email.utils import parseaddr, formataddr
@@ -125,7 +125,7 @@ def timestamp_to_timestring(timestamp, fmt="%Y-%m-%d %H:%M:%S"):
     return strftime(fmt, timestamp)
 
 
-def create_redis_engine(redis_url=None):
+def create_redis_engine(redis_url=None) -> Redis:
     """创建redis连接的入口"""
     from config import REDIS
 
@@ -418,7 +418,7 @@ def try_request(
     proxy=None,
     num_retries=1,
     _is_retry=False,
-):
+) -> requests.Response:
     """
     :param dict params: 请求查询参数
     :param dict data: 提交表单数据
