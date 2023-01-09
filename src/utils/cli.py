@@ -38,6 +38,7 @@ def exec_createuser(username, password, **kwargs):
             echo("密码最少6位", "yellow")
         else:
             rc = create_redis_engine()
+            version = rc.execute_command('INFO')['redis_version']
             if rc.sismember(ak, username):
                 echo("用户名已存在", "red")
             else:
@@ -45,9 +46,14 @@ def exec_createuser(username, password, **kwargs):
                 uk = rsp("account", username)
                 pipe = rc.pipeline()
                 pipe.sadd(ak, username)
+                if version < "4.0.0":
+                    hset_method = pipe.hmset
+                else:
+                    hset_method = pipe.hset    
+
                 if kwargs:
-                    pipe.hset(uk, mapping=kwargs)
-                pipe.hset(
+                    hset_method(uk, mapping=kwargs)
+                hset_method(
                     uk,
                     mapping=dict(
                         username=username,
