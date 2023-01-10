@@ -152,14 +152,15 @@ http://demo.sapicd.com
 
 ![控制台管理员功能](./Snapshot/hook.png)
 
-## 贡献者
-
-感谢以下参与项目的人：
-
-<a href="graphs/contributors"><img src="https://opencollective.com/sapic/contributors.svg?width=890&button=false" /></a>
-
 ## Contributing
 
 感谢您的贡献！
 
 关于如何提交issue或pr，请参考 [contributing guidelines](./CONTRIBUTING.md)
+
+感谢以下参与项目的人：
+
+<a href="https://github.com/sapicd/sapic/graphs/contributors">
+  <img src="https://opencollective.com/sapic/contributors.svg?width=890&button=false" />
+</a>
+

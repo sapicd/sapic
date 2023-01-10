@@ -7,9 +7,10 @@
 v1.16.1
 --------
 
-Released in 2023-1-9
+Released in 2023-1-10
 
 - 修复：redis 3.x版本，cli创建用户失败，感谢 @moria
+- 修复：个人资料与设置字段空字符移除
 - 修复：docker pillow import error
 - 更改：docker运行时改为python3.9-slim
 - 更改：redis hmset 命令更换为 hset
