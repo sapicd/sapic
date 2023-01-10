@@ -2,7 +2,7 @@
 name: Bug report
 about: 提交漏洞
 title: "[BUG]"
-labels: ''
+labels: enhancement
 assignees: ''
 
 ---
