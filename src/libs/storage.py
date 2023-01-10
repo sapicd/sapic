@@ -55,12 +55,16 @@ class RedisStorage(object):
 
     def set(self, key, value):
         """set key data"""
+        if isinstance(value, str):
+            value = value.strip()
         return self._db.hset(self.index, key, json.dumps(value))
 
     def setmany(self, **mapping):
         if mapping and isinstance(mapping, dict):
             pipe = self._db.pipeline()
             for k, v in iteritems(mapping):
+                if isinstance(v, str):
+                    v = v.strip()
                 pipe.hset(self.index, k, json.dumps(v))
             return pipe.execute()
 

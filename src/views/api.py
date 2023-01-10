@@ -953,7 +953,7 @@ def my():
         #: 基于资料本身进行的统一更新
         allowed_fields = ["nickname", "avatar", "email"]
         data = {
-            k: v
+            k: v.strip()
             for k, v in iteritems(request.form.to_dict())
             if k in allowed_fields
         }
@@ -1007,6 +1007,8 @@ def my():
             try:
                 pipe: Pipeline = g.rc.pipeline()
                 for k, v in iteritems(cfgs):
+                    if isinstance(v, str):
+                        v = v.strip()
                     pipe.hset(ak, k, v)
                 pipe.execute()
             except RedisError:
