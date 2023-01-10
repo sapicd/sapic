@@ -10,8 +10,9 @@ v1.16.1
 Released in 2023-1-9
 
 - 修复：redis 3.x版本，cli创建用户失败，感谢 @moria
-- 更改：redis hmset 命令更换为 hset
 - 修复：docker pillow import error
+- 更改：docker运行时改为python3.9-slim
+- 更改：redis hmset 命令更换为 hset
 
 v1.16.0
 --------

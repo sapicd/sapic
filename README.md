@@ -1,7 +1,8 @@
 # sapic
 
 即picbed，基于Flask的Web自建图床，
-支持存储到本地、又拍云、七牛云、阿里云OSS、腾讯云COS、GitHub、Gitee(码云)、S3等。
+支持存储到本地、又拍云、七牛云、阿里云OSS、腾讯云COS、GitHub、Gitee(码云)等，
+支持第三方扩展存储到[AWS S3](https://aws.amazon.com/s3/)、[sm.ms](https://sm.ms/)、[superbed聚合图床](https://www.superbed.cn)等。
 
 [![Actions Status: ci](https://github.com/sapicd/sapic/workflows/ci/badge.svg)](https://github.com/sapicd/sapic/actions?query=workflow%3A%22build+and+test%22)
 [![codecov](https://codecov.io/gh/sapicd/sapic/branch/master/graph/badge.svg)](https://codecov.io/gh/sapicd/sapic)
@@ -113,8 +114,9 @@ cd /path/to/sapic
 docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmin
 ```
 
-- Dockerfile采用分阶段构建，推送到Docker hub，latest标签是master分支，
-  dev标签是dev分支，其他标签是已发布的版本。
+-------
+
+- 镜像推送到 `Docker Hub`，latest 标签是 master 分支，dev 标签是 dev 分支，其他标签是已发布的版本。
 
 - docker-compose.yml仅为简单定义，可以自行修改，比如加上nginx、redis挂载数据(/data)。
 
@@ -149,6 +151,12 @@ http://demo.sapicd.com
 ![管理我的图片](./Snapshot/pic.png)
 
 ![控制台管理员功能](./Snapshot/hook.png)
+
+## 贡献者
+
+感谢以下参与项目的人：
+
+<a href="graphs/contributors"><img src="https://opencollective.com/sapic/contributors.svg?width=890&button=false" /></a>
 
 ## Contributing
 

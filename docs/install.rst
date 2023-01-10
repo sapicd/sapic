@@ -77,7 +77,7 @@ NO.1 启动Redis
 NO.2 部署程序
 ---------------------
 
-这是一个基于Python Flask框架写的web应用，依赖redis，部署要求python3.8+
+这是一个基于Python Flask框架写的web应用，依赖redis（建议4.0+），部署要求python3.8+
 
 2.1. 下载源码
 ^^^^^^^^^^^^^^^
@@ -89,18 +89,18 @@ dev分支的功能完成后会合并到master分支；
 一阶段功能完成会从master分支发版。
 
 - 开发版（dev）
-    ! 建议，如果你有git，可以：\ ``git clone -b dev https://github.com/sapicd/sapic picbed``
+    ! 建议，如果你有git，可以：\ ``git clone -b dev https://github.com/sapicd/sapic sapic``
 
     ! 也可以下载压缩包：
 
     .. code-block:: bash
 
-        $ wget -O picbed.zip https://codeload.github.com/sapicd/sapic/zip/dev
-        $ unzip picbed.zip 
-        $ mv picbed-dev picbed
+        $ wget -O sapic.zip https://codeload.github.com/sapicd/sapic/zip/dev
+        $ unzip sapic.zip
+        $ mv sapic-dev sapic
 
 - 尝鲜版（master）
-    ``git clone https://github.com/sapicd/sapic picbed``
+    ``git clone https://github.com/sapicd/sapic sapic``
 
 - 正式版（release）
     ! 到 `release <https://github.com/sapicd/sapic/releases>`_ 页面下载正式版本的包。
@@ -112,7 +112,7 @@ dev分支的功能完成后会合并到master分支；
 
 .. code-block:: bash
 
-    $ cd picbed
+    $ cd sapic
     $ [建议]激活virtualenv、venv，当然也可以直接在全局模式下安装
     $ pip install -r requirements/all.txt # all可以换成具体env
 
@@ -371,8 +371,8 @@ NO.5 程序升级
 - v1.8.0
     - 增加了依赖模块bleach和semver，可以手动安装：
     
-      .. code-block:: bash
-      
+    .. code-block:: bash
+
         $ pip install 'bleach>2.0.0' 'semver>=2.9.1,<3'
 
     - 更改设计：已删除图片的数据直接删除，故此升级时可以清理历史遗留的key

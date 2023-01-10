@@ -57,7 +57,7 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
 
 .. versionchanged:: 1.16.1
 
-    采用python3.8版本，取消多阶段构建。
+    采用python3.9-slim版本，避免Alpine镜像问题，镜像容量约180M，取消多阶段构建。
 
 打包步骤如下：
 
@@ -70,7 +70,7 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
 
   .. code-block:: bash
 
-    $ docker build -t staugur/sapic . --build-arg PIPMIRROR=https://pypi.tuna.tsinghua.edu.cn/simple --build-arg ALPINEMIRROR=mirrors.ustc.edu.cn
+    $ docker build -t staugur/sapic . --build-arg PIPMIRROR=https://pypi.tuna.tsinghua.edu.cn/simple
 
 .. tip::
 

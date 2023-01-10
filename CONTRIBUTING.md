@@ -25,9 +25,12 @@ Feature
 -------
 
 同样是在GitHub中新建 [Issue](https://github.com/sapicd/sapic/issues/new)，提出功能需求，描述下其具体要求。
+非常欢迎提交PR以直接完成您的功能。
 
 Pull Request
 ------------
+
+感谢提交代码，可按以下方式启动项目：
 
 **首先是环境**
 
@@ -37,7 +40,7 @@ Pull Request
 
   如果您不是最新fork，需先同步最新代码，参考官方文档：[Syncing a fork](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork)
 
-  请在dev分支编写代码。
+  请尽量在dev分支编写代码。
 
 - 基础环境与安装过程参照 [sapic文档](https://sapic.rtfd.vip/install.html)
 
@@ -49,7 +52,7 @@ Pull Request
 
 - 如果可能，使用py3.8+运行测试（位于src）: ``make test``
 
-- 如果可能，请编写或更新文档，位于docs下，构建文档(py3)：
+- 如果可能，请编写或更新对应文档，位于docs下，构建文档命令(py3)：
 
   ```bash
   cd /path/to/sapic/docs
