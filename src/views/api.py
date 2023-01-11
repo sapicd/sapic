@@ -13,7 +13,6 @@ import json
 from random import choice, randint
 from posixpath import join, splitext
 from base64 import urlsafe_b64encode as b64encode
-from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask import (
     Blueprint,
@@ -60,6 +59,7 @@ from utils.tool import (
     parse_label,
     allowed_file,
     ALLOWED_VIDEO,
+    secure_filename
 )
 from utils.web import (
     dfr,
