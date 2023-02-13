@@ -980,6 +980,18 @@
             });
             return false;
         });
+        //安装/升级（其他/本地）第三方包
+        form.on('submit(addInstallPackage)', function(data){
+            let value = data.field.package;
+            picbed.ajax("{{ url_for('api.pip_install') }}", function(res) {
+                layer.msg(`正在安装${value}，请稍后...`, {time:1000}, function() {
+                    if (data.field.index) layer.close(data.field.index);
+                });
+            }, {
+                data: {package:value}
+            });
+            return false;
+        });
         //检测版本更新
         picbed.ajax("{{ url_for('api.github', Action='latestRelease') }}", function(res) {
             if (res.show_upgrade === true) {

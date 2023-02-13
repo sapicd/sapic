@@ -677,7 +677,20 @@ def get_upload_method(class_name):
 def _pip_install(pkg, index=None, upgrade=None):
     """使用pip安装模块到指定目标或默认用户目录$HOME/.local"""
     tgt = GLOBAL["HookPkgStorageDir"]
-    cmd = [executable, "-m", "pip", "install", "-q"]
+    cmd = [
+        executable,
+        "-m",
+        "pip",
+        "install",
+        "--timeout",
+        "5",
+        "--retries",
+        "2",
+        "--no-color",
+        "--no-cache-dir",
+        "--disable-pip-version-check",
+        "--no-python-version-warning",
+    ]
     if tgt:
         cmd.extend(("-t", tgt))
     if not is_venv():
