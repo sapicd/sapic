@@ -122,9 +122,9 @@ def secure_filename(filename: str) -> str:
     for sep in os.path.sep, os.path.altsep:
         if sep:
             filename = filename.replace(sep, " ")
-    filename = str(_filename_ascii_strip_re.sub("", "_".join(filename.split()))).strip(
-        "._"
-    )
+    filename = str(
+        _filename_ascii_strip_re.sub("", "_".join(filename.split()))
+    ).strip("._")
 
     # on nt a couple of special files are present in each folder.  We
     # have to ensure that the target file is not such a filename.  In
@@ -137,6 +137,7 @@ def secure_filename(filename: str) -> str:
         filename = f"_{filename}"
 
     return filename
+
 
 def rsp(*args):
     """使用 `picbed:` 前缀生成redis key"""
@@ -645,7 +646,7 @@ def bleach_html(
     """清洗HTML，设置中仅允许部分标签、属性和样式。"""
     from config import GLOBAL
 
-    _tags = tags or ALLOWED_TAGS
+    _tags = tags or list(ALLOWED_TAGS)
     _ext_tags = parse_valid_comma(GLOBAL["AllowTags"])
     _ext_styles = parse_valid_comma(GLOBAL["AllowStyles"])
     _tags.extend(_ext_tags)
