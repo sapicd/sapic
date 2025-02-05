@@ -68,7 +68,13 @@ def get_origin():
 
 
 def get_ip():
-    return request.headers.get("X-Real-Ip", request.remote_addr)
+    """首先从HTTP标头的X-Forwarded-For获取代理IP，其次获取X-Real-IP，最后是客户端IP"""
+    if request.headers.get("X-Forwarded-For"):
+        return request.headers["X-Forwarded-For"].split(",")[0].strip()
+    elif request.headers.get("X-Real-IP"):
+        return request.headers.get("X-Real-IP")
+    else:
+        return request.remote_addr
 
 
 def get_ua():

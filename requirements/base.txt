@@ -1,4 +1,4 @@
-Flask>=2.1.0
+Flask>=2.1.0,<3.0.0
 redis>=4.4.0
 requests>=2.28.0
 user_agents>=2.2.0
