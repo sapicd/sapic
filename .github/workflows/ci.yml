@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        flask-version: ["3.1.0"]
+        flask-version: ["3.0.3"]
         python-version: ["3.8", "3.10"]
 
     steps:
