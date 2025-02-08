@@ -31,8 +31,8 @@ from flask import (
     jsonify,
     current_app,
     make_response,
-    Markup,
 )
+from markupsafe import Markup
 from jinja2 import Environment, FileSystemLoader
 from sys import executable
 from functools import partial

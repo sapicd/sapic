@@ -57,7 +57,7 @@ class Properties(object):
 
     def _getProperties(self):
         try:
-            pro_file = open(self.filename, "Ur")
+            pro_file = open(self.filename, "r")
             for line in pro_file.readlines():
                 line = line.strip().replace("\n", "")
                 if line.find("#") != -1:

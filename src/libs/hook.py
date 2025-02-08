@@ -27,11 +27,11 @@ from jinja2 import ChoiceLoader, FileSystemLoader, PackageLoader
 from flask import (
     render_template,
     render_template_string,
-    Markup,
     abort,
     send_from_directory,
     url_for,
 )
+from markupsafe import Markup
 from utils.tool import (
     Attribution,
     is_valid_verion,
