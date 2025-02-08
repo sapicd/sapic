@@ -738,5 +738,5 @@ def b64size(b64string):
 
 def raise_version():
     vs = sys.version_info
-    if (vs[0], vs[1]) < (3, 8):
-        raise RuntimeError("The system requires python version 3.8+")
+    if (vs[0], vs[1]) < (3, 9):
+        raise RuntimeError("The system requires python version 3.9+")

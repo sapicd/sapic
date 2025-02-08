@@ -10,7 +10,7 @@
 
 ## 手动部署
 
-1. 要求： Python3.8+ 和 Redis(建议v4.0+)
+1. 要求： Python3.9+ 和 Redis(建议v4.0+)
 
 2. 下载： `git clone https://github.com/sapicd/sapic && cd sapic`
 

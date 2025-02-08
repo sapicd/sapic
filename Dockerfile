@@ -1,5 +1,5 @@
 # -- build and run with debian(multiarch) --
-FROM python:3.10-slim
+FROM python:3.12-slim
 LABEL maintainer=me@tcw.im
 ARG PIPMIRROR=https://pypi.org/simple
 ENV sapic_isrun=true
