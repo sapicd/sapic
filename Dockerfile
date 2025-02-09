@@ -4,7 +4,8 @@ LABEL maintainer=me@tcw.im
 ARG PIPMIRROR=https://pypi.org/simple
 ENV sapic_isrun=true
 COPY requirements /requirements
-RUN pip install --timeout 15 --index $PIPMIRROR --user --no-cache-dir --no-warn-script-location -r /requirements/all.txt && \
+RUN apt update && apt install -y git && \
+    pip install --timeout 15 --index $PIPMIRROR --user --no-cache-dir --no-warn-script-location -r /requirements/all.txt && \
     ln -sf /root/.local/bin/flask /root/.local/bin/gunicorn /bin/
 WORKDIR /picbed
 COPY src /picbed
