@@ -45,6 +45,7 @@ class UtilsTest(unittest.TestCase):
         self.assertFalse(is_valid_verion("v2.19.10"))
         self.assertTrue(is_match_appversion())
         self.assertTrue(is_match_appversion(VER))
+        self.assertTrue(is_match_appversion("0.0.1"))
         self.assertFalse(is_match_appversion("<{}".format(VER)))
         self.assertFalse(is_match_appversion(">{}".format(VER)))
         self.assertTrue(is_match_appversion(">={}".format(VER)))

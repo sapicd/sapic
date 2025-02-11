@@ -31,7 +31,7 @@ from bleach import clean as bleach_clean
 from bleach.sanitizer import ALLOWED_TAGS, ALLOWED_ATTRIBUTES
 from bleach.css_sanitizer import CSSSanitizer
 from typing import Optional, Dict, List
-from version import __version__ as PICBED_VERSION
+from version import __version__ as SAPIC_VERSION
 from .log import Logger
 from ._compat import string_types, text_type, urlparse, is_true
 
@@ -494,7 +494,7 @@ def try_request(
     """
     headers = headers or {}
     if "User-Agent" not in headers:
-        headers["User-Agent"] = "sapic/v%s" % PICBED_VERSION
+        headers["User-Agent"] = "sapic/v%s" % SAPIC_VERSION
     method = method.lower()
     if method == "get":
         method_func = requests.get
@@ -693,13 +693,13 @@ def is_match_appversion(appversion=None):
     if not isinstance(appversion, string_types):
         appversion = appversion.decode("utf-8")
 
-    sysver = semver.VersionInfo.parse(PICBED_VERSION)
-
     def vermatch(check_ver):
+        if is_valid_verion(check_ver):
+            check_ver = ">={}".format(check_ver)
         try:
-            return sysver.match(check_ver)
+            return semver.match(SAPIC_VERSION, check_ver)
         except ValueError:
-            return sysver.match(">={}".format(check_ver))
+            return False
 
     avs = comma_pat.split(appversion)
     for v in avs:
@@ -712,7 +712,7 @@ def is_match_appversion(appversion=None):
 def less_latest_tag(latest_tag):
     """当前应用是否小于GitHub最新版本比较"""
     if latest_tag and is_valid_verion(latest_tag):
-        return semver.compare(latest_tag, PICBED_VERSION) == 1
+        return semver.compare(latest_tag, SAPIC_VERSION) == 1
 
 
 def parse_author_mail(author):

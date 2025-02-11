@@ -87,7 +87,7 @@ Gitee： `staugur/picbed <https://gitee.com/staugur/picbed>`_
 
 5. 管理员控制台可配置全局参数定制站点信息以及用户个性自定义覆盖全局参数
 
-6. 支持Py3.8+、PyPy3，支持Docker（AMD/ARM）且实时构建最新镜像传到官方仓库
+6. 支持Py3.9+，支持Docker（X86/ARM）且实时构建最新镜像传到官方仓库
 
 7. 支持油猴脚本（用户脚本） ，使用它，几乎可以采集全网图片！
 
@@ -107,7 +107,7 @@ Gitee： `staugur/picbed <https://gitee.com/staugur/picbed>`_
 一句话部署：
 ------------
 
-1. 要求： Python3.8+ 和 Redis
+1. 要求： Python3.9+ 和 Redis
 2. 下载： ``git clone https://github.com/sapicd/sapic && cd sapic``
 3. 依赖： ``pip install -r requirements/all.txt``
 4. 配置： ``config.py`` 即配置文件，可从 `.cfg` 文件或环境变量读取配置信息。

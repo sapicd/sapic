@@ -77,7 +77,7 @@ NO.1 启动Redis
 NO.2 部署程序
 ---------------------
 
-这是一个基于Python Flask框架写的web应用，依赖redis（建议4.0+），部署要求python3.8+
+这是一个基于Python Flask框架写的web应用，依赖redis（建议4.0+），部署要求python3.9+
 
 2.1. 下载源码
 ^^^^^^^^^^^^^^^
@@ -238,12 +238,12 @@ ProxyFix          sapic_proxyfix              无                信任代理标
 
 .. code-block:: bash
 
-    $ cd picbed/src
+    $ cd sapic/src
     $ make dev
 
 正式环境::
 
-    $ cd picbed/src
+    $ cd sapic/src
     $ sh online_gunicorn.sh start  #可以用run参数前台启动，status查看状态，stop停止，restart重启，reload重载
 
     或者使用make start等同于上述命令，其他诸如: make stop, make restart, makre load, make status
@@ -254,7 +254,7 @@ ProxyFix          sapic_proxyfix              无                信任代理标
       使用构建好的 `sapic @ docker hub <https://hub.docker.com/r/staugur/sapic>`_ ，
       详情请看 :ref:`picbed-docker-deploy`
 
-    - 刚启动的picbed是没有默认管理员用户的，需要使用命令行手动创建，
+    - 刚启动的 sapic 是没有默认管理员用户的，需要使用命令行手动创建，
       参考 :ref:`picbed-usgae`
 
     - 查看我录制的手动部署的gif图: `picbed-install.gif <https://static.saintic.com/picbed/staugur/2020/07/24/picbed-install.gif>`_ 

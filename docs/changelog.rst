@@ -4,10 +4,17 @@
 更新日志
 =========
 
+v1.16.5
+--------
+
+Released in 2025-2-11
+
+- 修复 is_match_appversion 函数
+
 v1.16.4
 --------
 
-Released in 2025-2-8
+Released in 2025-2-9
 
 - 修复 dockerfile gunicorn
 
