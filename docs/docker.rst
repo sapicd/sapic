@@ -34,7 +34,7 @@ Dockerfile仅包含源码及其依赖的Python模块，不包含redis和nginx环
 
   拉取dev分支（开发版）镜像： `docker pull staugur/sapic:dev`
 
-  拉取v1.13.0镜像： `docker pull staugur/sapic:1.13.0`
+  拉取v1.16.6镜像： `docker pull staugur/sapic:1.16.6`
 
 .. _picbed-self-build:
 
