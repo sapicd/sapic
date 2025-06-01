@@ -4,6 +4,13 @@
 更新日志
 =========
 
+v1.16.6
+--------
+
+Released in 2025-6-1
+
+- update docs to readthedocs.org
+
 v1.16.5
 --------
 

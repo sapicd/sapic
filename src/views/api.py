@@ -436,7 +436,7 @@ def hook():
             res.update(code=0)
     elif Action == "add_third_hook":
         #: hook module name
-        name = request.form.get("name")
+        name = request.form.get("name","").strip()
         try:
             __import__(name)
             g.hm.add_third_hook(name)
