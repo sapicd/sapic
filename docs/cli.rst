@@ -107,7 +107,7 @@ sapicli（golang）比之cli.py的细节差异
                       [-d DESC] [-e EXPIRE] [-s STYLE] [-c {url,md,rst}]
                       file [file ...]
 
-    Doc to https://sapic.rtfd.vip/cli.html
+    Doc to https://sapic.rtfd.vip/zh-cn/latest/cli.html
     Git to https://github.com/sapicd/cli
 
     positional arguments:

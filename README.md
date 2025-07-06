@@ -124,17 +124,17 @@ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmi
 
 ### 客户端上传示例
 
-- [使用PicGo上传到自定义的 sapic 图床](https://sapic.rtfd.vip/usage.html#picbed-upload-picgo)
+- [使用PicGo上传到自定义的 sapic 图床](https://sapic.rtfd.vip/zh-cn/latest/usage.html#picbed-upload-picgo)
 
-- [使用uPic上传到自定义的 sapic 图床](https://sapic.rtfd.vip/usage.html#picbed-upload-upic)
+- [使用uPic上传到自定义的 sapic 图床](https://sapic.rtfd.vip/zh-cn/latest/usage.html#picbed-upload-upic)
 
-- [作为自定义命令在使用Typora时上传图片到sapic](https://sapic.rtfd.vip/cli.html#picbed-upload-typora)
+- [作为自定义命令在使用Typora时上传图片到sapic](https://sapic.rtfd.vip/zh-cn/latest/cli.html#picbed-upload-typora)
 
-- [Windows系统的图片文件添加右键菜单](https://sapic.rtfd.vip/cli.html#picbed-upload-rightmenu-windows)
+- [Windows系统的图片文件添加右键菜单](https://sapic.rtfd.vip/zh-cn/latest/cli.html#picbed-upload-rightmenu-windows)
 
-- [macOS系统的图片文件添加右键菜单](https://sapic.rtfd.vip/cli.html#picbed-upload-rightmenu-macos)
+- [macOS系统的图片文件添加右键菜单](https://sapic.rtfd.vip/zh-cn/latest/cli.html#picbed-upload-rightmenu-macos)
 
-详细文档请访问：[Sapic Docs](https://sapic.rtfd.vip)
+详细文档请访问：[Sapic Docs](https://sapic.rtfd.vip/zh-cn/latest)
 
 ## 演示站
 
