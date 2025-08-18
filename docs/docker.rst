@@ -92,7 +92,7 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
 配置必需有sapic_redis_url，设置redis连接信息。
 其他的可选配置请参考 :ref:`picbed-config` 自行设置环境变量。
 
-查看我录制的使用docker单独启动的gif图: `picbed-alone-docker.gif <https://static.saintic.com/picbed/staugur/2020/07/24/picbed-alone-docker.gif>`_ 
+查看我录制的使用docker单独启动的gif图: `picbed-alone-docker.gif </_static/images/picbed-alone-docker.gif>`_ 
 
 .. tip::
 
@@ -123,7 +123,7 @@ v1.4.0增加了Dockerfile文件，它使用alpine3.11 + python3.6，构建完成
     因为使用bind方式挂载了upload上传目录，所以删除数据卷并不会删除已经上传
     的图片（位于宿主机/data/picbed）！
 
-    查看我录制的使用docker单独启动的gif图（包括数据卷和nginx）: `picbed-docker-volume.gif <https://static.saintic.com/picbed/staugur/2020/07/24/picbed-docker-volume.gif>`_ 
+    查看我录制的使用docker单独启动的gif图（包括数据卷和nginx）: `picbed-docker-volume.gif </_static/images/picbed-docker-volume.gif>`_ 
 
 如果没有问题，docker ps查看其状态是Up，系统中能看到进程：
 
@@ -186,7 +186,7 @@ redis开启AOF，宿主机映射9514端口以供外部访问。
       因为使用bind方式挂载了upload上传目录，所以删除数据卷并不会删除已经上传
       的图片（位于宿主机/data/picbed）！
 
-      查看我录制的使用docker-compose启动的gif图: `picbed-docker-compose.gif <https://static.saintic.com/picbed/staugur/2020/07/24/picbed-docker-compose.gif>`_
+      查看我录制的使用docker-compose启动的gif图: `picbed-docker-compose.gif </_static/images/picbed-docker-compose.gif>`_
 
 .. warning::
 
