@@ -85,7 +85,7 @@ RESTful API
     Host: 127.0.0.1:9514
     Content-Type: application/x-www-form-urlencoded
 
-    username=xxx&&password=your-password-here
+    username=xxx&password=your-password-here
 
 
     HTTP/1.0 200 OK
@@ -119,7 +119,7 @@ RESTful API
     Host: 127.0.0.1:9514
     Content-Type: application/x-www-form-urlencoded
 
-    username=xxx&&password=your-password-here
+    username=xxx&password=your-password-here
 
 
     HTTP/1.0 200 OK

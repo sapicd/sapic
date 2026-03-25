@@ -4,6 +4,14 @@
 更新日志
 =========
 
+v1.16.7
+--------
+
+Released in 2026-3-25
+
+- update version of requirements
+- docs remove demo site
+
 v1.16.6
 --------
 

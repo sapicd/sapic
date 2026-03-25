@@ -1,7 +1,7 @@
 -r base.txt
 # py3
-sphinx>5.0.0
-pygments>=2.12.0
-git+https://github.com/saintic/sphinx_press_theme.git@master
-sphinxcontrib-httpdomain>=1.8.0
-sphinxcontrib-httpexample>=1.1
+sphinx==7.4.7
+pygments==2.17.0
+sphinx-press-theme==0.9.1
+sphinxcontrib-httpdomain==1.8.1
+sphinxcontrib-httpexample==1.3
