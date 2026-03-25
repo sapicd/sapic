@@ -10,7 +10,7 @@
 
 ## 手动部署
 
-1. 要求： Python3.9+ 和 Redis(建议v4.0+)
+1. 要求： Python3.9+ 和 Redis(v5.0+)
 
 2. 下载： `git clone https://github.com/sapicd/sapic && cd sapic`
 
@@ -138,7 +138,7 @@ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmi
 
 ## 演示站
 
-http://demo.sapicd.com
+https://sapicd.com
 
 测试账号及密码：demo 123456（请勿修改）
 

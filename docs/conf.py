@@ -65,7 +65,7 @@ html_show_sourcelink = False
 
 html_theme_options = {
     "external_links": [
-        ("Demo", "http://demo.sapicd.com"),
+        ("Demo", "https://sapicd.com"),
         ("GitHub", "https://github.com/sapicd/sapic"),
         ("Gitee", "https://gitee.com/staugur/picbed"),
     ],

@@ -279,7 +279,7 @@ NO.2 初始化
 
 - url
 
-  必需，sapic上传接口地址，例如http://demo.sapicd.com/api/upload
+  必需，sapic上传接口地址，例如https://sapicd.com/api/upload
 
 - elem
 

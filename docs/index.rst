@@ -58,7 +58,7 @@ Gitee： `staugur/picbed <https://gitee.com/staugur/picbed>`_
 
     已逐步更新配置字段，镜像同时支持sapic，请查看后续文档了解详情。
 
-    建议：普通环境使用python3.8+，Docker使用staugur/sapic镜像，配置使用sapic字样。
+    建议：普通环境使用python3.9+，Docker使用staugur/sapic镜像，配置使用sapic字样。
 
 .. note::
 
@@ -107,7 +107,7 @@ Gitee： `staugur/picbed <https://gitee.com/staugur/picbed>`_
 一句话部署：
 ------------
 
-1. 要求： Python3.9+ 和 Redis
+1. 要求： Python3.9+ 和 Redis5.0+
 2. 下载： ``git clone https://github.com/sapicd/sapic && cd sapic``
 3. 依赖： ``pip install -r requirements/all.txt``
 4. 配置： ``config.py`` 即配置文件，可从 `.cfg` 文件或环境变量读取配置信息。
