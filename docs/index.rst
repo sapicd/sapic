@@ -107,7 +107,7 @@ Gitee： `staugur/picbed <https://gitee.com/staugur/picbed>`_
 一句话部署：
 ------------
 
-1. 要求： Python3.9+ 和 Redis5.0+
+1. 要求： Python3.10+ 和 Redis5.0+
 2. 下载： ``git clone https://github.com/sapicd/sapic && cd sapic``
 3. 依赖： ``pip install -r requirements/all.txt``
 4. 配置： ``config.py`` 即配置文件，可从 `.cfg` 文件或环境变量读取配置信息。
