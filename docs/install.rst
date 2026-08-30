@@ -77,7 +77,7 @@ NO.1 启动Redis
 NO.2 部署程序
 ---------------------
 
-这是一个基于Python Flask框架写的web应用，依赖redis（建议4.0+），部署要求python3.9+
+这是一个基于Python Flask框架写的web应用，依赖redis（建议4.0+），部署要求python3.10+
 
 2.1. 下载源码
 ^^^^^^^^^^^^^^^

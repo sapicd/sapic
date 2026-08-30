@@ -135,3 +135,4 @@ src/online_preboot.sh
 src/.qiniu_pythonsdk_hostscache.json
 .DS_Store
 .cfg
+.codebuddy/
