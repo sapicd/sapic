@@ -16,7 +16,7 @@ spec:
         app: sapic
       annotations:
         port: "9514"
-        python: "3.9"
+        python: "3.10"
         github: "sapicd/sapic"
     spec:
       containers:

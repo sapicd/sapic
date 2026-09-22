@@ -58,7 +58,7 @@ Gitee： `staugur/picbed <https://gitee.com/staugur/picbed>`_
 
     已逐步更新配置字段，镜像同时支持sapic，请查看后续文档了解详情。
 
-    建议：普通环境使用python3.9+，Docker使用staugur/sapic镜像，配置使用sapic字样。
+    建议：普通环境使用python3.10+，Docker使用staugur/sapic镜像，配置使用sapic字样。
 
 .. note::
 
@@ -87,7 +87,7 @@ Gitee： `staugur/picbed <https://gitee.com/staugur/picbed>`_
 
 5. 管理员控制台可配置全局参数定制站点信息以及用户个性自定义覆盖全局参数
 
-6. 支持Py3.9+，支持Docker（X86/ARM）且实时构建最新镜像传到官方仓库
+6. 支持Py3.10+，支持Docker（X86/ARM）且实时构建最新镜像传到官方仓库
 
 7. 支持油猴脚本（用户脚本） ，使用它，几乎可以采集全网图片！
 

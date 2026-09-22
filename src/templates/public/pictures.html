@@ -1,0 +1,124 @@
+{% extends "layout/fullscreen.html" %}
+
+{% block title %}我的图片{% endblock %}
+
+{% block head %}
+<style>
+    /*图片瀑布流：多列布局自适应列数与图片尺寸*/
+    .waterfall {
+        -moz-column-count: auto;
+        -webkit-column-count: auto;
+        column-count: auto;
+        -moz-column-width: 15em;
+        -webkit-column-width: 15em;
+        column-width: 15em;
+        -moz-column-gap: 1em;
+        -webkit-column-gap: 1em;
+        column-gap: 1em;
+    }
+    .pin {
+        margin: 0 0 1em;
+        /*避免单个元素跨列断开*/
+        -moz-page-break-inside: avoid;
+        -webkit-column-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .pin img,
+    .pin video {
+        width: 100%;
+        display: block;
+        border-radius: 3px;
+        background-color: #eee;
+    }
+    .pin img {
+        cursor: zoom-in;
+    }
+    .pin img:hover {
+        opacity: 0.88;
+    }
+    /*layui flow 的加载提示横跨所有列*/
+    .waterfall .layui-flow-more {
+        column-span: all;
+        text-align: center;
+        color: #999;
+        padding: 10px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="waterfall" class="waterfall"></div>
+{% endblock %}
+
+{% block script %}
+<script>
+    layui.use(['flow', 'layer', 'util', 'picbed'], function () {
+        let $ = layui.jquery,
+            flow = layui.flow,
+            layer = layui.layer,
+            picbed = layui.picbed;
+        //: 每次滚动加载的图片数量
+        let limit = parseInt("{{ g.userinfo.ucfg_mypic_limit or 20 }}");
+        //: 转义HTML，避免图片标题注入
+        let esc = function (str) {
+            return String(str === undefined || str === null ? "" : str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;");
+        };
+        //: 点击查看原图
+        let preview = function (src) {
+            layui.img(src, function () {
+                layer.open({
+                    type: 1,
+                    title: false,
+                    closeBtn: 1,
+                    shade: 0.4,
+                    shadeClose: true,
+                    resize: false,
+                    scrollbar: false,
+                    area: [
+                        Math.min(document.documentElement.clientWidth * 0.9, 1000) + 'px',
+                        Math.min(document.documentElement.clientHeight * 0.85, 800) + 'px'
+                    ],
+                    content: '<img src="' + esc(src) + '" style="display:block;width:100%;height:100%;object-fit:contain;">'
+                });
+            }, function () {
+                layer.msg("图片加载失败", {icon: 2});
+            });
+        };
+        //: layui 瀑布流滚动加载
+        flow.load({
+            elem: '#waterfall',
+            scroll: true,
+            isAuto: true,
+            end: '没有更多图片了',
+            done: function (page, next) {
+                let url = "{{ url_for('api.waterfall', sort='desc')|safe }}" + "&limit=" + limit + "&page=" + page;
+                picbed.ajax(url, function (res) {
+                    let html = res.data.map(function (img) {
+                        let title = esc(img.title || img.filename),
+                            src = esc(img.src);
+                        if (img.is_video) {
+                            return '<div class="pin"><video src="' + src + '" controls preload="metadata" title="' + title + '"></video></div>';
+                        }
+                        return '<div class="pin"><img src="' + src + '" title="' + title + '" alt="' + title + '"></div>';
+                    }).join("");
+                    next(html, page < res.pageCount);
+                }, {
+                    msgprefix: false,
+                    fail: function () {
+                        //: 无数据或请求失败时结束加载
+                        next("", false);
+                    }
+                });
+            }
+        });
+        //: 事件委托，兼容滚动加载新增的图片
+        $('#waterfall').on('click', '.pin img', function () {
+            preview(this.getAttribute('src'));
+        });
+    });
+</script>
+{% endblock %}

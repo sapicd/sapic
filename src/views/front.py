@@ -79,6 +79,12 @@ def my():
     return render_template("control/my.html")
 
 
+@bp.route("/pictures")
+@login_required
+def pictures():
+    return render_template("public/pictures.html")
+
+
 @bp.route("/control/admin")
 @admin_apilogin_required
 def admin():

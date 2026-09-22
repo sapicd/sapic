@@ -6,7 +6,7 @@
 
 ## 一、技术栈与运行形态
 
-- 语言/框架：Python 3.9+ / Flask
+- 语言/框架：Python 3.10+ / Flask（`utils.tool.raise_version()` 启动时强制校验）
 - 存储：Redis（唯一必需依赖，建议开启 AOF 持久化）
 - 生产部署：gunicorn + gevent，`workers = CPU 核数`，配置文件 `src/sapicd.py`
 - 运维入口：`flask sa create | clean | upgrade`（`src/utils/cli.py`）

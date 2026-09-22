@@ -8,6 +8,9 @@
         <a {% if request.endpoint != 'front.index' %} href="{{ url_for('front.index') }}" {% endif %}><i class="saintic-icon saintic-icon-home"></i> 首页</a>
     </li>
     {% if g.signin %}
+    <li class="layui-nav-item {% if request.endpoint == 'front.pictures' %}layui-this{% endif %}">
+        <a {% if request.endpoint != 'front.pictures' %} href="{{ url_for('front.pictures') }}" {% endif %}><i class="saintic-icon saintic-icon-user-album"></i> 我的图片</a>
+    </li>
     <li class="layui-nav-item">
         <a href="javascript:;">
             <img id="avatar" src="{{ g.userinfo.avatar or url_for('static', filename='img/defaultAvatar.png') }}" class="layui-nav-img">
@@ -16,7 +19,7 @@
         <dl class="layui-nav-child">
             <dd><a {% if request.endpoint != "front.my" %} href="{{ url_for('front.my', _anchor='!profile') }}" {% endif %}><i class="saintic-icon saintic-icon-user"></i> 个人资料</a></dd>
             <dd><a {% if request.endpoint != "front.my" %} href="{{ url_for('front.my', _anchor='!setting') }}" {% endif %}><i class="saintic-icon saintic-icon-setting"></i> 用户设置</a></dd>
-            <dd><a {% if request.endpoint != "front.my" %} href="{{ url_for('front.my', _anchor='!picbed') }}" {% endif %}><i class="saintic-icon saintic-icon-user-album"></i> 我的图片</a></dd>
+            <dd><a {% if request.endpoint != "front.my" %} href="{{ url_for('front.my', _anchor='!picbed') }}" {% endif %}><i class="saintic-icon saintic-icon-user-album"></i> 图片管理</a></dd>
             <dd><a href="{{ url_for('front.feed') }}" target="_blank"><i class="saintic-icon saintic-icon-rss"></i> 我的RSS</a></dd>
             {{ intpl("nav") }}
             {% if g.is_admin %}

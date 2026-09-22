@@ -1,0 +1,52 @@
+{% extends "layout/base.html" %}
+
+{% block LayoutTitle %}{% block title %}{% endblock %}{% endblock %}
+
+{% block LayoutHead %}
+<style>
+    /*全屏页面布局：仅保留顶部导航，内容区铺满剩余视口*/
+    .header {
+        height: 59px;
+        background-color: transparent;
+    }
+    .layui-logo img {
+        width: auto;
+        height: 50px;
+        padding-top: 5px;
+    }
+    .header .layui-nav {
+        position: absolute;
+        right: 5px;
+        top: 0;
+        padding: 0;
+        background: none;
+    }
+    .fullscreen-body {
+        /*减去顶部导航高度，内容不足时也占满一屏*/
+        min-height: calc(100vh - 59px);
+        box-sizing: border-box;
+        padding: 10px 20px 20px;
+    }
+    @media screen and (max-width: 500px) {
+        .fullscreen-body {
+            padding: 10px 10px 20px;
+        }
+    }
+</style>
+{% block head %}{% endblock %}
+{% endblock %}
+
+{% block LayoutBody %}
+<div class="layui-header header">
+    <div class="layui-container-fluid">
+        {% include "ref/nav.html" %}
+    </div>
+</div>
+<div class="fullscreen-body">
+    {% block content %}{% endblock %}
+</div>
+{% endblock %}
+
+{% block LayoutScript %}
+{% block script %}{% endblock %}
+{% endblock %}
