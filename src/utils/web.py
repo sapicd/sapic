@@ -10,7 +10,6 @@
 """
 
 import json
-import imghdr
 from posixpath import basename, splitext
 from os import remove
 from os.path import join as pathjoin, getsize, isdir
@@ -68,6 +67,7 @@ from .tool import (
     parse_label,
     ALLOWED_VIDEO,
     b64size,
+    what_image,
 )
 from ._compat import text_type, urlsplit, parse_qs
 from config import GLOBAL
@@ -563,7 +563,7 @@ class Base64FileStorage(object):
     @property
     def filename(self):
         if not self._filename:
-            ext = imghdr.what(None, self._parse.data)
+            ext = what_image(self._parse.data)
             if not ext and self.mimetype:
                 mType, sType = self.mimetype.split("/")
                 if mType == "image":  # without parse video
@@ -634,7 +634,7 @@ class ImgUrlFileStorage(object):
             if ufn and splitext(ufn)[-1] in self._allowed_exts:
                 self._filename = ufn
                 return ufn
-            ext = imghdr.what(None, self._imgobj.content)
+            ext = what_image(self._imgobj.content)
             if not ext:
                 mType, sType = self._imgobj.headers["Content-Type"].split("/")
                 if mType in ("image", "video"):
