@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Site-level key/value settings (replaces v1 ``picbed:dat/siteconfig``)."""
+"""Site-level key/value settings (replaces v1 legacy site config)."""
 
 from __future__ import annotations
 

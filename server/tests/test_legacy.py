@@ -28,7 +28,7 @@ def test_legacy_upload_and_sha(client):
         data={
             "token": token,
             "album": "legacy-album",
-            "picbed": (io.BytesIO(b"legacy-bytes"), "legacy.jpg"),
+            "file": (io.BytesIO(b"legacy-bytes"), "legacy.jpg"),
         },
         content_type="multipart/form-data",
     )
@@ -63,7 +63,7 @@ def test_legacy_format_option(client):
         data={
             "token": token,
             "format": "data.src",
-            "picbed": (io.BytesIO(b"bytes"), "a.png"),
+            "file": (io.BytesIO(b"bytes"), "a.png"),
         },
         content_type="multipart/form-data",
     )

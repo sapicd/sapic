@@ -1,2 +1,4 @@
 -r base.txt
-black
+
+pytest==9.2.0
+pytest-cov==7.1.0

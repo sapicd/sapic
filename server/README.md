@@ -10,32 +10,39 @@ sapic v2 后端，API-only（前端由独立的 Vue 应用提供）。
 
 ## 依赖安装
 
+本包是**纯本地包**，不发布 PyPI、也不 `pip install` 本包；依赖由仓库根的 `requirements/` 管理。
+在**仓库根**执行：
+
 ```bash
-cd server
-python -m pip install -e ".[dev]"
+make setup            # 开发 + 测试依赖 (requirements/dev.txt) + 前端依赖
+# 仅后端：python -m pip install -r requirements/dev.txt
 ```
 
 ## 配置
 
-配置读取顺序：默认值 → `server/.cfg`（`key=value`）→ 环境变量（`sapic_` 前缀）。
+配置读取顺序：配置类默认值（`basis/conf.py`）→ `server/.cfg`（`key=value`）→ 环境变量（`sapic_` 前缀），
+读取后逐项校验。`sapic_env=dev`（或 `FLASK_ENV=development`）切换到 `DevConfig`（开启调试与 DEBUG 日志）。
 
 | 配置项 | 说明 | 默认值 |
 | --- | --- | --- |
-| `sapic_db_url` | 数据库 DSN，如 `postgresql://user:pass@host:5432/sapic`、`mysql://...`、`sqlite:///tmp/sapic.db` | 空（必填） |
+| `sapic_env` | 运行环境，`dev`/`development` 为开发模式 | `production` |
+| `sapic_db_url` | 数据库 DSN，如 `postgresql://user:pass@host:5432/sapic`、`mysql://...`、`sqlite:///tmp/sapic.db` | `sqlite:///<server>/data/sapic.db` |
 | `sapic_redis_url` | Redis DSN，如 `redis://:pass@host:6379/0` | 空（可选） |
 | `sapic_secretkey` | Web 应用密钥 | 内置串 |
 | `sapic_maxupload` | 上传上限，单位 MB | `20` |
 | `sapic_storagedir` | 本地存储目录 | `data/upload` |
 | `sapic_external_base_url` | 对外访问根地址，用于拼接图片外链 | 空（相对地址） |
 | `sapic_proxyfix` | 是否信任代理标头 | 关闭 |
-| `sapic_hookreloadtime` | 钩子重载间隔，单位秒 | `600` |
 
 ## 数据库初始化
+
+建表与增量迁移（含 ALTER）在应用启动时自动执行，无需手动操作；多 worker 并发启动
+由重试 + 幂等保证。需要手动兜底时才执行：
 
 ```bash
 cd server
 export FLASK_APP=sapic
-flask sa upgrade          # 建表 / 增量迁移
+flask sa upgrade          # 建表 / 增量迁移（启动时已自动执行）
 flask sa create-admin -u admin -p 123456
 ```
 
@@ -72,7 +79,7 @@ gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent
 | GET/POST | `/api/v1/albums` | 相册列表 / 创建 |
 | PATCH/DELETE | `/api/v1/albums/<id>` | 修改 / 删除（非空拒绝） |
 | GET | `/i/<sha>` | 图片读取（优先级选择副本，支持 Range） |
-| POST | `/api/upload` | v1 兼容上传（`picbed` + `token`） |
+| POST | `/api/upload` | v1 兼容上传（`file` + `token`） |
 | GET/PUT/DELETE | `/api/sha/<sha>` | v1 兼容图片管理 |
 
 认证方式：Cookie 会话（写操作需要 `X-CSRF-Token`）或 `Authorization: Bearer <PAT>`；v1 兼容接口额外接受 `token` 参数。

@@ -1,3 +1,4 @@
 -r base.txt
-gunicorn==23.0.0
-gevent==24.11.1
+
+gunicorn==26.2.0
+gevent==26.9.0

@@ -1,0 +1,43 @@
+# -*- coding: utf-8 -*-
+"""Hard-coded constants that do not change between deployments."""
+
+from __future__ import annotations
+
+from os.path import abspath, dirname, join
+from typing import Literal
+
+#: Environment variable prefix for config overrides.
+ENV_PREFIX = "sapic_"
+
+#: Environment switch selecting the dev/prod config class.
+ENV_NAME = ENV_PREFIX + "env"
+
+#: Project root (``server/``), three levels above this module.
+BASE_DIR = dirname(dirname(dirname(abspath(__file__))))
+
+#: Local config file, read before environment variables.
+CFG_FILE = join(BASE_DIR, ".cfg")
+
+#: Runtime data directory (default SQLite file and uploads); created on start.
+DATA_DIR = join(BASE_DIR, "data")
+
+#: Fallback ``SECRET_KEY``; replace it in any real deployment.
+DEFAULT_SECRET_KEY = "BD1E2CF7DF9CD6971D641C115EE72871BEDA2806"
+
+#: String values treated as ``True`` by :func:`sapic.basis.common.as_bool`.
+TRUE_VALUES = ("1", "true", "yes", "on")
+
+#: Legal log levels; the annotation is the single source of truth.
+LOG_LEVEL_TYPE = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
+#: Session cookie name; part of the app identity, never per-deployment.
+SESSION_COOKIE_NAME = "sapic_sid"
+
+#: Salt isolating the signed login-state cookie from other signed payloads.
+SESSION_COOKIE_SALT = "sapic-login-state"
+
+#: Hook directory rescan interval, in seconds.
+HOOK_RELOAD_TIME = 600
+
+#: Documentation root used by front-end help links.
+DOCS_BASE_URL = "https://sapic.rtfd.vip/zh_cn/latest/"

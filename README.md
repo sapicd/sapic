@@ -1,6 +1,6 @@
 # sapic
 
-即picbed，基于Flask的Web自建图床，
+基于Flask的Web自建图床，
 支持存储到本地、又拍云、七牛云、阿里云OSS、腾讯云COS、GitHub、Gitee(码云)等，
 支持第三方扩展存储到[AWS S3](https://aws.amazon.com/s3/)、[sm.ms](https://sm.ms/)、[superbed聚合图床](https://www.superbed.cn)等。
 
@@ -124,15 +124,15 @@ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmi
 
 ### 客户端上传示例
 
-- [使用PicGo上传到自定义的 sapic 图床](https://sapic.rtfd.vip/zh-cn/latest/usage.html#picbed-upload-picgo)
+- [使用PicGo上传到自定义的 sapic 图床](https://sapic.rtfd.vip/zh-cn/latest/usage.html#upload-picgo)
 
-- [使用uPic上传到自定义的 sapic 图床](https://sapic.rtfd.vip/zh-cn/latest/usage.html#picbed-upload-upic)
+- [使用uPic上传到自定义的 sapic 图床](https://sapic.rtfd.vip/zh-cn/latest/usage.html#upload-upic)
 
-- [作为自定义命令在使用Typora时上传图片到sapic](https://sapic.rtfd.vip/zh-cn/latest/cli.html#picbed-upload-typora)
+- [作为自定义命令在使用Typora时上传图片到sapic](https://sapic.rtfd.vip/zh-cn/latest/cli.html#upload-typora)
 
-- [Windows系统的图片文件添加右键菜单](https://sapic.rtfd.vip/zh-cn/latest/cli.html#picbed-upload-rightmenu-windows)
+- [Windows系统的图片文件添加右键菜单](https://sapic.rtfd.vip/zh-cn/latest/cli.html#upload-rightmenu-windows)
 
-- [macOS系统的图片文件添加右键菜单](https://sapic.rtfd.vip/zh-cn/latest/cli.html#picbed-upload-rightmenu-macos)
+- [macOS系统的图片文件添加右键菜单](https://sapic.rtfd.vip/zh-cn/latest/cli.html#upload-rightmenu-macos)
 
 详细文档请访问：[Sapic Docs](https://sapic.rtfd.vip/zh-cn/latest)
 

@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import io
 
+from sapic.libs.settings import set_setting
+from sapic.models import Album, Image
+
 
 def register_and_login(client):
     client.post(
@@ -54,3 +57,85 @@ def test_album_flow_controls_visibility(app, client):
 
     response = client.delete("/api/v1/albums/%d" % album_id, headers=headers)
     assert response.status_code == 409
+
+
+def upload(client, csrf=None, filename="photo.png", content=b"album-bytes", album_id=None):
+    data = {"file": (io.BytesIO(content), filename)}
+    if album_id is not None:
+        data["album_id"] = str(album_id)
+    return client.post(
+        "/api/v1/uploads",
+        data=data,
+        content_type="multipart/form-data",
+        headers={"X-CSRF-Token": csrf} if csrf else {},
+    )
+
+
+def test_upload_without_album_uses_default_album(app, client):
+    csrf = register_and_login(client)
+    response = upload(client, csrf)
+    assert response.status_code == 201, response.get_json()
+    image = response.get_json()["data"]["image"]
+
+    with app.app_context():
+        row = Album.get_by_id(image["album_id"])
+        assert row.name == "默认相册"
+        assert row.is_default is True
+        #: 兜底相册默认公开，上传即可外链。
+        assert row.visibility == "public"
+        assert Image.get(Image.sha == image["sha"]).visibility is None
+
+    assert app.test_client().get(image["src"]).status_code == 200
+
+
+def test_anonymous_upload_lands_in_system_album(app, client):
+    with app.app_context():
+        set_setting("allow_anonymous_upload", True)
+
+    response = upload(client)
+    assert response.status_code == 201, response.get_json()
+    image = response.get_json()["data"]["image"]
+
+    with app.app_context():
+        row = Image.get(Image.sha == image["sha"])
+        assert row.owner_id is None
+        assert row.album.owner_id is None
+        assert row.album.name == "公共相册"
+
+    assert app.test_client().get(image["src"]).status_code == 200
+
+
+def test_default_album_cannot_be_deleted(client):
+    csrf = register_and_login(client)
+    headers = {"X-CSRF-Token": csrf}
+    albums = client.get("/api/v1/albums").get_json()["data"]["items"]
+
+    default = next(album for album in albums if album["is_default"])
+    response = client.delete("/api/v1/albums/%d" % default["id"], headers=headers)
+    assert response.status_code == 409
+
+
+def test_single_image_visibility_overrides_album(app, client):
+    csrf = register_and_login(client)
+    headers = {"X-CSRF-Token": csrf}
+    image = upload(client, csrf).get_json()["data"]["image"]
+    anonymous = app.test_client()
+
+    assert anonymous.get(image["src"]).status_code == 200
+
+    response = client.patch(
+        "/api/v1/images/%s" % image["sha"],
+        json={"visibility": "private"},
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert anonymous.get(image["src"]).status_code == 403
+
+    #: 置回 NULL 即重新跟随相册。
+    response = client.patch(
+        "/api/v1/images/%s" % image["sha"],
+        json={"visibility": None},
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert anonymous.get(image["src"]).status_code == 200

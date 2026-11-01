@@ -3,19 +3,33 @@
 
 from __future__ import annotations
 
-import logging
-from uuid import uuid4
+from typing import TYPE_CHECKING
 
-from flask import Flask, g, request
-from werkzeug.middleware.proxy_fix import ProxyFix
-
-from .config import load_config
-from .errors import register_error_handlers
 from .version import __version__
+
+if TYPE_CHECKING:
+    from flask import Flask
 
 
 def create_app(config: dict | None = None) -> Flask:
     """Create the Flask application."""
+    #: Imports are deferred so that ``import sapic`` stays cheap and
+    #: side-effect free (e.g. reading ``sapic.__version__`` for packaging).
+    import logging
+    from uuid import uuid4
+
+    from flask import Flask, g, request
+    from werkzeug.middleware.proxy_fix import ProxyFix
+
+    from .basis.conf import load_config
+    from .basis.db import init_app as init_db
+    from .basis.errors import register_error_handlers
+    from .cli import sa_cli
+    from .libs.auth import init_app as init_auth
+    from .libs.hook import init_app as init_hooks
+    from .migrations import auto_upgrade
+    from .views import register_blueprints
+
     app = Flask(__name__)
     app.config.from_mapping(load_config())
     if config:
@@ -29,31 +43,12 @@ def create_app(config: dict | None = None) -> Flask:
     if app.config.get("PROXY_FIX"):
         app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-    app.config.setdefault(
-        "PERMANENT_SESSION_LIFETIME", app.config.get("SESSION_TTL", 7 * 24 * 3600)
-    )
-    app.config.setdefault("SESSION_COOKIE_HTTPONLY", True)
-    app.config.setdefault("SESSION_COOKIE_SAMESITE", "Lax")
-
-    from . import extensions
-
-    extensions.init_app(app)
-
-    from . import security
-
-    security.init_app(app)
-
-    from .libs.hook import init_app as init_hooks
-
+    init_db(app)
+    auto_upgrade()
+    init_auth(app)
     init_hooks(app)
-
-    from .api import register_blueprints
-
     register_blueprints(app)
     register_error_handlers(app)
-
-    from .cli import sa_cli
-
     app.cli.add_command(sa_cli)
 
     @app.before_request

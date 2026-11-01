@@ -7,7 +7,7 @@ import click
 from flask.cli import AppGroup
 from werkzeug.security import generate_password_hash
 
-from .extensions import db
+from .basis.db import db
 from .models import User
 from .models.base import now
 from .models.user import STATUS_NORMAL

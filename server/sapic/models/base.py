@@ -14,7 +14,7 @@ import time
 
 from peewee import Model, TextField
 
-from ..extensions import db
+from ..basis.db import db
 
 
 def now() -> int:

@@ -2,7 +2,7 @@
 import pytest
 
 from sapic import create_app
-from sapic.extensions import db
+from sapic.basis.db import db
 from sapic.migrations import upgrade
 
 

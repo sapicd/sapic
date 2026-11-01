@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import io
 
+from sapic.libs.settings import set_setting
 from sapic.models import Image, ImageBackend
 
 
@@ -20,12 +21,13 @@ def register_and_login(client):
     return response.get_json()["data"]["csrf"]
 
 
-def upload(client, csrf, filename="photo.png", content=b"fake-image-bytes"):
+def upload(client, csrf=None, filename="photo.png", content=b"fake-image-bytes"):
+    headers = {"X-CSRF-Token": csrf} if csrf else {}
     return client.post(
         "/api/v1/uploads",
         data={"file": (io.BytesIO(content), filename)},
         content_type="multipart/form-data",
-        headers={"X-CSRF-Token": csrf},
+        headers=headers,
     )
 
 
@@ -89,3 +91,23 @@ def test_upload_rejects_unknown_suffix(client):
     response = upload(client, csrf, filename="shell.php")
     assert response.status_code == 400
     assert response.get_json()["code"] == "PARAM_ERROR"
+
+
+def test_anonymous_upload_disabled_by_default(client):
+    response = upload(client)
+    assert response.status_code == 403
+    assert response.get_json()["code"] == "FORBIDDEN"
+
+
+def test_anonymous_upload_when_enabled(app, client):
+    with app.app_context():
+        set_setting("allow_anonymous_upload", True)
+
+    response = upload(client)
+    assert response.status_code == 201, response.get_json()
+    image = response.get_json()["data"]["image"]
+
+    with app.app_context():
+        row = Image.get(Image.sha == image["sha"])
+        assert row.owner_id is None
+    assert client.get(image["src"]).status_code == 200

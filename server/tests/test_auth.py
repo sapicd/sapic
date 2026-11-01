@@ -116,3 +116,38 @@ def test_password_change_revokes_other_sessions(app, client):
 
     assert first.get("/api/v1/auth/session").get_json()["data"]["authenticated"] is False
     assert second.get("/api/v1/auth/session").get_json()["data"]["authenticated"] is True
+
+
+def test_update_profile(client):
+    register(client)
+    csrf = login(client)
+
+    response = client.put(
+        "/api/v1/auth/profile",
+        json={"nickname": "爱丽丝", "email": "alice2@example.com", "avatar": "/a.png"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 200, response.get_json()
+    user = response.get_json()["data"]["user"]
+    assert user["nickname"] == "爱丽丝"
+    assert user["email"] == "alice2@example.com"
+    assert user["avatar"] == "/a.png"
+    assert user["username"] == "alice"
+
+    session = client.get("/api/v1/auth/session").get_json()["data"]
+    assert session["user"]["nickname"] == "爱丽丝"
+
+
+def test_update_profile_rejects_taken_email(client):
+    register(client)
+    client.post("/api/v1/auth/logout")
+    register(client, username="bobby", email="bob@example.com")
+
+    csrf = login(client, username="bobby")
+    response = client.put(
+        "/api/v1/auth/profile",
+        json={"email": "alice@example.com"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 409
+    assert response.get_json()["code"] == "CONFLICT"

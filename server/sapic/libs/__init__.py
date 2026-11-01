@@ -1,2 +1,2 @@
 # -*- coding: utf-8 -*-
-"""Low-level infrastructure (hooks, storage primitives)."""
+"""Reusable base classes, interfaces and feature wrappers (hooks, auth, storage)."""

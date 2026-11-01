@@ -25,6 +25,9 @@ from types import ModuleType
 
 from flask import current_app
 
+from ..basis.vars import HOOK_RELOAD_TIME
+from . import ui
+
 logger = logging.getLogger(__name__)
 
 META_FIELDS = (
@@ -54,6 +57,7 @@ class HookManager:
         self.paths = [Path(p) for p in paths if p]
         self.reload_interval = max(int(reload_interval or 0), 0)
         self._hooks: dict[str, Hook] = {}
+        self._manifests: dict[str, dict] = {}
         self._signature = ""
         self._last_scan = 0.0
         self._lock = RLock()
@@ -143,6 +147,7 @@ class HookManager:
         with self._lock:
             if hooks or not self._hooks:
                 self._hooks = hooks
+                self._manifests.clear()
             self._signature = self._compute_signature()
             self._last_scan = time.time()
 
@@ -221,6 +226,151 @@ class HookManager:
             results.append(result)
         return results
 
+    # -- declarative UI ------------------------------------------------
+    def _build_manifest(self, hook: Hook) -> dict:
+        """Validated manifest of one hook, cached until the next reload."""
+        cached = self._manifests.get(hook.name)
+        if cached is not None:
+            return cached
+
+        raw = getattr(hook.module, "hook_manifest", None)
+        data = {}
+        if callable(raw):
+            try:
+                data = raw() or {}
+            except Exception:
+                logger.exception("Hook %s.hook_manifest failed", hook.name)
+                data = {}
+        if not isinstance(data, dict):
+            data = {}
+
+        entry = {
+            "name": hook.name,
+            "title": str(data.get("title") or hook.meta.get("__hookname__") or hook.name),
+            "catalog": data.get("catalog") or hook.meta.get("__catalog__") or "",
+            "description": data.get("description")
+            or hook.meta.get("__description__")
+            or "",
+            "version": str(hook.meta.get("__version__") or ""),
+            "enabled": hook.enabled,
+            "ui_version": ui.UI_VERSION,
+            "config_schema": ui.clean_fields(data.get("config_schema")),
+            "actions": ui.clean_actions(data.get("actions")),
+            "data_sources": ui.clean_sources(data.get("data_sources")),
+            "slots": ui.clean_slots(data.get("slots")),
+        }
+        with self._lock:
+            self._manifests[hook.name] = entry
+        return entry
+
+    def manifest(self, name: str):
+        """Manifest of a single hook, ``None`` when it is not loaded."""
+        hook = self.hooks.get(name)
+        if hook is None:
+            return None
+        return self._build_manifest(hook)
+
+    def manifests(self, slots=None) -> list[dict]:
+        """Manifests of every loaded hook, optionally filtered to ``slots``."""
+        allowed = set(slots) if slots is not None else None
+        items = []
+        for name in sorted(self.hooks):
+            entry = dict(self._build_manifest(self.hooks[name]))
+            if allowed is not None:
+                entry["slots"] = [
+                    slot for slot in entry["slots"] if slot["name"] in allowed
+                ]
+            items.append(entry)
+        return items
+
+    def slot(self, name: str, context=None, values=None) -> list[dict]:
+        """Render one slot into ``[{hook, title, nodes}]`` blocks."""
+        if name not in ui.SLOTS:
+            return []
+        context = dict(context or {})
+        values = dict(values or {})
+        blocks = []
+        for hook_name in sorted(self.hooks):
+            hook = self.hooks[hook_name]
+            if not hook.enabled:
+                continue
+            manifest = self._build_manifest(hook)
+            if name not in {slot["name"] for slot in manifest["slots"]}:
+                continue
+            func = getattr(hook.module, "slot_%s" % name.replace(".", "_"), None)
+            if not callable(func):
+                logger.warning(
+                    "Hook %s declares slot %s without a slot function", hook_name, name
+                )
+                continue
+            try:
+                nodes = func(**self._accepted_kwargs(func, dict(context=context, values=values)))
+            except Exception:
+                logger.exception("Hook %s slot %s failed", hook_name, name)
+                continue
+            cleaned = ui.clean_tree(
+                nodes,
+                actions={item["name"] for item in manifest["actions"]},
+                values=values,
+                context=context,
+            )
+            if cleaned:
+                blocks.append(
+                    {"hook": hook_name, "title": manifest["title"], "nodes": cleaned}
+                )
+        return blocks
+
+    def action(self, name: str, action: str, payload=None, context=None):
+        """Run ``action_<action>`` declared by the hook manifest.
+
+        Returns ``None`` when the hook or the action is not declared, so the
+        caller can answer 404 instead of reaching into the module.
+        """
+        hook = self.hooks.get(name)
+        if hook is None or not hook.enabled:
+            return None
+        manifest = self._build_manifest(hook)
+        spec = next(
+            (item for item in manifest["actions"] if item["name"] == action), None
+        )
+        if spec is None:
+            return None
+        func = getattr(hook.module, "action_%s" % action, None)
+        if not callable(func):
+            return {"code": 1, "message": "action not implemented"}
+        payload = dict(payload or {})
+        kwargs = dict(
+            payload=payload,
+            context=dict(context or {}),
+            values=dict(payload.get("values") or {}),
+        )
+        try:
+            result = func(**self._accepted_kwargs(func, kwargs))
+        except Exception as exc:
+            logger.exception("Hook %s action %s failed", name, action)
+            result = {"code": 1, "message": str(exc)}
+        return ui.clean_result(result)
+
+    def data(self, name: str, source: str, query=None, context=None) -> dict:
+        """Read one declared dataset; failures degrade to an empty list."""
+        hook = self.hooks.get(name)
+        if hook is None or not hook.enabled:
+            return {"items": [], "total": 0}
+        manifest = self._build_manifest(hook)
+        if source not in {item["name"] for item in manifest["data_sources"]}:
+            return {"items": [], "total": 0}
+        func = getattr(hook.module, "data_%s" % source, None)
+        if not callable(func):
+            logger.warning("Hook %s declares data source %s without a reader", name, source)
+            return {"items": [], "total": 0}
+        kwargs = dict(query=dict(query or {}), context=dict(context or {}))
+        try:
+            result = func(**self._accepted_kwargs(func, kwargs))
+        except Exception:
+            logger.exception("Hook %s data source %s failed", name, source)
+            return {"items": [], "total": 0}
+        return ui.clean_dataset(result)
+
 
 def init_app(app) -> None:
     from pathlib import Path as _Path
@@ -229,9 +379,7 @@ def init_app(app) -> None:
     extra = app.config.get("HOOK_PKG_STORAGE_DIR")
     if extra:
         paths.append(_Path(extra))
-    app.extensions["hooks"] = HookManager(
-        paths, app.config.get("HOOK_RELOAD_TIME", 600)
-    )
+    app.extensions["hooks"] = HookManager(paths, HOOK_RELOAD_TIME)
 
 
 def get_hook_manager() -> HookManager:
