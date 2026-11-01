@@ -736,6 +736,49 @@ def b64size(b64string):
     return (len(b64string) * 3) / 4 - b64string.count("=", -2)
 
 
+#: Same header checks and order as imghdr.what() (removed in Python 3.13)
+_image_tests = (
+    ("jpeg", lambda h: h[6:10] in (b"JFIF", b"Exif")),
+    ("jpeg", lambda h: h[:4] == b"\xff\xd8\xff\xdb"),
+    ("png", lambda h: h.startswith(b"\211PNG\r\n\032\n")),
+    ("gif", lambda h: h[:6] in (b"GIF87a", b"GIF89a")),
+    ("tiff", lambda h: h[:2] in (b"MM", b"II")),
+    ("rgb", lambda h: h.startswith(b"\001\332")),
+    ("pbm", lambda h: _is_pnm(h, b"14")),
+    ("pgm", lambda h: _is_pnm(h, b"25")),
+    ("ppm", lambda h: _is_pnm(h, b"36")),
+    ("rast", lambda h: h.startswith(b"\x59\xa6\x6a\x95")),
+    ("xbm", lambda h: h.startswith(b"#define ")),
+    ("bmp", lambda h: h.startswith(b"BM")),
+    ("webp", lambda h: h.startswith(b"RIFF") and h[8:12] == b"WEBP"),
+    ("exr", lambda h: h.startswith(b"\x76\x2f\x31\x01")),
+)
+
+
+def _is_pnm(h, kinds):
+    return (
+        len(h) >= 3
+        and h[0] == ord(b"P")
+        and h[1] in kinds
+        and h[2] in b" \t\n\r"
+    )
+
+
+def what_image(data):
+    """Guess the image type from its first bytes, like imghdr.what(None, data)
+
+    :param data: image content
+    :type data: bytes
+    :returns: type name such as ``png`` or ``jpeg``, or None
+    """
+    if not data:
+        return None
+    for name, test in _image_tests:
+        if test(data):
+            return name
+    return None
+
+
 def raise_version():
     vs = sys.version_info
     if (vs[0], vs[1]) < (3, 10):

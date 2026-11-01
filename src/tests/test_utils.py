@@ -25,6 +25,7 @@ from utils.tool import (
     is_match_appversion,
     bleach_html,
     parse_author_mail,
+    what_image,
 )
 from version import __version__ as VER
 
@@ -181,6 +182,20 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(rst5.mimetype, "text/plain")
         self.assertEqual(rst5.charset, "utf-8")
         self.assertTrue(rst5.is_base64)
+
+    def test_what_image(self):
+        self.assertEqual(what_image(b"\x89PNG\r\n\x1a\n" + b"\0" * 24), "png")
+        self.assertEqual(
+            what_image(b"\xff\xd8\xff\xe0\x00\x10JFIF\x00"), "jpeg"
+        )
+        self.assertEqual(what_image(b"\xff\xd8\xff\xdb\x00\x84"), "jpeg")
+        self.assertEqual(what_image(b"GIF89a\x01\x00"), "gif")
+        self.assertEqual(what_image(b"RIFF\x24\x00\x00\x00WEBPVP8 "), "webp")
+        self.assertEqual(what_image(b"BM\x36\x00"), "bmp")
+        self.assertEqual(what_image(b"P6\n1 1\n255\n"), "ppm")
+        self.assertIsNone(what_image(b"<svg></svg>"))
+        self.assertIsNone(what_image(b""))
+        self.assertIsNone(what_image(None))
 
 
 if __name__ == "__main__":
