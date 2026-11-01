@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html  lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>utils.web</title>
+    
+          <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+          <link rel="stylesheet" href="../../_static/theme.css " type="text/css" />
+          <link rel="stylesheet" href="../../_static/sphinxcontrib-httpexample.css" type="text/css" />
+      
+      <!-- sphinx script_files -->
+        <script src="../../_static/documentation_options.js?v=2ca6879d"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../_static/sphinxcontrib-httpexample.js?v=31a81d62"></script>
+        <script src="../../_static/translations.js?v=beaddf03"></script>
+
+      
+      <!-- bundled in js (rollup iife) -->
+      <!-- <script src="../../_static/theme-vendors.js"></script> -->
+      <script src="../../_static/theme.js" defer></script>
+    
+      <link rel="shortcut icon" href="../../../../_static/favicon.png"/>
+  <link rel="index" title="索引" href="../../genindex.html" />
+  <link rel="search" title="搜索" href="../../search.html" /> 
+  </head>
+
+  <body>
+    <div id="app">
+    <div class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="../../index.html" class="home-link">
+    
+      <img class="logo" src="../../../../_static/logo.png" alt="logo"/>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+
+
+  
+    <div class="nav-item">
+      <a href="https://sapicd.com"
+        class="nav-link external">
+          Demo <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://github.com/sapicd/sapic"
+        class="nav-link external">
+          GitHub <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://gitee.com/staugur/picbed"
+        class="nav-link external">
+          Gitee <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+
+
+  
+    <div class="nav-item">
+      <a href="https://sapicd.com"
+        class="nav-link external">
+          Demo <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://github.com/sapicd/sapic"
+        class="nav-link external">
+          GitHub <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://gitee.com/staugur/picbed"
+        class="nav-link external">
+          Gitee <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">快速搜索</span>
+    <div class="searchformwrapper">
+      <form class="search" action="../../search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="搜索" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="../../index.html#sapic">sapic - 简约不小气的自建图床程序</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 ">
+            
+              <a href="../../install.html" class="reference internal ">部署安装</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="../../docker.html" class="reference internal ">使用Docker部署</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="../../usage.html" class="reference internal ">使用说明 - 概述</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="../../linktoken.html" class="reference internal ">使用说明 - LinkToken及应用</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="../../cli.html" class="reference internal ">使用说明 - sapicli</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="../../admin.html" class="reference internal ">使用说明 - 站点管理</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="../../hook.html" class="reference internal ">钩子</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="../../api.html" class="reference internal ">RESTful API</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="../../module.html" class="reference internal ">Modules API</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="../../faq.html" class="reference internal ">FAQ</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="../../changelog.html" class="reference internal ">更新日志</a>
+            
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+    
+      <li><a href="../index.html">模块代码</a> &raquo;</li>
+    
+    <li>utils.web</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main" v-pre>
+            
+  <h1>utils.web 源代码</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    utils.web</span>
+<span class="sd">    ~~~~~~~~~</span>
+
+<span class="sd">    Some web app tool classes and functions.</span>
+
+<span class="sd">    :copyright: (c) 2019 by staugur.</span>
+<span class="sd">    :license: BSD 3-Clause, see LICENSE for more details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">imghdr</span>
+<span class="kn">from</span> <span class="nn">posixpath</span> <span class="kn">import</span> <span class="n">basename</span><span class="p">,</span> <span class="n">splitext</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">remove</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">join</span> <span class="k">as</span> <span class="n">pathjoin</span><span class="p">,</span> <span class="n">getsize</span><span class="p">,</span> <span class="n">isdir</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">urlsafe_b64decode</span> <span class="k">as</span> <span class="n">b64decode</span><span class="p">,</span> <span class="n">b64decode</span> <span class="k">as</span> <span class="n">pic64decode</span>
+<span class="kn">from</span> <span class="nn">binascii</span> <span class="kn">import</span> <span class="n">Error</span> <span class="k">as</span> <span class="n">BaseDecodeError</span>
+<span class="kn">from</span> <span class="nn">redis</span> <span class="kn">import</span> <span class="n">Redis</span>
+<span class="kn">from</span> <span class="nn">redis.exceptions</span> <span class="kn">import</span> <span class="n">RedisError</span>
+<span class="kn">from</span> <span class="nn">requests.exceptions</span> <span class="kn">import</span> <span class="n">RequestException</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">g</span><span class="p">,</span>
+    <span class="n">redirect</span><span class="p">,</span>
+    <span class="n">request</span><span class="p">,</span>
+    <span class="n">url_for</span><span class="p">,</span>
+    <span class="n">abort</span><span class="p">,</span>
+    <span class="n">Response</span><span class="p">,</span>
+    <span class="n">jsonify</span><span class="p">,</span>
+    <span class="n">current_app</span><span class="p">,</span>
+    <span class="n">make_response</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">markupsafe</span> <span class="kn">import</span> <span class="n">Markup</span>
+<span class="kn">from</span> <span class="nn">jinja2</span> <span class="kn">import</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">FileSystemLoader</span>
+<span class="kn">from</span> <span class="nn">sys</span> <span class="kn">import</span> <span class="n">executable</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">subprocess</span> <span class="kn">import</span> <span class="n">call</span><span class="p">,</span> <span class="n">check_output</span>
+<span class="kn">from</span> <span class="nn">jwt</span> <span class="kn">import</span> <span class="n">encode</span> <span class="k">as</span> <span class="n">Serializer</span><span class="p">,</span> <span class="n">decode</span> <span class="k">as</span> <span class="n">Deserializer</span>
+<span class="kn">from</span> <span class="nn">jwt.exceptions</span> <span class="kn">import</span> <span class="n">ExpiredSignatureError</span><span class="p">,</span> <span class="n">DecodeError</span>
+<span class="kn">from</span> <span class="nn">tempfile</span> <span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
+<span class="kn">from</span> <span class="nn">bleach.css_sanitizer</span> <span class="kn">import</span> <span class="n">CSSSanitizer</span>
+<span class="kn">from</span> <span class="nn">libs.storage</span> <span class="kn">import</span> <span class="n">get_storage</span>
+<span class="kn">from</span> <span class="nn">.tool</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">logger</span><span class="p">,</span>
+    <span class="n">get_current_timestamp</span><span class="p">,</span>
+    <span class="n">rsp</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="p">,</span>
+    <span class="n">username_pat</span><span class="p">,</span>
+    <span class="n">parse_valid_comma</span><span class="p">,</span>
+    <span class="n">parse_data_uri</span><span class="p">,</span>
+    <span class="n">format_apires</span><span class="p">,</span>
+    <span class="n">url_pat</span><span class="p">,</span>
+    <span class="n">ALLOWED_EXTS</span><span class="p">,</span>
+    <span class="n">parse_valid_verticaline</span><span class="p">,</span>
+    <span class="n">parse_valid_colon</span><span class="p">,</span>
+    <span class="n">is_true</span><span class="p">,</span>
+    <span class="n">is_venv</span><span class="p">,</span>
+    <span class="n">gen_ua</span><span class="p">,</span>
+    <span class="n">check_to_addr</span><span class="p">,</span>
+    <span class="n">is_all_fail</span><span class="p">,</span>
+    <span class="n">bleach_html</span><span class="p">,</span>
+    <span class="n">try_request</span><span class="p">,</span>
+    <span class="n">comma_pat</span><span class="p">,</span>
+    <span class="n">create_redis_engine</span><span class="p">,</span>
+    <span class="n">allowed_file</span><span class="p">,</span>
+    <span class="n">parse_label</span><span class="p">,</span>
+    <span class="n">ALLOWED_VIDEO</span><span class="p">,</span>
+    <span class="n">b64size</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">._compat</span> <span class="kn">import</span> <span class="n">text_type</span><span class="p">,</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">parse_qs</span>
+<span class="kn">from</span> <span class="nn">config</span> <span class="kn">import</span> <span class="n">GLOBAL</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Thread</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
+
+<span class="n">rc</span><span class="p">:</span> <span class="n">Redis</span> <span class="o">=</span> <span class="n">create_redis_engine</span><span class="p">()</span>
+
+<span class="n">no_jump_ep</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;front.login&quot;</span><span class="p">,</span> <span class="s2">&quot;front.logout&quot;</span><span class="p">,</span> <span class="s2">&quot;front.register&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get_referrer_url</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;获取上一页地址&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;GET&quot;</span>
+        <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">referrer</span>
+        <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">referrer</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">host_url</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">endpoint</span>
+        <span class="ow">and</span> <span class="s2">&quot;api.&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">endpoint</span>
+        <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">endpoint</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">no_jump_ep</span>
+    <span class="p">):</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">referrer</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">url</span>
+
+
+<span class="k">def</span> <span class="nf">get_redirect_url</span><span class="p">(</span><span class="n">endpoint</span><span class="o">=</span><span class="s2">&quot;front.index&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;获取重定向地址&quot;&quot;&quot;</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;next&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">url</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">endpoint</span> <span class="o">!=</span> <span class="s2">&quot;front.index&quot;</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">url_for</span><span class="p">(</span><span class="n">endpoint</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">get_referrer_url</span><span class="p">()</span>
+                <span class="ow">or</span> <span class="p">(</span>
+                    <span class="n">request</span><span class="o">.</span><span class="n">full_path</span>
+                    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">endpoint</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">no_jump_ep</span>
+                    <span class="k">else</span> <span class="kc">None</span>
+                <span class="p">)</span>
+                <span class="ow">or</span> <span class="n">url_for</span><span class="p">(</span><span class="n">endpoint</span><span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">url</span>
+
+
+<span class="k">def</span> <span class="nf">default_login_auth</span><span class="p">(</span><span class="n">dSid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;默认登录解密</span>
+
+<span class="sd">    :returns: (signin:boolean, userinfo:dict)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sid</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">cookies</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dSid&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">dSid</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">signin</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">userinfo</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+        <span class="n">sid</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="n">sid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sid</span><span class="p">,</span> <span class="n">text_type</span><span class="p">):</span>
+            <span class="n">sid</span> <span class="o">=</span> <span class="n">sid</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">usr</span><span class="p">,</span> <span class="n">expire</span><span class="p">,</span> <span class="n">sha</span> <span class="o">=</span> <span class="n">sid</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="n">expire</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">expire</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">expire</span> <span class="o">&gt;</span> <span class="n">get_current_timestamp</span><span class="p">():</span>
+            <span class="n">ak</span> <span class="o">=</span> <span class="n">rsp</span><span class="p">(</span><span class="s2">&quot;accounts&quot;</span><span class="p">)</span>
+            <span class="n">pipe</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">rc</span><span class="o">.</span><span class="n">pipeline</span><span class="p">()</span>
+            <span class="n">pipe</span><span class="o">.</span><span class="n">sismember</span><span class="p">(</span><span class="n">ak</span><span class="p">,</span> <span class="n">usr</span><span class="p">)</span>
+            <span class="n">pipe</span><span class="o">.</span><span class="n">hgetall</span><span class="p">(</span><span class="n">rsp</span><span class="p">(</span><span class="s2">&quot;account&quot;</span><span class="p">,</span> <span class="n">usr</span><span class="p">))</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">RedisError</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">has_usr</span><span class="p">,</span> <span class="n">userinfo</span> <span class="o">=</span> <span class="n">result</span>
+                    <span class="k">if</span> <span class="n">has_usr</span> <span class="ow">and</span> <span class="n">userinfo</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">userinfo</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                        <span class="n">pwd</span> <span class="o">=</span> <span class="n">userinfo</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;password&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="p">(</span>
+                            <span class="n">sha256</span><span class="p">(</span>
+                                <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span>
+                                <span class="o">%</span> <span class="p">(</span>
+                                    <span class="n">usr</span><span class="p">,</span>
+                                    <span class="n">pwd</span><span class="p">,</span>
+                                    <span class="n">expire</span><span class="p">,</span>
+                                    <span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;SECRET_KEY&quot;</span><span class="p">],</span>
+                                <span class="p">)</span>
+                            <span class="p">)</span>
+                            <span class="o">==</span> <span class="n">sha</span>
+                        <span class="p">):</span>
+                            <span class="n">signin</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">signin</span><span class="p">:</span>
+        <span class="n">userinfo</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">signin</span><span class="p">,</span> <span class="n">userinfo</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="login_required">
+<a class="viewcode-back" href="../../module.html#utils.web.login_required">[文档]</a>
+<span class="k">def</span> <span class="nf">login_required</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;页面要求登录装饰器&quot;&quot;&quot;</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">decorated_function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">g</span><span class="o">.</span><span class="n">signin</span><span class="p">:</span>
+            <span class="n">nu</span> <span class="o">=</span> <span class="n">get_redirect_url</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">nu</span> <span class="ow">and</span> <span class="p">(</span><span class="n">nu</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">nu</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">url_root</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">url_for</span><span class="p">(</span><span class="s2">&quot;front.login&quot;</span><span class="p">,</span> <span class="nb">next</span><span class="o">=</span><span class="n">nu</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">url_for</span><span class="p">(</span><span class="s2">&quot;front.login&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">decorated_function</span></div>
+
+
+
+<div class="viewcode-block" id="anonymous_required">
+<a class="viewcode-back" href="../../module.html#utils.web.anonymous_required">[文档]</a>
+<span class="k">def</span> <span class="nf">anonymous_required</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;页面要求匿名装饰器&quot;&quot;&quot;</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">decorated_function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">signin</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">url_for</span><span class="p">(</span><span class="s2">&quot;front.index&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">decorated_function</span></div>
+
+
+
+<div class="viewcode-block" id="apilogin_required">
+<a class="viewcode-back" href="../../module.html#utils.web.apilogin_required">[文档]</a>
+<span class="k">def</span> <span class="nf">apilogin_required</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;接口要求登录装饰器&quot;&quot;&quot;</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">decorated_function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">g</span><span class="o">.</span><span class="n">signin</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">abort</span><span class="p">(</span><span class="mi">403</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">signin</span> <span class="ow">and</span> <span class="n">g</span><span class="o">.</span><span class="n">userinfo</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">abort</span><span class="p">(</span>
+                <span class="n">make_response</span><span class="p">(</span>
+                    <span class="n">jsonify</span><span class="p">(</span>
+                        <span class="n">msg</span><span class="o">=</span><span class="s2">&quot;The user is disabled, no operation&quot;</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="mi">403</span>
+                    <span class="p">),</span>
+                    <span class="mi">403</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">decorated_function</span></div>
+
+
+
+<div class="viewcode-block" id="admin_apilogin_required">
+<a class="viewcode-back" href="../../module.html#utils.web.admin_apilogin_required">[文档]</a>
+<span class="k">def</span> <span class="nf">admin_apilogin_required</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;接口要求管理员级别登录装饰器&quot;&quot;&quot;</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">decorated_function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">signin</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">is_admin</span> <span class="ow">and</span> <span class="n">g</span><span class="o">.</span><span class="n">userinfo</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">abort</span><span class="p">(</span><span class="mi">403</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">abort</span><span class="p">(</span><span class="mi">404</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">decorated_function</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">parse_accept_language</span><span class="p">(</span><span class="n">acceptLanguage</span><span class="p">,</span> <span class="n">default_language</span><span class="o">=</span><span class="s2">&quot;zh-CN&quot;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">acceptLanguage</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">default_language</span>
+    <span class="n">languages</span> <span class="o">=</span> <span class="n">acceptLanguage</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+    <span class="n">locale_q_pairs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">language</span> <span class="ow">in</span> <span class="n">languages</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">language</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">language</span><span class="p">:</span>
+            <span class="c1"># no q =&gt; q = 1</span>
+            <span class="n">locale_q_pairs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">language</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s2">&quot;1&quot;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">locale</span> <span class="o">=</span> <span class="n">language</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">language</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">locale_q_pairs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">locale</span><span class="p">,</span> <span class="n">q</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="nb">sorted</span><span class="p">(</span><span class="n">locale_q_pairs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="ow">or</span> <span class="n">default_language</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">dfr</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;en-US&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;定义前端返回，将res中msg字段转换语言</span>
+
+<span class="sd">    :param dict res: 例如 {&quot;msg&quot;: &quot;翻译内容(英文)&quot;, &quot;other&quot;: &quot;xx&quot;}</span>
+<span class="sd">    :param str default: 默认语言</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">language</span> <span class="o">=</span> <span class="n">parse_accept_language</span><span class="p">(</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">cookies</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">&quot;locale&quot;</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Accept-Language&quot;</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">default</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;zh-Hans-CN&quot;</span><span class="p">:</span>
+            <span class="n">language</span> <span class="o">=</span> <span class="s2">&quot;zh-CN&quot;</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
+        <span class="n">language</span> <span class="o">=</span> <span class="n">default</span>
+    <span class="c1"># 翻译转换字典库 TODO 翻译文本文件，按英文索引</span>
+    <span class="n">trans</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="c1"># 简体中文</span>
+        <span class="s2">&quot;zh-CN&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;Hello World&quot;</span><span class="p">:</span> <span class="s2">&quot;你好，世界&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Parameter error&quot;</span><span class="p">:</span> <span class="s2">&quot;参数错误&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The upload_path type error&quot;</span><span class="p">:</span> <span class="s2">&quot;upload_path类型错误&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The upyun parameter error&quot;</span><span class="p">:</span> <span class="s2">&quot;又拍云相关参数错误&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Please install upyun module&quot;</span><span class="p">:</span> <span class="s2">&quot;请安装upyun模块&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Please install qiniu module&quot;</span><span class="p">:</span> <span class="s2">&quot;请安装qiniu模块&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The qiniu parameter error&quot;</span><span class="p">:</span> <span class="s2">&quot;七牛云相关参数错误&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The aliyun parameter error&quot;</span><span class="p">:</span> <span class="s2">&quot;阿里云oss相关参数错误&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The tencent parameter error&quot;</span><span class="p">:</span> <span class="s2">&quot;腾讯云cos相关参数错误&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The sm.ms parameter error&quot;</span><span class="p">:</span> <span class="s2">&quot;sm.ms相关参数错误&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The github parameter error&quot;</span><span class="p">:</span> <span class="s2">&quot;GitHub相关参数错误&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The gitee parameter error&quot;</span><span class="p">:</span> <span class="s2">&quot;Gitee相关参数错误&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;An unknown error occurred in the program&quot;</span><span class="p">:</span> <span class="s2">&quot;程序发生未知错误&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Program data storage service error&quot;</span><span class="p">:</span> <span class="s2">&quot;程序数据存储服务异常&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Anonymous user is not sign in&quot;</span><span class="p">:</span> <span class="s2">&quot;匿名用户未登录&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;No valid username found&quot;</span><span class="p">:</span> <span class="s2">&quot;未发现有效用户名&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The username or password parameter error&quot;</span><span class="p">:</span> <span class="s2">&quot;用户名或密码参数错误&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;No data&quot;</span><span class="p">:</span> <span class="s2">&quot;没有数据&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;No file or image format error&quot;</span><span class="p">:</span> <span class="s2">&quot;未获取到文件或不允许的图片格式&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;All backend storage services failed to save pictures&quot;</span><span class="p">:</span> <span class="s2">&quot;后端存储服务图片保存全部失败&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;No valid backend storage service&quot;</span><span class="p">:</span> <span class="s2">&quot;无有效后端存储服务&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;No valid backend hook&quot;</span><span class="p">:</span> <span class="s2">&quot;无有效后端钩子&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The third module not found&quot;</span><span class="p">:</span> <span class="s2">&quot;第三方模块未发现&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Password verification failed&quot;</span><span class="p">:</span> <span class="s2">&quot;密码验证失败&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Password must be at least 6 characters&quot;</span><span class="p">:</span> <span class="s2">&quot;密码最少6位&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Confirm passwords do not match&quot;</span><span class="p">:</span> <span class="s2">&quot;确认密码不匹配&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Existing token&quot;</span><span class="p">:</span> <span class="s2">&quot;已有token&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;No token yet&quot;</span><span class="p">:</span> <span class="s2">&quot;还未有token&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The username is invalid or registration is not allowed&quot;</span><span class="p">:</span> <span class="s2">&quot;用户名不合法或不允许注册&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The username already exists&quot;</span><span class="p">:</span> <span class="s2">&quot;用户名已存在&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Normal user login has been disabled&quot;</span><span class="p">:</span> <span class="s2">&quot;已禁止普通用户登录&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Illegal users are not allowed to modify&quot;</span><span class="p">:</span> <span class="s2">&quot;不合法的用户禁止修改&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The user setting must start with `ucfg_`&quot;</span><span class="p">:</span> <span class="s2">&quot;用户设置必须以`ucfg_`开头&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Invalid IP address&quot;</span><span class="p">:</span> <span class="s2">&quot;无效的IP地址&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Invalid url address&quot;</span><span class="p">:</span> <span class="s2">&quot;无效的url&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Not found the LinkId&quot;</span><span class="p">:</span> <span class="s2">&quot;没有此LinkId&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Not found the endpoint&quot;</span><span class="p">:</span> <span class="s2">&quot;无此endpoint路由端点&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Invalid HTTP method&quot;</span><span class="p">:</span> <span class="s2">&quot;无效http方法&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Invalid exterior_relation&quot;</span><span class="p">:</span> <span class="s2">&quot;无效的exterior_relation平行规则&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Invalid interior_relation&quot;</span><span class="p">:</span> <span class="s2">&quot;无效的interior_relation内联规则&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Wrong query range parameter&quot;</span><span class="p">:</span> <span class="s2">&quot;查询范围错误&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;accepted&quot;</span><span class="p">:</span> <span class="s2">&quot;已接受&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Pending review, cannot upload pictures&quot;</span><span class="p">:</span> <span class="s2">&quot;审核中，不能上传图片&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The user is disabled, no operation&quot;</span><span class="p">:</span> <span class="s2">&quot;用户被禁用，无权操作&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Email send failed&quot;</span><span class="p">:</span> <span class="s2">&quot;邮件发送失败&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;expired token&quot;</span><span class="p">:</span> <span class="s2">&quot;token过期&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;useless&quot;</span><span class="p">:</span> <span class="s2">&quot;无用token&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Current state prohibits use of this method&quot;</span><span class="p">:</span> <span class="s2">&quot;当前状态禁止使用此方法&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The user has no authenticated mailbox&quot;</span><span class="p">:</span> <span class="s2">&quot;用户没有验证过的邮箱&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Interceptor processing rejection, upload aborted&quot;</span><span class="p">:</span> <span class="s2">&quot;拦截器处理拒绝，上传中止&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Request fail&quot;</span><span class="p">:</span> <span class="s2">&quot;请求失败&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Invalid expire param&quot;</span><span class="p">:</span> <span class="s2">&quot;无效的expire参数&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Users also have pictures that cannot be deleted&quot;</span><span class="p">:</span> <span class="s2">&quot;用户还有图片，不能删除&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The upload hook does not exist or is disabled&quot;</span><span class="p">:</span> <span class="s2">&quot;上传钩子不存在或被禁用&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;User uploads are limited&quot;</span><span class="p">:</span> <span class="s2">&quot;用户上传数量限制&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;the uploaded file exceeds the limit&quot;</span><span class="p">:</span> <span class="s2">&quot;上传文件超出限制&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;en&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">language</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;msg&quot;</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s2">&quot;msg&quot;</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">new</span> <span class="o">=</span> <span class="n">trans</span><span class="p">[</span><span class="n">language</span><span class="p">][</span><span class="n">msg</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Miss translation: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">msg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="s2">&quot;msg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new</span>
+    <span class="k">return</span> <span class="n">res</span>
+
+
+<span class="k">def</span> <span class="nf">change_res_format</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;code&quot;</span> <span class="ow">in</span> <span class="n">res</span><span class="p">:</span>
+        <span class="n">sn</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status_name&quot;</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status_name&quot;</span><span class="p">))</span>
+            <span class="ow">or</span> <span class="s2">&quot;code&quot;</span>
+        <span class="p">)</span>
+        <span class="n">oc</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ok_code&quot;</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ok_code&quot;</span><span class="p">))</span>
+        <span class="n">mn</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;msg_name&quot;</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;msg_name&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">format_apires</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">sn</span><span class="p">,</span> <span class="n">oc</span><span class="p">,</span> <span class="n">mn</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">res</span>
+
+
+<span class="k">def</span> <span class="nf">change_userinfo</span><span class="p">(</span><span class="n">userinfo</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;解析用户信息userinfo部分字段数据&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">userinfo</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">userinfo</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">userinfo</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">parsed_ucfg_url_rule</span><span class="o">=</span><span class="n">parse_valid_colon</span><span class="p">(</span>
+                <span class="n">userinfo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ucfg_url_rule&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="ow">or</span> <span class="p">{},</span>
+            <span class="n">parsed_ucfg_url_rule_switch</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                <span class="n">loadmypic</span><span class="o">=</span><span class="n">is_true</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">userinfo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ucfg_urlrule_inloadmypic&quot;</span><span class="p">)),</span>
+                <span class="n">url</span><span class="o">=</span><span class="n">is_true</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">userinfo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ucfg_urlrule_incopyurl&quot;</span><span class="p">)),</span>
+                <span class="n">html</span><span class="o">=</span><span class="n">is_true</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">userinfo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ucfg_urlrule_incopyhtml&quot;</span><span class="p">)),</span>
+                <span class="n">rst</span><span class="o">=</span><span class="n">is_true</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">userinfo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ucfg_urlrule_incopyrst&quot;</span><span class="p">)),</span>
+                <span class="n">markdown</span><span class="o">=</span><span class="n">is_true</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">userinfo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ucfg_urlrule_incopymd&quot;</span><span class="p">)),</span>
+            <span class="p">),</span>
+            <span class="c1">#: ..versionadded:: 1.7.0</span>
+            <span class="c1">#: 用户状态默认是1启用，-2、-1待审核仅无法上传，0禁用无任何权限</span>
+            <span class="n">status</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">userinfo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+            <span class="c1">#: .. versionadded:: 1.12.0</span>
+            <span class="c1">#: 转换标签</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">parse_label</span><span class="p">(</span><span class="n">userinfo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;label&quot;</span><span class="p">)),</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">userinfo</span>
+
+
+<div class="viewcode-block" id="get_site_config">
+<a class="viewcode-back" href="../../module.html#utils.web.get_site_config">[文档]</a>
+<span class="k">def</span> <span class="nf">get_site_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;获取站点配置&quot;&quot;&quot;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">get_storage</span><span class="p">()</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;siteconfig&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="c1">#: Maybe to fix None</span>
+    <span class="k">if</span> <span class="s2">&quot;upload_includes&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
+        <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;upload_includes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">cfg</span></div>
+
+
+
+<div class="viewcode-block" id="set_site_config">
+<a class="viewcode-back" href="../../module.html#utils.web.set_site_config">[文档]</a>
+<span class="k">def</span> <span class="nf">set_site_config</span><span class="p">(</span><span class="n">mapping</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;设置站点信息&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">mapping</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">ALLOWED_TAGS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;abbr&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="s2">&quot;code&quot;</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="s2">&quot;br&quot;</span><span class="p">,</span> <span class="s2">&quot;center&quot;</span><span class="p">]</span>
+        <span class="n">ALLOWED_ATTRIBUTES</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;href&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;target&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;abbr&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;*&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;style&quot;</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="n">ALLOWED_STYLES</span> <span class="o">=</span> <span class="n">CSSSanitizer</span><span class="p">(</span>
+            <span class="n">allowed_css_properties</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">,</span> <span class="s2">&quot;font-weight&quot;</span><span class="p">,</span> <span class="s2">&quot;font-size&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">upload_beforehtml</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;upload_beforehtml&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">bulletin</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bulletin&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">about</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;about&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">upload_beforehtml</span><span class="p">:</span>
+            <span class="n">mapping</span><span class="p">[</span><span class="s2">&quot;upload_beforehtml&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bleach_html</span><span class="p">(</span>
+                <span class="n">upload_beforehtml</span><span class="p">,</span>
+                <span class="n">ALLOWED_TAGS</span><span class="p">,</span>
+                <span class="n">ALLOWED_ATTRIBUTES</span><span class="p">,</span>
+                <span class="n">ALLOWED_STYLES</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">bulletin</span><span class="p">:</span>
+            <span class="n">ALLOWED_TAGS</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;img&quot;</span><span class="p">)</span>
+            <span class="n">ALLOWED_ATTRIBUTES</span><span class="p">[</span><span class="s2">&quot;img&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s2">&quot;title&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;alt&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;src&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;width&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;height&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+            <span class="n">mapping</span><span class="p">[</span><span class="s2">&quot;bulletin&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bleach_html</span><span class="p">(</span>
+                <span class="n">bulletin</span><span class="p">,</span> <span class="n">ALLOWED_TAGS</span><span class="p">,</span> <span class="n">ALLOWED_ATTRIBUTES</span><span class="p">,</span> <span class="n">ALLOWED_STYLES</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">about</span><span class="p">:</span>
+            <span class="n">mapping</span><span class="p">[</span><span class="s2">&quot;about&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bleach_html</span><span class="p">(</span>
+                <span class="n">about</span><span class="p">,</span> <span class="n">ALLOWED_TAGS</span><span class="p">,</span> <span class="n">ALLOWED_ATTRIBUTES</span><span class="p">,</span> <span class="n">ALLOWED_STYLES</span>
+            <span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">get_storage</span><span class="p">()</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;siteconfig&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">cfg</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">mapping</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;siteconfig&quot;</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">check_username</span><span class="p">(</span><span class="n">usr</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;检测用户名是否合法、是否可以注册&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">usr</span> <span class="ow">and</span> <span class="n">username_pat</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">usr</span><span class="p">):</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="n">get_site_config</span><span class="p">()</span>
+        <span class="n">fus</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">parse_valid_comma</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;forbidden_username&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+        <span class="n">fus</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;anonymous&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">usr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fus</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="guess_filename_from_url">
+<a class="viewcode-back" href="../../module.html#utils.web.guess_filename_from_url">[文档]</a>
+<span class="k">def</span> <span class="nf">guess_filename_from_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">allowed_exts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;从url中猜测图片文件名，其后缀符合控制台设定或默认予以返回。</span>
+
+<span class="sd">    首先尝试从url path猜测，比如http://example.com/upload/abc.png，这合法。</span>
+
+<span class="sd">    如果猜测失败，则从url query查找filename查询参数。</span>
+
+<span class="sd">    :param str url: 图片地址</span>
+<span class="sd">    :param list allowed_exts: 允许的图片后缀，比如[&#39;png&#39;, &#39;jpg&#39;]，</span>
+<span class="sd">                              如未设置，则使用控制台设定或默认</span>
+<span class="sd">    :returns: 当图片合法时返回filename，否则None</span>
+
+<span class="sd">    .. versionadded:: 1.10.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_allowed_exts</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">get_allowed_suffix</span><span class="p">()]</span>
+
+    <span class="n">ufn</span> <span class="o">=</span> <span class="n">basename</span><span class="p">(</span><span class="n">urlsplit</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">splitext</span><span class="p">(</span><span class="n">ufn</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">_allowed_exts</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ufn</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fns</span> <span class="o">=</span> <span class="n">parse_qs</span><span class="p">(</span><span class="n">urlsplit</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;filename&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fns</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fns</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">fns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">splitext</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">_allowed_exts</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">filename</span></div>
+
+
+
+<span class="k">class</span> <span class="nc">JsonResponse</span><span class="p">(</span><span class="n">Response</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">force_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">rv</span><span class="p">,</span> <span class="n">environ</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rv</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">rv</span> <span class="o">=</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">rv</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">JsonResponse</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="n">force_type</span><span class="p">(</span><span class="n">rv</span><span class="p">,</span> <span class="n">environ</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="FormFileStorage">
+<a class="viewcode-back" href="../../module.html#utils.web.FormFileStorage">[文档]</a>
+<span class="k">class</span> <span class="nc">FormFileStorage</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;通过表单上传文件&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fp</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fp</span> <span class="o">=</span> <span class="n">fp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmppath</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__parse</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__parse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fp</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fp</span><span class="o">.</span><span class="n">filename</span>
+            <span class="k">with</span> <span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;sapic&quot;</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_tmppath</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">name</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fp</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">fp</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">=</span> <span class="n">getsize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tmppath</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tmppath</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">(</span><span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+            <span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tmppath</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mimetype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fp</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fp</span><span class="o">.</span><span class="n">mimetype</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">filename</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">stream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;return bytes&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span>
+
+    <span class="k">def</span> <span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&lt;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%r</span><span class="s2"> (</span><span class="si">%d</span><span class="s2">)&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_size</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Base64FileStorage">
+<a class="viewcode-back" href="../../module.html#utils.web.Base64FileStorage">[文档]</a>
+<span class="k">class</span> <span class="nc">Base64FileStorage</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;上传接口中接受base64编码的图片。</span>
+
+<span class="sd">    允许来自前端的Data URI形式:</span>
+<span class="sd">        https://developer.mozilla.org/docs/Web/HTTP/data_URIs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b64str</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="c1">#: data uri scheme</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_b64str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__set_data_uri</span><span class="p">(</span><span class="n">b64str</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parse</span> <span class="o">=</span> <span class="n">parse_data_uri</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_b64str</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_base64</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1">#: now data change to binary</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pic64decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">BaseDecodeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The attempt to decode the image failed&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Not found base64&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__set_data_uri</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b64str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b64str</span><span class="p">,</span> <span class="n">text_type</span><span class="p">):</span>
+            <span class="n">b64str</span> <span class="o">=</span> <span class="n">b64str</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">b64str</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;data:&quot;</span><span class="p">):</span>
+            <span class="n">b64str</span> <span class="o">=</span> <span class="s2">&quot;data:;base64,</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">b64str</span>
+        <span class="k">return</span> <span class="n">b64str</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mimetype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="o">.</span><span class="n">mimetype</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">filename</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">:</span>
+            <span class="n">ext</span> <span class="o">=</span> <span class="n">imghdr</span><span class="o">.</span><span class="n">what</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ext</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span><span class="p">:</span>
+                <span class="n">mType</span><span class="p">,</span> <span class="n">sType</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">mType</span> <span class="o">==</span> <span class="s2">&quot;image&quot;</span><span class="p">:</span>  <span class="c1"># without parse video</span>
+                    <span class="n">ext</span> <span class="o">=</span> <span class="n">sType</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">get_current_timestamp</span><span class="p">(),</span> <span class="n">ext</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_base64</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="o">.</span><span class="n">is_base64</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">stream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_base64</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">BytesIO</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;return bytes&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_base64</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">b64size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_b64str</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_base64</span></div>
+
+
+
+<div class="viewcode-block" id="ImgUrlFileStorage">
+<a class="viewcode-back" href="../../module.html#utils.web.ImgUrlFileStorage">[文档]</a>
+<span class="k">class</span> <span class="nc">ImgUrlFileStorage</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;上传接口中接受远程图片地址，会自动调用代理下载图片。&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">imgurl</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_imgurl</span> <span class="o">=</span> <span class="n">imgurl</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_exts</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">get_allowed_suffix</span><span class="p">()]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_imgobj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__download</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Headers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;User-Agent&quot;</span><span class="p">:</span> <span class="n">gen_ua</span><span class="p">()}</span>
+
+    <span class="k">def</span> <span class="nf">__download</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_imgurl</span> <span class="ow">and</span> <span class="n">url_pat</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_imgurl</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">resp</span> <span class="o">=</span> <span class="n">try_proxy_request</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_imgurl</span><span class="p">,</span>
+                    <span class="n">method</span><span class="o">=</span><span class="s2">&quot;get&quot;</span><span class="p">,</span>
+                    <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">Headers</span><span class="p">,</span>
+                    <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">resp</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">RequestException</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mime</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">mime</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="s2">&quot;video&quot;</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">resp</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">filename</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;定义url图片文件名：</span>
+<span class="sd">        如果给定文件名，则用，否则从url path猜测。</span>
+<span class="sd">        猜测失败，从url query查找filename参数。</span>
+<span class="sd">        未果，则读取图片二进制猜测格式。</span>
+<span class="sd">        未果，从返回标头Content-Type判断。</span>
+<span class="sd">        未果，文件名后缀可能是None，将不合要求。</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_imgobj</span><span class="p">:</span>
+            <span class="n">ufn</span> <span class="o">=</span> <span class="n">guess_filename_from_url</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_imgobj</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_exts</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ufn</span> <span class="ow">and</span> <span class="n">splitext</span><span class="p">(</span><span class="n">ufn</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_exts</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">ufn</span>
+                <span class="k">return</span> <span class="n">ufn</span>
+            <span class="n">ext</span> <span class="o">=</span> <span class="n">imghdr</span><span class="o">.</span><span class="n">what</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_imgobj</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ext</span><span class="p">:</span>
+                <span class="n">mType</span><span class="p">,</span> <span class="n">sType</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_imgobj</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">mType</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="s2">&quot;video&quot;</span><span class="p">):</span>
+                    <span class="n">ext</span> <span class="o">=</span> <span class="n">sType</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">get_current_timestamp</span><span class="p">(),</span> <span class="n">ext</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">stream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_imgobj</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">BytesIO</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_imgobj</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">getObj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span>
+        <span class="k">if</span> <span class="n">f</span> <span class="ow">and</span> <span class="n">splitext</span><span class="p">(</span><span class="n">f</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_exts</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_imgobj</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;return bytes&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_imgobj</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_imgobj</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Content-Length&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_imgobj</span> <span class="k">else</span> <span class="kc">False</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">get_upload_method</span><span class="p">(</span><span class="n">class_name</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">class_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;FileStorage&quot;</span><span class="p">,</span> <span class="s2">&quot;FormFileStorage&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;file&quot;</span>
+    <span class="k">elif</span> <span class="n">class_name</span> <span class="o">==</span> <span class="s2">&quot;ImgUrlFileStorage&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;url&quot;</span>
+    <span class="k">elif</span> <span class="n">class_name</span> <span class="o">==</span> <span class="s2">&quot;Base64FileStorage&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;base64&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;unknown&quot;</span>
+
+
+<span class="k">def</span> <span class="nf">_pip_install</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">upgrade</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;使用pip安装模块到指定目标或默认用户目录$HOME/.local&quot;&quot;&quot;</span>
+    <span class="n">tgt</span> <span class="o">=</span> <span class="n">GLOBAL</span><span class="p">[</span><span class="s2">&quot;HookPkgStorageDir&quot;</span><span class="p">]</span>
+    <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">executable</span><span class="p">,</span>
+        <span class="s2">&quot;-m&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;pip&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;install&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--progress-bar&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;off&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--timeout&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--retries&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--no-color&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--no-cache-dir&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--disable-pip-version-check&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--no-python-version-warning&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">tgt</span><span class="p">:</span>
+        <span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s2">&quot;-t&quot;</span><span class="p">,</span> <span class="n">tgt</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_venv</span><span class="p">():</span>
+        <span class="n">cmd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;--user&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">upgrade</span><span class="p">:</span>
+        <span class="n">cmd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-U&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">index</span><span class="p">:</span>
+        <span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="n">index</span><span class="p">])</span>
+    <span class="n">cmd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+    <span class="n">retcode</span> <span class="o">=</span> <span class="n">call</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">retcode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">set_page_msg</span><span class="p">(</span><span class="n">pkg</span> <span class="o">+</span> <span class="s2">&quot; 安装成功&quot;</span><span class="p">,</span> <span class="s2">&quot;success&quot;</span><span class="p">)</span>
+        <span class="n">_pip_list</span><span class="p">(</span><span class="n">no_fresh</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">set_page_msg</span><span class="p">(</span><span class="n">pkg</span> <span class="o">+</span> <span class="s2">&quot; 安装失败&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">, retcode: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cmd</span><span class="p">),</span> <span class="n">retcode</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_pip_list</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">no_fresh</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;获取pip list的JSON结果&quot;&quot;&quot;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">rsp</span><span class="p">(</span><span class="s2">&quot;cache&quot;</span><span class="p">,</span> <span class="s2">&quot;piplist&quot;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">is_true</span><span class="p">(</span><span class="n">no_fresh</span><span class="p">)</span> <span class="ow">and</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="n">executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;list&quot;</span><span class="p">,</span> <span class="s2">&quot;--format&quot;</span><span class="p">,</span> <span class="s2">&quot;json&quot;</span><span class="p">]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">check_output</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
+        <span class="n">tgt</span> <span class="o">=</span> <span class="n">GLOBAL</span><span class="p">[</span><span class="s2">&quot;HookPkgStorageDir&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">tgt</span> <span class="ow">and</span> <span class="n">isdir</span><span class="p">(</span><span class="n">tgt</span><span class="p">):</span>
+            <span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s2">&quot;--path&quot;</span><span class="p">,</span> <span class="n">tgt</span><span class="p">))</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">check_output</span><span class="p">(</span><span class="n">cmd</span><span class="p">)))</span>
+        <span class="n">pipe</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">pipeline</span><span class="p">()</span>
+        <span class="n">pipe</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+        <span class="n">pipe</span><span class="o">.</span><span class="n">expire</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">3600</span><span class="p">)</span>
+        <span class="n">pipe</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;dict&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">n</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]:</span> <span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">data</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="k">def</span> <span class="nf">generate_activate_token</span><span class="p">(</span><span class="n">dump_data</span><span class="p">,</span> <span class="n">max_age</span><span class="o">=</span><span class="mi">600</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">dump_data</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dump_data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;exp&quot;</span><span class="p">:</span> <span class="n">get_current_timestamp</span><span class="p">()</span> <span class="o">+</span> <span class="n">max_age</span><span class="p">}</span>
+        <span class="n">payload</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">dump_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Serializer</span><span class="p">(</span>
+            <span class="n">payload</span><span class="p">,</span>
+            <span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;SECRET_KEY&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">check_activate_token</span><span class="p">(</span><span class="n">token</span><span class="p">):</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">Deserializer</span><span class="p">(</span>
+                <span class="n">token</span><span class="p">,</span> <span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;SECRET_KEY&quot;</span><span class="p">],</span> <span class="s2">&quot;HS256&quot;</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">ExpiredSignatureError</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="mi">403</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s2">&quot;expired token&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">DecodeError</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s2">&quot;invalid token&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s2">&quot;Parameter error&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">res</span>
+
+
+<div class="viewcode-block" id="sendmail">
+<a class="viewcode-back" href="../../module.html#utils.web.sendmail">[文档]</a>
+<span class="k">def</span> <span class="nf">sendmail</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">to</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;调用钩子中发送邮件函数（任意钩子发送成功即停止），要求用于Web上下文环境</span>
+
+<span class="sd">    :param str subject: 主题</span>
+<span class="sd">    :param str message: 正文（支持HTML）</span>
+<span class="sd">    :param str to: 收件人，可用逗号添加多个</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">subject</span> <span class="ow">and</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">to</span> <span class="ow">and</span> <span class="n">check_to_addr</span><span class="p">(</span><span class="n">to</span><span class="p">):</span>
+        <span class="n">to</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parse_valid_comma</span><span class="p">(</span><span class="n">to</span><span class="p">))</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">current_app</span><span class="o">.</span><span class="n">extensions</span><span class="p">[</span><span class="s2">&quot;hookmanager&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">call</span><span class="p">(</span>
+            <span class="n">_funcname</span><span class="o">=</span><span class="s2">&quot;sendmail&quot;</span><span class="p">,</span>
+            <span class="n">_mode</span><span class="o">=</span><span class="s2">&quot;any_true&quot;</span><span class="p">,</span>
+            <span class="n">_args</span><span class="o">=</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">to</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_all_fail</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s2">&quot;Email send failed&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">res</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s2">&quot;Parameter error&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+
+<div class="viewcode-block" id="async_sendmail">
+<a class="viewcode-back" href="../../module.html#utils.web.async_sendmail">[文档]</a>
+<span class="k">def</span> <span class="nf">async_sendmail</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">to</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;异步邮件发送，可用于多线程及非Web上下文环境&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">send_async_email</span><span class="p">(</span><span class="n">app</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">app</span><span class="o">.</span><span class="n">test_request_context</span><span class="p">():</span>
+            <span class="n">app</span><span class="o">.</span><span class="n">preprocess_request</span><span class="p">()</span>
+            <span class="n">sendmail</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">to</span><span class="p">)</span>
+
+    <span class="n">app</span> <span class="o">=</span> <span class="n">current_app</span><span class="o">.</span><span class="n">_get_current_object</span><span class="p">()</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">send_async_email</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="n">app</span><span class="p">])</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="make_email_tpl">
+<a class="viewcode-back" href="../../module.html#utils.web.make_email_tpl">[文档]</a>
+<span class="k">def</span> <span class="nf">make_email_tpl</span><span class="p">(</span><span class="n">tpl</span><span class="p">,</span> <span class="o">**</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;制作邮件模板</span>
+
+<span class="sd">    :param tpl: 模板文件（位于templates/email/下）</span>
+<span class="sd">    :keyword data: 模板所用变量</span>
+<span class="sd">    :returns: jinja2渲染好的html内容</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">je</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+        <span class="n">loader</span><span class="o">=</span><span class="n">FileSystemLoader</span><span class="p">(</span>
+            <span class="n">pathjoin</span><span class="p">(</span>
+                <span class="n">current_app</span><span class="o">.</span><span class="n">root_path</span><span class="p">,</span> <span class="n">current_app</span><span class="o">.</span><span class="n">template_folder</span><span class="p">,</span> <span class="s2">&quot;email&quot;</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;site_name&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;site_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">site_name</span>
+    <span class="k">if</span> <span class="s2">&quot;url_root&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;url_root&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">url_root</span>
+    <span class="k">if</span> <span class="s2">&quot;username&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;username&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">userinfo</span><span class="o">.</span><span class="n">nickname</span> <span class="ow">or</span> <span class="n">g</span><span class="o">.</span><span class="n">userinfo</span><span class="o">.</span><span class="n">username</span>
+    <span class="k">return</span> <span class="n">je</span><span class="o">.</span><span class="n">get_template</span><span class="p">(</span><span class="n">tpl</span><span class="p">)</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="try_proxy_request">
+<a class="viewcode-back" href="../../module.html#utils.web.try_proxy_request">[文档]</a>
+<span class="k">def</span> <span class="nf">try_proxy_request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;自动调用代理服务的try_request</span>
+
+<span class="sd">    :param str url: 请求地址</span>
+<span class="sd">    :keyword kwars: :func:`utils.tool.try_request` 要求的其他参数</span>
+
+<span class="sd">    .. versionadded:: 1.9.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;proxy&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">dict</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">ps</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">ps</span> <span class="ow">in</span> <span class="n">comma_pat</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">proxies</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ps</span> <span class="ow">and</span> <span class="s2">&quot;=&quot;</span> <span class="ow">in</span> <span class="n">ps</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">proxies</span>
+        <span class="k">else</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">try_request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="set_page_msg">
+<a class="viewcode-back" href="../../module.html#utils.web.set_page_msg">[文档]</a>
+<span class="k">def</span> <span class="nf">set_page_msg</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;info&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;给管理员的控制台消息（任意环境均可）</span>
+
+<span class="sd">    :param str text: 消息内容</span>
+<span class="sd">    :param str level: 级别，info(默认)、success、error、warn</span>
+
+<span class="sd">    .. versionadded:: 1.9.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">levels</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">info</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">warn</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">success</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">text</span> <span class="ow">and</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">levels</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">rc</span><span class="o">.</span><span class="n">rpush</span><span class="p">(</span>
+            <span class="n">rsp</span><span class="p">(</span><span class="s2">&quot;msg&quot;</span><span class="p">,</span> <span class="s2">&quot;admin&quot;</span><span class="p">,</span> <span class="s2">&quot;control&quot;</span><span class="p">),</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="n">levels</span><span class="p">[</span><span class="n">level</span><span class="p">])),</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_page_msg">
+<a class="viewcode-back" href="../../module.html#utils.web.get_page_msg">[文档]</a>
+<span class="k">def</span> <span class="nf">get_page_msg</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;生成消息Js，仅在管理员控制台页面闪现消息（仅Web环境调用）&quot;&quot;&quot;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">rsp</span><span class="p">(</span><span class="s2">&quot;msg&quot;</span><span class="p">,</span> <span class="s2">&quot;admin&quot;</span><span class="p">,</span> <span class="s2">&quot;control&quot;</span><span class="p">)</span>
+    <span class="n">msgs</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">lrange</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">msgs</span><span class="p">:</span>
+
+        <span class="k">def</span> <span class="nf">tpl_plus</span><span class="p">(</span><span class="n">total</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">total</span> <span class="o">%</span> <span class="n">new</span>
+
+        <span class="k">def</span> <span class="nf">make_layer</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="s1">&#39;layer.alert(&quot;@1&quot;,{icon:@2,offset:&quot;rt&quot;,shade:0,&#39;</span>
+                    <span class="s1">&#39;title:false,btn:&quot;我知道了&quot;,btnAlign:&quot;c&quot;,closeBtn:0},&#39;</span>
+                    <span class="s2">&quot;function(index){layer.close(index);</span><span class="si">%s</span><span class="s2">});&quot;</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;@1&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">])</span>
+                <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;@2&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="s2">&quot;icon&quot;</span><span class="p">]))</span>
+            <span class="p">)</span>
+
+        <span class="n">html</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;&lt;script&gt;&quot;</span><span class="p">,</span>
+            <span class="n">reduce</span><span class="p">(</span><span class="n">tpl_plus</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">make_layer</span><span class="p">,</span> <span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">msgs</span><span class="p">]))</span>
+            <span class="o">%</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;&lt;/script&gt;&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">rc</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Markup</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">html</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="push_user_msg">
+<a class="viewcode-back" href="../../module.html#utils.web.push_user_msg">[文档]</a>
+<span class="k">def</span> <span class="nf">push_user_msg</span><span class="p">(</span><span class="n">to</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">align</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;给用户推送消息（任意环境均可）</span>
+
+<span class="sd">    :param str to: 用户名</span>
+<span class="sd">    :param str text: 消息内容</span>
+<span class="sd">    :param str level: 级别，info(默认)、success、error、warn</span>
+<span class="sd">    :param int time: 超时时间，单位秒</span>
+<span class="sd">    :param str align: 消息显示位置，right右上角、center顶部中间、left左上角</span>
+
+<span class="sd">    .. versionadded:: 1.10.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">to</span>
+        <span class="ow">and</span> <span class="n">text</span>
+        <span class="ow">and</span> <span class="n">level</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">align</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">rc</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">rsp</span><span class="p">(</span><span class="s2">&quot;account&quot;</span><span class="p">,</span> <span class="n">to</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">rc</span><span class="o">.</span><span class="n">rpush</span><span class="p">(</span>
+                <span class="n">rsp</span><span class="p">(</span><span class="s2">&quot;msg&quot;</span><span class="p">,</span> <span class="n">to</span><span class="p">),</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                    <span class="nb">dict</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="n">time</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">align</span><span class="o">=</span><span class="n">align</span><span class="p">)</span>
+                <span class="p">),</span>
+            <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_push_msg">
+<a class="viewcode-back" href="../../module.html#utils.web.get_push_msg">[文档]</a>
+<span class="k">def</span> <span class="nf">get_push_msg</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;生成消息Js，仅在个人中心页面闪现消息（仅Web环境调用）&quot;&quot;&quot;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">rsp</span><span class="p">(</span><span class="s2">&quot;msg&quot;</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">userinfo</span><span class="o">.</span><span class="n">username</span><span class="p">)</span>
+    <span class="n">msgs</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">lrange</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">msgs</span><span class="p">:</span>
+
+        <span class="k">def</span> <span class="nf">make_layer</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="s1">&#39;message.push(&quot;</span><span class="si">{text}</span><span class="s1">&quot;,&quot;</span><span class="si">{level}</span><span class="s1">&quot;,&quot;</span><span class="si">{align}</span><span class="s1">&quot;,</span><span class="si">{time}</span><span class="s1">);&#39;</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">text</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">],</span>
+                <span class="n">level</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;level&quot;</span><span class="p">],</span>
+                <span class="n">align</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;align&quot;</span><span class="p">],</span>
+                <span class="n">time</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]),</span>
+            <span class="p">)</span>
+
+        <span class="n">html</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;&lt;script&gt;&quot;</span>
+            <span class="s1">&#39;layui.use(&quot;message&quot;,function(){var message = layui.message;</span><span class="si">%s</span><span class="s1">});&#39;</span>
+            <span class="s2">&quot;&lt;/script&gt;&quot;</span>
+        <span class="p">)</span> <span class="o">%</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">make_layer</span><span class="p">,</span> <span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">msgs</span><span class="p">]))</span>
+        <span class="n">rc</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Markup</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="get_user_ip">
+<a class="viewcode-back" href="../../module.html#utils.web.get_user_ip">[文档]</a>
+<span class="k">def</span> <span class="nf">get_user_ip</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;首先从HTTP标头的X-Forwarded-For获取代理IP，其次获取X-Real-IP，最后是客户端IP&quot;&quot;&quot;</span>
+    <span class="n">ip</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;X-Forwarded-For&quot;</span><span class="p">):</span>
+        <span class="n">ip</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;X-Forwarded-For&quot;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;X-Real-IP&quot;</span><span class="p">):</span>
+        <span class="n">ip</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;X-Real-IP&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ip</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">remote_addr</span>
+    <span class="k">return</span> <span class="n">ip</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="has_image">
+<a class="viewcode-back" href="../../module.html#utils.web.has_image">[文档]</a>
+<span class="k">def</span> <span class="nf">has_image</span><span class="p">(</span><span class="n">sha</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;是否存在图片&quot;&quot;&quot;</span>
+    <span class="n">gk</span> <span class="o">=</span> <span class="n">rsp</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="s2">&quot;global&quot;</span><span class="p">)</span>
+    <span class="n">ik</span> <span class="o">=</span> <span class="n">rsp</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="n">sha</span><span class="p">)</span>
+    <span class="n">pipe</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">pipeline</span><span class="p">()</span>
+    <span class="n">pipe</span><span class="o">.</span><span class="n">sismember</span><span class="p">(</span><span class="n">gk</span><span class="p">,</span> <span class="n">sha</span><span class="p">)</span>
+    <span class="n">pipe</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ik</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">result</span> <span class="o">==</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="get_allowed_suffix">
+<a class="viewcode-back" href="../../module.html#utils.web.get_allowed_suffix">[文档]</a>
+<span class="k">def</span> <span class="nf">get_allowed_suffix</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;获取允许上传的后缀（允许视频，后缀无点）&quot;&quot;&quot;</span>
+    <span class="n">allowed</span> <span class="o">=</span> <span class="n">parse_valid_verticaline</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">upload_exts</span><span class="p">)</span> <span class="ow">or</span> <span class="n">ALLOWED_EXTS</span>
+    <span class="k">if</span> <span class="n">is_true</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">upload_video</span><span class="p">):</span>
+        <span class="n">allowed</span> <span class="o">+=</span> <span class="n">ALLOWED_VIDEO</span>
+    <span class="k">return</span> <span class="n">allowed</span></div>
+
+
+
+<div class="viewcode-block" id="allowed_suffix">
+<a class="viewcode-back" href="../../module.html#utils.web.allowed_suffix">[文档]</a>
+<span class="k">def</span> <span class="nf">allowed_suffix</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;判断filename是否匹配控制台配置的上传后缀（及默认）</span>
+
+<span class="sd">    :param str filename: 图片文件名</span>
+<span class="sd">    :rtype: boolean</span>
+
+<span class="sd">    .. versionadded:: 1.10.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">allowed_file</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="n">get_allowed_suffix</span><span class="p">())(</span><span class="n">filename</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">up_size_limit</span><span class="p">():</span>
+    <span class="n">limit</span> <span class="o">=</span> <span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;MAX_UPLOAD&quot;</span><span class="p">]</span>
+    <span class="n">up_size</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">upload_size</span>
+    <span class="k">if</span> <span class="n">up_size</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">up_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">up_size</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">limit</span> <span class="o">=</span> <span class="n">up_size</span>
+    <span class="k">return</span> <span class="n">limit</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span>
+</pre></div>
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2020, staugur.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.4.7 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a> 0.9.1.
+</div>
+            </div>
+          </div>
+      </page>
+    </div></div>
+    
+    
+  </body>
+</html>

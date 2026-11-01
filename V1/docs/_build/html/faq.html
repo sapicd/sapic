@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html  lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+      <title>FAQ</title>
+    
+          <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+          <link rel="stylesheet" href="_static/theme.css " type="text/css" />
+          <link rel="stylesheet" href="_static/sphinxcontrib-httpexample.css" type="text/css" />
+      
+      <!-- sphinx script_files -->
+        <script src="_static/documentation_options.js?v=c6c5d30b"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="_static/sphinxcontrib-httpexample.js?v=31a81d62"></script>
+        <script src="_static/translations.js?v=beaddf03"></script>
+
+      
+      <!-- bundled in js (rollup iife) -->
+      <!-- <script src="_static/theme-vendors.js"></script> -->
+      <script src="_static/theme.js" defer></script>
+    
+      <link rel="shortcut icon" href="_static/favicon.png"/>
+  <link rel="index" title="索引" href="genindex.html" />
+  <link rel="search" title="搜索" href="search.html" />
+  <link rel="next" title="更新日志" href="changelog.html" />
+  <link rel="prev" title="Modules API" href="module.html" /> 
+  </head>
+
+  <body>
+    <div id="app">
+    <div class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="index.html" class="home-link">
+    
+      <img class="logo" src="_static/logo.png" alt="logo"/>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+
+
+  
+    <div class="nav-item">
+      <a href="https://sapicd.com"
+        class="nav-link external">
+          Demo <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://github.com/sapicd/sapic"
+        class="nav-link external">
+          GitHub <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://gitee.com/staugur/picbed"
+        class="nav-link external">
+          Gitee <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+
+
+  
+    <div class="nav-item">
+      <a href="https://sapicd.com"
+        class="nav-link external">
+          Demo <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://github.com/sapicd/sapic"
+        class="nav-link external">
+          GitHub <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://gitee.com/staugur/picbed"
+        class="nav-link external">
+          Gitee <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">快速搜索</span>
+    <div class="searchformwrapper">
+      <form class="search" action="search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="搜索" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="index.html#sapic">sapic - 简约不小气的自建图床程序</a></span>
+      </p>
+      <ul class="current">
+        
+          <li class="toctree-l1 ">
+            
+              <a href="install.html" class="reference internal ">部署安装</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="docker.html" class="reference internal ">使用Docker部署</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="usage.html" class="reference internal ">使用说明 - 概述</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="linktoken.html" class="reference internal ">使用说明 - LinkToken及应用</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="cli.html" class="reference internal ">使用说明 - sapicli</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="admin.html" class="reference internal ">使用说明 - 站点管理</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="hook.html" class="reference internal ">钩子</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="api.html" class="reference internal ">RESTful API</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="module.html" class="reference internal ">Modules API</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 current">
+            
+              <a href="#" class="reference internal current">FAQ</a>
+            
+
+            
+              <ul>
+                
+                  <li class="toctree-l2"><a href="#redis" class="reference internal">1. 未配置redis</a></li>
+                
+                  <li class="toctree-l2"><a href="#redisredis" class="reference internal">2. 配置了redis但未启动redis服务</a></li>
+                
+                  <li class="toctree-l2"><a href="#id1" class="reference internal">3. redis服务有密码，但配置中没有</a></li>
+                
+                  <li class="toctree-l2"><a href="#id2" class="reference internal">4. redis服务没有密码，但配置中有</a></li>
+                
+                  <li class="toctree-l2"><a href="#worker" class="reference internal">5. 正式环境多worker下登录状态紊乱</a></li>
+                
+                  <li class="toctree-l2"><a href="#id3" class="reference internal">6. 能上传视频吗</a></li>
+                
+                  <li class="toctree-l2"><a href="#nginxdockersapic-httpshttp" class="reference internal">7. Nginx反向代理Docker中的sapic时，https显示异常变成http</a></li>
+                
+                  <li class="toctree-l2"><a href="#id4" class="reference internal">8. 如何备份数据</a></li>
+                
+                  <li class="toctree-l2"><a href="#id5" class="reference internal">9. 添加第三方钩子时提示模块未发现</a></li>
+                
+              </ul>
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="changelog.html" class="reference internal ">更新日志</a>
+            
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+    
+    <li>FAQ</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+  <li class="prev">
+    <a href="module.html"
+       title="上一章">← Modules API</a>
+  </li>
+  <li class="next">
+    <a href="changelog.html"
+       title="下一章">更新日志 →</a>
+  </li>
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main" v-pre>
+            
+  <section id="faq">
+<span id="picbed-faq"></span><h1>FAQ<a class="headerlink" href="#faq" title="Link to this heading">¶</a></h1>
+<section id="redis">
+<h2>1. 未配置redis<a class="headerlink" href="#redis" title="Link to this heading">¶</a></h2>
+<p>状况：</p>
+<p>开发方式启动没异常，或者出现 <code class="docutils literal notranslate"><span class="pre">ValueError:</span> <span class="pre">Invalid</span> <span class="pre">redis</span> <span class="pre">url</span></code></p>
+<p>访问页面时出现（正式环境启动时会出现此错误）：</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">AttributeError:</span> <span class="pre">'NoneType'</span> <span class="pre">object</span> <span class="pre">has</span> <span class="pre">no</span> <span class="pre">attribute</span> <span class="pre">'hget'</span></code></p>
+</div></blockquote>
+<p>解决：配置redis即可，设置环境变量sapic_redis_url或写入.cfg配置文件</p>
+</section>
+<section id="redisredis">
+<h2>2. 配置了redis但未启动redis服务<a class="headerlink" href="#redisredis" title="Link to this heading">¶</a></h2>
+<p>状况： <code class="docutils literal notranslate"><span class="pre">ConnectionError:</span> <span class="pre">Error</span> <span class="pre">111</span> <span class="pre">connecting</span> <span class="pre">to</span> <span class="pre">localhost:6379.</span> <span class="pre">Connection</span> <span class="pre">refused.</span></code></p>
+<p>解决：启动即可</p>
+</section>
+<section id="id1">
+<h2>3. redis服务有密码，但配置中没有<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
+<p>状况： <code class="docutils literal notranslate"><span class="pre">AuthenticationError:</span> <span class="pre">Authentication</span> <span class="pre">required.</span></code></p>
+<p>解决：</p>
+<p>redis配置格式是 <code class="docutils literal notranslate"><span class="pre">redis://[:password]&#64;host:port/db</span></code></p>
+<p>如果没有密码，去掉 <code class="docutils literal notranslate"><span class="pre">[:password]</span></code> ，有密码就需要加上，注意：有冒号，没有中括号。</p>
+</section>
+<section id="id2">
+<h2>4. redis服务没有密码，但配置中有<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<p>状况： <code class="docutils literal notranslate"><span class="pre">AuthenticationError:</span> <span class="pre">Client</span> <span class="pre">sent</span> <span class="pre">AUTH,</span> <span class="pre">but</span> <span class="pre">no</span> <span class="pre">password</span> <span class="pre">is</span> <span class="pre">set</span></code></p>
+<p>解决：去掉配置中密码部分，或者redis加上密码重启redis服务</p>
+</section>
+<section id="worker">
+<h2>5. 正式环境多worker下登录状态紊乱<a class="headerlink" href="#worker" title="Link to this heading">¶</a></h2>
+<p>状况：在正式环境启动了多个工作进程（gunicorn workers），由于web应用的密钥
+随机生成的原因，多进程之间没有共享，所以会出现登录后，刷新页面又不是登录
+状态了。</p>
+<p>解决：v1.8修复此问题，固定了密钥，之前的版本可以在环境变量或配置文件.cfg中
+设置 <code class="docutils literal notranslate"><span class="pre">picbed_secretkey</span></code> 为一个固定复杂的值。</p>
+<p>ps：docker-compose用户可以在docker-compose.yml中添加以下变量再构建启动（大概是第10行sapic_redis_url下面）：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span> <span class="n">picbed_secretkey</span> <span class="o">=</span> <span class="n">abcdefg</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h2>6. 能上传视频吗<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h2>
+<p>v1.13.0支持，进入beta，可由后台开启。</p>
+</section>
+<section id="nginxdockersapic-httpshttp">
+<h2>7. Nginx反向代理Docker中的sapic时，https显示异常变成http<a class="headerlink" href="#nginxdockersapic-httpshttp" title="Link to this heading">¶</a></h2>
+<p>我记得之前有人邮件我这个问题，up2local遇到的，应该是v1.13.0试了个方法，不过后来我在k8s中
+发现同样问题，所以使用了flask官方方案。</p>
+<p>启动前先配置ProxyFix，请看安装篇，可以设置环境变量 <cite>sapic_proxyfix=true</cite> 开启信任代理标头。</p>
+<div class="versionadded">
+<p><span class="versionmodified added">Added in version 1.13.2.</span></p>
+</div>
+</section>
+<section id="id4">
+<h2>8. 如何备份数据<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h2>
+<p>请注意，除图片或视频源文件外的其他持久化数据均存储在 <strong>redis</strong> 中，然而它并不是传统的关系型
+数据库，而是内存型，所以是有风险的，一定要开启AOF。</p>
+<p>所以备份数据就是备份redis的库，请使用redis相关工具定时导出库中数据即可备份。</p>
+</section>
+<section id="id5">
+<h2>9. 添加第三方钩子时提示模块未发现<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h2>
+<p>管理员后台安装第三方包后，需要添加第三方钩子方能加载，但发现提交时提示未发现模块。</p>
+<p>请确保钩子的导入名称正确，且包已安装成功。</p>
+</section>
+</section>
+
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+  <li class="prev">
+    <a href="module.html"
+       title="上一章">← Modules API</a>
+  </li>
+  <li class="next">
+    <a href="changelog.html"
+       title="下一章">更新日志 →</a>
+  </li>
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2020, staugur.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.4.7 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a> 0.9.1.
+</div>
+            </div>
+          </div>
+      </page>
+    </div></div>
+    
+    
+  </body>
+</html>

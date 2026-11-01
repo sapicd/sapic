@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html  lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+      <title>部署安装</title>
+    
+          <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+          <link rel="stylesheet" href="_static/theme.css " type="text/css" />
+          <link rel="stylesheet" href="_static/sphinxcontrib-httpexample.css" type="text/css" />
+      
+      <!-- sphinx script_files -->
+        <script src="_static/documentation_options.js?v=c6c5d30b"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="_static/sphinxcontrib-httpexample.js?v=31a81d62"></script>
+        <script src="_static/translations.js?v=beaddf03"></script>
+
+      
+      <!-- bundled in js (rollup iife) -->
+      <!-- <script src="_static/theme-vendors.js"></script> -->
+      <script src="_static/theme.js" defer></script>
+    
+      <link rel="shortcut icon" href="_static/favicon.png"/>
+  <link rel="index" title="索引" href="genindex.html" />
+  <link rel="search" title="搜索" href="search.html" />
+  <link rel="next" title="使用Docker部署" href="docker.html" />
+  <link rel="prev" title="sapic - 简约不小气的自建图床程序" href="index.html" /> 
+  </head>
+
+  <body>
+    <div id="app">
+    <div class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="index.html" class="home-link">
+    
+      <img class="logo" src="_static/logo.png" alt="logo"/>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+
+
+  
+    <div class="nav-item">
+      <a href="https://sapicd.com"
+        class="nav-link external">
+          Demo <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://github.com/sapicd/sapic"
+        class="nav-link external">
+          GitHub <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://gitee.com/staugur/picbed"
+        class="nav-link external">
+          Gitee <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+
+
+  
+    <div class="nav-item">
+      <a href="https://sapicd.com"
+        class="nav-link external">
+          Demo <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://github.com/sapicd/sapic"
+        class="nav-link external">
+          GitHub <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://gitee.com/staugur/picbed"
+        class="nav-link external">
+          Gitee <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">快速搜索</span>
+    <div class="searchformwrapper">
+      <form class="search" action="search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="搜索" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="index.html#sapic">sapic - 简约不小气的自建图床程序</a></span>
+      </p>
+      <ul class="current">
+        
+          <li class="toctree-l1 current">
+            
+              <a href="#" class="reference internal current">部署安装</a>
+            
+
+            
+              <ul>
+                
+                  <li class="toctree-l2"><a href="#no-1-redis" class="reference internal">NO.1 启动Redis</a></li>
+                
+                  <li class="toctree-l2"><a href="#no-2" class="reference internal">NO.2 部署程序</a></li>
+                
+                  <li class="toctree-l2"><a href="#no-3-nginx" class="reference internal">NO.3 Nginx配置</a></li>
+                
+                  <li class="toctree-l2"><a href="#no-4" class="reference internal">NO.4 演示站</a></li>
+                
+                  <li class="toctree-l2"><a href="#no-5" class="reference internal">NO.5 程序升级</a></li>
+                
+              </ul>
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="docker.html" class="reference internal ">使用Docker部署</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="usage.html" class="reference internal ">使用说明 - 概述</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="linktoken.html" class="reference internal ">使用说明 - LinkToken及应用</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="cli.html" class="reference internal ">使用说明 - sapicli</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="admin.html" class="reference internal ">使用说明 - 站点管理</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="hook.html" class="reference internal ">钩子</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="api.html" class="reference internal ">RESTful API</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="module.html" class="reference internal ">Modules API</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="faq.html" class="reference internal ">FAQ</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="changelog.html" class="reference internal ">更新日志</a>
+            
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+    
+    <li>部署安装</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+  <li class="prev">
+    <a href="index.html"
+       title="上一章">← sapic - 简约不小气的自建图床程序</a>
+  </li>
+  <li class="next">
+    <a href="docker.html"
+       title="下一章">使用Docker部署 →</a>
+  </li>
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main" v-pre>
+            
+  <section id="picbed-install">
+<span id="id1"></span><h1>部署安装<a class="headerlink" href="#picbed-install" title="Link to this heading">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>部署就是三步走，一步准备工作，一步安装依赖，一步配置运行。
+以下文档基于Linux的CentOS7，Ubuntu18</p>
+</div>
+<hr class="docutils" />
+<p>源码地址： <a class="reference external" href="https://github.com/sapicd/sapic">https://github.com/sapicd/sapic</a></p>
+<p>正式版本： <a class="reference external" href="https://github.com/sapicd/sapic/releases">https://github.com/sapicd/sapic/releases</a></p>
+<p>内容说明： 以下部署文档适用于有一点linux基础的同学，大概涉及到yum、git、docker等命令，以及redis、nginx等服务。</p>
+<section id="no-1-redis">
+<span id="picbed-install-no1"></span><h2>NO.1 启动Redis<a class="headerlink" href="#no-1-redis" title="Link to this heading">¶</a></h2>
+<p>部署redis很简单，理论版本要求5.x+(~7.x)。</p>
+<ul>
+<li><p>CentOS/RHEL</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>sudo<span class="w"> </span>yum<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>epel-release
+$<span class="w"> </span>sudo<span class="w"> </span>yum<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>redis
+</pre></div>
+</div>
+</li>
+<li><p>Ubuntu</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>sudo<span class="w"> </span>apt<span class="w"> </span>update
+$<span class="w"> </span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>redis-server
+</pre></div>
+</div>
+</li>
+<li><p>编译安装</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>//<span class="w"> </span>version可替换为其他版本
+$<span class="w"> </span><span class="nv">version</span><span class="o">=</span><span class="s2">&quot;5.0.14&quot;</span>
+$<span class="w"> </span>wget<span class="w"> </span>http://download.redis.io/releases/redis-<span class="si">${</span><span class="nv">version</span><span class="si">}</span>.tar.gz
+$<span class="w"> </span>tar<span class="w"> </span>xzf<span class="w"> </span>redis-<span class="si">${</span><span class="nv">version</span><span class="si">}</span>.tar.gz
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>redis-<span class="si">${</span><span class="nv">version</span><span class="si">}</span>
+$<span class="w"> </span>make
+$<span class="w"> </span>./src/redis-server<span class="w"> </span>./redis.conf<span class="w"> </span><span class="c1"># 编译成功的话此处正常启动服务了</span>
+</pre></div>
+</div>
+</li>
+<li><p>或者可以docker启动，用官方镜像启动一个docker redis，地址：<a class="reference external" href="https://hub.docker.com/_/redis">https://hub.docker.com/_/redis</a>。</p></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">警告</p>
+<p>一定记得修改redis配置文件，开启AOF持久化，建议设置密码、只绑定本机，
+否则有被入侵和数据丢失风险。</p>
+<p>ps：上述内容供参考，若启动失败，请参考官方或其他文档。</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">小技巧</p>
+<p>v1.6.0及之后版本兼容了redis cluster集群模式，可以将数据存到集群中，
+具体参考配置。</p>
+<p>使用redis集群，需要安装redis-py-cluster模块，它写在了可选模块文件：requirements/optional.txt</p>
+<p>查看我录制的安装redis的gif图: <a class="reference external" href="/_static/images/redis-install.gif">redis-install.gif</a></p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">在 1.15.0 版本发生变更: </span>已经移除 redis cluster 集群支持！</p>
+</div>
+</div>
+</section>
+<section id="no-2">
+<span id="picbed-install-no2"></span><h2>NO.2 部署程序<a class="headerlink" href="#no-2" title="Link to this heading">¶</a></h2>
+<p>这是一个基于Python Flask框架写的web应用，依赖redis（建议4.0+），部署要求python3.9+</p>
+<section id="id2">
+<h3>2.1. 下载源码<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<p>目前GitHub上保持两个分支：dev、master</p>
+<p>dev是开发分支，不建议非开发人员使用；
+dev分支的功能完成后会合并到master分支；
+一阶段功能完成会从master分支发版。</p>
+<ul>
+<li><dl>
+<dt>开发版（dev）</dt><dd><p>! 建议，如果你有git，可以：<code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">-b</span> <span class="pre">dev</span> <span class="pre">https://github.com/sapicd/sapic</span> <span class="pre">sapic</span></code></p>
+<p>! 也可以下载压缩包：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>wget<span class="w"> </span>-O<span class="w"> </span>sapic.zip<span class="w"> </span>https://codeload.github.com/sapicd/sapic/zip/dev
+$<span class="w"> </span>unzip<span class="w"> </span>sapic.zip
+$<span class="w"> </span>mv<span class="w"> </span>sapic-dev<span class="w"> </span>sapic
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>尝鲜版（master）</dt><dd><p><code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/sapicd/sapic</span> <span class="pre">sapic</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>正式版（release）</dt><dd><p>! 到 <a class="reference external" href="https://github.com/sapicd/sapic/releases">release</a> 页面下载正式版本的包。</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="id3">
+<h3>2.2 安装依赖<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<p>目前从最小化安装的CentOS7.8系统中整体部署了下，没有特殊的系统层面的依赖软件。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>sapic
+$<span class="w"> </span><span class="o">[</span>建议<span class="o">]</span>激活virtualenv、venv，当然也可以直接在全局模式下安装
+$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements/all.txt<span class="w"> </span><span class="c1"># all可以换成具体env</span>
+</pre></div>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">在 1.1.0 版本发生变更: </span>requirements目录是依赖包文件所在，env是环境，比如开发环境是dev，正式环境是prod。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements/dev.txt
+</pre></div>
+</div>
+<p>在v1.1.0+版本内置了几个对象存储钩子（上传），需要安装的模块在此目录下
+以 <em>up2xxx.txt</em> 命名，你想使用某个钩子就需要安装对应模块，
+比如开启又拍云上传，请先安装：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements/up2upyun.txt
+</pre></div>
+</div>
+<p>当然，也可以直接全部安装：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements/all.txt
+</pre></div>
+</div>
+</div>
+<p>requirements目录几个txt文件，up2xxx都是独立的，dev/prod依赖基础的base.txt，
+procname.txt是设置进程名的模块（非必需），docs.txt是构建文档的模块（py3+），
+optional.txt是系统可选功能依赖的模块（可选）。</p>
+<p>而终极大法就是all.txt，直接安装了prod.txt和up2xxx.txt。</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">在 1.8.0 版本发生变更: </span>all.txt移除了procname.txt，这个是setproctitle模块，优雅地设置进程名，但是
+它所依赖gcc和python-dev包，太”重”了，所以不放到all里面了，有需要可以自己
+单独安装。</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>CentOS/RHEL</dt><dd><p>$ sudo yum install -y gcc python-devel # python3-devel</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Ubuntu</dt><dd><p>$ sudo apt install build-essential python-dev # python3-dev</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">小技巧</p>
+<p>如果pip install时提示命令不存在，那么可以这么安装pip：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>curl<span class="w"> </span>https://bootstrap.pypa.io/get-pip.py<span class="w"> </span><span class="p">|</span><span class="w"> </span>python
+</pre></div>
+</div>
+<p>当然，也可以使用操作系统的包管理工具，如yum、apt-get安装。</p>
+<p>在国内，pip可以使用清华源：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-i<span class="w"> </span>https://pypi.tuna.tsinghua.edu.cn/simple<span class="w"> </span>pip<span class="w"> </span>-U
+$<span class="w"> </span>pip<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>global.index-url<span class="w"> </span>https://pypi.tuna.tsinghua.edu.cn/simple
+</pre></div>
+</div>
+</div>
+</section>
+<section id="picbed-config">
+<span id="id4"></span><h3>2.3 修改配置<a class="headerlink" href="#picbed-config" title="Link to this heading">¶</a></h3>
+<p>配置文件是源码src目录下的config.py，它会加载同级目录 <strong>.cfg</strong> 文件读取配置信息，
+无法找到时再加载环境变量，最后使用默认值，必需的配置项是sapic_redis_url。</p>
+<p>所以可以把配置项写到 <cite>.bash_profile</cite> 或 <cite>.bashrc</cite> 此类文件中在登录时作为环境变量加载，
+也可以写入到 <cite>.cfg</cite> 文件里（源码 src 目录下），这是推荐的方式，
+它不会被提交到仓库，格式是k=v，每行一条，注意：
+v是所见即所得（不要有多余的引号等，除非真的需要）！</p>
+<p>比如: <cite>sapic_redis_url=redis://&#64;localhost</cite></p>
+<p>可设置列表如下：</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>配置</p></th>
+<th class="head"><p>[环境]变量名</p></th>
+<th class="head"><p>默认值</p></th>
+<th class="head"><p>说明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>HOST</p></td>
+<td><p>sapic_host</p></td>
+<td><p>0.0.0.0</p></td>
+<td><p>监听地址</p></td>
+</tr>
+<tr class="row-odd"><td><p>PORT</p></td>
+<td><p>sapic_port</p></td>
+<td><p>9514</p></td>
+<td><p>监听端口</p></td>
+</tr>
+<tr class="row-even"><td><p>LOGLEVEL</p></td>
+<td><p>sapic_loglevel</p></td>
+<td><p>DEBUG</p></td>
+<td><p>日志级别，可选DEBUG, INFO, WARNING, ERROR, CRITICAL</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>REDIS</strong></p></td>
+<td><p>sapic_redis_url</p></td>
+<td><p>无</p></td>
+<td><p>核心数据存储（redis连接串，格式是：redis://[:password]&#64;host:port/db）</p></td>
+</tr>
+<tr class="row-even"><td><p>SecretKey</p></td>
+<td><p>sapic_secretkey</p></td>
+<td><p>(大长串)</p></td>
+<td><p>App应用秘钥(默认有固定值)</p></td>
+</tr>
+<tr class="row-odd"><td><p>MaxUpload</p></td>
+<td><p>sapic_maxupload</p></td>
+<td><p>20</p></td>
+<td><p>设定程序最大上传容量，单位MB</p></td>
+</tr>
+<tr class="row-even"><td><p>ProxyFix</p></td>
+<td><p>sapic_proxyfix</p></td>
+<td><p>无</p></td>
+<td><p>信任代理标头</p></td>
+</tr>
+</tbody>
+</table>
+<p>更多参数请参考 config.py 配置文件中的注释。</p>
+<p>!!!以上参数 <strong>REDIS</strong> 无默认值，必须根据实际情况手动设置，
+示例如下（可以写入.bash_profile中）：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">sapic_redis_url</span><span class="o">=</span><span class="s2">&quot;redis://:password@127.0.0.1:6379/1&quot;</span>
+或者写入文件
+$<span class="w"> </span>cat<span class="w"> </span>.cfg
+<span class="nv">sapic_redis_url</span><span class="o">=</span>redis://:password@127.0.0.1:6379/1
+</pre></div>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">在 1.6.0 版本发生变更: </span>v1.6.0支持redis cluster集群连接，格式：<code class="docutils literal notranslate"><span class="pre">rediscluster://host:port,host:port...</span></code>
+其他地方无需修改，暂不支持密码</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">在 1.13.0 版本发生变更: </span>配置读取环境变量时支持sapic前缀，比如picbed_host，优先读取sapic_host</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">在 1.15.0 版本发生变更: </span>配置读取环境变量时已移除支持picbed前缀的兼容性处理和redis集群支持。</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">小技巧</p>
+<p>SecretKey之前是随机生成，在1.8.0设置为固定默认值，建议设置其他复杂的值！</p>
+</div>
+</section>
+<section id="id5">
+<h3>2.4 启动程序<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<p>开发环境</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>sapic/src
+$<span class="w"> </span>make<span class="w"> </span>dev
+</pre></div>
+</div>
+<p>正式环境:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cd sapic/src
+$ sh online_gunicorn.sh start  #可以用run参数前台启动，status查看状态，stop停止，restart重启，reload重载
+
+或者使用make start等同于上述命令，其他诸如: make stop, make restart, makre load, make status
+</pre></div>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">小技巧</p>
+<ul class="simple">
+<li><p>部署程序可以使用Docker，源码中已经写好了Dockerfile，您可以藉此构建或者
+使用构建好的 <a class="reference external" href="https://hub.docker.com/r/staugur/sapic">sapic &#64; docker hub</a> ，
+详情请看 <a class="reference internal" href="docker.html#picbed-docker-deploy"><span class="std std-ref">使用Docker部署</span></a></p></li>
+<li><p>刚启动的 sapic 是没有默认管理员用户的，需要使用命令行手动创建，
+参考 <a class="reference internal" href="usage.html#picbed-usgae"><span class="std std-ref">使用说明 - 概述</span></a></p></li>
+<li><p>查看我录制的手动部署的gif图: <a class="reference external" href="/_static/images/picbed-install.gif">picbed-install.gif</a></p></li>
+</ul>
+</div>
+</section>
+</section>
+<section id="no-3-nginx">
+<span id="picbed-nginx"></span><h2>NO.3 Nginx配置<a class="headerlink" href="#no-3-nginx" title="Link to this heading">¶</a></h2>
+<p>Nginx配置示例如下，您也可以配置使其支持HTTPS:</p>
+<div class="highlight-nginx notranslate"><div class="highlight"><pre><span></span><span class="k">server</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">80</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">server_name</span><span class="w"> </span><span class="s">域名</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">charset</span><span class="w"> </span><span class="s">utf-8</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">#防止在IE9、Chrome和Safari中的MIME类型混淆攻击</span>
+<span class="w">    </span><span class="kn">add_header</span><span class="w"> </span><span class="s">X-Content-Type-Options</span><span class="w"> </span><span class="s">nosniff</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">#上传大小限制（单位，实际程序上限默认是20M，可以手动设定上限，此处同步限制）</span>
+<span class="w">    </span><span class="kn">client_max_body_size</span><span class="w"> </span><span class="s">20M</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">#可以设置不允许搜索引擎抓取信息</span>
+<span class="w">    </span><span class="c1">#处理静态资源，root路径根据实际情况修改</span>
+<span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="p">~</span><span class="w"> </span><span class="sr">^\/static\/.*$</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kn">root</span><span class="w"> </span><span class="s">/path/to/&lt;程序目录&gt;/src/</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">#9514是默认端口，根据实际情况修改</span>
+<span class="w">        </span><span class="kn">proxy_pass</span><span class="w"> </span><span class="s">http://127.0.0.1:9514</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Host</span><span class="w"> </span><span class="nv">$host</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Real-IP</span><span class="w"> </span><span class="nv">$remote_addr</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Forwarded-Proto</span><span class="w"> </span><span class="nv">$scheme</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Forwarded-For</span><span class="w"> </span><span class="nv">$proxy_add_x_forwarded_for</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>程序部署好+Nginx配置完成，启动后，这个域名就能对外服务了（温馨提示：您可以使用HTTPS提供服务，并且也建议用HTTPS），即可进入下一篇查看如何注册、使用。</p>
+<p>此处也录制了安装配置nginx的gif图: <a class="reference external" href="/_static/images/picbed-nginx.gif">picbed-nginx.gif</a></p>
+</section>
+<section id="no-4">
+<h2>NO.4 演示站<a class="headerlink" href="#no-4" title="Link to this heading">¶</a></h2>
+<p>目前在国内部署了一个演示站（自用），服务地址是：</p>
+<blockquote>
+<div><p><a class="reference external" href="https://sapicd.com">https://sapicd.com</a></p>
+<p>测试账号及密码：demo 123456</p>
+</div></blockquote>
+<p>可以注册测试，也可以使用上述测试账号，请不要修改其密码。</p>
+</section>
+<section id="no-5">
+<span id="picbed-upgrade"></span><h2>NO.5 程序升级<a class="headerlink" href="#no-5" title="Link to this heading">¶</a></h2>
+<p>目前git下载可以使用git pull拉取最新代码，重载或重启主程序(make reload/restart)即完成升级。</p>
+<div class="admonition tip">
+<p class="admonition-title">小技巧</p>
+<p>reload/restart在大部分情况下都可以重载代码和配置(从.cfg读取)，但是如果
+需要从环境变量重新读取配置，那么只能用restart。</p>
+</div>
+<p>下面提到的版本在升级时需要注意，未提及的直接更新代码和程序即可。</p>
+<p>从旧版本跨多个版本更新，在拉取最新代码后，参考下面升级到对应版本的注意事项，
+如果使用upgrade命令行，注意不要跨版本（当然其参数固定，也无法跨多个）。</p>
+<ul>
+<li><dl class="simple">
+<dt>v1.2.0</dt><dd><p>增加了依赖，需要安装requests模块（pip install requests），
+已写到requirements/base.txt</p>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>v1.6.0</dt><dd><ol class="arabic simple">
+<li><p>兼容了redis cluster集群模式，如果使用此存储，需要安装redis-py-cluster模块</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>redis-py-cluster&gt;1.0.0
+</pre></div>
+</div>
+<p>此依赖已写到requirements/optional.txt文件中</p>
+<ol class="arabic simple">
+<li><p>LinkToken统计功能设计更改</p></li>
+</ol>
+<p>旧版本调用统计写入到redis的 <cite>picbed:report:linktokens</cite> 中，此版本改为
+<cite>picbed:report:linktokens:{username}</cite></p>
+<p>如果需要旧数据，可以将旧版key改名，加上 <cite>:{your username}</cite></p>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>v1.7.0</dt><dd><p>值得一提的是，这个版本命令行增加了upgrade子命令，用来在版本更新时迁移数据、字段等。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>picbed/src
+$<span class="w"> </span>flask<span class="w"> </span>sa<span class="w"> </span>upgrade<span class="w"> </span>-h
+Usage:<span class="w"> </span>flask<span class="w"> </span>sa<span class="w"> </span>upgrade<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="m">1</span>.6-1.7<span class="o">]</span>
+
+版本升级助手
+
+Options:
+<span class="w">    </span>--yes<span class="w">       </span>Confirm<span class="w"> </span>the<span class="w"> </span>action<span class="w"> </span>without<span class="w"> </span>prompting.
+<span class="w">    </span>-h,<span class="w"> </span>--help<span class="w">  </span>Show<span class="w"> </span>this<span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span>exit.
+</pre></div>
+</div>
+<p>所以，从1.6升级代码到1.7，请执行命令（可以多次执行）：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>picbed/src
+$<span class="w"> </span>flask<span class="w"> </span>sa<span class="w"> </span>upgrade<span class="w"> </span>--yes<span class="w"> </span><span class="m">1</span>.6-1.7
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>v1.8.0</dt><dd><ul class="simple">
+<li><p>增加了依赖模块bleach和semver，可以手动安装：</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;bleach&gt;2.0.0&#39;</span><span class="w"> </span><span class="s1">&#39;semver&gt;=2.9.1,&lt;3&#39;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>更改设计：已删除图片的数据直接删除，故此升级时可以清理历史遗留的key</p></li>
+</ul>
+<p>以上都可以通过命令行自动完成：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>picbed/src
+$<span class="w"> </span>flask<span class="w"> </span>sa<span class="w"> </span>upgrade<span class="w"> </span>--yes<span class="w"> </span><span class="m">1</span>.7-1.8
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">警告</p>
+<p>up2cos、up2oss两个钩子从内置移除了，独立成第三方，分别是：
+<a class="reference external" href="https://github.com/sapicd/up2cos">staugur/picbed-up2cos</a> 、
+<a class="reference external" href="https://github.com/sapicd/up2oss">staugur/picbed-up2oss</a></p>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>v1.16.0</dt><dd><ul class="simple">
+<li><p>增加了内置模块 <cite>pic2webp</cite>，可以手动安装：</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements/pic2webp.txt
+</pre></div>
+</div>
+<p>或通过命令行自动完成：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>picbed/src
+$<span class="w"> </span>flask<span class="w"> </span>sa<span class="w"> </span>upgrade<span class="w"> </span>--yes<span class="w"> </span><span class="m">1</span>.16
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+  <li class="prev">
+    <a href="index.html"
+       title="上一章">← sapic - 简约不小气的自建图床程序</a>
+  </li>
+  <li class="next">
+    <a href="docker.html"
+       title="下一章">使用Docker部署 →</a>
+  </li>
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2020, staugur.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.4.7 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a> 0.9.1.
+</div>
+            </div>
+          </div>
+      </page>
+    </div></div>
+    
+    
+  </body>
+</html>
