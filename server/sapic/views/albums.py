@@ -8,14 +8,17 @@ from flask import Blueprint, g, request
 from ..basis.errors import ApiError, ErrorCode
 from ..libs.auth import login_required
 from ..libs.images import album_image_count
-from ..models import Album, AlbumShare, Image
+from ..libs.users import normalize_username
+from ..models import Album, AlbumShare, Image, User
 from ..models.base import now
 from ..models.image import STATUS_ENABLED
+from ..models.share import PERMISSION_READ, PERMISSION_WRITE
 from ..utils.web import ok
 
 bp = Blueprint("albums", __name__)
 
 VISIBILITIES = ("public", "private", "shared")
+PERMISSIONS = (PERMISSION_READ, PERMISSION_WRITE)
 
 
 def serialize_album(album: Album, role: str = "owner") -> dict:
@@ -34,8 +37,29 @@ def serialize_album(album: Album, role: str = "owner") -> dict:
     }
 
 
+def serialize_share(share: AlbumShare) -> dict:
+    return {
+        "user_id": share.grantee.id,
+        "username": share.grantee.username,
+        "nickname": share.grantee.nickname,
+        "permission": share.permission,
+        "expires_at": share.expires_at,
+        "created_at": share.created_at,
+    }
+
+
 def _payload() -> dict:
     return request.get_json(silent=True) or request.form.to_dict()
+
+
+def _owned_album(album_id: int) -> Album:
+    """Only the owner manages members; guests get a plain 404."""
+    album = Album.get_or_none(
+        (Album.id == album_id) & (Album.owner == g.user)
+    )
+    if album is None:
+        raise ApiError("album not found", ErrorCode.NOT_FOUND, 404)
+    return album
 
 
 @bp.get("/albums")
@@ -155,4 +179,79 @@ def delete_album(album_id: int):
         )
     AlbumShare.delete().where(AlbumShare.album == album).execute()
     album.delete_instance()
+    return ok({"deleted": True})
+
+
+@bp.get("/albums/<int:album_id>/shares")
+@login_required
+def list_shares(album_id: int):
+    album = _owned_album(album_id)
+    shares = (
+        AlbumShare.select(AlbumShare, User)
+        .join(User, on=(AlbumShare.grantee == User.id))
+        .where(AlbumShare.album == album)
+        .order_by(AlbumShare.created_at.desc())
+    )
+    return ok({"items": [serialize_share(share) for share in shares]})
+
+
+@bp.post("/albums/<int:album_id>/shares")
+@login_required
+def create_share(album_id: int):
+    """Grant one station member access to an album, by username."""
+    album = _owned_album(album_id)
+    data = _payload()
+
+    username = normalize_username(data.get("username") or "")
+    if not username:
+        raise ApiError("username is required", ErrorCode.PARAM_ERROR)
+    permission = data.get("permission") or PERMISSION_READ
+    if permission not in PERMISSIONS:
+        raise ApiError("invalid permission", ErrorCode.PARAM_ERROR)
+
+    grantee = User.get_or_none(User.username == username)
+    if grantee is None:
+        raise ApiError("user not found", ErrorCode.NOT_FOUND, 404)
+    if grantee.id == g.user.id:
+        raise ApiError("cannot share with yourself", ErrorCode.PARAM_ERROR)
+
+    share = AlbumShare.get_or_none(
+        (AlbumShare.album == album) & (AlbumShare.grantee == grantee)
+    )
+    created = share is None
+    if created:
+        share = AlbumShare.create(
+            album=album,
+            grantee=grantee,
+            permission=permission,
+            created_at=now(),
+        )
+    else:
+        share.permission = permission
+        share.save(only=[AlbumShare.permission])
+
+    #: Granting access to a private album turns it into a shared one, so the
+    #: visibility label matches what actually happens to the album.
+    if album.visibility == "private":
+        album.visibility = "shared"
+        album.updated_at = now()
+        album.save(only=[Album.visibility, Album.updated_at])
+
+    return ok(
+        {"share": serialize_share(share), "album": serialize_album(album)},
+        status=201 if created else 200,
+    )
+
+
+@bp.delete("/albums/<int:album_id>/shares/<int:user_id>")
+@login_required
+def delete_share(album_id: int, user_id: int):
+    album = _owned_album(album_id)
+    deleted = (
+        AlbumShare.delete()
+        .where((AlbumShare.album == album) & (AlbumShare.grantee == user_id))
+        .execute()
+    )
+    if not deleted:
+        raise ApiError("share not found", ErrorCode.NOT_FOUND, 404)
     return ok({"deleted": True})

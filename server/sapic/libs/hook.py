@@ -13,6 +13,7 @@ Keeps the v1 plugin contract (metadata fields, ``upimg_save`` /
 
 from __future__ import annotations
 
+import importlib
 import inspect
 import logging
 import sys
@@ -27,6 +28,7 @@ from flask import current_app
 
 from ..basis.vars import HOOK_RELOAD_TIME
 from . import ui
+from .settings import get_setting
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +42,9 @@ META_FIELDS = (
     "__appversion__",
 )
 
+#: Upper bound for imported (third-party) modules; keeps the scan predictable.
+MAX_IMPORTED = 32
+
 
 @dataclass(frozen=True)
 class Hook:
@@ -48,19 +53,72 @@ class Hook:
     path: str
     meta: dict
     enabled: bool
+    family: str = "local"
 
 
 class HookManager:
-    """Load hooks from one or more directories with hot reload support."""
+    """Load hooks from one or more directories with hot reload support.
 
-    def __init__(self, paths, reload_interval: int = 600):
+    ``state_provider`` is an optional callable returning ``{name: enabled}``; it
+    lets the application persist the admin's enable/disable choice while the
+    manager stays usable without an app context (tests pass ``None``).
+
+    ``imported_provider`` returns a list of importable module names, which is
+    how third-party hooks are installed: the module lives in site-packages and
+    is imported instead of scanned from :attr:`paths`.
+    """
+
+    def __init__(
+        self,
+        paths,
+        reload_interval: int = 600,
+        state_provider=None,
+        imported_provider=None,
+    ):
         self.paths = [Path(p) for p in paths if p]
         self.reload_interval = max(int(reload_interval or 0), 0)
+        self.state_provider = state_provider
+        self.imported_provider = imported_provider
+        self._states: dict[str, bool] = {}
+        self._imported: list[str] = []
         self._hooks: dict[str, Hook] = {}
         self._manifests: dict[str, dict] = {}
         self._signature = ""
         self._last_scan = 0.0
         self._lock = RLock()
+
+    def _read_states(self) -> dict[str, bool]:
+        """Read the persisted states; ``__state__`` is the fallback."""
+        if self.state_provider is None:
+            return {}
+        try:
+            data = self.state_provider() or {}
+        except Exception:
+            logger.exception("Failed to read hook states, using __state__")
+            return {}
+        if not isinstance(data, dict):
+            return {}
+        return {str(name): bool(value) for name, value in data.items()}
+
+    def _read_imported(self) -> list[str]:
+        """Read the module names registered by the admin."""
+        if self.imported_provider is None:
+            return []
+        try:
+            data = self.imported_provider() or []
+        except Exception:
+            logger.exception("Failed to read imported hooks")
+            return []
+        if isinstance(data, str):
+            data = [data]
+        if not isinstance(data, (list, tuple)):
+            return []
+        names = []
+        for item in data:
+            name = str(item or "").strip()
+            if name and name not in names:
+                names.append(name)
+        return names[:MAX_IMPORTED]
 
     # -- discovery -----------------------------------------------------
     def _iter_sources(self):
@@ -115,25 +173,48 @@ class HookManager:
             sys.modules.pop(module_name, None)
             raise
 
+        hook = self._build_hook(name, module, str(file), "local")
+        if hook is None:
+            sys.modules.pop(module_name, None)
+        return hook
+
+    def _build_hook(
+        self, name: str, module: ModuleType, path: str, family: str = "local"
+    ) -> Hook | None:
+        """Validate the metadata of a loaded module and compute its state."""
         if not getattr(module, "__version__", None) or not getattr(
             module, "__author__", None
         ):
             logger.warning("Hook %s skipped: missing __version__/__author__", name)
-            sys.modules.pop(module_name, None)
             return None
 
         meta = {field: getattr(module, field, None) for field in META_FIELDS}
-        enabled = (meta.get("__state__") or "enabled") != "disabled"
+        enabled = self._states.get(name)
+        if enabled is None:
+            enabled = (meta.get("__state__") or "enabled") != "disabled"
         return Hook(
             name=name,
             module=module,
-            path=str(file),
+            path=path,
             meta=meta,
-            enabled=enabled,
+            enabled=bool(enabled),
+            family=family,
         )
+
+    def _load_imported(self, module_name: str) -> Hook | None:
+        """Load a third-party hook from an importable module name."""
+        try:
+            module = importlib.import_module(module_name)
+        except Exception:
+            logger.exception("Failed to import hook module %s", module_name)
+            return None
+        path = getattr(module, "__file__", None) or module_name
+        return self._build_hook(module_name, module, str(path), "third")
 
     def reload(self) -> None:
         """Rebuild the hook snapshot; keep the old one if every load fails."""
+        self._states = self._read_states()
+        self._imported = self._read_imported()
         hooks: dict[str, Hook] = {}
         for name, file in self._iter_sources():
             try:
@@ -143,6 +224,12 @@ class HookManager:
                 continue
             if hook is not None:
                 hooks[name] = hook
+        for module_name in self._imported:
+            if module_name in hooks:
+                continue
+            hook = self._load_imported(module_name)
+            if hook is not None:
+                hooks[hook.name] = hook
 
         with self._lock:
             if hooks or not self._hooks:
@@ -180,6 +267,7 @@ class HookManager:
                 "name": hook.name,
                 "path": hook.path,
                 "enabled": hook.enabled,
+                "family": hook.family,
                 **{k: v for k, v in hook.meta.items() if v is not None},
             }
             for hook in self.hooks.values()
@@ -251,8 +339,10 @@ class HookManager:
             "description": data.get("description")
             or hook.meta.get("__description__")
             or "",
+            "author": str(hook.meta.get("__author__") or ""),
             "version": str(hook.meta.get("__version__") or ""),
             "enabled": hook.enabled,
+            "family": hook.family,
             "ui_version": ui.UI_VERSION,
             "config_schema": ui.clean_fields(data.get("config_schema")),
             "actions": ui.clean_actions(data.get("actions")),
@@ -283,6 +373,24 @@ class HookManager:
             items.append(entry)
         return items
 
+    def _hook_config(self, name: str) -> dict:
+        """Saved config of one hook (see the hooks page)."""
+        try:
+            saved = get_setting("hooks_config", {}) or {}
+        except Exception:
+            logger.exception("Failed to read the config of hook %s", name)
+            return {}
+        if not isinstance(saved, dict):
+            return {}
+        data = saved.get(name) or {}
+        return dict(data) if isinstance(data, dict) else {}
+
+    def _hook_context(self, name: str, context=None) -> dict:
+        """Caller context plus this hook's config, so hooks read one channel."""
+        scoped = dict(context or {})
+        scoped.setdefault("config", self._hook_config(name))
+        return scoped
+
     def slot(self, name: str, context=None, values=None) -> list[dict]:
         """Render one slot into ``[{hook, title, nodes}]`` blocks."""
         if name not in ui.SLOTS:
@@ -303,8 +411,13 @@ class HookManager:
                     "Hook %s declares slot %s without a slot function", hook_name, name
                 )
                 continue
+            hook_context = self._hook_context(hook_name, context)
             try:
-                nodes = func(**self._accepted_kwargs(func, dict(context=context, values=values)))
+                nodes = func(
+                    **self._accepted_kwargs(
+                        func, dict(context=hook_context, values=values)
+                    )
+                )
             except Exception:
                 logger.exception("Hook %s slot %s failed", hook_name, name)
                 continue
@@ -312,7 +425,7 @@ class HookManager:
                 nodes,
                 actions={item["name"] for item in manifest["actions"]},
                 values=values,
-                context=context,
+                context=hook_context,
             )
             if cleaned:
                 blocks.append(
@@ -341,7 +454,7 @@ class HookManager:
         payload = dict(payload or {})
         kwargs = dict(
             payload=payload,
-            context=dict(context or {}),
+            context=self._hook_context(name, context),
             values=dict(payload.get("values") or {}),
         )
         try:
@@ -363,7 +476,10 @@ class HookManager:
         if not callable(func):
             logger.warning("Hook %s declares data source %s without a reader", name, source)
             return {"items": [], "total": 0}
-        kwargs = dict(query=dict(query or {}), context=dict(context or {}))
+        kwargs = dict(
+            query=dict(query or {}),
+            context=self._hook_context(name, context),
+        )
         try:
             result = func(**self._accepted_kwargs(func, kwargs))
         except Exception:
@@ -379,7 +495,12 @@ def init_app(app) -> None:
     extra = app.config.get("HOOK_PKG_STORAGE_DIR")
     if extra:
         paths.append(_Path(extra))
-    app.extensions["hooks"] = HookManager(paths, HOOK_RELOAD_TIME)
+    app.extensions["hooks"] = HookManager(
+        paths,
+        HOOK_RELOAD_TIME,
+        state_provider=lambda: get_setting("hooks_state", {}),
+        imported_provider=lambda: get_setting("hooks_imported", []),
+    )
 
 
 def get_hook_manager() -> HookManager:

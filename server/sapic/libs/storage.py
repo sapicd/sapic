@@ -16,6 +16,7 @@ from peewee import IntegrityError
 from ..models import ImageBackend, StorageBackend, UserBackend
 from ..models.storage import SCOPE_GLOBAL, SCOPE_USER
 from .hook import get_hook_manager
+from .settings import get_setting
 
 DEFAULT_BACKEND_NAME = "local"
 
@@ -88,11 +89,23 @@ def list_backends(user=None) -> list[dict]:
     return items
 
 
+def hook_config(hook_name: str) -> dict:
+    """Hook-wide defaults managed on the hooks page (site settings)."""
+    saved = get_setting("hooks_config", {}) or {}
+    if not isinstance(saved, dict):
+        return {}
+    data = saved.get(hook_name) or {}
+    return dict(data) if isinstance(data, dict) else {}
+
+
 def driver_backend(backend: dict) -> dict:
-    """Add runtime-only driver options (never persisted)."""
+    """Merge hook defaults, per-backend config and runtime-only options."""
     data = dict(backend)
-    config = dict(data.get("config") or {})
-    if data.get("hook_name") == "up2local" and not config.get("root"):
+    hook_name = data.get("hook_name") or ""
+    config = hook_config(hook_name)
+    #: A configured backend row always wins over the hook-wide defaults.
+    config.update(dict(data.get("config") or {}))
+    if hook_name == "up2local" and not config.get("root"):
         config["root"] = current_app.config["STORAGE_DIR"]
     data["config"] = config
     return data
@@ -120,7 +133,7 @@ def save_object(
 
 def delete_object(image, replica: ImageBackend) -> bool:
     backend = replica.backend
-    root = (backend.config or {}).get("root") or current_app.config["STORAGE_DIR"]
+    runtime = driver_backend(_as_dict(backend))
     result = {
         "path": replica.object_key,
         "size": replica.size,
@@ -132,8 +145,9 @@ def delete_object(image, replica: ImageBackend) -> bool:
         sha=image.sha,
         upload_path="",
         filename=image.filename,
-        basedir=root,
+        basedir=(runtime.get("config") or {}).get("root", ""),
         save_result=result,
+        backend=runtime,
     )
     return bool(results and results[0].get("code") == 0)
 
@@ -141,10 +155,8 @@ def delete_object(image, replica: ImageBackend) -> bool:
 def local_path(replica: ImageBackend) -> Path | None:
     if replica.backend.hook_name != "up2local":
         return None
-    root = (replica.backend.config or {}).get("root") or current_app.config[
-        "STORAGE_DIR"
-    ]
-    path = Path(root) / replica.object_key
+    config = driver_backend(_as_dict(replica.backend)).get("config") or {}
+    path = Path(config["root"]) / replica.object_key
     return path if path.is_file() else None
 
 

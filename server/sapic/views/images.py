@@ -8,9 +8,12 @@ from flask import Blueprint, g, request
 from ..basis.errors import ApiError, ErrorCode
 from ..libs.auth import current_user, login_required
 from ..libs.images import (
+    album_serializer,
     can_view,
     delete_image,
+    normalize_tags,
     serialize_image,
+    tag_condition,
     visible_query,
 )
 from ..models import Album, Image
@@ -47,6 +50,10 @@ def list_images():
             (Image.filename.contains(keyword)) | (Image.title.contains(keyword))
         )
 
+    tag = (request.args.get("tag") or "").strip()
+    if tag:
+        query = query.where(tag_condition(tag))
+
     try:
         limit = int(request.args.get("limit", 20))
     except (TypeError, ValueError) as exc:
@@ -56,7 +63,7 @@ def list_images():
         paginate(
             query,
             Image,
-            serialize_image,
+            album_serializer(),
             limit=limit,
             cursor=request.args.get("cursor"),
         )
@@ -70,7 +77,7 @@ def read_image(sha: str):
     if not can_view(user, image):
         raise ApiError("permission denied", ErrorCode.FORBIDDEN, 403)
 
-    data = serialize_image(image)
+    data = serialize_image(image, image.album)
     data["replicas"] = [
         {
             "backend": replica.backend.name,
@@ -111,12 +118,20 @@ def update_image(sha: str):
         if visibility not in (None, "public", "private", "shared"):
             raise ApiError("invalid visibility", ErrorCode.PARAM_ERROR)
         image.visibility = visibility
+    if "tags" in data:
+        image.tags = normalize_tags(data.get("tags"))
 
     image.updated_at = now()
     image.save(
-        only=[Image.title, Image.album, Image.visibility, Image.updated_at]
+        only=[
+            Image.title,
+            Image.album,
+            Image.visibility,
+            Image.tags,
+            Image.updated_at,
+        ]
     )
-    return ok({"image": serialize_image(image)})
+    return ok({"image": serialize_image(image, image.album)})
 
 
 @bp.delete("/images/<sha>")

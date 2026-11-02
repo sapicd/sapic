@@ -10,6 +10,20 @@ def test_upgrade_is_idempotent(app):
         assert SchemaVersion.select().count() >= 1
 
 
+def test_tags_column_is_added_to_existing_databases(app):
+    """v003 back-fills databases created before image tags existed."""
+    with app.app_context():
+        db.execute_sql("ALTER TABLE images DROP COLUMN tags")
+        SchemaVersion.delete().where(SchemaVersion.version == 3).execute()
+
+        assert upgrade() == [3]
+        columns = {column.name for column in db.get_columns("images")}
+        assert "tags" in columns
+        #: Re-running is a no-op, so concurrent boots stay safe.
+        SchemaVersion.delete().where(SchemaVersion.version == 3).execute()
+        assert upgrade() == [3]
+
+
 def test_create_app_migrates_on_boot(tmp_path):
     """A fresh database must be usable without running ``flask sa upgrade``."""
     app = create_app(

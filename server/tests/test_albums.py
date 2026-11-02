@@ -139,3 +139,104 @@ def test_single_image_visibility_overrides_album(app, client):
     )
     assert response.status_code == 200
     assert anonymous.get(image["src"]).status_code == 200
+
+
+def _second_client(app, username):
+    client = app.test_client()
+    client.post(
+        "/api/v1/auth/register",
+        json={"username": username, "password": "secret123"},
+    )
+    csrf = client.post(
+        "/api/v1/auth/login",
+        json={"username": username, "password": "secret123"},
+    ).get_json()["data"]["csrf"]
+    return client, csrf
+
+
+def test_album_shares_grant_and_revoke_access(app, client):
+    csrf = register_and_login(client)
+    headers = {"X-CSRF-Token": csrf}
+
+    album = client.post(
+        "/api/v1/albums",
+        json={"name": "私房", "visibility": "private"},
+        headers=headers,
+    ).get_json()["data"]["album"]
+    image = client.post(
+        "/api/v1/uploads",
+        data={"file": (io.BytesIO(b"share-bytes"), "trip.png"), "album_id": str(album["id"])},
+        content_type="multipart/form-data",
+        headers=headers,
+    ).get_json()["data"]["image"]
+
+    bobby, _ = _second_client(app, "bobby")
+    assert bobby.get("/api/v1/albums").get_json()["data"]["items"][0]["role"] == "owner"
+    assert image["sha"] not in [
+        item["sha"] for item in bobby.get("/api/v1/images").get_json()["data"]["items"]
+    ]
+
+    response = client.post(
+        "/api/v1/albums/%s/shares" % album["id"],
+        json={"username": "bobby", "permission": "read"},
+        headers=headers,
+    )
+    assert response.status_code == 201
+    data = response.get_json()["data"]
+    assert data["share"]["username"] == "bobby"
+    #: 私有相册一旦有成员，可见性跟着变成「共享」。
+    assert data["album"]["visibility"] == "shared"
+
+    shared = [
+        item
+        for item in bobby.get("/api/v1/albums").get_json()["data"]["items"]
+        if item["id"] == album["id"]
+    ]
+    assert shared and shared[0]["role"] == "shared"
+    assert image["sha"] in [
+        item["sha"] for item in bobby.get("/api/v1/images").get_json()["data"]["items"]
+    ]
+
+    members = client.get(
+        "/api/v1/albums/%s/shares" % album["id"]
+    ).get_json()["data"]["items"]
+    assert [member["username"] for member in members] == ["bobby"]
+
+    response = client.delete(
+        "/api/v1/albums/%s/shares/%s" % (album["id"], members[0]["user_id"]),
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert image["sha"] not in [
+        item["sha"] for item in bobby.get("/api/v1/images").get_json()["data"]["items"]
+    ]
+
+
+def test_album_share_validation(app, client):
+    csrf = register_and_login(client)
+    headers = {"X-CSRF-Token": csrf}
+    album = client.post(
+        "/api/v1/albums",
+        json={"name": "旅行", "visibility": "public"},
+        headers=headers,
+    ).get_json()["data"]["album"]
+    _second_client(app, "bobby")
+
+    base = "/api/v1/albums/%s/shares" % album["id"]
+    assert client.post(
+        base, json={"username": "ghost"}, headers=headers
+    ).status_code == 404
+    assert client.post(
+        base, json={"username": "alice"}, headers=headers
+    ).status_code == 400
+    assert client.post(
+        base, json={"username": "bobby", "permission": "owner"}, headers=headers
+    ).status_code == 400
+
+    #: 非所有者看不到别人的相册，成员接口统一 404。
+    outsider, outsider_csrf = _second_client(app, "carol")
+    assert outsider.post(
+        base,
+        json={"username": "alice"},
+        headers={"X-CSRF-Token": outsider_csrf},
+    ).status_code == 404

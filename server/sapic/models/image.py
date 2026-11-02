@@ -17,7 +17,7 @@ from peewee import (
 )
 
 from .album import Album
-from .base import BaseModel, now
+from .base import BaseModel, JSONTextField, now
 from .user import User
 
 STATUS_ENABLED = "enabled"
@@ -43,6 +43,8 @@ class Image(BaseModel):
     status = CharField(max_length=16, default=STATUS_ENABLED)
     #: NULL means "inherit from album".
     visibility = CharField(max_length=16, null=True)
+    #: Free-form labels, stored as a JSON array; NULL means "no tags".
+    tags = JSONTextField(null=True)
     created_at = IntegerField(default=now)
     updated_at = IntegerField(default=now)
     expire_at = IntegerField(null=True)

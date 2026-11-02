@@ -298,6 +298,10 @@ a {
   width: 240px;
 }
 
+.toolbar__search--narrow {
+  width: 160px;
+}
+
 .load-more {
   display: flex;
   justify-content: center;
@@ -367,6 +371,13 @@ a {
   margin-left: 6px;
 }
 
+.share-add {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
 /* ============================================================
    首页上传
    ============================================================ */
@@ -398,12 +409,20 @@ a {
 
 .upload-hero__toolbar {
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 10px;
   margin-bottom: 14px;
 }
 
-.upload-hero__more {
-  margin-top: 18px;
+.upload-hero__label {
+  font-size: 13px;
+  color: var(--app-text-muted);
+}
+
+.upload-hero__label--hint {
+  font-size: 12px;
+  opacity: 0.8;
 }
 
 .upload-hero .el-upload,
@@ -456,6 +475,56 @@ a {
 .upload-zone__hint {
   margin-top: 10px;
   font-size: 12px;
+  color: var(--app-text-muted);
+}
+
+.upload-zone__note {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--app-text-muted);
+  opacity: 0.85;
+}
+
+/* 待上传列表：单文件可单独指定相册 */
+.upload-hero .el-upload-list {
+  margin-top: 14px;
+  text-align: left;
+}
+
+.upload-hero .el-upload-list__item {
+  height: auto;
+  padding: 0;
+  margin-top: 8px;
+}
+
+.upload-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+}
+
+.upload-item__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-item__album {
+  flex: none;
+  width: 170px;
+}
+
+.upload-item__status {
+  flex: none;
+  width: 56px;
+  font-size: 12px;
+  text-align: right;
   color: var(--app-text-muted);
 }
 
@@ -567,6 +636,61 @@ a {
   font-size: 14px;
   font-weight: 600;
   color: var(--el-text-color-regular);
+}
+
+/* 钩子管理：扩展列表与配置表单 */
+.hook-toolbar {
+  margin-bottom: 14px;
+}
+
+.toolbar__meta {
+  font-size: 12px;
+  color: var(--app-text-muted);
+}
+
+.hook-name {
+  font-family: var(--el-font-family);
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+.hook-name__title {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--app-text-muted);
+}
+
+.hook-config {
+  border: 1px solid var(--app-divider);
+  border-radius: var(--app-radius-sm);
+  padding: 14px 16px 4px;
+  margin-bottom: 14px;
+  background: var(--app-surface);
+}
+
+.hook-config__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.hook-config__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-regular);
+}
+
+.hook-config__desc {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--app-text-muted);
 }
 
 .node-fieldset {
@@ -802,7 +926,22 @@ a {
   font-size: 12px;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
+}
+
+.image-card__sub .el-tag {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.image-card__more {
+  font-size: 12px;
+  color: var(--app-text-muted);
+}
+
+.detail-album {
+  cursor: pointer;
 }
 
 .image-skeleton {
@@ -1000,6 +1139,58 @@ a {
 
 .el-pagination.is-background .el-pager li {
   border-radius: 8px;
+}
+
+/* ============================================================
+   头像上传与裁剪
+   ============================================================ */
+.avatar-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar-crop {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.avatar-crop__viewport {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 50%;
+  background: rgba(16, 24, 40, 0.04);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.avatar-crop__viewport:active {
+  cursor: grabbing;
+}
+
+.avatar-crop__image {
+  position: absolute;
+  max-width: none;
+  pointer-events: none;
+}
+
+.avatar-crop__empty {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--app-text-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.avatar-crop__input {
+  display: none;
 }
 
 /* ============================================================

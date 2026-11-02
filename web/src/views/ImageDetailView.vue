@@ -22,7 +22,7 @@ const image = ref(null)
 const replicas = ref([])
 const loading = ref(false)
 const saving = ref(false)
-const form = reactive({ title: '', visibility: '' })
+const form = reactive({ title: '', visibility: '', tags: [] })
 
 async function load() {
   loading.value = true
@@ -33,6 +33,7 @@ async function load() {
     form.title = image.value?.title || ''
     //: 空串表示没有单图覆盖，可见性跟随相册。
     form.visibility = image.value?.visibility || ''
+    form.tags = [...(image.value?.tags || [])]
   } catch (error) {
     ElMessage.error(errorMessage(error, '加载图片失败'))
   } finally {
@@ -44,7 +45,11 @@ async function save() {
   saving.value = true
   try {
     const data = await api.patch(`/images/${route.params.sha}`, {
-      json: { title: form.title, visibility: form.visibility || null },
+      json: {
+        title: form.title,
+        visibility: form.visibility || null,
+        tags: form.tags,
+      },
     })
     if (data?.image) image.value = { ...image.value, ...data.image }
     ElMessage.success('已保存')
@@ -70,6 +75,11 @@ async function remove() {
   } catch (error) {
     ElMessage.error(errorMessage(error, '删除失败'))
   }
+}
+
+function openAlbum() {
+  if (!image.value?.album) return
+  router.push({ name: 'images', query: { album: image.value.album.id } })
 }
 
 async function copy() {
@@ -103,6 +113,24 @@ onMounted(load)
             />
           </div>
           <div class="detail-meta">
+            <el-tag
+              v-if="image.album"
+              effect="plain"
+              class="detail-album"
+              title="查看该相册的图片"
+              @click="openAlbum"
+            >
+              相册：{{ image.album.name }}
+            </el-tag>
+            <el-tag v-else effect="plain">相册：未归属</el-tag>
+            <el-tag
+              v-for="tag in image.tags || []"
+              :key="tag"
+              type="success"
+              effect="plain"
+            >
+              {{ tag }}
+            </el-tag>
             <el-tag effect="plain">{{ image.mime || '未知类型' }}</el-tag>
             <el-tag effect="plain">{{ formatSize(image.size) }}</el-tag>
             <el-tag effect="plain">{{ formatTime(image.created_at) }}</el-tag>
@@ -120,6 +148,19 @@ onMounted(load)
           <el-form label-position="top">
             <el-form-item label="标题">
               <el-input v-model="form.title" maxlength="255" />
+            </el-form-item>
+            <el-form-item label="标签">
+              <el-select
+                v-model="form.tags"
+                multiple
+                filterable
+                allow-create
+                default-first-option
+                :reserve-keyword="false"
+                :multiple-limit="10"
+                placeholder="输入后回车添加，最多 10 个"
+                style="width: 100%"
+              />
             </el-form-item>
             <el-form-item label="可见性">
               <el-select v-model="form.visibility" style="width: 100%">

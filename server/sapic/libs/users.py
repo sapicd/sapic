@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+import secrets
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -18,6 +19,7 @@ from ..models.user import (
     STATUS_REJECTED,
 )
 from .albums import default_album
+from .images import create_image, public_url
 
 USERNAME_RE = re.compile(r"^[a-zA-Z][0-9a-zA-Z_]{3,31}$")
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -114,6 +116,76 @@ def change_password(user: User, new_password: str) -> User:
     return user
 
 
+def _oidc_username(hint: str) -> str:
+    """Derive a unique local username from the provider's claims."""
+    base = re.sub(r"[^0-9a-zA-Z_]", "", hint or "")[:28]
+    if not base or not base[0].isalpha():
+        base = "u%s" % base
+    base = base.ljust(4, "_")
+    candidate = base
+    index = 1
+    while User.get_or_none(User.username == candidate):
+        index += 1
+        suffix = str(index)
+        candidate = "%s%s" % (base[: 32 - len(suffix)], suffix)
+    return candidate
+
+
+def resolve_oidc_user(
+    issuer: str,
+    subject: str,
+    username: str = "",
+    nickname: str = "",
+    email: str = "",
+    auto_register: bool = True,
+    status: int = STATUS_NORMAL,
+) -> User:
+    """Find the local account bound to an OIDC identity, creating it if allowed.
+
+    ``issuer``/``subject`` are persisted on the user row (see
+    ``User.oidc_issuer``/``oidc_subject``), so a provider account maps back to
+    the same local user even when the upstream display name changes.
+    """
+    issuer = (issuer or "").strip()[:255]
+    subject = (subject or "").strip()[:255]
+    if not issuer or not subject:
+        raise ApiError("invalid oidc identity", ErrorCode.PARAM_ERROR)
+
+    user = User.get_or_none(
+        (User.oidc_issuer == issuer) & (User.oidc_subject == subject)
+    )
+    if user is not None:
+        if user.status != STATUS_NORMAL:
+            raise ApiError("account is not active", ErrorCode.FORBIDDEN, 403)
+        return user
+
+    if not auto_register:
+        raise ApiError("account is not linked", ErrorCode.FORBIDDEN, 403)
+
+    email = (email or "").strip().lower() or None
+    if email and User.get_or_none(User.email == email):
+        #: 邮箱已被本地账号占用时不自动合并，避免他人的账号被接管。
+        email = None
+
+    with db.atomic():
+        user = User.create(
+            username=_oidc_username(username or nickname),
+            email=email,
+            #: OIDC 账号没有本地密码，随机值让密码登录不可能成功。
+            password_hash=generate_password_hash(secrets.token_urlsafe(32)),
+            nickname=(nickname or username or "")[:64],
+            status=status,
+            labels=[],
+            oidc_issuer=issuer,
+            oidc_subject=subject,
+            created_at=now(),
+            updated_at=now(),
+        )
+        #: 权限以相册为维度，账号必须立刻拥有兜底相册。
+        default_album(user)
+    return user
+
+
 def update_profile(user: User, data: dict) -> User:
     """Update the fields a user may edit themselves.
 
@@ -133,6 +205,29 @@ def update_profile(user: User, data: dict) -> User:
         user.avatar = (data["avatar"] or "").strip()[:255]
     user.updated_at = now()
     user.save(only=[User.nickname, User.email, User.avatar, User.updated_at])
+    return user
+
+
+def update_avatar(
+    user: User, filename: str, stream: bytes, mime: str = ""
+) -> User:
+    """Store a cropped avatar in the user's default album.
+
+    Avatars are ordinary images: they inherit the album visibility, so the
+    "上传即入默认相册" rule keeps the permission model intact.
+    """
+    if not stream:
+        raise ApiError("empty file", ErrorCode.PARAM_ERROR)
+    image = create_image(
+        owner=user,
+        filename=filename or "avatar.png",
+        stream=stream,
+        mime=mime or "image/png",
+        album=default_album(user),
+    )
+    user.avatar = public_url(image.sha)[:255]
+    user.updated_at = now()
+    user.save(only=[User.avatar, User.updated_at])
     return user
 
 
@@ -162,6 +257,8 @@ __all__ = [
     "change_password",
     "create_user",
     "normalize_username",
+    "resolve_oidc_user",
     "serialize_user",
+    "update_avatar",
     "update_profile",
 ]

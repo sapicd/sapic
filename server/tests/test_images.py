@@ -111,3 +111,86 @@ def test_anonymous_upload_when_enabled(app, client):
         row = Image.get(Image.sha == image["sha"])
         assert row.owner_id is None
     assert client.get(image["src"]).status_code == 200
+
+
+def test_image_listing_filters_by_album(client):
+    csrf = register_and_login(client)
+
+    album = client.post(
+        "/api/v1/albums",
+        json={"name": "旅行", "visibility": "public"},
+        headers={"X-CSRF-Token": csrf},
+    ).get_json()["data"]["album"]
+
+    inside = upload(client, csrf).get_json()["data"]["image"]
+    outside = upload(client, csrf, "other.png").get_json()["data"]["image"]
+    client.patch(
+        "/api/v1/images/%s" % inside["sha"],
+        json={"album_id": album["id"]},
+        headers={"X-CSRF-Token": csrf},
+    )
+
+    listing = client.get(
+        "/api/v1/images", query_string={"album_id": album["id"]}
+    ).get_json()["data"]
+    shas = [item["sha"] for item in listing["items"]]
+    assert shas == [inside["sha"]]
+    assert outside["sha"] not in shas
+
+
+def test_image_payload_carries_its_album(client):
+    csrf = register_and_login(client)
+    uploaded = upload(client, csrf).get_json()["data"]["image"]
+
+    detail = client.get("/api/v1/images/%s" % uploaded["sha"]).get_json()["data"]
+    assert detail["image"]["album"]["id"] == uploaded["album_id"]
+    assert detail["image"]["album"]["name"]
+
+    listing = client.get("/api/v1/images").get_json()["data"]["items"]
+    item = next(entry for entry in listing if entry["sha"] == uploaded["sha"])
+    assert item["album"]["id"] == uploaded["album_id"]
+
+
+def test_image_tags_are_normalized_and_filterable(client):
+    csrf = register_and_login(client)
+    tagged = upload(client, csrf).get_json()["data"]["image"]
+    other = upload(client, csrf, "other.png").get_json()["data"]["image"]
+
+    response = client.patch(
+        "/api/v1/images/%s" % tagged["sha"],
+        json={"tags": ["旅行", " 旅行 ", "", "海边"]},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 200
+    assert response.get_json()["data"]["image"]["tags"] == ["旅行", "海边"]
+
+    detail = client.get("/api/v1/images/%s" % tagged["sha"]).get_json()["data"]
+    assert detail["image"]["tags"] == ["旅行", "海边"]
+
+    listing = client.get(
+        "/api/v1/images", query_string={"tag": "旅行"}
+    ).get_json()["data"]
+    shas = [item["sha"] for item in listing["items"]]
+    assert shas == [tagged["sha"]]
+    assert other["sha"] not in shas
+
+
+def test_image_tags_reject_oversized_input(client):
+    csrf = register_and_login(client)
+    uploaded = upload(client, csrf).get_json()["data"]["image"]
+
+    too_many = ["t%d" % index for index in range(11)]
+    response = client.patch(
+        "/api/v1/images/%s" % uploaded["sha"],
+        json={"tags": too_many},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 400
+    assert response.get_json()["code"] == "PARAM_ERROR"
+
+    response = client.patch(
+        "/api/v1/images/%s" % uploaded["sha"],
+        json={"tags": ["x" * 33]},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 400

@@ -1,0 +1,239 @@
+# -*- coding: utf-8 -*-
+"""The v1 drivers ported to the v2 hook contract."""
+
+from io import BytesIO
+
+import pytest
+
+from sapic.libs import images
+
+DRIVERS = ("up2github", "up2gitee", "up2qiniu", "up2upyun")
+
+
+class FakeResponse:
+    def __init__(self, status_code=200, payload=None):
+        self.status_code = status_code
+        self._payload = payload or {}
+
+    def json(self):
+        return self._payload
+
+
+class FakeRequests:
+    """Records calls and replies with the queued responses."""
+
+    def __init__(self, *responses):
+        self.responses = list(responses)
+        self.calls = []
+
+    def _reply(self, method, url, kwargs):
+        self.calls.append((method, url, kwargs))
+        if self.responses:
+            return self.responses.pop(0)
+        return FakeResponse(200, {})
+
+    def put(self, url, **kwargs):
+        return self._reply("put", url, kwargs)
+
+    def post(self, url, **kwargs):
+        return self._reply("post", url, kwargs)
+
+    def get(self, url, **kwargs):
+        return self._reply("get", url, kwargs)
+
+    def delete(self, url, **kwargs):
+        return self._reply("delete", url, kwargs)
+
+
+class StubManager:
+    def __init__(self, results):
+        self.results = results
+
+    def call(self, funcname, **kwargs):
+        assert funcname == "upimg_stream_processor"
+        return list(self.results)
+
+
+def module_of(app, name):
+    return app.extensions["hooks"].get(name).module
+
+
+def test_ported_hooks_are_loaded(app):
+    manager = app.extensions["hooks"]
+    for name in DRIVERS:
+        hook = manager.get(name)
+        assert hook.meta["__catalog__"] == "upload"
+        assert hook.meta["__state__"] == "disabled"
+
+    processor = manager.get("pic2webp")
+    assert processor.meta["__catalog__"] == "processor"
+    assert processor.enabled is False
+
+
+def test_drivers_declare_an_admin_form(app):
+    for name in DRIVERS:
+        manifest = app.extensions["hooks"].manifest(name)
+        keys = [field["key"] for field in manifest["config_schema"]]
+        assert "basedir" in keys
+        assert [action["name"] for action in manifest["actions"]] == ["ping"]
+        assert manifest["slots"] == [
+            {"name": "admin.hook_setting", "mode": "declarative"}
+        ]
+
+
+def test_driver_slot_fills_defaults_from_saved_config(app):
+    module = module_of(app, "up2github")
+    nodes = module.slot_admin_hook_setting(
+        context={
+            "backend": {
+                "config": {"token": "t", "repo": "a/b", "basedir": "img"},
+                "in_use": True,
+            }
+        }
+    )
+
+    children = nodes[0]["children"]
+    assert children[0]["type"] == "alert"
+    fields = {child["key"]: child for child in children if "key" in child}
+    assert fields["repo"]["default"] == "a/b"
+    assert fields["basedir"]["default"] == "img"
+    button = next(child for child in children if child["type"] == "button")
+    assert button["action"] == "ping"
+
+
+def test_github_save_returns_the_object_key(app, monkeypatch):
+    module = module_of(app, "up2github")
+    fake = FakeRequests(FakeResponse(201, {"content": {"size": 5, "sha": "blob"}}))
+    monkeypatch.setattr(module, "requests", fake)
+
+    result = module.upimg_save(
+        "photo.png",
+        b"bytes",
+        "alice/2026",
+        backend={"config": {"token": "t", "repo": "a/b", "basedir": "/img/"}},
+    )
+
+    assert result == {
+        "code": 0,
+        "path": "img/alice/2026/photo.png",
+        "size": 5,
+        "etag": "blob",
+    }
+    method, url, kwargs = fake.calls[0]
+    assert method == "put"
+    assert url.endswith("/repos/a/b/contents/img/alice/2026/photo.png")
+    assert kwargs["headers"]["Authorization"] == "token t"
+
+
+def test_github_save_rejects_incomplete_config(app, monkeypatch):
+    module = module_of(app, "up2github")
+    monkeypatch.setattr(module, "requests", FakeRequests())
+    result = module.upimg_save(
+        "a.png", b"x", backend={"config": {"repo": "a/b"}}
+    )
+    assert result["code"] == 1
+    assert "parameter error" in result["msg"]
+
+
+def test_github_delete_reuses_the_stored_etag(app, monkeypatch):
+    module = module_of(app, "up2github")
+    fake = FakeRequests(FakeResponse(200, {}))
+    monkeypatch.setattr(module, "requests", fake)
+
+    result = module.upimg_delete(
+        "sha1.1.x",
+        "",
+        "photo.png",
+        "",
+        {"path": "img/photo.png", "etag": "blob"},
+        backend={"config": {"token": "t", "repo": "a/b", "branch": "dev"}},
+    )
+
+    assert result["code"] == 0
+    method, url, kwargs = fake.calls[0]
+    assert method == "delete"
+    assert kwargs["json"]["sha"] == "blob"
+    assert kwargs["json"]["branch"] == "dev"
+
+
+def test_gitee_save_sends_the_token_as_a_parameter(app, monkeypatch):
+    module = module_of(app, "up2gitee")
+    fake = FakeRequests(FakeResponse(201, {"content": {"size": 3, "sha": "xyz"}}))
+    monkeypatch.setattr(module, "requests", fake)
+
+    result = module.upimg_save(
+        "a.png", b"abc", "", backend={"config": {"token": "tk", "repo": "a/b"}}
+    )
+
+    assert result["code"] == 0
+    assert result["path"] == "a.png"
+    assert fake.calls[0][2]["data"]["access_token"] == "tk"
+
+
+@pytest.mark.parametrize(
+    "name, vendor",
+    (("up2qiniu", "qiniu"), ("up2upyun", "upyun")),
+)
+def test_sdk_drivers_report_a_missing_dependency(app, name, vendor):
+    module = module_of(app, name)
+    if getattr(module, "Auth", None) is not None or getattr(module, "UpYun", None):
+        pytest.skip("%s SDK is installed" % vendor)
+
+    result = module.upimg_save("a.png", b"x", backend={"config": {}})
+    assert result["code"] == 1
+    assert result["msg"] == "Please install %s module" % vendor
+
+
+def test_disabled_processor_is_never_called(app):
+    results = app.extensions["hooks"].call(
+        "upimg_stream_processor", stream=b"x", suffix=".png"
+    )
+    assert results == []
+
+
+def test_process_stream_rewrites_name_and_mime(monkeypatch):
+    stub = StubManager(
+        [{"code": 0, "data": {"stream": b"webp"}, "suffix": ".webp"}]
+    )
+    monkeypatch.setattr(images, "get_hook_manager", lambda: stub)
+
+    stream, filename, mime = images.process_stream(b"jpeg", "photo.png", "image/png")
+
+    assert stream == b"webp"
+    assert filename == "photo.webp"
+    assert mime == "image/webp"
+
+
+def test_process_stream_ignores_failed_hooks(monkeypatch):
+    stub = StubManager([{"code": 1, "msg": "boom"}])
+    monkeypatch.setattr(images, "get_hook_manager", lambda: stub)
+
+    assert images.process_stream(b"jpeg", "photo.png", "image/png") == (
+        b"jpeg",
+        "photo.png",
+        "image/png",
+    )
+
+
+def test_process_stream_skips_videos(monkeypatch):
+    monkeypatch.setattr(images, "get_hook_manager", lambda: StubManager([]))
+
+    assert images.process_stream(b"video", "clip.mp4", "video/mp4") == (
+        b"video",
+        "clip.mp4",
+        "video/mp4",
+    )
+
+
+def test_pic2webp_converts_a_png(app):
+    module = module_of(app, "pic2webp")
+    if module.Image is None:
+        pytest.skip("Pillow is not installed")
+
+    source = BytesIO()
+    module.Image.new("RGB", (2, 2), "red").save(source, "PNG")
+    result = module.upimg_stream_processor(source.getvalue(), ".png")
+
+    assert result["code"] == 0
+    assert result["suffix"] == ".webp"
+    assert result["data"]["stream"][:4] == b"RIFF"

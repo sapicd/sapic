@@ -44,8 +44,9 @@ def test_catalogue_lists_installed_hooks(client):
     items = {item["name"]: item for item in body["data"]["items"]}
     assert "up2local" in items
     assert items["up2local"]["catalog"] == "upload"
-    #: Admin slots are hidden from ordinary users.
-    assert all(not slot["name"].startswith("admin.") for slot in body["data"]["slots"])
+    assert items["up2local"]["author"] == "staugur"
+    #: Admin slots are hidden from ordinary users; ``slots`` is a name list.
+    assert body["data"]["slots"] == ["login.after_form"]
 
 
 def test_manifests_require_admin(app, client):
@@ -155,3 +156,184 @@ def test_unknown_dataset_is_404(client):
     signin(client)
     response = client.get("/api/v1/hooks/up2local/data/missing")
     assert response.status_code == 404
+
+
+def test_state_is_persisted_and_overrides_the_file_default(app, client):
+    csrf = signin(client, app=app, admin=True)
+
+    items = {
+        item["name"]: item
+        for item in client.get("/api/v1/hooks").get_json()["data"]["items"]
+    }
+    assert items["up2github"]["enabled"] is False
+
+    response = client.patch(
+        "/api/v1/hooks/up2github",
+        json={"enabled": True},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 200
+    assert response.get_json()["data"]["enabled"] is True
+
+    items = {
+        item["name"]: item
+        for item in client.get("/api/v1/hooks").get_json()["data"]["items"]
+    }
+    assert items["up2github"]["enabled"] is True
+
+    with app.app_context():
+        manager = app.extensions["hooks"]
+        assert manager.get("up2github").enabled is True
+        senders = {
+            result.get("sender")
+            for result in manager.call("upimg_save", filename="", stream=b"")
+        }
+        assert "up2github" in senders
+
+
+def test_state_needs_admin_and_a_boolean(app, client):
+    csrf = signin(client)
+    response = client.patch(
+        "/api/v1/hooks/up2github",
+        json={"enabled": True},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 403
+
+    grant_admin(app)
+    response = client.patch(
+        "/api/v1/hooks/up2github",
+        json={"enabled": "yes"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 400
+    assert response.get_json()["code"] == "PARAM_ERROR"
+
+    response = client.patch(
+        "/api/v1/hooks/ghost",
+        json={"enabled": True},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 404
+
+
+def test_reload_returns_the_catalogue(app, client):
+    csrf = signin(client, app=app, admin=True)
+
+    response = client.post("/api/v1/hooks/reload", headers={"X-CSRF-Token": csrf})
+    assert response.status_code == 200
+    names = {item["name"] for item in response.get_json()["data"]["items"]}
+    assert {"up2local", "up2github", "pic2webp"} <= names
+
+
+def test_config_roundtrip(app, client):
+    csrf = signin(client, app=app, admin=True)
+
+    items = {
+        item["name"]: item
+        for item in client.get("/api/v1/hooks/config").get_json()["data"]["items"]
+    }
+    assert set(items["up2local"]["values"]) == {"root"}
+    #: 没有 config_schema 的钩子不进入配置页。
+    assert "pic2webp" not in items
+
+    response = client.put(
+        "/api/v1/hooks/config/up2local",
+        json={"root": "/srv/images"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 200
+    assert response.get_json()["data"]["values"] == {"root": "/srv/images"}
+
+    items = {
+        item["name"]: item
+        for item in client.get("/api/v1/hooks/config").get_json()["data"]["items"]
+    }
+    assert items["up2local"]["values"]["root"] == "/srv/images"
+
+
+def test_config_rejects_unknown_keys(app, client):
+    csrf = signin(client, app=app, admin=True)
+
+    response = client.put(
+        "/api/v1/hooks/config/up2local",
+        json={"nope": "x"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 400
+    assert "unknown config key" in response.get_json()["message"]
+
+
+def test_config_requires_admin(client):
+    signin(client)
+    assert client.get("/api/v1/hooks/config").status_code == 403
+
+
+def test_import_and_remove_a_third_party_hook(app, client, tmp_path, monkeypatch):
+    from uuid import uuid4
+
+    name = "demo_hook_%s" % uuid4().hex[:8]
+    (tmp_path / ("%s.py" % name)).write_text(
+        '__version__ = "1.0.0"\n__author__ = "tester"\n\n'
+        'def hook_manifest():\n    return {"title": "Demo", "catalog": "auth"}\n',
+        encoding="utf-8",
+    )
+    monkeypatch.syspath_prepend(str(tmp_path))
+    csrf = signin(client, app=app, admin=True)
+
+    response = client.post(
+        "/api/v1/hooks/import",
+        json={"module": name},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 200, response.get_json()
+    item = response.get_json()["data"]["item"]
+    assert item["name"] == name
+    assert item["family"] == "third"
+
+    names = {
+        entry["name"]
+        for entry in client.get("/api/v1/hooks").get_json()["data"]["items"]
+    }
+    assert name in names
+
+    response = client.delete(
+        "/api/v1/hooks/import/%s" % name, headers={"X-CSRF-Token": csrf}
+    )
+    assert response.status_code == 200
+
+    names = {
+        entry["name"]
+        for entry in client.get("/api/v1/hooks").get_json()["data"]["items"]
+    }
+    assert name not in names
+
+
+def test_import_rejects_invalid_and_non_hook_modules(app, client):
+    csrf = signin(client, app=app, admin=True)
+
+    #: ``../etc/passwd`` is not a module name; ``os`` has no
+    #: ``__version__``/``__author__``, so it cannot be a hook.
+    for module in ("../etc/passwd", "os"):
+        response = client.post(
+            "/api/v1/hooks/import",
+            json={"module": module},
+            headers={"X-CSRF-Token": csrf},
+        )
+        assert response.status_code == 400, module
+
+    names = {
+        entry["name"]
+        for entry in client.get("/api/v1/hooks").get_json()["data"]["items"]
+    }
+    assert "os" not in names
+
+
+def test_local_hooks_are_marked_as_local(app, client):
+    signin(client, app=app, admin=True)
+
+    items = {
+        entry["name"]: entry
+        for entry in client.get("/api/v1/hooks").get_json()["data"]["items"]
+    }
+    assert items["up2local"]["family"] == "local"

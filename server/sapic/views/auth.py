@@ -3,12 +3,15 @@
 
 from __future__ import annotations
 
+import logging
+import secrets
 from hashlib import sha256
 
-from flask import Blueprint, current_app, g, request
+from flask import Blueprint, current_app, g, redirect, request, url_for
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from werkzeug.security import check_password_hash
 
+from ..basis.common import as_bool
 from ..basis.errors import ApiError, ErrorCode
 from ..libs.auth import (
     current_csrf,
@@ -19,25 +22,42 @@ from ..libs.auth import (
     login_user,
     logout_user,
 )
+from ..libs.hook import get_hook_manager
 from ..libs.mail import send_mail
 from ..libs.settings import get_setting
+from ..libs.storage import hook_config
 from ..libs.users import (
     authenticate,
     change_password,
     create_user,
     normalize_username,
+    resolve_oidc_user,
     serialize_user,
+    update_avatar,
     update_profile,
 )
 from ..models import ApiToken, User
 from ..models.base import now
 from ..models.user import STATUS_DISABLED, STATUS_NORMAL, STATUS_PENDING
-from ..utils.web import ok
+from ..utils.web import (
+    clear_cookie_state,
+    get_cookie_state,
+    ok,
+    set_cookie_state,
+)
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint("auth", __name__)
 
 RESET_SALT = "sapic-reset-password"
 RESET_MAX_AGE = 600
+AVATAR_MAX_BYTES = 2 * 1024 * 1024
+
+#: OIDC state cookie; scoped to the redirect dance only.
+OIDC_COOKIE = "sapic-oidc"
+OIDC_SALT = "sapic-oidc-state"
+OIDC_STATE_MAX_AGE = 600
 
 
 def _payload() -> dict:
@@ -111,6 +131,107 @@ def login():
     return ok({"user": serialize_user(user, True), "csrf": csrf})
 
 
+def _oidc_hook(name: str):
+    """Resolve an enabled hook that speaks the OIDC contract."""
+    hook = get_hook_manager().get(name)
+    if (
+        hook is None
+        or not hook.enabled
+        or not callable(getattr(hook.module, "oidc_authorize_url", None))
+        or not callable(getattr(hook.module, "oidc_exchange", None))
+    ):
+        raise ApiError("oidc provider is unavailable", ErrorCode.NOT_FOUND, 404)
+    return hook
+
+
+def _oidc_redirect_uri(name: str) -> str:
+    return url_for("auth.oidc_callback", name=name, _external=True)
+
+
+def _safe_next(value) -> str:
+    """Only same-site paths are accepted as the post-login target."""
+    path = str(value or "")
+    if not path.startswith("/") or path.startswith("//"):
+        return "/"
+    return path
+
+
+@bp.get("/auth/oidc/<name>")
+def oidc_start(name: str):
+    """Kick off the authorization-code flow for a hook-based provider."""
+    hook = _oidc_hook(name)
+    state = secrets.token_urlsafe(24)
+    try:
+        location = hook.module.oidc_authorize_url(
+            config=hook_config(name),
+            redirect_uri=_oidc_redirect_uri(name),
+            state=state,
+        )
+    except ValueError as exc:
+        raise ApiError(str(exc), ErrorCode.PARAM_ERROR) from exc
+    except Exception as exc:
+        logger.exception("oidc provider %s is unreachable", name)
+        raise ApiError(
+            "oidc provider is unreachable", ErrorCode.BAD_GATEWAY, 502
+        ) from exc
+
+    response = redirect(location)
+    return set_cookie_state(
+        response,
+        {"state": state, "next": _safe_next(request.args.get("next"))},
+        OIDC_STATE_MAX_AGE,
+        OIDC_COOKIE,
+        OIDC_SALT,
+    )
+
+
+@bp.get("/auth/oidc/<name>/callback")
+def oidc_callback(name: str):
+    """Finish the flow: bind the identity, then start a normal session."""
+    hook = _oidc_hook(name)
+    if request.args.get("error"):
+        return redirect("/login?oidc=denied")
+
+    saved = get_cookie_state(OIDC_STATE_MAX_AGE, OIDC_COOKIE, OIDC_SALT)
+    state = request.args.get("state") or ""
+    if not isinstance(saved, dict) or not state or saved.get("state") != state:
+        raise ApiError("invalid oidc state", ErrorCode.PARAM_ERROR)
+
+    code = request.args.get("code")
+    if not code:
+        raise ApiError("missing oidc code", ErrorCode.PARAM_ERROR)
+
+    try:
+        identity = hook.module.oidc_exchange(
+            config=hook_config(name),
+            code=code,
+            redirect_uri=_oidc_redirect_uri(name),
+        )
+    except Exception:
+        logger.exception("oidc token exchange failed for %s", name)
+        return redirect("/login?oidc=error")
+
+    config = hook_config(name)
+    review = bool(get_setting("register_review", False))
+    try:
+        user = resolve_oidc_user(
+            issuer=identity.get("issuer") or config.get("issuer") or "",
+            subject=identity.get("subject") or "",
+            username=identity.get("username") or "",
+            nickname=identity.get("nickname") or "",
+            email=identity.get("email") or "",
+            auto_register=as_bool(config.get("auto_register", True)),
+            status=STATUS_PENDING if review else STATUS_NORMAL,
+        )
+    except ApiError:
+        logger.warning("oidc login rejected for %s", name)
+        return redirect("/login?oidc=error")
+
+    login_user(user)
+    response = redirect(_safe_next(saved.get("next")))
+    return clear_cookie_state(response, OIDC_COOKIE)
+
+
 @bp.post("/auth/logout")
 @login_required
 def logout():
@@ -162,6 +283,27 @@ def reset_password():
 
     change_password(user, data.get("password", ""))
     return ok({"reset": True})
+
+
+@bp.post("/auth/avatar")
+@login_required
+def upload_avatar():
+    """Store a cropped avatar in the user's default album."""
+    file = request.files.get("file")
+    if file is None or not file.filename:
+        raise ApiError("file is required", ErrorCode.PARAM_ERROR)
+    stream = file.stream.read()
+    if not stream:
+        raise ApiError("empty file", ErrorCode.PARAM_ERROR)
+    if len(stream) > AVATAR_MAX_BYTES:
+        raise ApiError(
+            "avatar must be smaller than 2 MB", ErrorCode.PAYLOAD_TOO_LARGE, 413
+        )
+
+    user = update_avatar(g.user, file.filename, stream, file.mimetype or "")
+    return ok(
+        {"avatar": user.avatar, "user": serialize_user(user, True)}, status=201
+    )
 
 
 @bp.put("/auth/profile")

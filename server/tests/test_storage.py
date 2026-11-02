@@ -67,3 +67,27 @@ def test_disabled_backend_is_skipped(app, client, tmp_path):
 
     with app.app_context():
         assert StorageBackend.get(StorageBackend.name == "low").priority == 50
+
+
+def test_hook_config_is_the_default_for_the_driver(app, client, tmp_path):
+    from sapic.libs.settings import set_setting
+
+    csrf = register_and_login(client)
+    with app.app_context():
+        set_setting("hooks_config", {"up2local": {"root": str(tmp_path / "hooked")}})
+
+    assert upload(client, csrf).status_code == 201
+    assert list((tmp_path / "hooked").rglob("photo.png"))
+
+
+def test_backend_config_wins_over_the_hook_default(app, client, tmp_path):
+    from sapic.libs.settings import set_setting
+
+    csrf = register_and_login(client)
+    with app.app_context():
+        set_setting("hooks_config", {"up2local": {"root": str(tmp_path / "hooked")}})
+        make_backend("explicit", tmp_path / "explicit", 1)
+
+    assert upload(client, csrf).status_code == 201
+    assert list((tmp_path / "explicit").rglob("photo.png"))
+    assert not list((tmp_path / "hooked").rglob("photo.png"))

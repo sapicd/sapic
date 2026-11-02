@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { errorMessage } from '@/api/client'
@@ -14,6 +14,17 @@ const site = useSiteStore()
 
 const form = reactive({ username: '', password: '' })
 const loading = ref(false)
+
+//: OIDC 回调出错时会带 ?oidc=error|denied 回到登录页。
+const OIDC_ERRORS = {
+  error: 'Passport 登录失败，请重试或联系管理员',
+  denied: '已取消 Passport 授权',
+}
+
+onMounted(() => {
+  const status = typeof route.query.oidc === 'string' ? route.query.oidc : ''
+  if (status && OIDC_ERRORS[status]) ElMessage.warning(OIDC_ERRORS[status])
+})
 
 async function submit() {
   if (!form.username || !form.password) {

@@ -25,7 +25,7 @@ from playhouse.migrate import SchemaMigrator, migrate
 
 from ..basis.db import db
 from ..models import ALL_MODELS, Album, Image, User
-from ..models.base import BaseModel, now
+from ..models.base import BaseModel, JSONTextField, now
 
 #: Substrings identifying transient lock errors raised by concurrent workers.
 _LOCK_ERRORS = ("locked", "busy", "deadlock")
@@ -116,9 +116,22 @@ def _v002_album_ownership() -> None:
         ).execute()
 
 
+def _v003_image_tags() -> None:
+    """Add the free-form ``images.tags`` column (JSON array in TEXT)."""
+    columns = {column.name for column in db.get_columns("images")}
+    if "tags" in columns:
+        return
+    migrate(
+        SchemaMigrator.from_database(db).add_column(
+            "images", "tags", JSONTextField(null=True)
+        )
+    )
+
+
 MIGRATIONS = [
     (1, "initial", _v001_initial),
     (2, "album_ownership", _v002_album_ownership),
+    (3, "image_tags", _v003_image_tags),
 ]
 
 

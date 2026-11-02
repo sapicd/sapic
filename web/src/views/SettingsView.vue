@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 
 import { api, errorMessage } from '@/api/client'
+import AvatarCropper from '@/components/AvatarCropper.vue'
 import HookSlot from '@/components/hook/HookSlot.vue'
 import { useSessionStore } from '@/stores/session'
 import { formatTime } from '@/utils/format'
@@ -17,6 +18,15 @@ const session = useSessionStore()
 
 const profile = reactive({ nickname: '', email: '', avatar: '' })
 const savingProfile = ref(false)
+const cropperVisible = ref(false)
+
+const avatarInitial = () =>
+  (profile.nickname || session.user?.username || '?').slice(0, 1)
+
+function onAvatarUploaded(data) {
+  profile.avatar = data?.avatar || ''
+  session.updateUser(data?.user)
+}
 
 const password = reactive({ old_password: '', new_password: '' })
 const changing = ref(false)
@@ -151,8 +161,26 @@ onMounted(() => {
             <el-form-item label="邮箱">
               <el-input v-model="profile.email" placeholder="用于找回密码，可留空" />
             </el-form-item>
-            <el-form-item label="头像地址">
-              <el-input v-model="profile.avatar" placeholder="图片 URL，留空则显示昵称首字" />
+            <el-form-item label="头像">
+              <div class="avatar-field">
+                <el-avatar :size="56" :src="profile.avatar || undefined">
+                  {{ avatarInitial() }}
+                </el-avatar>
+                <el-button size="small" @click="cropperVisible = true">
+                  上传头像
+                </el-button>
+                <el-button
+                  v-if="profile.avatar"
+                  size="small"
+                  text
+                  @click="profile.avatar = ''"
+                >
+                  清除
+                </el-button>
+              </div>
+              <div class="node-field__help">
+                上传后拖动、缩放裁剪，保存的图片会存入你的默认相册
+              </div>
             </el-form-item>
             <div class="form-actions">
               <el-button type="primary" :loading="savingProfile" @click="saveProfile">
@@ -244,6 +272,8 @@ onMounted(() => {
       show-title
       style="margin-top: 16px"
     />
+
+    <AvatarCropper v-model="cropperVisible" @uploaded="onAvatarUploaded" />
 
     <el-dialog v-model="tokenDialog" title="新建令牌" width="440px">
       <el-form label-position="top">

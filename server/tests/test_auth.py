@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+import io
+
+from sapic.libs.albums import default_album
+from sapic.models import Image, User
+
 USER = {
     "username": "alice",
     "password": "secret123",
@@ -151,3 +156,35 @@ def test_update_profile_rejects_taken_email(client):
     )
     assert response.status_code == 409
     assert response.get_json()["code"] == "CONFLICT"
+
+def test_upload_avatar_stores_the_image_in_the_default_album(app, client):
+    register(client)
+    csrf = login(client)
+
+    response = client.post(
+        "/api/v1/auth/avatar",
+        data={"file": (io.BytesIO(b"cropped"), "avatar.png")},
+        content_type="multipart/form-data",
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 201, response.get_json()
+    data = response.get_json()["data"]
+    assert data["avatar"].startswith("/i/")
+    assert data["user"]["avatar"] == data["avatar"]
+
+    with app.app_context():
+        user = User.get(User.username == "alice")
+        assert user.avatar == data["avatar"]
+        album = default_album(user)
+        sha = data["avatar"].rsplit("/", 1)[-1]
+        image = Image.get(Image.sha == sha)
+        assert image.album_id == album.id
+
+
+def test_upload_avatar_requires_login(client):
+    response = client.post(
+        "/api/v1/auth/avatar",
+        data={"file": (io.BytesIO(b"x"), "avatar.png")},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 401
