@@ -3,7 +3,7 @@ from sapic.libs.settings import set_setting
 
 
 def test_site_metadata_is_public(client):
-    response = client.get("/api/v1/site")
+    response = client.get("/api/v2/site")
     assert response.status_code == 200
     data = response.get_json()["data"]
     assert data["name"] == "sapic"
@@ -16,6 +16,6 @@ def test_site_metadata_reads_settings(app, client):
         set_setting("site_name", "图床")
         set_setting("site_background", "https://example.com/bg.jpg")
 
-    data = client.get("/api/v1/site").get_json()["data"]
+    data = client.get("/api/v2/site").get_json()["data"]
     assert data["name"] == "图床"
     assert data["background"] == "https://example.com/bg.jpg"

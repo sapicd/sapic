@@ -17,7 +17,12 @@ function reset(values) {
   const source = values || {}
   props.config.fields.forEach((field) => {
     const value = source[field.key]
-    form[field.key] = value === undefined || value === null ? '' : value
+    if (value !== undefined && value !== null) {
+      form[field.key] = value
+      return
+    }
+    //: 没保存过的字段回落到 schema 默认值，switch 才不会假装是关闭状态。
+    form[field.key] = field.default ?? ''
   })
 }
 
@@ -44,9 +49,6 @@ const canPing = computed(() =>
         <span>{{ config.title }}</span>
         <el-tag v-if="config.version" size="small" type="info" effect="plain">
           v{{ config.version }}
-        </el-tag>
-        <el-tag v-if="!config.enabled" size="small" type="warning" effect="plain">
-          已禁用
         </el-tag>
       </div>
       <div class="form-actions">

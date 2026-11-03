@@ -2,8 +2,7 @@
 """Unified API errors.
 
 API responses use stable string codes so the Vue frontend can map them to
-localised messages. The v1 compatibility layer translates them to the legacy
-integer ``code`` / ``msg`` shape separately.
+localised messages.
 """
 
 from __future__ import annotations

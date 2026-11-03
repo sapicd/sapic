@@ -63,31 +63,50 @@ gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| GET | `/api/v1/health` | 健康检查（DB / Redis） |
-| POST | `/api/v1/auth/register` | 注册 |
-| POST | `/api/v1/auth/login` | 登录（Cookie 会话，返回 CSRF） |
-| POST | `/api/v1/auth/logout` | 登出 |
-| GET | `/api/v1/auth/session` | 当前会话 |
-| POST | `/api/v1/auth/password/forgot` | 发送重置令牌（10 分钟） |
-| POST | `/api/v1/auth/password/reset` | 使用令牌重置密码 |
-| PUT | `/api/v1/auth/password` | 修改密码（吊销其它会话） |
-| GET/POST | `/api/v1/auth/tokens` | 列出 / 创建 PAT |
-| DELETE | `/api/v1/auth/tokens/<id>` | 撤销 PAT |
-| POST | `/api/v1/uploads` | 上传（multipart，字段 `file`） |
-| GET | `/api/v1/images` | 图片列表（游标分页，权限过滤） |
-| GET/PATCH/DELETE | `/api/v1/images/<sha>` | 详情 / 修改 / 删除 |
-| GET/POST | `/api/v1/albums` | 相册列表 / 创建 |
-| PATCH/DELETE | `/api/v1/albums/<id>` | 修改 / 删除（非空拒绝） |
-| GET | `/i/<sha>` | 图片读取（优先级选择副本，支持 Range） |
-| POST | `/api/upload` | v1 兼容上传（`file` + `token`） |
-| GET/PUT/DELETE | `/api/sha/<sha>` | v1 兼容图片管理 |
+| GET | `/api/v2/health` | 健康检查（DB / Redis） |
+| POST | `/api/v2/auth/register` | 注册 |
+| POST | `/api/v2/auth/login` | 登录（Cookie 会话，返回 CSRF） |
+| POST | `/api/v2/auth/logout` | 登出 |
+| GET | `/api/v2/auth/session` | 当前会话 |
+| POST | `/api/v2/auth/password/forgot` | 发送重置令牌（10 分钟） |
+| POST | `/api/v2/auth/password/reset` | 使用令牌重置密码 |
+| PUT | `/api/v2/auth/password` | 修改密码（吊销其它会话） |
+| GET/POST | `/api/v2/auth/tokens` | 列出 / 创建 PAT |
+| DELETE | `/api/v2/auth/tokens/<id>` | 撤销 PAT |
+| GET | `/api/v2/auth/oidc/<name>` | 发起统一登录（`?bind=1` 则绑定当前账号） |
+| GET | `/api/v2/auth/oidc/<name>/callback` | 统一登录回调 |
+| GET | `/api/v2/auth/identities` | 可绑定的登录方式与绑定状态 |
+| DELETE | `/api/v2/auth/identities/<name>` | 解除绑定（需当前密码） |
+| POST | `/api/v2/uploads` | 上传（multipart，字段 `file` 或 `url`） |
+| GET | `/api/v2/images` | 图片列表（游标分页，权限过滤） |
+| GET/PATCH/DELETE | `/api/v2/images/<sha>` | 详情 / 修改 / 删除 |
+| GET/POST | `/api/v2/albums` | 相册列表 / 创建 |
+| PATCH/DELETE | `/api/v2/albums/<id>` | 修改 / 删除（非空拒绝） |
+| GET | `/i/<sha>` | 图片读取（公开图 302 到后端直链；私有图鉴权后输出，支持 Range） |
 
-认证方式：Cookie 会话（写操作需要 `X-CSRF-Token`）或 `Authorization: Bearer <PAT>`；v1 兼容接口额外接受 `token` 参数。
+认证方式：Cookie 会话（写操作需要 `X-CSRF-Token`）或 `Authorization: Bearer <PAT>`。
+
+统一登录（OIDC，由 `passport` 钩子提供）：
+
+- 登录顺序：身份已绑定 → 直接登录；未绑定但 provider 已验证的邮箱与本地已验证账号一致 → 自动关联；否则按 provider 信息自动建号（新用户的主要入口，同时创建默认相册）。
+- 邮箱关联始终启用，且要求**provider 与本地账号的邮箱都验证过**：provider 缺 `email_verified` 字段按已验证处理、显式 `false` 不关联；本地邮箱需先通过验证流程，避免「抢填他人邮箱」的账号被接管。
+- 邮箱验证：注册时自动寄出令牌，也可在「账号设置」重新发送（`POST /api/v2/auth/email/verify`），提交令牌到 `POST /api/v2/auth/email/confirm` 后置为已验证；修改邮箱会重置为未验证，旧令牌随之失效。找回密码（`/auth/password/forgot`）同样只对已验证邮箱签发令牌。
+- 已登录用户可在「账号设置 → 统一登录」绑定/解绑；解绑需输入当前密码，避免 OIDC 专用账号（随机密码）把自己锁在门外。
+- 站点设置 `password_login` 关闭后，密码登录与本地注册一并停用，只能通过统一登录进入。
+
+图片地址（`src`）策略：
+
+- **公开图片**：返回优先级最高的存储后端直链，流量不经过 sapic。直链来自钩子 `upimg_save` 返回的 `src`：各后端的「加速域名」配置（`domain`）优先；本地存储没配则回落代理，GitHub/Gitee 没配则用 `download_url`（GitHub 再兜底 jsDelivr）。
+- **私有图片**（私有相册或单图覆盖 `visibility=private`）：始终返回 `/i/<sha>`，由 sapic 鉴权后输出；远程副本会被流式转发，不会暴露源站地址。
+- **没有直链的后端**（如未配置 `domain` 的本地存储）：回落到 `/i/<sha>`，本地副本流式输出并支持 Range。
+- **缓存**：公开图 `Cache-Control: public, max-age=31536000, immutable`；私有图 `private, max-age=31536000, immutable`（只允许浏览器缓存，共享缓存不缓存）。
+
+存储 key 形如 `{用户}/{年}/{月}/{日}/{ASCII 文件名}-{sha 片段}.{ext}`：后缀保证同名文件不会互相覆盖。文件名统一经 `secure_filename` 清洗（中文等非 ASCII 字符被丢弃），主体被整段清空时用 `{yyyyMMddHHmmss}{6 位随机}` 兜底，后缀始终保留；删除按 `ImageBackend.object_key` 执行。
 
 ## 当前实现范围
 
-- 已完成：应用工厂、Peewee 模型、迁移框架、健康检查、注册/登录/找回密码/PAT、上传与读取、相册权限、存储后端优先级、v1 兼容接口。
-- 待实现：用户自定义存储后端管理 API、上传票据（Upload Ticket）、多副本异步复制与对账、相册共享成员管理、管理后台 API、第三方插件安装持久化、OIDC 对接。
+- 已完成：应用工厂、Peewee 模型、迁移框架、健康检查、注册/登录/找回密码/PAT、上传与读取、相册权限、存储后端优先级。
+- 待实现：用户自定义存储后端管理 API、上传票据（Upload Ticket）、多副本异步复制与对账、相册共享成员管理、管理后台 API、第三方插件安装持久化。
 
 ## 测试
 

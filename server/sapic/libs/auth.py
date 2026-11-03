@@ -131,11 +131,6 @@ def _load_current_user() -> None:
 def _csrf_protect() -> None:
     if request.method in SAFE_METHODS:
         return
-    #: v1 protocol endpoints are token based and never carried a CSRF token.
-    if request.path.startswith("/api/upload") or request.path.startswith(
-        "/api/sha/"
-    ):
-        return
     if getattr(g, "auth_type", None) != "session":
         #: Bearer tokens are not vulnerable to CSRF.
         return

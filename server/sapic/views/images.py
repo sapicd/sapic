@@ -59,13 +59,15 @@ def list_images():
     except (TypeError, ValueError) as exc:
         raise ApiError("invalid limit", ErrorCode.PARAM_ERROR) from exc
 
+    serialize, prefetch = album_serializer()
     return ok(
         paginate(
             query,
             Image,
-            album_serializer(),
+            serialize,
             limit=limit,
             cursor=request.args.get("cursor"),
+            prefetch=prefetch,
         )
     )
 
@@ -115,7 +117,9 @@ def update_image(sha: str):
             image.album = album
     if "visibility" in data:
         visibility = data.get("visibility")
-        if visibility not in (None, "public", "private", "shared"):
+        #: ``shared`` 只在相册维度有意义（授权是按相册发放的），单图只能
+        #: 覆盖为公开/私有，空值表示跟随相册。
+        if visibility not in (None, "public", "private"):
             raise ApiError("invalid visibility", ErrorCode.PARAM_ERROR)
         image.visibility = visibility
     if "tags" in data:

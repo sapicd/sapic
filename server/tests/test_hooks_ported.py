@@ -113,16 +113,40 @@ def test_github_save_returns_the_object_key(app, monkeypatch):
         backend={"config": {"token": "t", "repo": "a/b", "basedir": "/img/"}},
     )
 
-    assert result == {
-        "code": 0,
-        "path": "img/alice/2026/photo.png",
-        "size": 5,
-        "etag": "blob",
-    }
+    assert result["code"] == 0
+    assert result["path"] == "img/alice/2026/photo.png"
+    assert result["size"] == 5
+    assert result["etag"] == "blob"
+    #: 没有加速域名时用 jsDelivr 兜底。
+    assert result["src"] == (
+        "https://cdn.jsdelivr.net/gh/a/b/img/alice/2026/photo.png"
+    )
     method, url, kwargs = fake.calls[0]
     assert method == "put"
     assert url.endswith("/repos/a/b/contents/img/alice/2026/photo.png")
     assert kwargs["headers"]["Authorization"] == "token t"
+
+
+def test_github_save_prefers_the_acceleration_domain(app, monkeypatch):
+    module = module_of(app, "up2github")
+    fake = FakeRequests(FakeResponse(201, {"content": {"size": 5, "sha": "blob"}}))
+    monkeypatch.setattr(module, "requests", fake)
+
+    result = module.upimg_save(
+        "photo.png",
+        b"bytes",
+        "alice/2026",
+        backend={
+            "config": {
+                "token": "t",
+                "repo": "a/b",
+                "domain": "https://static.example.com/",
+            }
+        },
+    )
+
+    assert result["code"] == 0
+    assert result["src"] == "https://static.example.com/alice/2026/photo.png"
 
 
 def test_github_save_rejects_incomplete_config(app, monkeypatch):

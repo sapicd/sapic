@@ -69,7 +69,7 @@ _TYPE_KEYS = {
     "textarea": {"type", "key", "label", "default", "required", "help",
                   "disabled", "placeholder", "maxlength", "rows", "mono", "when"},
     "switch": {"type", "key", "label", "default", "required", "disabled",
-               "active_text", "inactive_text", "when"},
+               "help", "active_text", "inactive_text", "when"},
     "select": {"type", "key", "label", "default", "required", "help",
                "disabled", "placeholder", "multiple", "options", "source", "when"},
     "radio": {"type", "key", "label", "default", "required", "disabled",

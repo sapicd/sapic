@@ -21,6 +21,7 @@ export const useSiteStore = defineStore('site', {
     uploadAllowedExt: '',
     allowVideo: true,
     allowRegister: true,
+    passwordLogin: true,
     allowAnonymousUpload: false,
     version: '',
     loaded: false,
@@ -73,6 +74,7 @@ export const useSiteStore = defineStore('site', {
         this.uploadAllowedExt = data?.upload_allowed_ext || ''
         this.allowVideo = data?.allow_video !== false
         this.allowRegister = data?.allow_register !== false
+        this.passwordLogin = data?.password_login !== false
         this.allowAnonymousUpload = Boolean(data?.allow_anonymous_upload)
         this.version = data?.version || ''
       } catch (error) {

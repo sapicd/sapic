@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 import secrets
 
@@ -19,7 +20,9 @@ from ..models.user import (
     STATUS_REJECTED,
 )
 from .albums import default_album
-from .images import create_image, public_url
+from .images import create_image, image_src
+
+logger = logging.getLogger(__name__)
 
 USERNAME_RE = re.compile(r"^[a-zA-Z][0-9a-zA-Z_]{3,31}$")
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -116,6 +119,39 @@ def change_password(user: User, new_password: str) -> User:
     return user
 
 
+def bind_oidc_identity(user: User, issuer: str, subject: str) -> User:
+    """Attach an OIDC identity to an existing account.
+
+    An identity may only serve one account, so re-binding it to someone else is
+    rejected instead of silently stealing the login.
+    """
+    issuer = (issuer or "").strip()[:255]
+    subject = (subject or "").strip()[:255]
+    if not issuer or not subject:
+        raise ApiError("invalid oidc identity", ErrorCode.PARAM_ERROR)
+
+    bound = User.get_or_none(
+        (User.oidc_issuer == issuer) & (User.oidc_subject == subject)
+    )
+    if bound is not None and bound.id != user.id:
+        raise ApiError("identity is already bound", ErrorCode.CONFLICT, 409)
+
+    user.oidc_issuer = issuer
+    user.oidc_subject = subject
+    user.updated_at = now()
+    user.save(only=[User.oidc_issuer, User.oidc_subject, User.updated_at])
+    return user
+
+
+def unbind_oidc_identity(user: User) -> User:
+    """Drop the OIDC identity so the account falls back to its password."""
+    user.oidc_issuer = None
+    user.oidc_subject = None
+    user.updated_at = now()
+    user.save(only=[User.oidc_issuer, User.oidc_subject, User.updated_at])
+    return user
+
+
 def _oidc_username(hint: str) -> str:
     """Derive a unique local username from the provider's claims."""
     base = re.sub(r"[^0-9a-zA-Z_]", "", hint or "")[:28]
@@ -137,14 +173,18 @@ def resolve_oidc_user(
     username: str = "",
     nickname: str = "",
     email: str = "",
-    auto_register: bool = True,
+    email_verified: bool = False,
     status: int = STATUS_NORMAL,
 ) -> User:
-    """Find the local account bound to an OIDC identity, creating it if allowed.
+    """Find the local account for an OIDC identity, creating it when needed.
 
     ``issuer``/``subject`` are persisted on the user row (see
     ``User.oidc_issuer``/``oidc_subject``), so a provider account maps back to
     the same local user even when the upstream display name changes.
+
+    An identity already bound wins; otherwise a provider-verified email may
+    link the identity to an existing verified account; anything else becomes a
+    brand new local account (the main sign-up path for provider users).
     """
     issuer = (issuer or "").strip()[:255]
     subject = (subject or "").strip()[:255]
@@ -159,14 +199,27 @@ def resolve_oidc_user(
             raise ApiError("account is not active", ErrorCode.FORBIDDEN, 403)
         return user
 
-    if not auto_register:
-        raise ApiError("account is not linked", ErrorCode.FORBIDDEN, 403)
-
     email = (email or "").strip().lower() or None
+    if email_verified and email:
+        #: 两边都要验证过：provider 声明邮箱已验证，且本地账号的邮箱本身
+        #: 通过过验证流程。否则等于允许「抢填他人邮箱」的账号被接管。
+        local = User.get_or_none(User.email == email)
+        if (
+            local is not None
+            and local.email_verified
+            and not local.oidc_issuer
+            and not local.oidc_subject
+        ):
+            if local.status != STATUS_NORMAL:
+                raise ApiError("account is not active", ErrorCode.FORBIDDEN, 403)
+            logger.info("oidc identity linked by email to user %s", local.username)
+            return bind_oidc_identity(local, issuer, subject)
+
     if email and User.get_or_none(User.email == email):
-        #: 邮箱已被本地账号占用时不自动合并，避免他人的账号被接管。
+        #: 邮箱已被本地账号占用时新建账号不抢这个地址，否则会撞唯一约束。
         email = None
 
+    #: 新用户的正常入口：按 provider 信息建号，并立刻建好兜底相册。
     with db.atomic():
         user = User.create(
             username=_oidc_username(username or nickname),
@@ -181,8 +234,19 @@ def resolve_oidc_user(
             created_at=now(),
             updated_at=now(),
         )
-        #: 权限以相册为维度，账号必须立刻拥有兜底相册。
         default_album(user)
+    return user
+
+
+def mark_email_verified(user: User, email: str) -> User:
+    """Mark the account's address verified once the mailed token checks out."""
+    email = (email or "").strip().lower()
+    if not user.email or email != user.email:
+        raise ApiError("email does not match", ErrorCode.PARAM_ERROR)
+    if not user.email_verified:
+        user.email_verified = True
+        user.updated_at = now()
+        user.save(only=[User.email_verified, User.updated_at])
     return user
 
 
@@ -200,11 +264,22 @@ def update_profile(user: User, data: dict) -> User:
             (User.email == email) & (User.id != user.id)
         ):
             raise ApiError("email already exists", ErrorCode.CONFLICT, 409)
+        if email != user.email:
+            #: 换了地址就必须重新验证，旧地址的验证状态不能沿用。
+            user.email_verified = False
         user.email = email
     if data.get("avatar") is not None:
         user.avatar = (data["avatar"] or "").strip()[:255]
     user.updated_at = now()
-    user.save(only=[User.nickname, User.email, User.avatar, User.updated_at])
+    user.save(
+        only=[
+            User.nickname,
+            User.email,
+            User.email_verified,
+            User.avatar,
+            User.updated_at,
+        ]
+    )
     return user
 
 
@@ -225,7 +300,7 @@ def update_avatar(
         mime=mime or "image/png",
         album=default_album(user),
     )
-    user.avatar = public_url(image.sha)[:255]
+    user.avatar = image_src(image)[:255]
     user.updated_at = now()
     user.save(only=[User.avatar, User.updated_at])
     return user

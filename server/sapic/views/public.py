@@ -1,24 +1,87 @@
 # -*- coding: utf-8 -*-
 """Public image delivery: ``/i/<sha>``.
 
-The public URL is stable and storage agnostic. Local replicas are streamed
-with range support; remote replicas are proxied by redirecting to the URL
-returned by the driver.
+Public images normally link straight to the storage backend, so this endpoint
+is the canonical fallback: local replicas are streamed with range support,
+backends without a public domain are redirected, and private images are
+authorised by sapic first (remote ones are relayed, never redirected, so the
+origin URL is not exposed).
 """
 
 from __future__ import annotations
 
-from flask import Blueprint, redirect, send_file
+from flask import (
+    Blueprint,
+    Response,
+    redirect,
+    request,
+    send_file,
+    stream_with_context,
+)
 
 from ..basis.errors import ApiError, ErrorCode
 from ..libs.auth import current_user
-from ..libs.images import can_view, effective_visibility
+from ..libs.images import (
+    REMOTE_CHUNK_SIZE,
+    can_view,
+    effective_visibility,
+    open_remote,
+)
 from ..libs.storage import local_path, replicas_for
 from ..models import Image
 from ..models.album import VISIBILITY_PUBLIC
 from ..models.image import STATUS_ENABLED
 
 bp = Blueprint("public", __name__)
+
+#: Objects behind a sha URL never change; private ones may only live in the
+#: browser cache, never in a shared one.
+CACHE_SECONDS = 31536000
+
+
+def _cached(response, public: bool):
+    cache = response.cache_control
+    cache.max_age = CACHE_SECONDS
+    cache.immutable = True
+    if public:
+        cache.public = True
+    else:
+        cache.private = True
+    return response
+
+
+def _body(response):
+    """Relay a remote body chunk by chunk and close it when done."""
+    try:
+        while True:
+            chunk = response.read(REMOTE_CHUNK_SIZE)
+            if not chunk:
+                break
+            yield chunk
+    finally:
+        response.close()
+
+
+def _proxy(url: str, mime: str):
+    headers = {}
+    if request.headers.get("Range"):
+        headers["Range"] = request.headers["Range"]
+    remote = open_remote(url, headers=headers)
+    response = Response(
+        stream_with_context(_body(remote)),
+        status=remote.status,
+        content_type=(
+            remote.headers.get_content_type()
+            or mime
+            or "application/octet-stream"
+        ),
+    )
+    for header in ("Content-Length", "Content-Range"):
+        value = remote.headers.get(header)
+        if value:
+            response.headers[header] = value
+    response.headers["Accept-Ranges"] = "bytes"
+    return response
 
 
 @bp.get("/i/<sha>")
@@ -35,16 +98,11 @@ def image(sha: str):
     for replica in replicas_for(row):
         path = local_path(replica)
         if path is not None:
-            response = send_file(path, conditional=True)
-            if public:
-                response.cache_control.public = True
-                response.cache_control.max_age = 31536000
-                response.cache_control.immutable = True
-            else:
-                response.cache_control.private = True
-                response.cache_control.max_age = 0
-            return response
-        if replica.url:
+            return _cached(send_file(path, conditional=True), public)
+        if not replica.url:
+            continue
+        if public:
             return redirect(replica.url)
+        return _cached(_proxy(replica.url, row.mime), public=False)
 
     raise ApiError("image data is unavailable", ErrorCode.NOT_FOUND, 404)

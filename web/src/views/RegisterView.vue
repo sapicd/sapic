@@ -34,7 +34,15 @@ async function submit() {
         <img :src="site.logoUrl" :alt="site.name" />
       </div>
       <p class="auth__subtitle">创建一个账号，开始使用</p>
-      <el-form label-position="top" @submit.prevent="submit">
+      <el-alert
+        v-if="!site.passwordLogin"
+        type="warning"
+        :closable="false"
+        show-icon
+        title="本站已关闭账号注册"
+        description="请通过统一登录进入；还没有账号请联系管理员"
+      />
+      <el-form v-else label-position="top" @submit.prevent="submit">
         <el-form-item label="用户名">
           <el-input v-model="form.username" placeholder="4-32 位，字母开头" />
         </el-form-item>
@@ -58,7 +66,7 @@ async function submit() {
           注册
         </el-button>
       </el-form>
-      <div class="auth__footer">
+      <div v-if="site.passwordLogin" class="auth__footer">
         已有账号？<router-link :to="{ name: 'login' }">登录</router-link>
       </div>
     </el-card>

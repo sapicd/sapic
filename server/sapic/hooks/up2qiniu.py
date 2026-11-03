@@ -2,13 +2,14 @@
 """up2qiniu — store objects in Qiniu Cloud.
 
 Driver contract (v2): ``upimg_save(filename, stream, upload_path, backend=...)``
-returns ``{"code": 0, "path": <bucket key>, "size": <bytes>, "etag": <hash>}``.
-The public URL is decided by the service layer, so the driver never returns
-``src``; switching backends therefore never changes external links.
+returns ``{"code": 0, "path": <bucket key>, "size": <bytes>, "etag": <hash>}``
+plus ``src`` when the backend has a public ``domain``. Without it the service
+layer falls back to ``/i/<sha>``.
 
 The credentials come from ``backend["config"]`` (``bucket`` / ``access_key`` /
-``secret_key`` / ``basedir``). The SDK is optional and only imported when the
-driver is actually used, with an English hint when it is missing.
+``secret_key`` / ``basedir`` / ``domain``). The SDK is optional and only
+imported when the driver is actually used, with an English hint when it is
+missing.
 """
 
 from __future__ import annotations
@@ -20,19 +21,20 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     Auth = BucketManager = put_data = None
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __author__ = "staugur"
 __description__ = "将图片保存到七牛云"
 __catalog__ = "upload"
 __state__ = "disabled"
 
 FIELDS = (
+    ("domain", "input", "加速域名", "绑定到存储桶的加速域名，如 https://static.example.com"),
     ("bucket", "input", "Bucket", "云存储服务的名称"),
     ("access_key", "password", "AccessKey", "七牛云个人密钥的 AK"),
     ("secret_key", "password", "SecretKey", "七牛云个人密钥的 SK"),
     ("basedir", "input", "存储根目录", "图片存储到七牛云的基础目录，默认是根目录"),
 )
-REQUIRED = ("bucket", "access_key", "secret_key")
+REQUIRED = ("domain", "bucket", "access_key", "secret_key")
 
 
 def hook_manifest():
@@ -130,6 +132,10 @@ def upimg_save(filename, stream, upload_path="", backend=None, **kwargs):
     if error:
         return {"code": 1, "msg": error}
 
+    domain = str(config.get("domain") or "").strip().rstrip("/")
+    if not domain:
+        return {"code": 1, "msg": "The qiniu domain parameter error"}
+
     data = stream if isinstance(stream, (bytes, bytearray)) else stream.read()
     bucket = str(config["bucket"]).strip()
     key = _key(config.get("basedir"), upload_path, filename)
@@ -146,6 +152,7 @@ def upimg_save(filename, stream, upload_path="", backend=None, **kwargs):
         "path": key,
         "size": len(data),
         "etag": (ret or {}).get("hash") or sha256(data).hexdigest()[:32],
+        "src": "%s/%s" % (domain, key),
     }
 
 

@@ -2,9 +2,9 @@
 """up2gitee — store objects in a Gitee repository.
 
 Driver contract (v2): ``upimg_save(filename, stream, upload_path, backend=...)``
-returns ``{"code": 0, "path": <repo key>, "size": <bytes>, "etag": <blob sha>}``.
-The public URL is decided by the service layer, so the driver never returns
-``src``; switching backends therefore never changes external links.
+returns ``{"code": 0, "path": <repo key>, "size": <bytes>, "etag": <blob sha>}``
+plus ``src``, the ``download_url`` Gitee reports for the new blob (public
+repositories only; the service layer falls back to ``/i/<sha>`` without it).
 
 The credentials come from ``backend["config"]`` (``token`` / ``repo`` /
 ``branch`` / ``basedir``). Gitee takes the private token as a request
@@ -21,7 +21,7 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     requests = None
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __author__ = "staugur"
 __description__ = "将图片保存到Gitee"
 __catalog__ = "upload"
@@ -32,6 +32,7 @@ TIMEOUT = 30
 
 #: (key, node type, label, hint) shared by the manifest and the settings slot.
 FIELDS = (
+    ("domain", "input", "加速域名", "如自建加速地址，留空则使用仓库源站地址"),
     ("token", "password", "私人令牌", "Gitee 私人令牌（projects 权限）"),
     ("repo", "input", "仓库名", "公开仓库，格式：用户名/仓库名"),
     ("branch", "input", "分支", "仓库分支，留空则使用仓库默认分支"),
@@ -168,12 +169,24 @@ def upimg_save(filename, stream, upload_path="", backend=None, **kwargs):
         return {"code": response.status_code or 1, "msg": _error(response)}
 
     content = (response.json() or {}).get("content") or {}
-    return {
+    result = {
         "code": 0,
         "path": key,
         "size": content.get("size") or len(data),
         "etag": content.get("sha") or sha256(data).hexdigest()[:32],
     }
+    #: 加速域名优先；其次是 Gitee 给出的 raw 地址；私有仓库两者都需 token，
+    #: 服务层只对公开图使用。
+    src = str(config.get("domain") or "").strip().rstrip("/")
+    if src:
+        src = "%s/%s" % (src, key)
+    else:
+        src = content.get("download_url") or ""
+        if not src and branch and "/" in repo:
+            src = "https://gitee.com/%s/raw/%s/%s" % (repo, branch, key)
+    if src:
+        result["src"] = src
+    return result
 
 
 def upimg_delete(sha, upload_path, filename, basedir, save_result, backend=None, **kwargs):

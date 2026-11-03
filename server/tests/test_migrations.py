@@ -36,6 +36,6 @@ def test_create_app_migrates_on_boot(tmp_path):
     )
     with app.app_context():
         assert SchemaVersion.select().count() == len(MIGRATIONS)
-        assert app.test_client().get("/api/v1/images").status_code == 200
+        assert app.test_client().get("/api/v2/images").status_code == 200
     if not db.is_closed():
         db.close()

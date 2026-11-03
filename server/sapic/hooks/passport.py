@@ -27,7 +27,7 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     requests = None
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "staugur"
 __description__ = "使用 Passport 统一登录（OIDC）"
 __catalog__ = "auth"
@@ -37,14 +37,13 @@ TIMEOUT = 15
 DISCOVERY_TTL = 300
 DEFAULT_SCOPES = "openid profile email"
 
-#: (key, node type, label, hint); ``switch`` fields carry no placeholder.
+#: (key, node type, label, hint)；``input`` 的 hint 是占位文案，``switch`` 的 hint 是说明提示。
 FIELDS = (
     ("issuer", "input", "Issuer 地址", "Passport 服务地址，如 https://passport.example.com"),
     ("client_id", "input", "Client ID", "Passport 后台创建 OIDC 应用后获得"),
     ("client_secret", "password", "Client Secret", "OIDC 应用密钥"),
     ("scopes", "input", "Scope", "留空使用 openid profile email"),
     ("button_text", "input", "按钮文案", "登录页按钮文案，默认「通过 Passport 登录」"),
-    ("auto_register", "switch", "自动注册", "首次登录自动创建本地账号"),
 )
 REQUIRED = ("issuer", "client_id", "client_secret")
 
@@ -70,6 +69,7 @@ def hook_manifest():
                 "key": key,
                 "label": label,
                 "default": True,
+                "help": hint,
                 "active_text": "开启",
                 "inactive_text": "关闭",
             }
@@ -98,7 +98,7 @@ def slot_login_after_form(context=None, **kwargs):
         {
             "type": "link",
             "text": text,
-            "href": "/api/v1/auth/oidc/passport",
+            "href": "/api/v2/auth/oidc/passport",
             "icon": "builtin:link",
         },
     ]
@@ -169,12 +169,18 @@ def _identity(claims: dict, issuer: str) -> dict:
         or claims.get("name")
         or ""
     )
+    #: Passport 只把验证过的手机号/邮箱入库，缺字段按已验证处理。
+    verified = claims.get("email_verified", True)
+    if isinstance(verified, str):
+        verified = verified.strip().lower() in ("true", "1", "yes")
     return {
         "issuer": str(claims.get("iss") or issuer),
         "subject": subject,
         "username": str(username or ""),
         "nickname": str(claims.get("name") or claims.get("nickname") or ""),
         "email": str(claims.get("email") or ""),
+        #: 只有 provider 明确验证过的邮箱才允许自动关联本地老账号。
+        "email_verified": bool(verified),
     }
 
 

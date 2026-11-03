@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { api, errorMessage } from '@/api/client'
@@ -7,11 +7,12 @@ import HookSlot from '@/components/hook/HookSlot.vue'
 import { useSessionStore } from '@/stores/session'
 import { absoluteUrl, formatSize, formatTime } from '@/utils/format'
 
+const VISIBILITY_LABELS = { public: '公开', private: '私有', shared: '共享' }
+const VISIBILITY_TAGS = { public: 'success', private: 'info', shared: 'warning' }
+//: 共享只存在于相册维度，单图只能覆盖为公开/私有（空值表示跟随相册）。
 const VISIBILITIES = [
-  { label: '跟随相册', value: '' },
   { label: '公开', value: 'public' },
   { label: '私有', value: 'private' },
-  { label: '共享', value: 'shared' },
 ]
 
 const route = useRoute()
@@ -23,6 +24,20 @@ const replicas = ref([])
 const loading = ref(false)
 const saving = ref(false)
 const form = reactive({ title: '', visibility: '', tags: [] })
+
+//: 生效可见性 = 单图覆盖，否则跟随相册（无相册时后端按公开处理）。
+const effective = computed(() => {
+  const own = image.value?.visibility
+  if (own) return { value: own, follow: false }
+  return { value: image.value?.album?.visibility || 'public', follow: true }
+})
+const effectiveLabel = computed(() => VISIBILITY_LABELS[effective.value.value] || '未知')
+const effectiveType = computed(() => VISIBILITY_TAGS[effective.value.value] || 'info')
+const albumLabel = computed(() => VISIBILITY_LABELS[image.value?.album?.visibility] || '公开')
+const visibilityOptions = computed(() => [
+  { label: `跟随相册（${albumLabel.value}）`, value: '' },
+  ...VISIBILITIES,
+])
 
 async function load() {
   loading.value = true
@@ -97,101 +112,154 @@ onMounted(load)
 <template>
   <div v-loading="loading" class="page">
     <div class="page__header">
-      <h2 class="page__title">{{ image?.filename || '图片详情' }}</h2>
-      <el-button @click="router.push({ name: 'images' })">返回列表</el-button>
+      <div class="page__heading">
+        <h2 class="page__title">
+          {{ image?.title || image?.filename || '图片详情' }}
+        </h2>
+        <div v-if="image?.title" class="page__subtitle">{{ image.filename }}</div>
+      </div>
+      <div class="detail-actions">
+        <el-button :disabled="!image" @click="copy">复制链接</el-button>
+        <el-button @click="router.push({ name: 'images' })">返回列表</el-button>
+      </div>
     </div>
 
     <el-row v-if="image" :gutter="16">
       <el-col :xs="24" :md="14">
-        <el-card>
-          <div class="detail-preview">
-            <el-image
-              :src="image.src"
-              fit="contain"
-              :preview-src-list="[absoluteUrl(image.src)]"
-              preview-teleported
-            />
-          </div>
-          <div class="detail-meta">
+        <div class="detail-preview">
+          <el-image
+            :src="image.src"
+            fit="contain"
+            :preview-src-list="[absoluteUrl(image.src)]"
+            preview-teleported
+          />
+        </div>
+      </el-col>
+
+      <el-col :xs="24" :md="10">
+        <el-descriptions
+          title="元数据"
+          :column="1"
+          :label-width="80"
+          size="small"
+          border
+          class="detail-sheet"
+        >
+          <el-descriptions-item label="相册">
             <el-tag
               v-if="image.album"
+              size="small"
               effect="plain"
               class="detail-album"
               title="查看该相册的图片"
               @click="openAlbum"
             >
-              相册：{{ image.album.name }}
+              {{ image.album.name }} · {{ albumLabel }}
             </el-tag>
-            <el-tag v-else effect="plain">相册：未归属</el-tag>
+            <span v-else class="detail-info__muted">未归属</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="可见性">
+            <el-tag size="small" :type="effectiveType" effect="light">
+              {{ effectiveLabel }}
+            </el-tag>
+            <span class="detail-info__muted">
+              {{ effective.follow ? '跟随相册' : '单图覆盖' }}
+            </span>
+          </el-descriptions-item>
+          <el-descriptions-item label="类型">
+            {{ image.mime || '未知类型' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="大小">
+            {{ formatSize(image.size) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="上传时间">
+            {{ formatTime(image.created_at) }}
+          </el-descriptions-item>
+          <el-descriptions-item v-if="image.tags?.length" label="标签">
+            <div class="detail-info__tags">
+              <el-tag
+                v-for="tag in image.tags"
+                :key="tag"
+                size="small"
+                type="success"
+                effect="plain"
+              >
+                {{ tag }}
+              </el-tag>
+            </div>
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <el-descriptions
+          v-if="replicas.length"
+          title="副本"
+          :column="1"
+          :label-width="80"
+          size="small"
+          border
+          class="detail-sheet detail-block"
+        >
+          <el-descriptions-item
+            v-for="replica in replicas"
+            :key="replica.backend"
+            :label="replica.backend"
+          >
             <el-tag
-              v-for="tag in image.tags || []"
-              :key="tag"
-              type="success"
+              size="small"
+              :type="replica.state === 'ok' ? 'success' : 'info'"
               effect="plain"
             >
-              {{ tag }}
+              {{ replica.state }}
             </el-tag>
-            <el-tag effect="plain">{{ image.mime || '未知类型' }}</el-tag>
-            <el-tag effect="plain">{{ formatSize(image.size) }}</el-tag>
-            <el-tag effect="plain">{{ formatTime(image.created_at) }}</el-tag>
-            <el-tag effect="plain">{{ image.visibility || '跟随相册' }}</el-tag>
-            <el-button size="small" type="primary" plain @click="copy">
-              复制链接
-            </el-button>
-          </div>
-        </el-card>
-      </el-col>
+            <span v-if="replica.is_primary" class="detail-info__muted">主副本</span>
+            <span v-if="replica.size" class="detail-info__muted">
+              {{ formatSize(replica.size) }}
+            </span>
+          </el-descriptions-item>
+        </el-descriptions>
 
-      <el-col :xs="24" :md="10">
-        <el-card v-if="session.authenticated">
-          <template #header>编辑</template>
-          <el-form label-position="top">
-            <el-form-item label="标题">
-              <el-input v-model="form.title" maxlength="255" />
-            </el-form-item>
-            <el-form-item label="标签">
-              <el-select
-                v-model="form.tags"
-                multiple
-                filterable
-                allow-create
-                default-first-option
-                :reserve-keyword="false"
-                :multiple-limit="10"
-                placeholder="输入后回车添加，最多 10 个"
-                style="width: 100%"
+        <el-descriptions
+          v-if="session.authenticated"
+          title="编辑"
+          :column="1"
+          :label-width="80"
+          size="small"
+          border
+          class="detail-sheet detail-block"
+        >
+          <el-descriptions-item label="标题">
+            <el-input v-model="form.title" maxlength="255" />
+          </el-descriptions-item>
+          <el-descriptions-item label="标签">
+            <el-select
+              v-model="form.tags"
+              multiple
+              filterable
+              allow-create
+              default-first-option
+              :reserve-keyword="false"
+              :multiple-limit="10"
+              placeholder="输入后回车添加，最多 10 个"
+              style="width: 100%"
+            />
+          </el-descriptions-item>
+          <el-descriptions-item label="可见性">
+            <el-select v-model="form.visibility" style="width: 100%">
+              <el-option
+                v-for="option in visibilityOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
               />
-            </el-form-item>
-            <el-form-item label="可见性">
-              <el-select v-model="form.visibility" style="width: 100%">
-                <el-option
-                  v-for="option in VISIBILITIES"
-                  :key="option.value"
-                  :label="option.label"
-                  :value="option.value"
-                />
-              </el-select>
-            </el-form-item>
+            </el-select>
+          </el-descriptions-item>
+          <el-descriptions-item label="操作">
             <el-button type="primary" :loading="saving" @click="save">
               保存
             </el-button>
             <el-button type="danger" plain @click="remove">删除</el-button>
-          </el-form>
-        </el-card>
-
-        <el-card style="margin-top: 16px">
-          <template #header>副本</template>
-          <el-table :data="replicas" size="small">
-            <el-table-column prop="backend" label="后端" />
-            <el-table-column prop="state" label="状态" width="90" />
-            <el-table-column label="主副本" width="90">
-              <template #default="{ row }">
-                <el-tag v-if="row.is_primary" size="small" type="success">是</el-tag>
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
+          </el-descriptions-item>
+        </el-descriptions>
 
         <HookSlot
           slot="image.detail"

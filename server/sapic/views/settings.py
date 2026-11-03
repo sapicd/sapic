@@ -37,6 +37,7 @@ _BOOL_KEYS = {
     "allow_anonymous_upload",
     "allow_register",
     "allow_video",
+    "password_login",
     "register_review",
 }
 

@@ -28,11 +28,14 @@ from ..libs.settings import get_setting
 from ..libs.storage import hook_config
 from ..libs.users import (
     authenticate,
+    bind_oidc_identity,
     change_password,
     create_user,
+    mark_email_verified,
     normalize_username,
     resolve_oidc_user,
     serialize_user,
+    unbind_oidc_identity,
     update_avatar,
     update_profile,
 )
@@ -52,6 +55,8 @@ bp = Blueprint("auth", __name__)
 
 RESET_SALT = "sapic-reset-password"
 RESET_MAX_AGE = 600
+VERIFY_SALT = "sapic-verify-email"
+VERIFY_MAX_AGE = 24 * 3600
 AVATAR_MAX_BYTES = 2 * 1024 * 1024
 
 #: OIDC state cookie; scoped to the redirect dance only.
@@ -78,6 +83,21 @@ def _reset_token(user: User) -> str:
     )
 
 
+def _verify_serializer() -> URLSafeTimedSerializer:
+    return URLSafeTimedSerializer(current_app.secret_key, salt=VERIFY_SALT)
+
+
+def _mail_verification(user: User) -> str:
+    """Mail a verification token, returning it for local/dev callers."""
+    token = _verify_serializer().dumps({"uid": user.id, "email": user.email})
+    send_mail(
+        to=user.email,
+        subject="验证邮箱",
+        body="24 小时内有效，请提交以下令牌完成邮箱验证：\n\n%s\n" % token,
+    )
+    return token
+
+
 @bp.get("/auth/csrf")
 @login_required
 def csrf_token():
@@ -96,8 +116,14 @@ def read_session():
     )
 
 
+def _password_login_enabled() -> bool:
+    return bool(get_setting("password_login", True))
+
+
 @bp.post("/auth/register")
 def register():
+    if not _password_login_enabled():
+        raise ApiError("password login is disabled", ErrorCode.FORBIDDEN, 403)
     if not current_app.config.get("ALLOW_REGISTER", True) or not get_setting(
         "allow_register", True
     ):
@@ -120,15 +146,37 @@ def register():
         email=data.get("email"),
         status=STATUS_PENDING if review else STATUS_NORMAL,
     )
+    if user.email:
+        #: 新注册的邮箱默认未验证，先寄一封；SMTP 未配置时只记日志。
+        _mail_verification(user)
     return ok({"user": serialize_user(user, True)}, status=201)
 
 
 @bp.post("/auth/login")
 def login():
+    if not _password_login_enabled():
+        raise ApiError("password login is disabled", ErrorCode.FORBIDDEN, 403)
     data = _payload()
     user = authenticate(data.get("username", ""), data.get("password", ""))
     csrf = login_user(user)
     return ok({"user": serialize_user(user, True), "csrf": csrf})
+
+
+#: Rejections are internal English messages; the login page localises the flags.
+_OIDC_FAILURES = (
+    ("not linked", "unlinked"),
+    ("not active", "inactive"),
+    ("invalid oidc identity", "invalid"),
+)
+
+
+def _oidc_failure_flag(exc: ApiError) -> str:
+    """Map a rejection to a flag so the login page can explain what happened."""
+    message = (exc.message or "").lower()
+    for needle, flag in _OIDC_FAILURES:
+        if needle in message:
+            return flag
+    return "error"
 
 
 def _oidc_hook(name: str):
@@ -156,10 +204,38 @@ def _safe_next(value) -> str:
     return path
 
 
+def _with_flag(path: str, key: str, value: str) -> str:
+    """Append a query flag to a same-site path, keeping existing params."""
+    return "%s%s%s=%s" % (path, "&" if "?" in path else "?", key, value)
+
+
+def _finish_bind(name: str, issuer: str, subject: str, bind_uid: int, saved: dict):
+    """Link the identity returned by the provider to the signed-in account."""
+    user = current_user()
+    if user is None or user.id != bind_uid:
+        raise ApiError("login is required to bind", ErrorCode.UNAUTHORIZED, 401)
+
+    target = _safe_next(saved.get("next"))
+    try:
+        bind_oidc_identity(user, issuer, subject)
+    except ApiError as exc:
+        logger.warning("oidc bind rejected for %s: %s", name, exc.message)
+        response = redirect(_with_flag(target, "identity", "error"))
+    else:
+        logger.info("oidc identity %s bound to user %s", name, user.username)
+        response = redirect(_with_flag(target, "identity", "bound"))
+    return clear_cookie_state(response, OIDC_COOKIE)
+
+
 @bp.get("/auth/oidc/<name>")
 def oidc_start(name: str):
     """Kick off the authorization-code flow for a hook-based provider."""
     hook = _oidc_hook(name)
+    user = current_user()
+    binding = as_bool(request.args.get("bind"))
+    if binding and user is None:
+        raise ApiError("login is required to bind", ErrorCode.UNAUTHORIZED, 401)
+
     state = secrets.token_urlsafe(24)
     try:
         location = hook.module.oidc_authorize_url(
@@ -172,16 +248,15 @@ def oidc_start(name: str):
     except Exception as exc:
         logger.exception("oidc provider %s is unreachable", name)
         raise ApiError(
-            "oidc provider is unreachable", ErrorCode.BAD_GATEWAY, 502
+            "oidc provider is unreachable", ErrorCode.SERVICE_UNAVAILABLE, 502
         ) from exc
 
+    payload = {"state": state, "next": _safe_next(request.args.get("next"))}
+    if binding:
+        payload["bind_uid"] = user.id
     response = redirect(location)
     return set_cookie_state(
-        response,
-        {"state": state, "next": _safe_next(request.args.get("next"))},
-        OIDC_STATE_MAX_AGE,
-        OIDC_COOKIE,
-        OIDC_SALT,
+        response, payload, OIDC_STATE_MAX_AGE, OIDC_COOKIE, OIDC_SALT
     )
 
 
@@ -212,24 +287,82 @@ def oidc_callback(name: str):
         return redirect("/login?oidc=error")
 
     config = hook_config(name)
+    issuer = identity.get("issuer") or config.get("issuer") or ""
+    subject = identity.get("subject") or ""
+    bind_uid = saved.get("bind_uid")
+    if bind_uid:
+        return _finish_bind(name, issuer, subject, bind_uid, saved)
+
     review = bool(get_setting("register_review", False))
     try:
         user = resolve_oidc_user(
-            issuer=identity.get("issuer") or config.get("issuer") or "",
-            subject=identity.get("subject") or "",
+            issuer=issuer,
+            subject=subject,
             username=identity.get("username") or "",
             nickname=identity.get("nickname") or "",
             email=identity.get("email") or "",
-            auto_register=as_bool(config.get("auto_register", True)),
+            email_verified=as_bool(identity.get("email_verified", False)),
             status=STATUS_PENDING if review else STATUS_NORMAL,
         )
-    except ApiError:
-        logger.warning("oidc login rejected for %s", name)
-        return redirect("/login?oidc=error")
+    except ApiError as exc:
+        logger.warning("oidc login rejected for %s: %s", name, exc.message)
+        return redirect("/login?oidc=%s" % _oidc_failure_flag(exc))
 
     login_user(user)
     response = redirect(_safe_next(saved.get("next")))
     return clear_cookie_state(response, OIDC_COOKIE)
+
+
+@bp.get("/auth/identities")
+@login_required
+def read_identities():
+    """List sign-in providers and whether this account is linked to them."""
+    user = current_user()
+    manager = get_hook_manager()
+    items = []
+    for entry in manager.manifests():
+        if entry.get("catalog") != "auth" or not entry.get("enabled"):
+            continue
+        name = entry["name"]
+        hook = manager.get(name)
+        if hook is None or not callable(
+            getattr(hook.module, "oidc_authorize_url", None)
+        ):
+            continue
+        config = hook_config(name)
+        items.append(
+            {
+                "name": name,
+                "title": entry.get("title") or name,
+                "bound": bool(
+                    user.oidc_subject
+                    and (user.oidc_issuer or "") == (config.get("issuer") or "")
+                ),
+                "bind_url": url_for(
+                    "auth.oidc_start", name=name, bind=1, next="/settings"
+                ),
+            }
+        )
+    return ok({"items": items})
+
+
+@bp.delete("/auth/identities/<name>")
+@login_required
+def unbind_identity(name: str):
+    """Unlink a provider after re-checking the password.
+
+    Requiring the password keeps OIDC-only accounts (random local password) from
+    locking themselves out by removing their only sign-in method.
+    """
+    _oidc_hook(name)
+    user = current_user()
+    password = str(_payload().get("password") or "")
+    if not password or not check_password_hash(
+        user.password_hash or "", password
+    ):
+        raise ApiError("password is incorrect", ErrorCode.FORBIDDEN, 403)
+    unbind_oidc_identity(user)
+    return ok({"unbound": True})
 
 
 @bp.post("/auth/logout")
@@ -248,7 +381,12 @@ def forgot_password():
 
     user = User.get_or_none(User.email == email)
     reset_token = None
-    if user is not None and user.status != STATUS_DISABLED:
+    #: 只有验证过的邮箱才允许找回密码，未验证地址可能只是被别人填进账号。
+    if (
+        user is not None
+        and user.email_verified
+        and user.status != STATUS_DISABLED
+    ):
         reset_token = _reset_token(user)
         send_mail(
             to=user.email,
@@ -283,6 +421,46 @@ def reset_password():
 
     change_password(user, data.get("password", ""))
     return ok({"reset": True})
+
+
+@bp.post("/auth/email/verify")
+@login_required
+def send_email_verification():
+    """Mail a verification token to the account's current address."""
+    user = g.user
+    if not user.email:
+        raise ApiError("email is not set", ErrorCode.PARAM_ERROR)
+    if user.email_verified:
+        raise ApiError("email is already verified", ErrorCode.CONFLICT, 409)
+
+    token = _mail_verification(user)
+    payload = {"sent": True}
+    #: Without SMTP configured, expose the token to local/dev clients only.
+    if not (get_setting("smtp", {}) or {}).get("host"):
+        if current_app.config.get("TESTING") or current_app.debug:
+            payload["verify_token"] = token
+    return ok(payload, status=202)
+
+
+@bp.post("/auth/email/confirm")
+def confirm_email():
+    """Mark the address verified once the mailed token checks out."""
+    token = (_payload().get("token") or "").strip()
+    if not token:
+        raise ApiError("token is required", ErrorCode.PARAM_ERROR)
+    try:
+        claims = _verify_serializer().loads(token, max_age=VERIFY_MAX_AGE)
+    except SignatureExpired as exc:
+        raise ApiError("verification token expired", ErrorCode.PARAM_ERROR) from exc
+    except BadSignature as exc:
+        raise ApiError("invalid verification token", ErrorCode.PARAM_ERROR) from exc
+
+    user = User.get_or_none(User.id == claims.get("uid"))
+    if user is None:
+        raise ApiError("invalid verification token", ErrorCode.PARAM_ERROR)
+    mark_email_verified(user, claims.get("email") or "")
+    logger.info("email verified for user %s", user.username)
+    return ok({"verified": True, "user": serialize_user(user, True)})
 
 
 @bp.post("/auth/avatar")

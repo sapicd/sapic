@@ -154,6 +154,10 @@ onMounted(loadSettings)
             <el-form-item label="保留用户名">
               <el-input v-model="form.forbidden_username" placeholder="逗号分隔，禁止注册" />
             </el-form-item>
+            <el-form-item label="密码登录">
+              <el-switch v-model="form.password_login" />
+              <span class="form-suffix">关闭后只能通过统一登录进入，同时停用本地注册</span>
+            </el-form-item>
             <el-form-item label="外部访问地址">
               <el-input
                 v-model="form.external_base_url"

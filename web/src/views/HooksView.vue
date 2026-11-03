@@ -29,6 +29,11 @@ const enabledCount = computed(
   () => manifests.value.filter((item) => item.enabled).length,
 )
 
+//: 禁用的钩子不可用，配置项也就没有必要暴露出来。
+const enabledConfigs = computed(() =>
+  configs.value.filter((item) => item.enabled),
+)
+
 async function loadHooks() {
   loading.value = true
   try {
@@ -244,12 +249,12 @@ onMounted(refresh)
           </p>
 
           <el-empty
-            v-if="!configs.length"
-            description="没有需要配置的钩子"
+            v-if="!enabledConfigs.length"
+            description="没有需要配置的钩子（禁用的钩子不显示配置项）"
             :image-size="60"
           />
           <HookConfigForm
-            v-for="item in configs"
+            v-for="item in enabledConfigs"
             :key="item.name"
             :config="item"
             :saving="saving === item.name"

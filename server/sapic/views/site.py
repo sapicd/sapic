@@ -33,6 +33,7 @@ def site():
             "upload_allowed_ext": get_setting("upload_allowed_ext", ""),
             "allow_video": bool(get_setting("allow_video", True)),
             "allow_register": bool(get_setting("allow_register", True)),
+            "password_login": bool(get_setting("password_login", True)),
             "allow_anonymous_upload": bool(
                 get_setting("allow_anonymous_upload", False)
             ),

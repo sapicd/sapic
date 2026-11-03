@@ -79,10 +79,19 @@ def ok(data=None, message: str = "", status: int = 200, **extra):
     return json_response(payload, status)
 
 
-def paginate(query, model, serializer, limit: int = 20, cursor: str | None = None):
+def paginate(
+    query,
+    model,
+    serializer,
+    limit: int = 20,
+    cursor: str | None = None,
+    prefetch=None,
+):
     """Cursor pagination ordered by ``(created_at, id)`` descending.
 
-    ``model`` must expose ``created_at`` and an integer ``id``.
+    ``model`` must expose ``created_at`` and an integer ``id``. ``prefetch`` is
+    called with the page rows before serializing, so a serializer can batch-load
+    relations instead of querying once per row.
     """
     limit = max(1, min(int(limit or 20), 100))
     if cursor:
@@ -97,6 +106,8 @@ def paginate(query, model, serializer, limit: int = 20, cursor: str | None = Non
     )
     has_more = len(rows) > limit
     rows = rows[:limit]
+    if prefetch is not None:
+        prefetch(rows)
     next_cursor = None
     if has_more and rows:
         last = rows[-1]

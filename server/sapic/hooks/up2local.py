@@ -4,9 +4,9 @@
 Driver contract (v2):
 
 ``upimg_save(filename, stream, upload_path, backend=...)`` returns
-``{"code": 0, "path": <object key>, "size": <bytes>, "etag": <hash>}``.
-The public URL is decided by the service layer, so switching storage does
-not change external links.
+``{"code": 0, "path": <object key>, "size": <bytes>, "etag": <hash>}`` plus an
+optional ``src`` direct link when ``domain`` is configured; without it the
+service layer falls back to ``/i/<sha>``.
 
 ``upimg_delete(sha, upload_path, filename, basedir, save_result)`` removes
 the object; failures must not raise.
@@ -21,7 +21,7 @@ from __future__ import annotations
 from hashlib import sha256
 from pathlib import Path
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 __author__ = "staugur"
 __description__ = "将图片保存到本地目录"
 __catalog__ = "upload"
@@ -34,12 +34,18 @@ def hook_manifest():
         "catalog": "upload",
         "config_schema": [
             {
+                "key": "domain",
+                "type": "input",
+                "label": "加速域名",
+                "placeholder": "如 https://img.example.com，留空则由 sapic 代理访问",
+            },
+            {
                 "key": "root",
                 "type": "input",
                 "label": "存储根目录",
                 "placeholder": "留空则使用站点配置的存储目录",
                 "format": "path",
-            }
+            },
         ],
         "actions": [
             {
@@ -58,6 +64,13 @@ def slot_admin_hook_setting(context=None, **kwargs):
     backend = context.get("backend") or {}
     config = backend.get("config") or {}
     children = [
+        {
+            "type": "input",
+            "key": "domain",
+            "label": "加速域名",
+            "default": config.get("domain") or "",
+            "help": "该目录由静态服务器直接伺服时的加速域名，留空则由 sapic 代理访问",
+        },
         {
             "type": "input",
             "key": "root",
@@ -101,6 +114,12 @@ def _root(backend=None, **kwargs) -> str:
     return config.get("root") or kwargs.get("root") or ""
 
 
+def _domain(backend=None, **kwargs) -> str:
+    """Direct link prefix served by a front-end web server, empty when unset."""
+    config = (backend or {}).get("config") or {}
+    return str(config.get("domain") or kwargs.get("domain") or "").strip().rstrip("/")
+
+
 def upimg_save(filename, stream, upload_path="", backend=None, **kwargs):
     root = _root(backend, **kwargs)
     if not root or not filename:
@@ -119,12 +138,16 @@ def upimg_save(filename, stream, upload_path="", backend=None, **kwargs):
     except OSError as exc:
         return {"code": 1, "msg": str(exc)}
 
-    return {
+    result = {
         "code": 0,
         "path": key,
         "size": len(data),
         "etag": sha256(data).hexdigest()[:32],
     }
+    domain = _domain(backend, **kwargs)
+    if domain:
+        result["src"] = "%s/%s" % (domain, key)
+    return result
 
 
 def upimg_delete(sha, upload_path, filename, basedir, save_result):

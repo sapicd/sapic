@@ -11,9 +11,9 @@ USER = {
 
 
 def signin(client, app=None, admin=False):
-    client.post("/api/v1/auth/register", json=USER)
+    client.post("/api/v2/auth/register", json=USER)
     response = client.post(
-        "/api/v1/auth/login",
+        "/api/v2/auth/login",
         json={"username": USER["username"], "password": USER["password"]},
     )
     assert response.status_code == 200, response.get_json()
@@ -34,13 +34,13 @@ def grant_admin(app):
 
 
 def test_catalogue_requires_login(client):
-    assert client.get("/api/v1/hooks").status_code == 401
+    assert client.get("/api/v2/hooks").status_code == 401
 
 
 def test_catalogue_lists_installed_hooks(client):
     signin(client)
 
-    body = client.get("/api/v1/hooks").get_json()
+    body = client.get("/api/v2/hooks").get_json()
     items = {item["name"]: item for item in body["data"]["items"]}
     assert "up2local" in items
     assert items["up2local"]["catalog"] == "upload"
@@ -51,29 +51,29 @@ def test_catalogue_lists_installed_hooks(client):
 
 def test_manifests_require_admin(app, client):
     signin(client)
-    assert client.get("/api/v1/hooks/manifests").status_code == 403
+    assert client.get("/api/v2/hooks/manifests").status_code == 403
 
     grant_admin(app)
-    body = client.get("/api/v1/hooks/manifests").get_json()
+    body = client.get("/api/v2/hooks/manifests").get_json()
     items = {item["name"]: item for item in body["data"]["items"]}
     local = items["up2local"]
     assert local["ui_version"] == 1
-    assert local["config_schema"][0]["key"] == "root"
+    assert local["config_schema"][0]["key"] == "domain"
     assert [action["name"] for action in local["actions"]] == ["ping"]
 
 
 def test_public_slot_is_anonymous(client):
-    body = client.get("/api/v1/hooks/slots/login.after_form").get_json()
+    body = client.get("/api/v2/hooks/slots/login.after_form").get_json()
     assert body["data"]["blocks"] == []
 
 
 def test_unknown_slot(client):
-    assert client.get("/api/v1/hooks/slots/nope").status_code == 404
+    assert client.get("/api/v2/hooks/slots/nope").status_code == 404
 
 
 def test_admin_slot_is_denied_for_regular_users(client):
     signin(client)
-    assert client.get("/api/v1/hooks/slots/admin.site_setting").status_code == 403
+    assert client.get("/api/v2/hooks/slots/admin.site_setting").status_code == 403
 
 
 def test_admin_slot_renders_declarative_nodes(app, client):
@@ -81,7 +81,7 @@ def test_admin_slot_renders_declarative_nodes(app, client):
 
     context = '{"backend": {"config": {"root": "/tmp"}, "in_use": true}}'
     body = client.get(
-        "/api/v1/hooks/slots/admin.hook_setting",
+        "/api/v2/hooks/slots/admin.hook_setting",
         query_string={"context": context},
     ).get_json()
 
@@ -93,14 +93,19 @@ def test_admin_slot_renders_declarative_nodes(app, client):
     assert children[0]["type"] == "alert"
     button = next(item for item in children if item["type"] == "button")
     assert button["action"] == "ping"
-    field = next(item for item in children if item["type"] == "input")
+    field = next(
+        item
+        for item in children
+        if item["type"] == "input" and item["key"] == "root"
+    )
     assert field["default"] == "/tmp"
+
 
 
 def test_invalid_context_is_rejected(app, client):
     signin(client, app=app, admin=True)
     response = client.get(
-        "/api/v1/hooks/slots/admin.hook_setting",
+        "/api/v2/hooks/slots/admin.hook_setting",
         query_string={"context": "not-json"},
     )
     assert response.status_code == 400
@@ -109,7 +114,7 @@ def test_invalid_context_is_rejected(app, client):
 def test_action_needs_a_csrf_token(app, client):
     signin(client, app=app, admin=True)
     response = client.post(
-        "/api/v1/hooks/up2local/actions/ping", json={"values": {}}
+        "/api/v2/hooks/up2local/actions/ping", json={"values": {}}
     )
     assert response.status_code == 403
 
@@ -118,7 +123,7 @@ def test_action_reports_success(app, client, tmp_path):
     csrf = signin(client, app=app, admin=True)
 
     response = client.post(
-        "/api/v1/hooks/up2local/actions/ping",
+        "/api/v2/hooks/up2local/actions/ping",
         json={"values": {"root": str(tmp_path)}},
         headers={"X-CSRF-Token": csrf},
     )
@@ -131,7 +136,7 @@ def test_action_business_failure_stays_in_the_body(app, client, tmp_path):
     csrf = signin(client, app=app, admin=True)
 
     response = client.post(
-        "/api/v1/hooks/up2local/actions/ping",
+        "/api/v2/hooks/up2local/actions/ping",
         json={"values": {"root": str(tmp_path / "missing")}},
         headers={"X-CSRF-Token": csrf},
     )
@@ -145,8 +150,8 @@ def test_undeclared_action_or_hook_is_404(app, client):
     csrf = signin(client, app=app, admin=True)
 
     for path in (
-        "/api/v1/hooks/up2local/actions/rm",
-        "/api/v1/hooks/ghost/actions/ping",
+        "/api/v2/hooks/up2local/actions/rm",
+        "/api/v2/hooks/ghost/actions/ping",
     ):
         response = client.post(path, json={}, headers={"X-CSRF-Token": csrf})
         assert response.status_code == 404
@@ -154,7 +159,7 @@ def test_undeclared_action_or_hook_is_404(app, client):
 
 def test_unknown_dataset_is_404(client):
     signin(client)
-    response = client.get("/api/v1/hooks/up2local/data/missing")
+    response = client.get("/api/v2/hooks/up2local/data/missing")
     assert response.status_code == 404
 
 
@@ -163,12 +168,12 @@ def test_state_is_persisted_and_overrides_the_file_default(app, client):
 
     items = {
         item["name"]: item
-        for item in client.get("/api/v1/hooks").get_json()["data"]["items"]
+        for item in client.get("/api/v2/hooks").get_json()["data"]["items"]
     }
     assert items["up2github"]["enabled"] is False
 
     response = client.patch(
-        "/api/v1/hooks/up2github",
+        "/api/v2/hooks/up2github",
         json={"enabled": True},
         headers={"X-CSRF-Token": csrf},
     )
@@ -177,7 +182,7 @@ def test_state_is_persisted_and_overrides_the_file_default(app, client):
 
     items = {
         item["name"]: item
-        for item in client.get("/api/v1/hooks").get_json()["data"]["items"]
+        for item in client.get("/api/v2/hooks").get_json()["data"]["items"]
     }
     assert items["up2github"]["enabled"] is True
 
@@ -194,7 +199,7 @@ def test_state_is_persisted_and_overrides_the_file_default(app, client):
 def test_state_needs_admin_and_a_boolean(app, client):
     csrf = signin(client)
     response = client.patch(
-        "/api/v1/hooks/up2github",
+        "/api/v2/hooks/up2github",
         json={"enabled": True},
         headers={"X-CSRF-Token": csrf},
     )
@@ -202,7 +207,7 @@ def test_state_needs_admin_and_a_boolean(app, client):
 
     grant_admin(app)
     response = client.patch(
-        "/api/v1/hooks/up2github",
+        "/api/v2/hooks/up2github",
         json={"enabled": "yes"},
         headers={"X-CSRF-Token": csrf},
     )
@@ -210,7 +215,7 @@ def test_state_needs_admin_and_a_boolean(app, client):
     assert response.get_json()["code"] == "PARAM_ERROR"
 
     response = client.patch(
-        "/api/v1/hooks/ghost",
+        "/api/v2/hooks/ghost",
         json={"enabled": True},
         headers={"X-CSRF-Token": csrf},
     )
@@ -220,7 +225,7 @@ def test_state_needs_admin_and_a_boolean(app, client):
 def test_reload_returns_the_catalogue(app, client):
     csrf = signin(client, app=app, admin=True)
 
-    response = client.post("/api/v1/hooks/reload", headers={"X-CSRF-Token": csrf})
+    response = client.post("/api/v2/hooks/reload", headers={"X-CSRF-Token": csrf})
     assert response.status_code == 200
     names = {item["name"] for item in response.get_json()["data"]["items"]}
     assert {"up2local", "up2github", "pic2webp"} <= names
@@ -231,14 +236,14 @@ def test_config_roundtrip(app, client):
 
     items = {
         item["name"]: item
-        for item in client.get("/api/v1/hooks/config").get_json()["data"]["items"]
+        for item in client.get("/api/v2/hooks/config").get_json()["data"]["items"]
     }
-    assert set(items["up2local"]["values"]) == {"root"}
+    assert set(items["up2local"]["values"]) == {"root", "domain"}
     #: 没有 config_schema 的钩子不进入配置页。
     assert "pic2webp" not in items
 
     response = client.put(
-        "/api/v1/hooks/config/up2local",
+        "/api/v2/hooks/config/up2local",
         json={"root": "/srv/images"},
         headers={"X-CSRF-Token": csrf},
     )
@@ -247,7 +252,7 @@ def test_config_roundtrip(app, client):
 
     items = {
         item["name"]: item
-        for item in client.get("/api/v1/hooks/config").get_json()["data"]["items"]
+        for item in client.get("/api/v2/hooks/config").get_json()["data"]["items"]
     }
     assert items["up2local"]["values"]["root"] == "/srv/images"
 
@@ -256,7 +261,7 @@ def test_config_rejects_unknown_keys(app, client):
     csrf = signin(client, app=app, admin=True)
 
     response = client.put(
-        "/api/v1/hooks/config/up2local",
+        "/api/v2/hooks/config/up2local",
         json={"nope": "x"},
         headers={"X-CSRF-Token": csrf},
     )
@@ -266,7 +271,7 @@ def test_config_rejects_unknown_keys(app, client):
 
 def test_config_requires_admin(client):
     signin(client)
-    assert client.get("/api/v1/hooks/config").status_code == 403
+    assert client.get("/api/v2/hooks/config").status_code == 403
 
 
 def test_import_and_remove_a_third_party_hook(app, client, tmp_path, monkeypatch):
@@ -282,7 +287,7 @@ def test_import_and_remove_a_third_party_hook(app, client, tmp_path, monkeypatch
     csrf = signin(client, app=app, admin=True)
 
     response = client.post(
-        "/api/v1/hooks/import",
+        "/api/v2/hooks/import",
         json={"module": name},
         headers={"X-CSRF-Token": csrf},
     )
@@ -293,18 +298,18 @@ def test_import_and_remove_a_third_party_hook(app, client, tmp_path, monkeypatch
 
     names = {
         entry["name"]
-        for entry in client.get("/api/v1/hooks").get_json()["data"]["items"]
+        for entry in client.get("/api/v2/hooks").get_json()["data"]["items"]
     }
     assert name in names
 
     response = client.delete(
-        "/api/v1/hooks/import/%s" % name, headers={"X-CSRF-Token": csrf}
+        "/api/v2/hooks/import/%s" % name, headers={"X-CSRF-Token": csrf}
     )
     assert response.status_code == 200
 
     names = {
         entry["name"]
-        for entry in client.get("/api/v1/hooks").get_json()["data"]["items"]
+        for entry in client.get("/api/v2/hooks").get_json()["data"]["items"]
     }
     assert name not in names
 
@@ -316,7 +321,7 @@ def test_import_rejects_invalid_and_non_hook_modules(app, client):
     #: ``__version__``/``__author__``, so it cannot be a hook.
     for module in ("../etc/passwd", "os"):
         response = client.post(
-            "/api/v1/hooks/import",
+            "/api/v2/hooks/import",
             json={"module": module},
             headers={"X-CSRF-Token": csrf},
         )
@@ -324,7 +329,7 @@ def test_import_rejects_invalid_and_non_hook_modules(app, client):
 
     names = {
         entry["name"]
-        for entry in client.get("/api/v1/hooks").get_json()["data"]["items"]
+        for entry in client.get("/api/v2/hooks").get_json()["data"]["items"]
     }
     assert "os" not in names
 
@@ -334,6 +339,6 @@ def test_local_hooks_are_marked_as_local(app, client):
 
     items = {
         entry["name"]: entry
-        for entry in client.get("/api/v1/hooks").get_json()["data"]["items"]
+        for entry in client.get("/api/v2/hooks").get_json()["data"]["items"]
     }
     assert items["up2local"]["family"] == "local"

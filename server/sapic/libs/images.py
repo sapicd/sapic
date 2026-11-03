@@ -3,11 +3,22 @@
 
 from __future__ import annotations
 
+import ipaddress
 import json
+import socket
+from contextlib import closing
 from datetime import datetime
 from hashlib import sha1
 from mimetypes import guess_type
 from os.path import splitext
+from urllib.error import HTTPError, URLError
+from urllib.parse import unquote, urljoin, urlparse
+from urllib.request import (
+    HTTPRedirectHandler,
+    ProxyHandler,
+    Request,
+    build_opener,
+)
 from uuid import uuid4
 
 from flask import current_app, url_for
@@ -16,7 +27,7 @@ from werkzeug.utils import secure_filename
 
 from ..basis.db import db
 from ..basis.errors import ApiError, ErrorCode
-from ..models import Album, AlbumShare, Image, ImageBackend
+from ..models import Album, AlbumShare, Image, ImageBackend, StorageBackend
 from ..models.album import VISIBILITY_PUBLIC
 from ..models.base import now
 from ..models.image import STATUS_DELETED, STATUS_ENABLED
@@ -27,6 +38,7 @@ from .storage import (
     delete_object,
     driver_backend,
     list_backends,
+    replicas_for,
     save_object,
 )
 
@@ -114,7 +126,35 @@ def tag_condition(tag: str):
     return SQL("tags LIKE ?", (pattern,))
 
 
-def serialize_image(image: Image, album: Album | None = None) -> dict:
+def image_src(
+    image: Image,
+    album: Album | None = None,
+    replicas: list[ImageBackend] | None = None,
+) -> str:
+    """Direct link for public images, stable ``/i/<sha>`` for the rest.
+
+    Public payloads link to the highest priority replica that reported a public
+    URL, which keeps sapic out of the data path; private images must stay behind
+    ``/i/<sha>`` so the visibility check keeps applying.
+    """
+    if album is None:
+        album = image.album
+    visibility = image.visibility or (
+        album.visibility if album is not None else VISIBILITY_PUBLIC
+    )
+    if visibility == VISIBILITY_PUBLIC:
+        rows = replicas if replicas is not None else replicas_for(image)
+        #: 只看优先级最高的副本，与 /i/<sha> 的输出顺序保持一致。
+        if rows and rows[0].url:
+            return rows[0].url
+    return public_url(image.sha)
+
+
+def serialize_image(
+    image: Image,
+    album: Album | None = None,
+    replicas: list[ImageBackend] | None = None,
+) -> dict:
     return {
         "sha": image.sha,
         "filename": image.filename,
@@ -136,24 +176,181 @@ def serialize_image(image: Image, album: Album | None = None) -> dict:
         ),
         "created_at": image.created_at,
         "expire_at": image.expire_at,
-        "src": public_url(image.sha),
+        "src": image_src(image, album, replicas),
     }
 
 
 def album_serializer():
-    """Serializer that annotates each image with its album.
+    """Serializer for image lists, plus a batch prefetch for its relations.
 
-    Album names are resolved lazily and cached per call, so a page costs at most
-    one extra query per distinct album (usually one).
+    Pass ``prefetch`` to :func:`sapic.utils.web.paginate` so a page costs a
+    constant number of queries instead of two per row.
     """
-    cache: dict[int, Album | None] = {}
+    albums: dict[int, Album | None] = {}
+    replicas: dict[int, list[ImageBackend]] = {}
+
+    def prefetch(rows: list[Image]) -> None:
+        ids = [row.id for row in rows]
+        if not ids:
+            return
+        for album_id in {row.album_id for row in rows if row.album_id}:
+            albums[album_id] = Album.get_or_none(Album.id == album_id)
+        for replica in (
+            ImageBackend.select(ImageBackend, StorageBackend)
+            .join(StorageBackend)
+            .where(
+                (ImageBackend.image.in_(ids))
+                & (ImageBackend.state == STATE_OK)
+                & (StorageBackend.enabled == True)  # noqa: E712
+            )
+            .order_by(StorageBackend.priority, ImageBackend.id)
+        ):
+            replicas.setdefault(replica.image_id, []).append(replica)
 
     def serialize(image: Image) -> dict:
-        if image.album_id and image.album_id not in cache:
-            cache[image.album_id] = Album.get_or_none(Album.id == image.album_id)
-        return serialize_image(image, cache.get(image.album_id))
+        if image.album_id and image.album_id not in albums:
+            albums[image.album_id] = Album.get_or_none(Album.id == image.album_id)
+        return serialize_image(
+            image, albums.get(image.album_id), replicas.get(image.id)
+        )
 
-    return serialize
+    return serialize, prefetch
+
+
+#: Remote fetches are http(s) only, hop-validated and size/time bounded, so the
+#: endpoint cannot be used as a proxy into the intranet.
+REMOTE_TIMEOUT = 10
+REMOTE_MAX_REDIRECTS = 3
+REMOTE_CHUNK_SIZE = 64 * 1024
+REMOTE_USER_AGENT = "sapic/url-fetch"
+
+#: Content-Type 兜底：URL 里没有可用后缀时按响应头补一个，供后缀白名单校验。
+MIME_EXTS = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/gif": ".gif",
+    "image/webp": ".webp",
+    "image/bmp": ".bmp",
+    "image/svg+xml": ".svg",
+    "image/x-icon": ".ico",
+    "image/vnd.microsoft.icon": ".ico",
+    "video/mp4": ".mp4",
+    "video/webm": ".webm",
+    "video/quicktime": ".mov",
+    "video/x-m4v": ".m4v",
+    "video/x-msvideo": ".avi",
+}
+
+
+class _NoRedirect(HTTPRedirectHandler):
+    """Surface 3xx as ``HTTPError`` so every redirect hop gets validated."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def _is_public_host(hostname: str) -> bool:
+    """Reject loopback/private/link-local targets before connecting."""
+    try:
+        infos = socket.getaddrinfo(hostname, None)
+    except OSError:
+        return False
+    for info in infos:
+        try:
+            address = ipaddress.ip_address(info[4][0])
+        except ValueError:
+            return False
+        if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped:
+            address = address.ipv4_mapped
+        if (
+            address.is_private
+            or address.is_loopback
+            or address.is_link_local
+            or address.is_multicast
+            or address.is_reserved
+            or address.is_unspecified
+        ):
+            return False
+    return bool(infos)
+
+
+def open_remote(
+    url: str, timeout: int = REMOTE_TIMEOUT, headers: dict | None = None
+):
+    """Open a validated public http(s) URL for streaming.
+
+    Redirects are validated hop by hop, so the caller must close the returned
+    response when done.
+    """
+    opener = build_opener(_NoRedirect(), ProxyHandler({}))
+    target = url
+    for _ in range(REMOTE_MAX_REDIRECTS + 1):
+        parsed = urlparse(target)
+        if parsed.scheme not in ("http", "https") or not parsed.hostname:
+            raise ApiError("only http(s) url is supported", ErrorCode.PARAM_ERROR)
+        if not _is_public_host(parsed.hostname):
+            raise ApiError("url host is not allowed", ErrorCode.FORBIDDEN, 403)
+        request_headers = {
+            "User-Agent": REMOTE_USER_AGENT,
+            "Accept": "image/*,video/*",
+        }
+        request_headers.update(headers or {})
+        try:
+            return opener.open(
+                Request(target, headers=request_headers), timeout=timeout
+            )
+        except HTTPError as exc:
+            location = exc.headers.get("Location")
+            exc.close()
+            if exc.code in (301, 302, 303, 307, 308) and location:
+                target = urljoin(target, location)
+                continue
+            raise ApiError(
+                "remote fetch failed: %s" % exc.code, ErrorCode.PARAM_ERROR
+            ) from exc
+        except (URLError, OSError, ValueError) as exc:
+            raise ApiError("remote fetch failed", ErrorCode.PARAM_ERROR) from exc
+    raise ApiError("too many redirects", ErrorCode.PARAM_ERROR)
+
+
+def download_image(
+    url: str, max_bytes: int, timeout: int = REMOTE_TIMEOUT
+) -> tuple[bytes, str, str]:
+    """Fetch a remote payload as ``(stream, filename, mime)``."""
+    response = open_remote(url, timeout)
+    parsed = urlparse(response.geturl() or url)
+    mime = (response.headers.get_content_type() or "").lower()
+    if not mime.startswith(("image/", "video/")):
+        response.close()
+        raise ApiError("remote resource is not an image", ErrorCode.PARAM_ERROR)
+
+    length = response.headers.get("Content-Length")
+    if length and length.isdigit() and int(length) > max_bytes:
+        response.close()
+        raise ApiError("file exceeds the size limit", ErrorCode.PARAM_ERROR, 413)
+
+    chunks: list[bytes] = []
+    total = 0
+    with closing(response):
+        try:
+            while True:
+                chunk = response.read(REMOTE_CHUNK_SIZE)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > max_bytes:
+                    raise ApiError(
+                        "file exceeds the size limit", ErrorCode.PARAM_ERROR, 413
+                    )
+                chunks.append(chunk)
+        except OSError as exc:
+            raise ApiError("remote fetch failed", ErrorCode.PARAM_ERROR) from exc
+
+    name = unquote(parsed.path.rsplit("/", 1)[-1]) or "remote"
+    suffix = splitext(name)[-1].lower()
+    if suffix not in IMAGE_EXTS and suffix not in VIDEO_EXTS:
+        name = "%s%s" % (splitext(name)[0] or "remote", MIME_EXTS.get(mime, ""))
+    return b"".join(chunks), name, mime
 
 
 def process_stream(
@@ -199,8 +396,19 @@ def create_image(
     upload_path: str | None = None,
 ) -> Image:
     """Persist an object and its metadata on the primary backend."""
-    filename = secure_filename(filename or "") or "image"
-    suffix = splitext(filename)[-1].lower()
+    #: secure_filename 会剥掉中文等非 ASCII 字符（"截图.png" -> "png"），
+    #: 主体与后缀分开清洗，避免后缀被一起吞掉导致类型判定失败。
+    name, ext = splitext(filename or "")
+    stem = secure_filename(name)
+    if not stem:
+        #: 名字整段被清空时用时间戳+随机串兜底，避免所有中文名都撞成同一个 key。
+        stem = "%s%s" % (
+            datetime.now().strftime("%Y%m%d%H%M%S"),
+            uuid4().hex[:6],
+        )
+    ext = secure_filename(ext.lstrip(".")).lower()
+    filename = f"{stem}.{ext}" if ext else stem
+    suffix = f".{ext}" if ext else ""
     if suffix not in IMAGE_EXTS and suffix not in VIDEO_EXTS:
         raise ApiError("unsupported file type", ErrorCode.PARAM_ERROR)
     if not stream:
@@ -212,11 +420,18 @@ def create_image(
         raise ApiError("empty file", ErrorCode.PARAM_ERROR)
 
     sha = make_sha(filename)
+    #: 同一用户同一天可能上传同名文件，key 里加一段 sha 片段避免互相覆盖。
+    object_stem, object_suffix = splitext(filename)
+    object_name = "%s-%s%s" % (
+        object_stem,
+        sha.rsplit(".", 1)[-1][:12],
+        object_suffix,
+    )
     upload_path = upload_path or upload_path_for(owner)
     backends = list_backends(owner)
     primary = backends[0]
 
-    result = save_object(primary, sha, filename, stream, upload_path)
+    result = save_object(primary, sha, object_name, stream, upload_path)
     if result.get("code") != 0:
         raise ApiError(
             "storage save failed: %s" % (result.get("msg") or "unknown error"),
@@ -289,6 +504,7 @@ def can_view(user, image: Image) -> bool:
     visibility = effective_visibility(image)
     if visibility == VISIBILITY_PUBLIC:
         return True
+    #: ``shared`` 只来自相册，授权记录按相册发放，单图不会单独共享。
     if visibility == "shared" and image.album is not None and user is not None:
         return (
             AlbumShare.get_or_none(

@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 import { api, errorMessage } from '@/api/client'
 import AvatarCropper from '@/components/AvatarCropper.vue'
@@ -14,11 +15,15 @@ const EXPIRES = [
   { label: '365 天', value: 365 },
 ]
 
+const route = useRoute()
 const session = useSessionStore()
+
+const identities = ref([])
 
 const profile = reactive({ nickname: '', email: '', avatar: '' })
 const savingProfile = ref(false)
 const cropperVisible = ref(false)
+const sendingVerify = ref(false)
 
 const avatarInitial = () =>
   (profile.nickname || session.user?.username || '?').slice(0, 1)
@@ -56,6 +61,44 @@ async function saveProfile() {
     ElMessage.error(errorMessage(error, '保存失败'))
   } finally {
     savingProfile.value = false
+  }
+}
+
+async function verifyEmail() {
+  if (!session.user?.email) {
+    ElMessage.warning('请先填写邮箱并保存')
+    return
+  }
+  if (profile.email !== session.user.email) {
+    ElMessage.warning('邮箱有未保存的改动，请先保存')
+    return
+  }
+  sendingVerify.value = true
+  try {
+    const sent = await api.post('/auth/email/verify')
+    let token = sent?.verify_token || ''
+    if (!token) {
+      try {
+        const { value } = await ElMessageBox.prompt(
+          '验证令牌已发送到邮箱，请粘贴邮件中的令牌完成验证',
+          '验证邮箱',
+          {
+            inputPlaceholder: '邮件中的令牌',
+            inputValidator: (value) => Boolean(value) || '请输入令牌',
+          },
+        )
+        token = value
+      } catch (error) {
+        return
+      }
+    }
+    const data = await api.post('/auth/email/confirm', { json: { token } })
+    session.updateUser(data?.user)
+    ElMessage.success('邮箱已验证')
+  } catch (error) {
+    ElMessage.error(errorMessage(error, '邮箱验证失败'))
+  } finally {
+    sendingVerify.value = false
   }
 }
 
@@ -135,9 +178,50 @@ async function copy(text) {
   }
 }
 
+async function loadIdentities() {
+  try {
+    const data = await api.get('/auth/identities')
+    identities.value = data?.items || []
+  } catch (error) {
+    ElMessage.error(errorMessage(error, '加载登录方式失败'))
+  }
+}
+
+function bindIdentity(item) {
+  window.location.href = item.bind_url
+}
+
+async function unbindIdentity(item) {
+  let password = ''
+  try {
+    const { value } = await ElMessageBox.prompt(
+      '解除后该账号无法再通过统一登录进入，请输入当前密码确认',
+      '解除绑定',
+      {
+        inputType: 'password',
+        inputValidator: (value) => Boolean(value) || '请输入密码',
+      }
+    )
+    password = value
+  } catch (error) {
+    return
+  }
+  try {
+    await api.del(`/auth/identities/${item.name}`, { json: { password } })
+    ElMessage.success('已解除绑定')
+    await loadIdentities()
+  } catch (error) {
+    ElMessage.error(errorMessage(error, '解除绑定失败'))
+  }
+}
+
 onMounted(() => {
   syncProfile()
   loadTokens()
+  loadIdentities()
+  const flag = typeof route.query.identity === 'string' ? route.query.identity : ''
+  if (flag === 'bound') ElMessage.success('统一登录已绑定')
+  if (flag === 'error') ElMessage.error('绑定失败，该身份可能已绑定到其他账号')
 })
 </script>
 
@@ -159,7 +243,27 @@ onMounted(() => {
               <el-input v-model="profile.nickname" maxlength="64" placeholder="右上角显示的名称" />
             </el-form-item>
             <el-form-item label="邮箱">
-              <el-input v-model="profile.email" placeholder="用于找回密码，可留空" />
+              <el-input v-model="profile.email" placeholder="用于找回密码与统一登录关联，可留空" />
+              <div v-if="session.user?.email" class="email-verify">
+                <el-tag
+                  size="small"
+                  :type="session.user?.email_verified ? 'success' : 'warning'"
+                  effect="plain"
+                >
+                  {{ session.user?.email_verified ? '已验证' : '未验证' }}
+                </el-tag>
+                <el-button
+                  v-if="!session.user?.email_verified"
+                  size="small"
+                  link
+                  type="primary"
+                  :loading="sendingVerify"
+                  @click="verifyEmail"
+                >
+                  发送验证邮件
+                </el-button>
+                <span class="node-field__help">验证后才允许按邮箱自动关联统一登录</span>
+              </div>
             </el-form-item>
             <el-form-item label="头像">
               <div class="avatar-field">
@@ -264,6 +368,46 @@ onMounted(() => {
           <el-empty description="还没有令牌" :image-size="60" />
         </template>
       </el-table>
+    </el-card>
+
+    <el-card style="margin-top: 16px">
+      <template #header>统一登录</template>
+      <p class="hint">
+        绑定后可用对应的平台账号登录本站；解除绑定需要输入当前密码。关闭「密码登录」后，
+        这里将是唯一的登录方式。
+      </p>
+      <div
+        v-for="item in identities"
+        :key="item.name"
+        style="
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 8px 0;
+          border-bottom: 1px solid var(--el-border-color-lighter);
+        "
+      >
+        <span style="flex: 1">{{ item.title }}</span>
+        <el-tag size="small" :type="item.bound ? 'success' : 'info'">
+          {{ item.bound ? '已绑定' : '未绑定' }}
+        </el-tag>
+        <el-button
+          v-if="item.bound"
+          link
+          type="danger"
+          @click="unbindIdentity(item)"
+        >
+          解除绑定
+        </el-button>
+        <el-button v-else link type="primary" @click="bindIdentity(item)">
+          立即绑定
+        </el-button>
+      </div>
+      <el-empty
+        v-if="!identities.length"
+        description="站点未启用第三方登录"
+        :image-size="60"
+      />
     </el-card>
 
     <HookSlot

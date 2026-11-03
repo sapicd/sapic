@@ -20,12 +20,13 @@ P ?=
 export FLASK_APP
 
 .DEFAULT_GOAL := help
-.PHONY: help setup install-prod config upgrade create-admin test dev serve \
+.PHONY: help setup setup-hooks install-prod config upgrade create-admin test dev serve \
 	web-dev web-build clean ensure-pnpm
 
 help:
 	@echo "安装"
 	@echo "  setup          安装开发依赖（后端 dev.txt + 前端 pnpm install）"
+	@echo "  setup-hooks    安装钩子可选依赖 (requirements/hooks.txt)"
 	@echo "  install-prod   安装生产部署依赖 (requirements/prod.txt)"
 	@echo ""
 	@echo "后端（均在 $(SERVER_DIR)/ 下执行，本地包无需安装）"
@@ -46,6 +47,10 @@ help:
 setup: ensure-pnpm
 	$(PY) -m pip install -r requirements/dev.txt
 	cd web && $(PNPM) install
+
+# 钩子可选依赖：只有要启用 passport/up2github 等钩子时才需要单独安装
+setup-hooks:
+	$(PY) -m pip install -r requirements/hooks.txt
 
 install-prod:
 	$(PY) -m pip install -r requirements/prod.txt

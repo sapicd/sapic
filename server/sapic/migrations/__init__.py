@@ -128,10 +128,23 @@ def _v003_image_tags() -> None:
     )
 
 
+def _v004_image_visibility_without_shared() -> None:
+    """Drop the meaningless ``shared`` value from single-image overrides.
+
+    Sharing is granted per album (``album_shares``), so an image-level
+    ``shared`` either equals ``public`` or collapses to "follow the album".
+    Such rows fall back to the album visibility (``NULL``).
+    """
+    Image.update(visibility=None, updated_at=now()).where(
+        Image.visibility == "shared"
+    ).execute()
+
+
 MIGRATIONS = [
     (1, "initial", _v001_initial),
     (2, "album_ownership", _v002_album_ownership),
     (3, "image_tags", _v003_image_tags),
+    (4, "image_visibility", _v004_image_visibility_without_shared),
 ]
 
 

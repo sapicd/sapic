@@ -15,15 +15,36 @@ const site = useSiteStore()
 const form = reactive({ username: '', password: '' })
 const loading = ref(false)
 
-//: OIDC 回调出错时会带 ?oidc=error|denied 回到登录页。
+//: OIDC 回调失败时会带 ?oidc=<flag> 回到登录页，这里给出可读的说明。
 const OIDC_ERRORS = {
-  error: 'Passport 登录失败，请重试或联系管理员',
-  denied: '已取消 Passport 授权',
+  denied: {
+    title: '已取消 Passport 授权',
+    description: '如需登录，请重新点击「通过 Passport 登录」。',
+  },
+  unlinked: {
+    title: 'Passport 账号无法登录',
+    description:
+      '该 Passport 账号暂时无法关联本地用户，请联系管理员检查统一登录配置或账号状态。',
+  },
+  inactive: {
+    title: '账号状态受限',
+    description: '该账号待审核或已被禁用，请联系管理员处理。',
+  },
+  invalid: {
+    title: 'Passport 身份信息无效',
+    description: 'Provider 未返回必要的 subject，请联系管理员检查 OIDC 配置。',
+  },
+  error: {
+    title: 'Passport 登录失败',
+    description: '请重试；若持续失败，请联系管理员查看后端日志。',
+  },
 }
+
+const oidcError = ref(null)
 
 onMounted(() => {
   const status = typeof route.query.oidc === 'string' ? route.query.oidc : ''
-  if (status && OIDC_ERRORS[status]) ElMessage.warning(OIDC_ERRORS[status])
+  oidcError.value = OIDC_ERRORS[status] || null
 })
 
 async function submit() {
@@ -52,7 +73,24 @@ async function submit() {
         <img :src="site.logoUrl" :alt="site.name" />
       </div>
       <p class="auth__subtitle">登录后可上传与管理图片</p>
-      <el-form label-position="top" @submit.prevent="submit">
+      <el-alert
+        v-if="oidcError"
+        class="auth__alert"
+        type="error"
+        show-icon
+        :title="oidcError.title"
+        :description="oidcError.description"
+        @close="oidcError = null"
+      />
+      <el-alert
+        v-if="!site.passwordLogin"
+        type="info"
+        :closable="false"
+        show-icon
+        title="本站已关闭密码登录"
+        description="请使用下方统一登录方式进入，如有问题请联系管理员"
+      />
+      <el-form v-else label-position="top" @submit.prevent="submit">
         <el-form-item label="用户名">
           <el-input v-model="form.username" autocomplete="username" />
         </el-form-item>
@@ -77,7 +115,7 @@ async function submit() {
 
       <HookSlot slot="login.after_form" />
 
-      <div class="auth__footer">
+      <div v-if="site.passwordLogin && site.allowRegister" class="auth__footer">
         还没有账号？<router-link :to="{ name: 'register' }">注册</router-link>
       </div>
     </el-card>

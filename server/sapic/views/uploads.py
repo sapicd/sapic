@@ -9,7 +9,12 @@ from flask import Blueprint, current_app, request
 
 from ..basis.errors import ApiError, ErrorCode
 from ..libs.auth import current_user
-from ..libs.images import VIDEO_EXTS, create_image, serialize_image
+from ..libs.images import (
+    VIDEO_EXTS,
+    create_image,
+    download_image,
+    serialize_image,
+)
 from ..libs.settings import get_setting
 from ..models import Album
 from ..models.user import STATUS_DISABLED, STATUS_PENDING, STATUS_REJECTED
@@ -63,12 +68,24 @@ def upload():
         raise ApiError("account cannot upload", ErrorCode.FORBIDDEN, 403)
 
     file = request.files.get("file")
-    if file is None or not file.filename:
-        raise ApiError("file is required", ErrorCode.PARAM_ERROR)
-    stream = file.stream.read()
+    if file is not None and not file.filename:
+        file = None
+    remote_url = (request.form.get("url") or "").strip()
+    if file is None and not remote_url:
+        raise ApiError("file or url is required", ErrorCode.PARAM_ERROR)
+
+    if file is not None:
+        filename = file.filename
+        mime = file.mimetype or ""
+        stream = file.stream.read()
+    else:
+        #: URL 上传由服务端抓取，下载阶段就按大小上限截断，避免把整段内容读进内存。
+        limit_mb = int(get_setting("upload_max_size", 20) or 20)
+        stream, filename, mime = download_image(remote_url, limit_mb * 1024 * 1024)
+
     if not stream:
         raise ApiError("empty file", ErrorCode.PARAM_ERROR)
-    _check_upload_limits(file.filename, len(stream))
+    _check_upload_limits(filename, len(stream))
 
     album = None
     album_id = request.form.get("album_id")
@@ -94,9 +111,9 @@ def upload():
 
     image = create_image(
         owner=user,
-        filename=file.filename,
+        filename=filename,
         stream=stream,
-        mime=file.mimetype or "",
+        mime=mime,
         album=album,
         title=request.form.get("title") or "",
         expire=expire,

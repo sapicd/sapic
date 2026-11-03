@@ -40,7 +40,7 @@ v1 代码已归档在 `V1/`，仅供对照，不参与 v2 构建；v1 的项目�
 │   │   ├── utils/
 │   │   │   ├── common.py 纯工具函数（不依赖 Flask 上下文，如游标编解码）
 │   │   │   └── web.py    Web 工具（依赖 Flask 上下文：响应信封、分页）
-│   │   ├── views/        Flask 蓝图与路由（auth/settings/users/uploads/images/albums/health/public/legacy/hooks）
+│   │   ├── views/        Flask 蓝图与路由（auth/settings/users/uploads/images/albums/health/public/hooks）
 │   │   ├── models/       Peewee 模型（BaseModel）
 │   │   ├── migrations/   Peewee 迁移框架（flask sa 命令入口）
 │   │   └── hooks/        内置钩子，一个 .py 即一个插件（up2local 等）
@@ -71,6 +71,7 @@ v1 代码已归档在 `V1/`，仅供对照，不参与 v2 构建；v1 的项目�
 
 ```bash
 make setup            # 安装开发依赖（后端 dev.txt + 前端 pnpm install）
+make setup-hooks      # 钩子可选依赖 (requirements/hooks.txt：requests/pillow/qiniu/upyun)
 make install-prod     # 生产部署依赖 (requirements/prod.txt：base + gunicorn + gevent)
 make config           # 打印当前生效配置 (python -c load_config)
 make upgrade          # 手动兜底：建表 / 增量迁移（启动时已自动执行）
@@ -171,7 +172,7 @@ def manifest(self, name: str) -> dict | None:
 
 ### API 响应信封 ★
 
-所有 `/api/v1/*` 响应统一由 `sapic/utils/web.py` 的 `ok()` 包裹（错误走 `ApiError`）：
+所有 `/api/v2/*` 响应统一由 `sapic/utils/web.py` 的 `ok()` 包裹（错误走 `ApiError`）：
 
 ```json
 { "code": "OK", "message": "", "data": { ... } }      // 成功
@@ -196,13 +197,19 @@ def manifest(self, name: str) -> dict | None:
 ## 站点设置
 
 - 默认值集中在 `sapic/libs/settings.py` 的 `DEFAULTS`，读写统一走 `get_setting` / `set_setting`
-- 后台通过 `GET/PUT /api/v1/settings` 管理（仅管理员），可写键白名单与类型校验在 `views/settings.py`
-- 前台展示字段由公开接口 `GET /api/v1/site` 输出，前端在 `stores/site.js` 消费
+- 后台通过 `GET/PUT /api/v2/settings` 管理（仅管理员），可写键白名单与类型校验在 `views/settings.py`
+- 前台展示字段由公开接口 `GET /api/v2/site` 输出，前端在 `stores/site.js` 消费
 - 上传类设置（后缀白名单 / 大小 / 数量 / 视频）在 `views/uploads.py` 生效，注册类设置在 `views/auth.py` 生效；
   新增配置项必须同时接入「后台表单 + 实际生效点」，不要留下只存不用的配置
+- `password_login`（默认开）关闭后 `views/auth.py` 的登录与注册接口直接 403，登录页只渲染统一登录入口
+- 统一登录（OIDC）：`passport` 钩子提供 provider 能力，`views/auth.py` 负责发起/回调与绑定，
+  `libs/users.py` 的 `resolve_oidc_user` 处理「已绑定 → 登录 / 双方邮箱均已验证 → 自动关联 / 否则按
+  provider 信息建号」（新用户主要入口）；解绑需校验当前密码，避免 OIDC 专用账号锁死自己
+- 邮箱验证：注册自动寄令牌，`POST /api/v2/auth/email/verify` 重发、`POST /api/v2/auth/email/confirm`
+  提交令牌后置 `email_verified=True`；改邮箱会重置为未验证，且 `resolve_oidc_user` 要求本地已验证
 - 后台页面已拆分：`/admin` 站点设置（`AdminView`）、`/admin/hooks` 钩子管理（`HooksView`）、
   `/admin/users` 用户管理（`UsersView`），各自挂 `admin.*` 插槽；不要把它们再合并回一页
-- 用户管理走 `GET/PATCH /api/v1/users`（仅管理员，`views/users.py`）：列表支持关键词与状态筛选
+- 用户管理走 `GET/PATCH /api/v2/users`（仅管理员，`views/users.py`）：列表支持关键词与状态筛选
   （`-2` 已拒绝 / `-1` 待审核 / `0` 已禁用 / `1` 正常），PATCH 可改 `status` 与 `is_admin`；
   禁用/拒绝会自增 `session_version` 让既有会话失效，且管理员不能改自己的状态或撤销自己的管理员权限
 
@@ -215,10 +222,16 @@ def manifest(self, name: str) -> dict | None:
   匿名上传落到**系统相册**（`albums.owner_id` 为 NULL 的「公共相册」）。`create_image()` 内部兜底，
   不要绕过它直接建 `Image`，否则会出现无相册（= 默认可公开）的图片。
 - 单图覆盖：`Image.visibility` 为 NULL 表示跟随相册；前端详情页用「跟随相册」选项清空。
-- 默认相册不可删除（409）；系统相册对普通用户不可见，管理员在 `GET /api/v1/albums`
+- 默认相册不可删除（409）；系统相册对普通用户不可见，管理员在 `GET /api/v2/albums`
   会额外拿到 `role=system` 的那条，用于筛选匿名图片。
 - 结构变更走 `sapic/migrations/`：`v002_album_ownership` 负责 `owner_id` 可空、`is_default` 列
   与存量图片回填，必须保持幂等。
+- 图片地址（`src`）：公开图直接返回优先级最高副本的直链（钩子 `upimg_save` 返回的 `src`），
+  私有图固定走 `/i/<sha>` 由 sapic 鉴权后输出；私有远程副本在 `/i/` 内流式转发，不做 302，
+  避免暴露源站地址。没有直链的后端（未配 `domain` 的本地存储）同样回落到 `/i/<sha>`。
+- 存储 key 固定为 `{用户}/{年}/{月}/{日}/{ASCII 文件名}-{sha 片段}.{ext}`（`libs.images.upload_path_for` +
+  `create_image`），后缀保证同名文件不被覆盖；文件名经 `secure_filename` 清洗，主体被整段清空时用
+  `{yyyyMMddHHmmss}{6 位随机}` 兜底（不同中文名不会撞成同一个 `image`），删除按 `object_key` 执行。
 
 ## 钩子（插件）开发规范 ★
 
@@ -244,7 +257,8 @@ __state__ = "enabled"       # enabled / disabled
 - 必备元数据 `__version__` 与 `__author__`
 - **无 import 副作用的模块级代码**：钩子会被反复扫描加载，不要在模块顶层初始化连接
 - 存储类钩子实现 `upimg_save(filename, stream, upload_path="", backend=None, **kwargs)`
-  （返回 `{"code": 0, "path": <key>, "size": <bytes>, "etag": <hash>}`）与
+  （返回 `{"code": 0, "path": <key>, "size": <bytes>, "etag": <hash>}`，并在后端配置了
+  「加速域名」`domain` 时附带 `src` 直链；没有 `src` 时服务层回落到 `/i/<sha>`）与
   `upimg_delete(sha, upload_path, filename, basedir, save_result)`（失败不外抛）
 
 ### 声明式 UI 契约
@@ -274,7 +288,7 @@ __state__ = "enabled"       # enabled / disabled
 - 工程在 `web/`，独立 pnpm 工程；依赖 `pnpm install`，开发 `pnpm run dev`，构建 `pnpm run build`（`make` 会自动检测/安装 pnpm）
 - 变量用 `let` / `const`，函数 camelCase，组件 PascalCase，模板用 `<script setup>`
 - 全屏背景 / 顶部导航 / 页脚统一由 `layout/AppLayout.vue` 提供（`App.vue` 用 `<slot>` 注入页面），
-  站点信息（名称、背景图、注册与匿名上传开关）取 `GET /api/v1/site`（`stores/site.js`），
+  站点信息（名称、背景图、注册与匿名上传开关）取 `GET /api/v2/site`（`stores/site.js`），
   未配置背景时回落到 `web/public/background.jpg`；`logo.png` / `favicon.png` 沿用 V1 资源
 - **前端不感知插件业务逻辑**：`HookSlot` 按插槽名拉节点树，`NodeRenderer` 递归分发词表，
   未知类型静默跳过（向后兼容）；`icon` 走 `builtin:` / `brand:` 名义映射，`href` 直接使用

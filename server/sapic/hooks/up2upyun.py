@@ -2,13 +2,13 @@
 """up2upyun — store objects in Upyun.
 
 Driver contract (v2): ``upimg_save(filename, stream, upload_path, backend=...)``
-returns ``{"code": 0, "path": <bucket key>, "size": <bytes>, "etag": <hash>}``.
-The public URL is decided by the service layer, so the driver never returns
-``src``; switching backends therefore never changes external links.
+returns ``{"code": 0, "path": <bucket key>, "size": <bytes>, "etag": <hash>}``
+plus ``src`` when the backend has a public ``domain``. Without it the service
+layer falls back to ``/i/<sha>``.
 
 The credentials come from ``backend["config"]`` (``bucket`` / ``username`` /
-``password`` / ``basedir``). Upyun keys are absolute, so ``basedir`` is
-normalised to a leading ``/``.
+``password`` / ``basedir`` / ``domain``). Upyun keys are absolute, so
+``basedir`` is normalised to a leading ``/``.
 """
 
 from __future__ import annotations
@@ -20,19 +20,20 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     ED_AUTO = UpYun = None
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __author__ = "staugur"
 __description__ = "将图片保存到又拍云"
 __catalog__ = "upload"
 __state__ = "disabled"
 
 FIELDS = (
+    ("domain", "input", "加速域名", "绑定到存储桶的加速域名，如 https://static.example.com"),
     ("bucket", "input", "Bucket", "云存储服务的名称"),
     ("username", "input", "操作员", "云存储操作员账号（具有读写删除权限）"),
     ("password", "password", "密码", "云存储操作员密码"),
     ("basedir", "input", "存储根目录", "图片存储到又拍云的基础目录，默认是根目录"),
 )
-REQUIRED = ("bucket", "username", "password")
+REQUIRED = ("domain", "bucket", "username", "password")
 
 
 def hook_manifest():
@@ -134,6 +135,10 @@ def upimg_save(filename, stream, upload_path="", backend=None, **kwargs):
     if error:
         return {"code": 1, "msg": error}
 
+    domain = str(config.get("domain") or "").strip().rstrip("/")
+    if not domain:
+        return {"code": 1, "msg": "The upyun domain parameter error"}
+
     data = stream if isinstance(stream, (bytes, bytearray)) else stream.read()
     key = _key(config.get("basedir"), upload_path, filename)
     try:
@@ -146,6 +151,7 @@ def upimg_save(filename, stream, upload_path="", backend=None, **kwargs):
         "path": key,
         "size": len(data),
         "etag": sha256(data).hexdigest()[:32],
+        "src": "%s/%s" % (domain, key.lstrip("/")),
     }
 
 
