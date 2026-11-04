@@ -43,6 +43,13 @@ const uploaded = ref([])
 
 const pendingTotal = computed(() => fileList.value.length + urlList.value.length)
 
+//: 只有自己的相册和被授予「可编辑」的共享相册能作为上传目标。
+const uploadableAlbums = computed(() =>
+  albums.value.filter(
+    (album) => album.role === 'owner' || album.permission === 'write',
+  ),
+)
+
 //: 文件与链接共用单次上传数量上限。
 function remainingSlots() {
   return Math.max(site.uploadCountLimit - pendingTotal.value, 0)
@@ -336,7 +343,7 @@ onBeforeUnmount(() => {
         style="width: 220px"
       >
         <el-option
-          v-for="album in albums"
+          v-for="album in uploadableAlbums"
           :key="album.id"
           :label="album.name"
           :value="album.id"
@@ -384,7 +391,7 @@ onBeforeUnmount(() => {
             :disabled="uploading"
           >
             <el-option
-              v-for="album in albums"
+              v-for="album in uploadableAlbums"
               :key="album.id"
               :label="album.name"
               :value="album.id"

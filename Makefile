@@ -77,8 +77,9 @@ test:
 	cd $(SERVER_DIR) && $(PY) -m pytest -q
 
 # --reload：改后端代码自动重启（不启用交互式调试器，避免监听 0.0.0.0 时暴露）
+# sapic_env=dev：开发模式允许使用内置 SECRET_KEY，生产必须显式配置
 dev:
-	cd $(SERVER_DIR) && $(PY) -m flask run --host $(HOST) --port $(PORT) --reload
+	cd $(SERVER_DIR) && sapic_env=dev $(PY) -m flask run --host $(HOST) --port $(PORT) --reload
 
 serve:
 	cd $(SERVER_DIR) && $(PY) -m gunicorn "sapic:create_app()" -b $(HOST):$(PORT) -w $(WORKERS) -k gevent

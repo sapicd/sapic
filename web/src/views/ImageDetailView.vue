@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { api, errorMessage } from '@/api/client'
 import HookSlot from '@/components/hook/HookSlot.vue'
-import { useSessionStore } from '@/stores/session'
 import { absoluteUrl, formatSize, formatTime } from '@/utils/format'
 
 const VISIBILITY_LABELS = { public: '公开', private: '私有', shared: '共享' }
@@ -17,13 +16,12 @@ const VISIBILITIES = [
 
 const route = useRoute()
 const router = useRouter()
-const session = useSessionStore()
 
 const image = ref(null)
 const replicas = ref([])
 const loading = ref(false)
 const saving = ref(false)
-const form = reactive({ title: '', visibility: '', tags: [] })
+const form = reactive({ title: '', visibility: '', tags: [], plaza: 'inherit' })
 
 //: 生效可见性 = 单图覆盖，否则跟随相册（无相册时后端按公开处理）。
 const effective = computed(() => {
@@ -31,12 +29,24 @@ const effective = computed(() => {
   if (own) return { value: own, follow: false }
   return { value: image.value?.album?.visibility || 'public', follow: true }
 })
+//: 只有作者和管理员能编辑；广场里点进来的公开图只读。
+const canEdit = computed(() => Boolean(image.value?.can_edit))
 const effectiveLabel = computed(() => VISIBILITY_LABELS[effective.value.value] || '未知')
 const effectiveType = computed(() => VISIBILITY_TAGS[effective.value.value] || 'info')
 const albumLabel = computed(() => VISIBILITY_LABELS[image.value?.album?.visibility] || '公开')
 const visibilityOptions = computed(() => [
   { label: `跟随相册（${albumLabel.value}）`, value: '' },
   ...VISIBILITIES,
+])
+
+//: 广场三态：跟随相册 / 强制发布 / 强制排除，只有公开图片会真正出现在广场。
+const plazaOptions = computed(() => [
+  {
+    label: `跟随相册（${image.value?.album?.plaza ? '已发布' : '未发布'}）`,
+    value: 'inherit',
+  },
+  { label: '发布到广场', value: 'on' },
+  { label: '不发布', value: 'off' },
 ])
 
 async function load() {
@@ -49,6 +59,9 @@ async function load() {
     //: 空串表示没有单图覆盖，可见性跟随相册。
     form.visibility = image.value?.visibility || ''
     form.tags = [...(image.value?.tags || [])]
+    //: 单图的广场开关是三态，null 表示跟随相册。
+    const plaza = image.value?.plaza
+    form.plaza = plaza === null || plaza === undefined ? 'inherit' : plaza ? 'on' : 'off'
   } catch (error) {
     ElMessage.error(errorMessage(error, '加载图片失败'))
   } finally {
@@ -64,6 +77,7 @@ async function save() {
         title: form.title,
         visibility: form.visibility || null,
         tags: form.tags,
+        plaza: form.plaza === 'inherit' ? null : form.plaza === 'on',
       },
     })
     if (data?.image) image.value = { ...image.value, ...data.image }
@@ -156,6 +170,9 @@ onMounted(load)
             >
               {{ image.album.name }} · {{ albumLabel }}
             </el-tag>
+            <span v-else-if="image.album_id" class="detail-info__muted">
+              所属相册不可见
+            </span>
             <span v-else class="detail-info__muted">未归属</span>
           </el-descriptions-item>
           <el-descriptions-item label="可见性">
@@ -164,6 +181,18 @@ onMounted(load)
             </el-tag>
             <span class="detail-info__muted">
               {{ effective.follow ? '跟随相册' : '单图覆盖' }}
+            </span>
+          </el-descriptions-item>
+          <el-descriptions-item label="广场">
+            <el-tag
+              size="small"
+              :type="image.plaza_effective ? 'success' : 'info'"
+              effect="plain"
+            >
+              {{ image.plaza_effective ? '已发布' : '未发布' }}
+            </el-tag>
+            <span class="detail-info__muted">
+              {{ image.plaza === null || image.plaza === undefined ? '跟随相册' : '单图设置' }}
             </span>
           </el-descriptions-item>
           <el-descriptions-item label="类型">
@@ -219,7 +248,7 @@ onMounted(load)
         </el-descriptions>
 
         <el-descriptions
-          v-if="session.authenticated"
+          v-if="canEdit"
           title="编辑"
           :column="1"
           :label-width="80"
@@ -247,6 +276,16 @@ onMounted(load)
             <el-select v-model="form.visibility" style="width: 100%">
               <el-option
                 v-for="option in visibilityOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </el-descriptions-item>
+          <el-descriptions-item label="广场">
+            <el-select v-model="form.plaza" style="width: 100%">
+              <el-option
+                v-for="option in plazaOptions"
                 :key="option.value"
                 :label="option.label"
                 :value="option.value"

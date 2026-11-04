@@ -4,7 +4,7 @@
 Driver contract (v2): ``upimg_save(filename, stream, upload_path, backend=...)``
 returns ``{"code": 0, "path": <repo key>, "size": <bytes>, "etag": <blob sha>}``
 plus ``src``, the ``download_url`` Gitee reports for the new blob (public
-repositories only; the service layer falls back to ``/i/<sha>`` without it).
+repositories only; the service layer falls back to ``/raw/<sha>`` without it).
 
 The credentials come from ``backend["config"]`` (``token`` / ``repo`` /
 ``branch`` / ``basedir``). Gitee takes the private token as a request

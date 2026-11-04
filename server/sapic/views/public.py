@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Public image delivery: ``/i/<sha>``.
+"""Public image delivery: ``/raw/<sha>``.
 
 Public images normally link straight to the storage backend, so this endpoint
 is the canonical fallback: local replicas are streamed with range support,
@@ -84,7 +84,7 @@ def _proxy(url: str, mime: str):
     return response
 
 
-@bp.get("/i/<sha>")
+@bp.get("/raw/<sha>")
 def image(sha: str):
     row = Image.get_or_none(
         (Image.sha == sha) & (Image.status == STATUS_ENABLED)
@@ -106,3 +106,7 @@ def image(sha: str):
         return _cached(_proxy(replica.url, row.mime), public=False)
 
     raise ApiError("image data is unavailable", ErrorCode.NOT_FOUND, 404)
+
+
+#: 历史别名：头像等已入库的 URL 存的是 ``/i/<sha>``，保留它避免旧链接 404。
+bp.add_url_rule("/i/<sha>", endpoint="legacy_image", view_func=image)

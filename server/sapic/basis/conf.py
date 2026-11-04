@@ -163,7 +163,8 @@ def _check_config_value(cfg: dict) -> None:
 
     Checks ``LOG_LEVEL`` against :data:`sapic.basis.vars.LOG_LEVEL_TYPE`, the
     positive-integer options (``MAX_UPLOAD`` / ``SESSION_TTL``), the secret key
-    length and the absolute ``STORAGE_DIR``.
+    (length, and that production does not fall back to the built-in default)
+    and the absolute ``STORAGE_DIR``.
     """
     assert isinstance(cfg, dict), "Config must be a dict"
 
@@ -180,6 +181,11 @@ def _check_config_value(cfg: dict) -> None:
     secret_key = cfg["SECRET_KEY"]
     assert isinstance(secret_key, str), "SECRET_KEY must be a string"
     assert len(secret_key) >= 14, "SECRET_KEY must be at least 14 bytes"
+    #: 内置默认值人人可见，用它签名等于没有签名，生产必须显式配置。
+    assert is_dev() or secret_key != DEFAULT_SECRET_KEY, (
+        "SECRET_KEY must be configured in production "
+        "(sapic_secretkey, or sapic_secretkey in server/.cfg)"
+    )
 
     assert isabs(cfg["STORAGE_DIR"]), "STORAGE_DIR must be an absolute path"
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Image metadata.
 
-``sha`` is the public identifier (``/i/<sha>``) and stays stable across
+``sha`` is the public identifier (``/raw/<sha>``) and stays stable across
 storage backends, so external links survive backend changes.
 """
 
@@ -43,6 +43,8 @@ class Image(BaseModel):
     status = CharField(max_length=16, default=STATUS_ENABLED)
     #: NULL means "inherit from album".
     visibility = CharField(max_length=16, null=True)
+    #: NULL inherits the album's plaza flag; True/False overrides it.
+    plaza = BooleanField(null=True)
     #: Free-form labels, stored as a JSON array; NULL means "no tags".
     tags = JSONTextField(null=True)
     created_at = IntegerField(default=now)

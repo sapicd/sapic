@@ -42,6 +42,8 @@ class Album(BaseModel):
     cover_sha = CharField(max_length=64, null=True)
     #: The per-user fallback album; it may be renamed but never deleted.
     is_default = BooleanField(default=False)
+    #: Owner published this album to the public plaza (visibility still applies).
+    plaza = BooleanField(default=False)
     created_at = IntegerField(default=now)
     updated_at = IntegerField(default=now)
 

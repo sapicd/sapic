@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
+import os
+
 import pytest
+
+#: 测试按开发环境跑：生产配置会拒绝内置 SECRET_KEY，测试不依赖这一点。
+os.environ.setdefault("sapic_env", "dev")
 
 from sapic import create_app
 from sapic.basis.db import db

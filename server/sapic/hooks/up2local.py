@@ -6,7 +6,7 @@ Driver contract (v2):
 ``upimg_save(filename, stream, upload_path, backend=...)`` returns
 ``{"code": 0, "path": <object key>, "size": <bytes>, "etag": <hash>}`` plus an
 optional ``src`` direct link when ``domain`` is configured; without it the
-service layer falls back to ``/i/<sha>``.
+service layer falls back to ``/raw/<sha>``.
 
 ``upimg_delete(sha, upload_path, filename, basedir, save_result)`` removes
 the object; failures must not raise.

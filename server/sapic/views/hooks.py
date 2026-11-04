@@ -254,6 +254,14 @@ def run_action(name, action):
     hook = manager.get(name)
     if hook is None or not hook.enabled:
         abort(404)
+    manifest = manager.manifest(name) or {}
+    declared = {item["name"]: item for item in manifest.get("actions", [])}
+    meta = declared.get(action)
+    if meta is None:
+        abort(404)
+    #: 动作的 scope 由 manifest 声明；后台动作（探测目录、校验密钥）只给管理员。
+    if meta.get("scope") == "admin" and not _is_admin():
+        abort(403)
     payload = request.get_json(silent=True) or {}
     result = manager.action(name, action, payload=payload, context=None)
     if result is None:
@@ -262,7 +270,7 @@ def run_action(name, action):
 
 
 @bp.get("/hooks/<name>/data/<source>")
-@login_required
+@admin_required
 def get_data(name, source):
     manager = _manager()
     hook = manager.get(name)

@@ -15,6 +15,15 @@ const EXPIRES = [
   { label: '365 天', value: 365 },
 ]
 
+//: 与后端 libs.auth 的 PAT_SCOPES 一一对应；admin 仅在管理员勾选时出现。
+const DEFAULT_SCOPES = ['read', 'upload', 'write']
+const SCOPES = [
+  { label: '读取（GET 接口）', value: 'read' },
+  { label: '上传图片', value: 'upload' },
+  { label: '写入（修改/删除相册与图片）', value: 'write' },
+  { label: '管理后台', value: 'admin', admin: true },
+]
+
 const route = useRoute()
 const session = useSessionStore()
 
@@ -41,7 +50,7 @@ const tokensLoading = ref(false)
 const tokenDialog = ref(false)
 const tokenSaving = ref(false)
 const createdToken = ref(null)
-const tokenForm = reactive({ name: '', expires_in: 0 })
+const tokenForm = reactive({ name: '', expires_in: 0, scopes: [...DEFAULT_SCOPES] })
 
 function syncProfile() {
   Object.assign(profile, {
@@ -128,7 +137,11 @@ async function loadTokens() {
 }
 
 function openTokenDialog() {
-  Object.assign(tokenForm, { name: '', expires_in: 0 })
+  Object.assign(tokenForm, {
+    name: '',
+    expires_in: 0,
+    scopes: [...DEFAULT_SCOPES],
+  })
   createdToken.value = null
   tokenDialog.value = true
 }
@@ -141,6 +154,7 @@ async function createToken() {
       json: {
         name: tokenForm.name,
         expires_in: expiresIn || undefined,
+        scopes: tokenForm.scopes,
       },
     })
     createdToken.value = data?.token || null
@@ -339,6 +353,19 @@ onMounted(() => {
       <el-table v-loading="tokensLoading" :data="tokens" size="small">
         <el-table-column prop="name" label="名称" min-width="120" />
         <el-table-column prop="prefix" label="前缀" width="140" />
+        <el-table-column label="权限" min-width="140">
+          <template #default="{ row }">
+            <el-tag
+              v-for="scope in row.scopes || []"
+              :key="scope"
+              size="small"
+              effect="plain"
+              style="margin-right: 4px"
+            >
+              {{ scope }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="创建时间" width="180">
           <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
         </el-table-column>
@@ -433,6 +460,18 @@ onMounted(() => {
               :value="option.value"
             />
           </el-select>
+        </el-form-item>
+        <el-form-item label="权限范围">
+          <el-checkbox-group v-model="tokenForm.scopes">
+            <el-checkbox
+              v-for="option in SCOPES"
+              v-show="!option.admin || session.user?.is_admin"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </el-checkbox>
+          </el-checkbox-group>
         </el-form-item>
       </el-form>
 

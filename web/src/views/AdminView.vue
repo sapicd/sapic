@@ -144,6 +144,10 @@ onMounted(loadSettings)
 
         <el-tab-pane label="系统" name="system">
           <el-form label-width="120px">
+            <el-form-item label="图片广场">
+              <el-switch v-model="form.plaza_enabled" />
+              <span class="form-suffix">仅展示作者主动发布的公开图片</span>
+            </el-form-item>
             <el-form-item label="开放注册">
               <el-switch v-model="form.allow_register" />
             </el-form-item>

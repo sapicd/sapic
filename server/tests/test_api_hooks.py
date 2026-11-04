@@ -157,10 +157,23 @@ def test_undeclared_action_or_hook_is_404(app, client):
         assert response.status_code == 404
 
 
-def test_unknown_dataset_is_404(client):
-    signin(client)
+def test_unknown_dataset_is_404_for_admins(app, client):
+    signin(client, app=app, admin=True)
     response = client.get("/api/v2/hooks/up2local/data/missing")
     assert response.status_code == 404
+
+
+def test_admin_scoped_endpoints_reject_normal_users(client):
+    csrf = signin(client)
+    #: 数据集是后台表格用途，普通用户一律 403，连数据源是否存在都不透露。
+    assert client.get("/api/v2/hooks/up2local/data/missing").status_code == 403
+    #: up2local 的 ping 声明了 scope=admin，普通用户不能借它探测服务器目录。
+    response = client.post(
+        "/api/v2/hooks/up2local/actions/ping",
+        json={"values": {"root": "/tmp"}},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 403
 
 
 def test_state_is_persisted_and_overrides_the_file_default(app, client):

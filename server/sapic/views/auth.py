@@ -14,6 +14,9 @@ from werkzeug.security import check_password_hash
 from ..basis.common import as_bool
 from ..basis.errors import ApiError, ErrorCode
 from ..libs.auth import (
+    DEFAULT_PAT_SCOPES,
+    PAT_SCOPES,
+    SCOPE_ADMIN,
     current_csrf,
     current_user,
     generate_token,
@@ -199,7 +202,8 @@ def _oidc_redirect_uri(name: str) -> str:
 def _safe_next(value) -> str:
     """Only same-site paths are accepted as the post-login target."""
     path = str(value or "")
-    if not path.startswith("/") or path.startswith("//"):
+    #: 浏览器把 `\` 归一成 `/`，所以 `/\evil.com` 等同 `//evil.com`。
+    if not path.startswith("/") or path.startswith("//") or "\\" in path:
         return "/"
     return path
 
@@ -308,6 +312,9 @@ def oidc_callback(name: str):
         logger.warning("oidc login rejected for %s: %s", name, exc.message)
         return redirect("/login?oidc=%s" % _oidc_failure_flag(exc))
 
+    #: 走审核的站点里，新号是待审核状态，不能直接发会话。
+    if user.status != STATUS_NORMAL:
+        return redirect("/login?oidc=inactive")
     login_user(user)
     response = redirect(_safe_next(saved.get("next")))
     return clear_cookie_state(response, OIDC_COOKIE)
@@ -530,6 +537,20 @@ def list_tokens():
     )
 
 
+def _token_scopes(value) -> list[str]:
+    """Validate the requested scopes; empty falls back to the default set."""
+    if value in (None, "", []):
+        return list(DEFAULT_PAT_SCOPES)
+    if not isinstance(value, list):
+        raise ApiError("scopes must be a list", ErrorCode.PARAM_ERROR)
+    scopes = [str(item) for item in value]
+    if any(item not in PAT_SCOPES for item in scopes):
+        raise ApiError("invalid scope", ErrorCode.PARAM_ERROR)
+    if SCOPE_ADMIN in scopes and not g.user.is_admin:
+        raise ApiError("admin scope requires an admin account", ErrorCode.FORBIDDEN, 403)
+    return scopes
+
+
 @bp.post("/auth/tokens")
 @login_required
 def create_token():
@@ -543,12 +564,13 @@ def create_token():
         except (TypeError, ValueError) as exc:
             raise ApiError("invalid expires_in", ErrorCode.PARAM_ERROR) from exc
 
+    scopes = _token_scopes(data.get("scopes"))
     row = ApiToken.create(
         owner=g.user,
         name=(data.get("name") or "")[:64],
         token_hash=hash_token(token),
         prefix=token[:10],
-        scopes=data.get("scopes") or ["upload"],
+        scopes=scopes,
         expires_at=expires_at,
         created_at=now(),
     )

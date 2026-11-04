@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 import io
 
+import pytest
+
+from sapic.basis.conf import _check_config_value
+from sapic.basis.vars import DEFAULT_SECRET_KEY
 from sapic.models import User
 
 
@@ -25,6 +29,25 @@ def promote_admin(app, username="alice"):
         user = User.get(User.username == username)
         user.is_admin = True
         user.save(only=[User.is_admin])
+
+
+def test_production_requires_configured_secret_key(monkeypatch):
+    """内置 SECRET_KEY 是公开字符串，生产环境必须显式配置。"""
+    monkeypatch.delenv("sapic_env", raising=False)
+    monkeypatch.delenv("FLASK_ENV", raising=False)
+    config = {
+        "LOG_LEVEL": "INFO",
+        "MAX_UPLOAD": 20,
+        "SESSION_TTL": 3600,
+        "SECRET_KEY": DEFAULT_SECRET_KEY,
+        "STORAGE_DIR": "/tmp",
+    }
+    with pytest.raises(AssertionError):
+        _check_config_value(config)
+
+    #: 开发环境允许回落到内置值。
+    monkeypatch.setenv("sapic_env", "dev")
+    _check_config_value(config)
 
 
 def test_settings_requires_admin(client):
@@ -125,3 +148,10 @@ def test_register_review_and_reserved_username(app, client):
     )
     assert response.status_code == 201
     assert response.get_json()["data"]["user"]["status"] == -1
+
+    #: 待审核账号不能登录，否则「审核」形同虚设。
+    denied = guest.post(
+        "/api/v2/auth/login",
+        json={"username": "bobby", "password": "secret123"},
+    )
+    assert denied.status_code == 403

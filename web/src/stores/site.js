@@ -23,6 +23,7 @@ export const useSiteStore = defineStore('site', {
     allowRegister: true,
     passwordLogin: true,
     allowAnonymousUpload: false,
+    plazaEnabled: true,
     version: '',
     loaded: false,
   }),
@@ -76,6 +77,7 @@ export const useSiteStore = defineStore('site', {
         this.allowRegister = data?.allow_register !== false
         this.passwordLogin = data?.password_login !== false
         this.allowAnonymousUpload = Boolean(data?.allow_anonymous_upload)
+        this.plazaEnabled = data?.plaza_enabled !== false
         this.version = data?.version || ''
       } catch (error) {
         //: 站点信息只影响展示，加载失败时保留默认值。

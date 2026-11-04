@@ -2,7 +2,8 @@
 import io
 
 from sapic.libs.settings import set_setting
-from sapic.models import Album, Image
+from sapic.models import Album, AlbumShare, Image, User
+from sapic.models.base import now
 
 
 def register_and_login(client):
@@ -45,7 +46,7 @@ def test_album_flow_controls_visibility(app, client):
     sha = response.get_json()["data"]["image"]["sha"]
 
     anonymous = app.test_client()
-    assert anonymous.get("/i/%s" % sha).status_code == 403
+    assert anonymous.get("/raw/%s" % sha).status_code == 403
 
     response = client.patch(
         "/api/v2/albums/%d" % album_id,
@@ -53,7 +54,7 @@ def test_album_flow_controls_visibility(app, client):
         headers=headers,
     )
     assert response.status_code == 200
-    assert anonymous.get("/i/%s" % sha).status_code == 200
+    assert anonymous.get("/raw/%s" % sha).status_code == 200
 
     response = client.delete("/api/v2/albums/%d" % album_id, headers=headers)
     assert response.status_code == 409
@@ -202,6 +203,15 @@ def test_album_shares_grant_and_revoke_access(app, client):
     ).get_json()["data"]["items"]
     assert [member["username"] for member in members] == ["bobby"]
 
+    #: 已有成员可以改权限，不必先移除再加。
+    response = client.patch(
+        "/api/v2/albums/%s/shares/%s" % (album["id"], members[0]["user_id"]),
+        json={"permission": "write"},
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert response.get_json()["data"]["share"]["permission"] == "write"
+
     response = client.delete(
         "/api/v2/albums/%s/shares/%s" % (album["id"], members[0]["user_id"]),
         headers=headers,
@@ -210,6 +220,85 @@ def test_album_shares_grant_and_revoke_access(app, client):
     assert image["sha"] not in [
         item["sha"] for item in bobby.get("/api/v2/images").get_json()["data"]["items"]
     ]
+
+
+def test_write_member_can_upload_into_shared_album(app, client):
+    csrf = register_and_login(client)
+    headers = {"X-CSRF-Token": csrf}
+    album = client.post(
+        "/api/v2/albums",
+        json={"name": "协作", "visibility": "private"},
+        headers=headers,
+    ).get_json()["data"]["album"]
+    bobby, bobby_csrf = _second_client(app, "bobby")
+    bobby_headers = {"X-CSRF-Token": bobby_csrf}
+    base = "/api/v2/albums/%s/shares" % album["id"]
+
+    client.post(
+        base, json={"username": "bobby", "permission": "read"}, headers=headers
+    )
+    denied = bobby.post(
+        "/api/v2/uploads",
+        data={"file": (io.BytesIO(b"read-bytes"), "a.png"), "album_id": str(album["id"])},
+        content_type="multipart/form-data",
+        headers=bobby_headers,
+    )
+    #: 只读成员看得到相册，但不能往里传。
+    assert denied.status_code == 404
+
+    member = client.get(base).get_json()["data"]["items"][0]
+    assert client.patch(
+        "%s/%s" % (base, member["user_id"]),
+        json={"permission": "write"},
+        headers=headers,
+    ).status_code == 200
+
+    allowed = bobby.post(
+        "/api/v2/uploads",
+        data={"file": (io.BytesIO(b"write-bytes"), "b.png"), "album_id": str(album["id"])},
+        content_type="multipart/form-data",
+        headers=bobby_headers,
+    )
+    assert allowed.status_code == 201
+    assert allowed.get_json()["data"]["image"]["album_id"] == album["id"]
+
+
+def test_share_expiry_and_inactive_grantee(app, client):
+    csrf = register_and_login(client)
+    headers = {"X-CSRF-Token": csrf}
+    album = client.post(
+        "/api/v2/albums",
+        json={"name": "临时", "visibility": "private"},
+        headers=headers,
+    ).get_json()["data"]["album"]
+    bobby, _ = _second_client(app, "bobby")
+    base = "/api/v2/albums/%s/shares" % album["id"]
+
+    created = client.post(
+        base,
+        json={"username": "bobby", "permission": "read", "expires_in": 3600},
+        headers=headers,
+    )
+    assert created.status_code == 201
+    assert created.get_json()["data"]["share"]["expires_at"]
+
+    with app.app_context():
+        #: 把授权推到过去，成员身份应当立即失效。
+        AlbumShare.update(expires_at=now() - 1).execute()
+    visible = [
+        item["id"]
+        for item in bobby.get("/api/v2/albums").get_json()["data"]["items"]
+    ]
+    assert album["id"] not in visible
+
+    #: 未激活（待审核/已禁用）的账号不能成为共享成员。
+    _second_client(app, "carol")
+    with app.app_context():
+        User.update(status=-1).where(User.username == "carol").execute()
+    denied = client.post(
+        base, json={"username": "carol"}, headers=headers
+    )
+    assert denied.status_code == 404
 
 
 def test_album_share_validation(app, client):

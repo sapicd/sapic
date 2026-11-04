@@ -2,7 +2,7 @@
 """View layer: blueprint registration and route modules.
 
 Blueprints under ``API_PREFIX`` are the native v2 API; ``public`` keeps the
-stable image URL (``/i/<sha>``).
+stable image URL (``/raw/<sha>``).
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ def register_blueprints(app) -> None:
     from .health import bp as health_bp
     from .hooks import bp as hooks_bp
     from .images import bp as images_bp
+    from .plaza import bp as plaza_bp
     from .public import bp as public_bp
     from .settings import bp as settings_bp
     from .site import bp as site_bp
@@ -29,6 +30,7 @@ def register_blueprints(app) -> None:
         uploads_bp,
         images_bp,
         albums_bp,
+        plaza_bp,
         settings_bp,
         hooks_bp,
         users_bp,

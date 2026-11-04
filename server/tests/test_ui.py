@@ -23,9 +23,9 @@ def test_unsafe_href_is_dropped():
     assert ui.clean_node(unsafe) is None
     assert ui.clean_node({"type": "link", "text": "x", "href": "//evil.com"}) is None
     node = ui.clean_node(
-        {"type": "link", "text": "x", "href": "/i/{sha}"}, context={"sha": "abc"}
+        {"type": "link", "text": "x", "href": "/raw/{sha}"}, context={"sha": "abc"}
     )
-    assert node["href"] == "/i/abc"
+    assert node["href"] == "/raw/abc"
     assert node["target"] == "self"
 
 

@@ -28,11 +28,12 @@ const backgroundStyle = computed(() => {
 })
 
 const menus = computed(() => {
-  const items = [
-    { name: 'upload', label: '首页', icon: 'HomeFilled' },
-    { name: 'images', label: '图片', icon: 'Picture' },
-  ]
+  const items = [{ name: 'upload', label: '首页', icon: 'HomeFilled' }]
+  if (site.plazaEnabled) {
+    items.push({ name: 'plaza', label: '广场', icon: 'Grid' })
+  }
   if (session.authenticated) {
+    items.push({ name: 'images', label: '图片', icon: 'Picture' })
     items.push({ name: 'albums', label: '相册', icon: 'FolderOpened' })
     items.push({ name: 'settings', label: '设置', icon: 'Setting' })
   }

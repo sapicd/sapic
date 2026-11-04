@@ -3,6 +3,7 @@ import io
 
 from sapic.libs.albums import default_album
 from sapic.models import Image, User
+from sapic.views.auth import _safe_next
 
 USER = {
     "username": "alice",
@@ -23,6 +24,14 @@ def login(client, username="alice", password="secret123"):
     )
     assert response.status_code == 200, response.get_json()
     return response.get_json()["data"]["csrf"]
+
+
+def test_post_login_redirect_stays_on_site():
+    """`\\` 会被浏览器归一成 `/`，`/\\evil.com` 等同站外跳转。"""
+    assert _safe_next("/albums") == "/albums"
+    assert _safe_next("//evil.com") == "/"
+    assert _safe_next("/\\evil.com") == "/"
+    assert _safe_next("https://evil.com") == "/"
 
 
 def test_register_login_session_logout(client):
@@ -85,6 +94,67 @@ def test_personal_access_token(app, client):
     ).get_json()["data"]
     assert session["authenticated"] is True
     assert session["user"]["username"] == "alice"
+
+
+def test_token_scopes_limit_what_a_token_can_do(client):
+    """令牌只能做它声明的范围：upload 不能读，read 不能上传，write 才管改动。"""
+    register(client)
+    csrf = login(client)
+
+    def issue(scopes):
+        response = client.post(
+            "/api/v2/auth/tokens",
+            json={"name": "scoped", "scopes": scopes},
+            headers={"X-CSRF-Token": csrf},
+        )
+        assert response.status_code == 201
+        return {"Authorization": "Bearer %s" % response.get_json()["data"]["token"]}
+
+    upload_only = issue(["upload"])
+    assert client.get("/api/v2/albums", headers=upload_only).status_code == 403
+    created = client.post(
+        "/api/v2/uploads",
+        data={"file": (io.BytesIO(b"scoped"), "a.png")},
+        content_type="multipart/form-data",
+        headers=upload_only,
+    )
+    assert created.status_code == 201
+
+    read_only = issue(["read"])
+    assert client.get("/api/v2/albums", headers=read_only).status_code == 200
+    denied = client.post(
+        "/api/v2/uploads",
+        data={"file": (io.BytesIO(b"scoped"), "b.png")},
+        content_type="multipart/form-data",
+        headers=read_only,
+    )
+    assert denied.status_code == 403
+    assert denied.get_json()["code"] == "FORBIDDEN"
+
+    #: 改相册需要 write。
+    assert client.post(
+        "/api/v2/albums", json={"name": "x"}, headers=read_only
+    ).status_code == 403
+
+
+def test_token_scope_validation(client):
+    register(client)
+    csrf = login(client)
+    headers = {"X-CSRF-Token": csrf}
+
+    #: 未声明范围时给默认集合（read/upload/write，不含 admin）。
+    default = client.post("/api/v2/auth/tokens", json={}, headers=headers)
+    assert default.status_code == 201
+    listed = client.get("/api/v2/auth/tokens").get_json()["data"]["items"]
+    assert listed[0]["scopes"] == ["read", "upload", "write"]
+
+    assert client.post(
+        "/api/v2/auth/tokens", json={"scopes": ["root"]}, headers=headers
+    ).status_code == 400
+    #: admin 范围只对管理员开放。
+    assert client.post(
+        "/api/v2/auth/tokens", json={"scopes": ["admin"]}, headers=headers
+    ).status_code == 403
 
 
 def test_password_reset_requires_a_verified_email(client):
@@ -184,7 +254,7 @@ def test_upload_avatar_stores_the_image_in_the_default_album(app, client):
     )
     assert response.status_code == 201, response.get_json()
     data = response.get_json()["data"]
-    assert data["avatar"].startswith("/i/")
+    assert data["avatar"].startswith("/raw/")
     assert data["user"]["avatar"] == data["avatar"]
 
     with app.app_context():

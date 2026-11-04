@@ -26,8 +26,8 @@ export default defineConfig({
         target: 'http://127.0.0.1:9514',
         changeOrigin: false,
       },
-      //: 必须是正则，否则 /i 前缀会连 /images 一起代理到后端。
-      '^/i/': {
+      //: 图片直链前缀，用正则锚定，避免误伤其它以 /raw 开头的路径。
+      '^/raw/': {
         target: 'http://127.0.0.1:9514',
         changeOrigin: false,
       },

@@ -111,7 +111,7 @@ def test_public_image_with_remote_replica_redirects(app, client):
     detail = client.get("/api/v2/images/%s" % sha).get_json()["data"]
     assert detail["image"]["src"] == url
 
-    response = client.get("/i/%s" % sha)
+    response = client.get("/raw/%s" % sha)
     assert response.status_code == 302
     assert response.headers["Location"] == url
 
@@ -142,8 +142,8 @@ def test_highest_priority_replica_decides_the_link(app, client):
 
     detail = client.get("/api/v2/images/%s" % sha).get_json()["data"]
     #: 主副本是本地（无直链），不能跳到次优先级副本的直链。
-    assert detail["image"]["src"] == "/i/%s" % sha
-    assert client.get("/i/%s" % sha).status_code == 200
+    assert detail["image"]["src"] == "/raw/%s" % sha
+    assert client.get("/raw/%s" % sha).status_code == 200
 
 
 def test_private_image_stays_behind_the_sapic_endpoint(app, client):
@@ -155,11 +155,11 @@ def test_private_image_stays_behind_the_sapic_endpoint(app, client):
         image.save(only=[Image.visibility])
 
     detail = client.get("/api/v2/images/%s" % sha).get_json()["data"]
-    assert detail["image"]["src"] == "/i/%s" % sha
+    assert detail["image"]["src"] == "/raw/%s" % sha
 
-    assert app.test_client().get("/i/%s" % sha).status_code == 403
+    assert app.test_client().get("/raw/%s" % sha).status_code == 403
 
-    response = client.get("/i/%s" % sha)
+    response = client.get("/raw/%s" % sha)
     assert response.status_code == 200
     cache = response.headers["Cache-Control"]
     assert "private" in cache
@@ -182,7 +182,7 @@ def test_private_remote_replica_is_relayed_not_redirected(app, client, monkeypat
 
     monkeypatch.setattr("sapic.views.public.open_remote", fake_open)
 
-    response = client.get("/i/%s" % sha, headers={"Range": "bytes=0-4"})
+    response = client.get("/raw/%s" % sha, headers={"Range": "bytes=0-4"})
     assert response.status_code == 200
     assert response.data == b"remote-bytes"
     assert seen["url"] == url
@@ -196,7 +196,7 @@ def test_local_replica_is_served_with_public_cache(app, client):
     csrf = register_and_login(client)
     sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
 
-    response = client.get("/i/%s" % sha)
+    response = client.get("/raw/%s" % sha)
     assert response.status_code == 200
     assert response.data == b"bytes"
     cache = response.headers["Cache-Control"]

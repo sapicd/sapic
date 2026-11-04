@@ -21,17 +21,20 @@ const VISIBILITY_TEXT = {
 
 const PERMISSIONS = [
   { label: '只读', value: 'read' },
-  { label: '可编辑（预留）', value: 'write' },
+  { label: '可编辑', value: 'write' },
 ]
-
-const PERMISSION_TEXT = { read: '只读', write: '可编辑' }
 
 const albums = ref([])
 const loading = ref(false)
 const saving = ref(false)
 const dialogVisible = ref(false)
 const editing = ref(null)
-const form = reactive({ name: '', description: '', visibility: 'private' })
+const form = reactive({
+  name: '',
+  description: '',
+  visibility: 'private',
+  plaza: false,
+})
 
 const shareVisible = ref(false)
 const shareAlbum = ref(null)
@@ -54,8 +57,20 @@ async function load() {
 
 function openCreate() {
   editing.value = null
-  Object.assign(form, { name: '', description: '', visibility: 'private' })
+  Object.assign(form, {
+    name: '',
+    description: '',
+    visibility: 'private',
+    plaza: false,
+  })
   dialogVisible.value = true
+}
+
+//: 私有相册添加成员时会自动升级为「共享」，所以私有相册也给入口；公开相册人人可见，无边授权。
+function canShare(album) {
+  return (
+    album.role === 'owner' && !album.is_system && album.visibility !== 'public'
+  )
 }
 
 function openImages(album) {
@@ -69,6 +84,7 @@ function openEdit(album) {
     name: album.name,
     description: album.description || '',
     visibility: album.visibility || 'private',
+    plaza: Boolean(album.plaza),
   })
   dialogVisible.value = true
 }
@@ -153,6 +169,21 @@ async function addShare() {
   }
 }
 
+async function updateSharePermission(member, permission) {
+  if (!permission || permission === member.permission) return
+  try {
+    const data = await api.patch(
+      `/albums/${shareAlbum.value.id}/shares/${member.user_id}`,
+      { json: { permission } },
+    )
+    if (data?.share) Object.assign(member, data.share)
+    ElMessage.success('已更新权限')
+  } catch (error) {
+    ElMessage.error(errorMessage(error, '更新失败'))
+    await loadShares()
+  }
+}
+
 async function removeShare(member) {
   try {
     await ElMessageBox.confirm(
@@ -232,6 +263,14 @@ onMounted(load)
             {{ VISIBILITY_TEXT[row.visibility] || row.visibility }}
           </template>
         </el-table-column>
+        <el-table-column label="广场" width="90">
+          <template #default="{ row }">
+            <el-tag v-if="row.plaza" size="small" type="success" effect="plain">
+              已发布
+            </el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="image_count" label="图片数" width="90" />
         <el-table-column label="创建时间" width="180">
           <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
@@ -239,7 +278,7 @@ onMounted(load)
         <el-table-column label="操作" width="200" align="right">
           <template #default="{ row }">
             <el-button
-              v-if="row.role === 'owner' && !row.is_system"
+              v-if="canShare(row)"
               link
               type="primary"
               @click.stop="openShares(row)"
@@ -292,6 +331,10 @@ onMounted(load)
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="发布到广场">
+          <el-switch v-model="form.plaza" />
+          <span class="form-suffix">仅公开相册的图片会出现在广场</span>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -302,10 +345,11 @@ onMounted(load)
     <el-dialog
       v-model="shareVisible"
       :title="`共享成员 · ${shareAlbum?.name || ''}`"
-      width="520px"
+      width="640px"
     >
       <p class="hint">
-        按用户名绑定站点成员；「共享」相册仅成员可见，「公开」相册本来就对所有人可见，成员设置不影响公开访问。
+        按用户名绑定站点成员；私有相册在这里添加成员后会自动变成「共享」，只有成员能查看相册内的图片。
+        「可编辑」的成员还可以把图片上传到这个相册。
       </p>
       <div class="share-add">
         <el-input
@@ -330,9 +374,20 @@ onMounted(load)
       <el-table v-loading="shareLoading" :data="shares" size="small">
         <el-table-column prop="username" label="用户名" min-width="120" />
         <el-table-column prop="nickname" label="昵称" min-width="110" show-overflow-tooltip />
-        <el-table-column label="权限" width="90">
+        <el-table-column label="权限" width="130">
           <template #default="{ row }">
-            {{ PERMISSION_TEXT[row.permission] || row.permission }}
+            <el-select
+              :model-value="row.permission"
+              size="small"
+              @change="(value) => updateSharePermission(row, value)"
+            >
+              <el-option
+                v-for="option in PERMISSIONS"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
           </template>
         </el-table-column>
         <el-table-column label="添加时间" width="160">
@@ -347,6 +402,7 @@ onMounted(load)
           <el-empty description="还没有共享成员" :image-size="50" />
         </template>
       </el-table>
+
     </el-dialog>
   </div>
 </template>

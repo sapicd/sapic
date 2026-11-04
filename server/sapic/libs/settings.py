@@ -19,6 +19,8 @@ DEFAULTS = {
     "site_footer": "SaintIC. All rights reserved.",
     "site_announcement": "",
     "site_about": "",
+    #: 是否开放图片广场（只有主动发布的公开图片会出现在里面）。
+    "plaza_enabled": True,
     #: 上传
     "allow_anonymous_upload": False,
     "upload_notice": "",

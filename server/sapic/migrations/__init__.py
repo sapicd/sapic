@@ -140,11 +140,35 @@ def _v004_image_visibility_without_shared() -> None:
     ).execute()
 
 
+def _v005_plaza() -> None:
+    """Add the plaza publishing flags.
+
+    ``albums.plaza`` is the album-level switch, ``images.plaza`` the per-image
+    override (``NULL`` follows the album). Publishing never widens the
+    visibility rules, it only decides what the public plaza lists.
+    """
+    migrator = SchemaMigrator.from_database(db)
+    album_columns = {column.name for column in db.get_columns("albums")}
+    image_columns = {column.name for column in db.get_columns("images")}
+    operations = []
+    if "plaza" not in album_columns:
+        operations.append(
+            migrator.add_column("albums", "plaza", BooleanField(default=False))
+        )
+    if "plaza" not in image_columns:
+        operations.append(
+            migrator.add_column("images", "plaza", BooleanField(null=True))
+        )
+    if operations:
+        migrate(*operations)
+
+
 MIGRATIONS = [
     (1, "initial", _v001_initial),
     (2, "album_ownership", _v002_album_ownership),
     (3, "image_tags", _v003_image_tags),
     (4, "image_visibility", _v004_image_visibility_without_shared),
+    (5, "plaza", _v005_plaza),
 ]
 
 

@@ -39,7 +39,7 @@ def test_upload_and_read(app, client, tmp_path):
 
     image = response.get_json()["data"]["image"]
     assert image["sha"].startswith("sha1.")
-    assert image["src"].endswith("/i/%s" % image["sha"])
+    assert image["src"].endswith("/raw/%s" % image["sha"])
 
     with app.app_context():
         row = Image.get(Image.sha == image["sha"])
@@ -51,6 +51,38 @@ def test_upload_and_read(app, client, tmp_path):
     response = client.get(image["src"])
     assert response.status_code == 200
     assert response.data == b"fake-image-bytes"
+
+
+def test_listing_never_leaks_other_peoples_images(app, client):
+    """图片列表是个人图库：别人公开相册里的图片不该出现，即使匿名也一样。"""
+    csrf = register_and_login(client)
+    sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
+
+    bobby = app.test_client()
+    bobby.post(
+        "/api/v2/auth/register",
+        json={
+            "username": "bobby",
+            "password": "secret123",
+            "email": "bobby@example.com",
+        },
+    )
+    bobby.post(
+        "/api/v2/auth/login",
+        json={"username": "bobby", "password": "secret123"},
+    )
+    assert bobby.get("/api/v2/images").get_json()["data"]["items"] == []
+    #: 列表要求登录，匿名直接 401，连空列表都不给。
+    assert app.test_client().get("/api/v2/images").status_code == 401
+    #: 知道地址仍然能看（公开图就是外链），只是不再出现在别人的列表里。
+    assert bobby.get("/raw/%s" % sha).status_code == 200
+    #: 详情页要能判断编辑权限，别人点进来只读。
+    assert bobby.get("/api/v2/images/%s" % sha).get_json()["data"]["image"][
+        "can_edit"
+    ] is False
+    assert client.get("/api/v2/images/%s" % sha).get_json()["data"]["image"][
+        "can_edit"
+    ] is True
 
 
 def test_image_listing_and_update(app, client):
@@ -100,7 +132,7 @@ def test_delete_image(app, client):
         "/api/v2/images/%s" % sha, headers={"X-CSRF-Token": csrf}
     )
     assert response.status_code == 200
-    assert client.get("/i/%s" % sha).status_code == 404
+    assert client.get("/raw/%s" % sha).status_code == 404
 
     with app.app_context():
         assert Image.get(Image.sha == sha).status == "deleted"
@@ -123,8 +155,8 @@ def test_same_name_uploads_do_not_overwrite(app, client):
     second = upload(client, csrf, content=b"second").get_json()["data"]["image"]
 
     assert first["sha"] != second["sha"]
-    assert client.get("/i/%s" % first["sha"]).data == b"first"
-    assert client.get("/i/%s" % second["sha"]).data == b"second"
+    assert client.get("/raw/%s" % first["sha"]).data == b"first"
+    assert client.get("/raw/%s" % second["sha"]).data == b"second"
 
     with app.app_context():
         keys = [row.object_key for row in ImageBackend.select()]
@@ -237,6 +269,46 @@ def test_image_listing_filters_by_album(client):
     shas = [item["sha"] for item in listing["items"]]
     assert shas == [inside["sha"]]
     assert outside["sha"] not in shas
+
+
+def test_public_image_hides_its_private_album(app, client):
+    """单图覆盖成公开时，别人不该顺带看到它所在私有相册的名字。"""
+    csrf = register_and_login(client)
+    album = client.post(
+        "/api/v2/albums",
+        json={"name": "私房", "visibility": "private"},
+        headers={"X-CSRF-Token": csrf},
+    ).get_json()["data"]["album"]
+    image = upload(client, csrf).get_json()["data"]["image"]
+    for payload in ({"album_id": album["id"]}, {"visibility": "public"}):
+        client.patch(
+            "/api/v2/images/%s" % image["sha"],
+            json=payload,
+            headers={"X-CSRF-Token": csrf},
+        )
+
+    anonymous = app.test_client()
+    detail = anonymous.get("/api/v2/images/%s" % image["sha"]).get_json()["data"]
+    assert detail["image"]["album"] is None
+    assert anonymous.get("/raw/%s" % image["sha"]).status_code == 200
+
+    #: 作者本人仍然拿得到相册信息。
+    own = client.get("/api/v2/images/%s" % image["sha"]).get_json()["data"]
+    assert own["image"]["album"]["name"] == "私房"
+
+
+def test_image_cannot_be_detached_from_its_album(client):
+    """图片必须留在相册里，否则会跌回 public 变成匿名可读。"""
+    csrf = register_and_login(client)
+    uploaded = upload(client, csrf).get_json()["data"]["image"]
+
+    response = client.patch(
+        "/api/v2/images/%s" % uploaded["sha"],
+        json={"album_id": None},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 400
+    assert response.get_json()["code"] == "PARAM_ERROR"
 
 
 def test_image_payload_carries_its_album(client):

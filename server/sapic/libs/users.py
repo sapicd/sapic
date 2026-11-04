@@ -104,7 +104,12 @@ def authenticate(username: str, password: str) -> User:
         raise ApiError(
             "invalid username or password", ErrorCode.UNAUTHORIZED, 401
         )
-    if user.status == STATUS_DISABLED:
+    #: 只有正常状态的账号能登录；待审核/已拒绝的账号即便密码正确也不放行。
+    if user.status == STATUS_PENDING:
+        raise ApiError("account is pending review", ErrorCode.FORBIDDEN, 403)
+    if user.status == STATUS_REJECTED:
+        raise ApiError("account was rejected", ErrorCode.FORBIDDEN, 403)
+    if user.status != STATUS_NORMAL:
         raise ApiError("account is disabled", ErrorCode.FORBIDDEN, 403)
     return user
 

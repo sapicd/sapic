@@ -6,7 +6,7 @@ v1 代码已归档在 `V1/`，仅供对照，不参与 v2 构建；v1 的项目�
 当前版本见 `server/sapic/version.py` 中的 `__version__`。
 
 技术栈（后端）：Python 3.10+，Flask，Peewee，Redis，psycopg(binary)，PyMySQL，PyJWT。
-前端：`web/` 是独立的 Vue 3 + Vite + Element Plus 应用，与后端通过 `/api` 与 `/i/` 交互。
+前端：`web/` 是独立的 Vue 3 + Vite + Element Plus 应用，与后端通过 `/api` 与 `/raw/` 交互。
 详细架构见 `ARCH.md`，贡献流程见 `CONTRIBUTING.md`。
 
 > Python 版本下限是 **3.10**，可自由使用 3.10 语法（`X | Y` 联合类型、match 语句、内置泛型
@@ -79,12 +79,15 @@ make create-admin     # 创建管理员，需 U=admin P='密码'
 make dev              # 开发服务器 0.0.0.0:9514 (flask run --reload，改代码自动重启)
 make serve            # gunicorn 前台运行 (WORKERS=4 -k gevent)
 make test             # 后端 pytest
-make web-dev          # 前端开发服务器 127.0.0.1:5173（/api 与 /i/ 代理到 9514）
+make web-dev          # 前端开发服务器 127.0.0.1:5173（/api 与 /raw/ 代理到 9514）
 make web-build        # 前端构建到 web/dist
 make clean            # 清理缓存与构建产物
 ```
 
 变量可覆盖：`make dev PORT=8080`、`make serve WORKERS=8`。`make` 无参数即打印帮助。
+
+`make dev` 自带 `sapic_env=dev`；生产模式（`make serve` 等）必须配置 `sapic_secretkey`
+（`server/.cfg` 或环境变量），否则 `load_config()` 直接报错——内置默认密钥是公开字符串。
 
 ## Python 编码规范
 
@@ -197,6 +200,7 @@ def manifest(self, name: str) -> dict | None:
 ## 站点设置
 
 - 默认值集中在 `sapic/libs/settings.py` 的 `DEFAULTS`，读写统一走 `get_setting` / `set_setting`
+- `upload_count_limit` 是**单次批次**限制，只由前端上传控件强制；后端每次请求只有一个文件，不做（也无从做）该校验。要服务端配额应另立「每日/每小时次数」这类语义
 - 后台通过 `GET/PUT /api/v2/settings` 管理（仅管理员），可写键白名单与类型校验在 `views/settings.py`
 - 前台展示字段由公开接口 `GET /api/v2/site` 输出，前端在 `stores/site.js` 消费
 - 上传类设置（后缀白名单 / 大小 / 数量 / 视频）在 `views/uploads.py` 生效，注册类设置在 `views/auth.py` 生效；
@@ -212,6 +216,14 @@ def manifest(self, name: str) -> dict | None:
 - 用户管理走 `GET/PATCH /api/v2/users`（仅管理员，`views/users.py`）：列表支持关键词与状态筛选
   （`-2` 已拒绝 / `-1` 待审核 / `0` 已禁用 / `1` 正常），PATCH 可改 `status` 与 `is_admin`；
   禁用/拒绝会自增 `session_version` 让既有会话失效，且管理员不能改自己的状态或撤销自己的管理员权限
+- **只有 `status=1`（正常）的账号能登录、持有会话或使用 PAT**（`libs/users.authenticate` /
+  `libs/auth._load_current_user` / `resolve_pat` 同一口径）：待审核与已拒绝都按未激活处理，
+  OIDC 建号走审核时也不发会话（重定向 `/login?oidc=inactive`）
+- PAT 的 `scopes` 是**真实生效**的（`libs/auth.py`）：`read` 覆盖安全方法、`upload` 覆盖上传、
+  `write` 覆盖其余改动、`admin` 覆盖管理接口；缺省 `read/upload/write`，`admin` 仅管理员可申请。
+  `login_required` 按请求方法自动校验，`admin_required` 额外要求 `admin`，上传接口支持匿名所以在
+  视图里显式 `require_scope(SCOPE_UPLOAD)`。新增接口只要走这两个装饰器就自动受限，**不要自己写
+  鉴权分支**；Cookie 会话不受 scope 约束（等价账号本身）
 
 ## 相册与可见性 ★
 
@@ -222,13 +234,29 @@ def manifest(self, name: str) -> dict | None:
   匿名上传落到**系统相册**（`albums.owner_id` 为 NULL 的「公共相册」）。`create_image()` 内部兜底，
   不要绕过它直接建 `Image`，否则会出现无相册（= 默认可公开）的图片。
 - 单图覆盖：`Image.visibility` 为 NULL 表示跟随相册；前端详情页用「跟随相册」选项清空。
+- 图片不能被摘出相册：`PATCH /api/v2/images/<sha>` 传空 `album_id` 直接 400，否则
+  `effective_visibility()` 会把「无相册 + 无覆盖」当成 public，私有图就泄漏成匿名可读。
 - 默认相册不可删除（409）；系统相册对普通用户不可见，管理员在 `GET /api/v2/albums`
   会额外拿到 `role=system` 的那条，用于筛选匿名图片。
+- 共享授权（`album_shares`）按用户名添加：`POST /albums/<id>/shares` 添加（可传 `expires_in` 秒）、
+  `PATCH .../shares/<uid>` 调整权限或有效期、`DELETE .../shares/<uid>` 移除；只有所有者能管理，
+  私有相册添加成员后自动提升为 `shared`。过期授权等于不存在——鉴权统一走
+  `libs.albums.share_for()`（`can_view` / `can_write` / 相册与图片列表都过它），别直接查 `AlbumShare`。
+  未激活（非 `status=1`）的账号不能被添加为成员，且接口不区分「不存在」与「未激活」。
+  `permission=read` 只能浏览，`write` 额外允许把图片上传进该相册（`libs.albums.can_write`，
+  在 `views/uploads.py` 生效；仍不能修改/删除别人的图片）。`GET /albums` 对共享相册返回
+  `permission` 字段，前端据此过滤上传目标。
 - 结构变更走 `sapic/migrations/`：`v002_album_ownership` 负责 `owner_id` 可空、`is_default` 列
   与存量图片回填，必须保持幂等。
+- 图片列表（`GET /api/v2/images`，`libs.images.visible_query`）是**个人图库**：只返回自己的图片 +
+  共享给自己的相册，**不包含他人的公开图片**（否则等于绕过了广场的显式发布）；接口要求登录，匿名 401。
+  公开图仍可按 `src` / `/raw/<sha>` 访问，那是图床的外链语义，与列表无关。
+- 图片广场（`GET /api/v2/plaza`，匿名可读，站点设置 `plaza_enabled` 可关）是**曝光渠道而非权限**：
+  只有有效可见性为 `public` 的图片会进列表，且必须显式发布（`albums.plaza` 相册开关 +
+  `images.plaza` 单图三态，`NULL` 跟随相册）；迁移 `v005` 加列，存量默认不发布。
 - 图片地址（`src`）：公开图直接返回优先级最高副本的直链（钩子 `upimg_save` 返回的 `src`），
-  私有图固定走 `/i/<sha>` 由 sapic 鉴权后输出；私有远程副本在 `/i/` 内流式转发，不做 302，
-  避免暴露源站地址。没有直链的后端（未配 `domain` 的本地存储）同样回落到 `/i/<sha>`。
+  私有图固定走 `/raw/<sha>` 由 sapic 鉴权后输出；私有远程副本在 `/raw/` 内流式转发，不做 302，
+  避免暴露源站地址。没有直链的后端（未配 `domain` 的本地存储）同样回落到 `/raw/<sha>`。
 - 存储 key 固定为 `{用户}/{年}/{月}/{日}/{ASCII 文件名}-{sha 片段}.{ext}`（`libs.images.upload_path_for` +
   `create_image`），后缀保证同名文件不被覆盖；文件名经 `secure_filename` 清洗，主体被整段清空时用
   `{yyyyMMddHHmmss}{6 位随机}` 兜底（不同中文名不会撞成同一个 `image`），删除按 `object_key` 执行。
@@ -258,7 +286,7 @@ __state__ = "enabled"       # enabled / disabled
 - **无 import 副作用的模块级代码**：钩子会被反复扫描加载，不要在模块顶层初始化连接
 - 存储类钩子实现 `upimg_save(filename, stream, upload_path="", backend=None, **kwargs)`
   （返回 `{"code": 0, "path": <key>, "size": <bytes>, "etag": <hash>}`，并在后端配置了
-  「加速域名」`domain` 时附带 `src` 直链；没有 `src` 时服务层回落到 `/i/<sha>`）与
+  「加速域名」`domain` 时附带 `src` 直链；没有 `src` 时服务层回落到 `/raw/<sha>`）与
   `upimg_delete(sha, upload_path, filename, basedir, save_result)`（失败不外抛）
 
 ### 声明式 UI 契约
@@ -276,6 +304,9 @@ __state__ = "enabled"       # enabled / disabled
   `clean_*` 清洗：未知类型/键被丢弃、`href` 仅允许 `http(s)` 与站内 `/`、
   `action` 必须声明于 manifest，否则被静默忽略（防 XSS / 越权）
 - `slots` 的 `name` 必须在 `ui.SLOTS` 白名单内；`admin.*` 开头的插槽仅管理员可见
+- `actions` 里声明 `scope: "admin"` 的动作（如各存储后端的 `ping`）只允许管理员调用，
+  `POST /hooks/<name>/actions/<action>` 会校验；`GET /hooks/<name>/data/<source>` 数据集接口
+  同样仅管理员。新增动作时若会碰服务器路径或第三方凭据，必须标 `scope: "admin"`
 - 节点类型完整列表见 `ui.py`：`fieldset/group/row/col/tabs/collapse/list/list_item`、
   `text/alert/badge/image/code/divider`、`input/number/password/textarea/switch/select/radio`、
   `button/link/dropdown/dropdown_item`
@@ -298,7 +329,7 @@ __state__ = "enabled"       # enabled / disabled
 - Element Plus 按需引入（`unplugin-auto-import` + `unplugin-vue-components`）：模板直接写 `<el-xxx>`，
   脚本直接用 `ElMessage` / `ElMessageBox` 等 API，**不要**再显式 `import ... from 'element-plus'`，
   组件样式由插件按需注入；中文化由 `App.vue` 的 `<el-config-provider :locale>` 统一提供
-- 生产部署把 `web/dist` 交给静态服务器，并将 `/api`、`/i/` 反向代理到后端
+- 生产部署把 `web/dist` 交给静态服务器，并将 `/api`、`/raw/` 反向代理到后端
 
 ## 文档与变更记录
 
@@ -319,8 +350,8 @@ __state__ = "enabled"       # enabled / disabled
 ## 已知技术债（改动时注意）
 
 - 存储后端优先级已支持，但**多副本异步复制与对账**尚未实现（仍取第一条成功结果）
-- 用户自定义存储后端管理 API、上传票据（Upload Ticket）、相册共享成员管理、OIDC 对接
-  仍在待实现列表，相关页面（如 `AdminView`）已留占位提示
+- 用户自定义存储后端管理 API、上传票据（Upload Ticket）仍在待实现列表，相关页面
+  （如 `AdminView`）已留占位提示
 - 钩子的插槽/动作目前是「声明即信任」+ 词表清洗，暂无插件市场与签名校验
 
 ## 编码前思考

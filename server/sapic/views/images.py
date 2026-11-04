@@ -6,6 +6,7 @@ from __future__ import annotations
 from flask import Blueprint, g, request
 
 from ..basis.errors import ApiError, ErrorCode
+from ..libs.albums import can_view_album
 from ..libs.auth import current_user, login_required
 from ..libs.images import (
     album_serializer,
@@ -34,6 +35,7 @@ def _get_image(sha: str) -> Image:
 
 
 @bp.get("/images")
+@login_required
 def list_images():
     query = visible_query(current_user())
 
@@ -80,6 +82,9 @@ def read_image(sha: str):
         raise ApiError("permission denied", ErrorCode.FORBIDDEN, 403)
 
     data = serialize_image(image, image.album)
+    #: 单图被覆盖成 public 时，别把别人私有相册的名字一起带出去。
+    if image.album is not None and not can_view_album(user, image.album):
+        data["album"] = None
     data["replicas"] = [
         {
             "backend": replica.backend.name,
@@ -90,6 +95,10 @@ def read_image(sha: str):
         }
         for replica in image.replicas
     ]
+    #: 只有作者和管理员能改，前端据此决定是否渲染编辑区。
+    data["can_edit"] = user is not None and (
+        image.owner_id == user.id or user.is_admin
+    )
     return ok({"image": data})
 
 
@@ -106,15 +115,16 @@ def update_image(sha: str):
         image.title = (data.get("title") or "")[:255]
     if "album_id" in data:
         album_id = data.get("album_id")
+        #: 每张图片必须归属相册：置空会让私有图在 effective_visibility 里跌回
+        #: public，等于把图片泄成匿名可读。
         if album_id in (None, "", 0):
-            image.album = None
-        else:
-            album = Album.get_or_none(
-                (Album.id == album_id) & (Album.owner == image.owner)
-            )
-            if album is None:
-                raise ApiError("album not found", ErrorCode.NOT_FOUND, 404)
-            image.album = album
+            raise ApiError("album_id is required", ErrorCode.PARAM_ERROR)
+        album = Album.get_or_none(
+            (Album.id == album_id) & (Album.owner == image.owner)
+        )
+        if album is None:
+            raise ApiError("album not found", ErrorCode.NOT_FOUND, 404)
+        image.album = album
     if "visibility" in data:
         visibility = data.get("visibility")
         #: ``shared`` 只在相册维度有意义（授权是按相册发放的），单图只能
@@ -124,6 +134,12 @@ def update_image(sha: str):
         image.visibility = visibility
     if "tags" in data:
         image.tags = normalize_tags(data.get("tags"))
+    if "plaza" in data:
+        plaza = data.get("plaza")
+        #: 三态：空值跟随相册，布尔值强制发布/排除。
+        if plaza is not None and not isinstance(plaza, bool):
+            raise ApiError("invalid plaza flag", ErrorCode.PARAM_ERROR)
+        image.plaza = plaza
 
     image.updated_at = now()
     image.save(
@@ -131,6 +147,7 @@ def update_image(sha: str):
             Image.title,
             Image.album,
             Image.visibility,
+            Image.plaza,
             Image.tags,
             Image.updated_at,
         ]

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from flask import Blueprint, g, request
 
+from ..basis.common import as_bool
 from ..basis.errors import ApiError, ErrorCode
 from ..libs.auth import login_required
 from ..libs.images import album_image_count
@@ -13,6 +14,7 @@ from ..models import Album, AlbumShare, Image, User
 from ..models.base import now
 from ..models.image import STATUS_ENABLED
 from ..models.share import PERMISSION_READ, PERMISSION_WRITE
+from ..models.user import STATUS_NORMAL
 from ..utils.web import ok
 
 bp = Blueprint("albums", __name__)
@@ -21,15 +23,20 @@ VISIBILITIES = ("public", "private", "shared")
 PERMISSIONS = (PERMISSION_READ, PERMISSION_WRITE)
 
 
-def serialize_album(album: Album, role: str = "owner") -> dict:
+def serialize_album(
+    album: Album, role: str = "owner", permission: str | None = None
+) -> dict:
     return {
         "id": album.id,
         "name": album.name,
         "description": album.description,
         "visibility": album.visibility,
+        "plaza": bool(album.plaza),
         "cover_sha": album.cover_sha,
         "image_count": album_image_count(album),
         "role": role,
+        #: 共享相册给出成员的权限（read/write），所有者没有这条记录，故为 None。
+        "permission": permission,
         "is_default": bool(album.is_default),
         "is_system": album.owner_id is None,
         "created_at": album.created_at,
@@ -52,6 +59,20 @@ def _payload() -> dict:
     return request.get_json(silent=True) or request.form.to_dict()
 
 
+def _share_expiry(data: dict) -> int | None:
+    """``expires_in`` seconds until the grant ends; empty means permanent."""
+    raw = data.get("expires_in")
+    if raw in (None, ""):
+        return None
+    try:
+        seconds = int(raw)
+    except (TypeError, ValueError) as exc:
+        raise ApiError("invalid expires_in", ErrorCode.PARAM_ERROR) from exc
+    if seconds <= 0:
+        raise ApiError("invalid expires_in", ErrorCode.PARAM_ERROR)
+    return now() + seconds
+
+
 def _owned_album(album_id: int) -> Album:
     """Only the owner manages members; guests get a plain 404."""
     album = Album.get_or_none(
@@ -65,21 +86,24 @@ def _owned_album(album_id: int) -> Album:
 @bp.get("/albums")
 @login_required
 def list_albums():
-    shared = (
-        AlbumShare.select(AlbumShare.album)
-        .where(AlbumShare.grantee == g.user)
+    #: 过期的授权等同于不存在，列表与鉴权保持同一口径。
+    live = AlbumShare.select().where(
+        (AlbumShare.grantee == g.user)
+        & (AlbumShare.expires_at.is_null() | (AlbumShare.expires_at > now()))
     )
+    shared = [row.album_id for row in live]
     albums = list(
         Album.select()
         .where((Album.owner == g.user) | (Album.id.in_(shared)))
         .order_by(Album.created_at.desc())
     )
-    shared_ids = {
-        row.album_id
-        for row in AlbumShare.select().where(AlbumShare.grantee == g.user)
-    }
+    grants = {row.album_id: row.permission for row in live}
     items = [
-        serialize_album(album, "shared" if album.id in shared_ids else "owner")
+        serialize_album(
+            album,
+            "shared" if album.id in grants else "owner",
+            grants.get(album.id),
+        )
         for album in albums
     ]
     if g.user.is_admin:
@@ -107,6 +131,7 @@ def create_album():
         owner=g.user,
         name=name,
         visibility=visibility,
+        plaza=as_bool(data.get("plaza")),
         description=(data.get("description") or "")[:1000],
         created_at=now(),
         updated_at=now(),
@@ -140,6 +165,8 @@ def update_album(album_id: int):
         album.visibility = data["visibility"]
     if "description" in data:
         album.description = (data.get("description") or "")[:1000]
+    if "plaza" in data:
+        album.plaza = as_bool(data.get("plaza"))
 
     album.updated_at = now()
     album.save(
@@ -147,6 +174,7 @@ def update_album(album_id: int):
             Album.name,
             Album.visibility,
             Album.description,
+            Album.plaza,
             Album.updated_at,
         ]
     )
@@ -210,11 +238,13 @@ def create_share(album_id: int):
         raise ApiError("invalid permission", ErrorCode.PARAM_ERROR)
 
     grantee = User.get_or_none(User.username == username)
-    if grantee is None:
-        raise ApiError("user not found", ErrorCode.NOT_FOUND, 404)
+    #: 不存在与未激活共用一条消息，别让人拿这个接口探测账号状态。
+    if grantee is None or grantee.status != STATUS_NORMAL:
+        raise ApiError("share target not found", ErrorCode.NOT_FOUND, 404)
     if grantee.id == g.user.id:
         raise ApiError("cannot share with yourself", ErrorCode.PARAM_ERROR)
 
+    expires_at = _share_expiry(data)
     share = AlbumShare.get_or_none(
         (AlbumShare.album == album) & (AlbumShare.grantee == grantee)
     )
@@ -224,11 +254,13 @@ def create_share(album_id: int):
             album=album,
             grantee=grantee,
             permission=permission,
+            expires_at=expires_at,
             created_at=now(),
         )
     else:
         share.permission = permission
-        share.save(only=[AlbumShare.permission])
+        share.expires_at = expires_at
+        share.save(only=[AlbumShare.permission, AlbumShare.expires_at])
 
     #: Granting access to a private album turns it into a shared one, so the
     #: visibility label matches what actually happens to the album.
@@ -241,6 +273,35 @@ def create_share(album_id: int):
         {"share": serialize_share(share), "album": serialize_album(album)},
         status=201 if created else 200,
     )
+
+
+@bp.patch("/albums/<int:album_id>/shares/<int:user_id>")
+@login_required
+def update_share(album_id: int, user_id: int):
+    """Change the permission or the expiry of an existing member."""
+    album = _owned_album(album_id)
+    data = _payload()
+    permission = data.get("permission")
+    if permission is not None and permission not in PERMISSIONS:
+        raise ApiError("invalid permission", ErrorCode.PARAM_ERROR)
+    if permission is None and "expires_in" not in data:
+        raise ApiError("nothing to update", ErrorCode.PARAM_ERROR)
+
+    share = AlbumShare.get_or_none(
+        (AlbumShare.album == album) & (AlbumShare.grantee == user_id)
+    )
+    if share is None:
+        raise ApiError("share not found", ErrorCode.NOT_FOUND, 404)
+
+    fields = []
+    if permission is not None:
+        share.permission = permission
+        fields.append(AlbumShare.permission)
+    if "expires_in" in data:
+        share.expires_at = _share_expiry(data)
+        fields.append(AlbumShare.expires_at)
+    share.save(only=fields)
+    return ok({"share": serialize_share(share)})
 
 
 @bp.delete("/albums/<int:album_id>/shares/<int:user_id>")

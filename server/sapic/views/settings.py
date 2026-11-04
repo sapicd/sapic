@@ -38,6 +38,7 @@ _BOOL_KEYS = {
     "allow_register",
     "allow_video",
     "password_login",
+    "plaza_enabled",
     "register_review",
 }
 

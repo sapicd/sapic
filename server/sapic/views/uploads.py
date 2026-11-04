@@ -8,7 +8,8 @@ from os.path import splitext
 from flask import Blueprint, current_app, request
 
 from ..basis.errors import ApiError, ErrorCode
-from ..libs.auth import current_user
+from ..libs.albums import can_write
+from ..libs.auth import SCOPE_UPLOAD, current_user, require_scope
 from ..libs.images import (
     VIDEO_EXTS,
     create_image,
@@ -58,6 +59,8 @@ def _check_upload_limits(filename: str, size: int) -> None:
 
 @bp.post("/uploads")
 def upload():
+    #: 上传接口允许匿名，没有 login_required 兜底，令牌的 scope 在这里单独校验。
+    require_scope(SCOPE_UPLOAD)
     user = current_user()
     if user is None:
         if not anonymous_upload_allowed():
@@ -96,10 +99,9 @@ def upload():
             album_id = int(album_id)
         except (TypeError, ValueError) as exc:
             raise ApiError("invalid album_id", ErrorCode.PARAM_ERROR) from exc
-        album = Album.get_or_none(
-            (Album.id == album_id) & (Album.owner == user)
-        )
-        if album is None:
+        album = Album.get_or_none(Album.id == album_id)
+        #: 相册所有者和被授予 write 的共享成员都可以往里上传。
+        if album is None or not can_write(user, album):
             raise ApiError("album not found", ErrorCode.NOT_FOUND, 404)
 
     expire = 0

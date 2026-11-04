@@ -32,7 +32,7 @@ from ..models.album import VISIBILITY_PUBLIC
 from ..models.base import now
 from ..models.image import STATUS_DELETED, STATUS_ENABLED
 from ..models.storage import STATE_OK
-from .albums import resolve_album
+from .albums import resolve_album, share_for
 from .hook import get_hook_manager
 from .storage import (
     delete_object,
@@ -131,11 +131,11 @@ def image_src(
     album: Album | None = None,
     replicas: list[ImageBackend] | None = None,
 ) -> str:
-    """Direct link for public images, stable ``/i/<sha>`` for the rest.
+    """Direct link for public images, stable ``/raw/<sha>`` for the rest.
 
     Public payloads link to the highest priority replica that reported a public
     URL, which keeps sapic out of the data path; private images must stay behind
-    ``/i/<sha>`` so the visibility check keeps applying.
+    ``/raw/<sha>`` so the visibility check keeps applying.
     """
     if album is None:
         album = image.album
@@ -144,7 +144,7 @@ def image_src(
     )
     if visibility == VISIBILITY_PUBLIC:
         rows = replicas if replicas is not None else replicas_for(image)
-        #: 只看优先级最高的副本，与 /i/<sha> 的输出顺序保持一致。
+        #: 只看优先级最高的副本，与 /raw/<sha> 的输出顺序保持一致。
         if rows and rows[0].url:
             return rows[0].url
     return public_url(image.sha)
@@ -163,6 +163,9 @@ def serialize_image(
         "mime": image.mime,
         "is_video": bool(image.is_video),
         "visibility": image.visibility,
+        #: NULL means "follow the album"; the effective value is for display.
+        "plaza": image.plaza,
+        "plaza_effective": effective_plaza(image, album),
         "tags": list(image.tags or []),
         "album_id": image.album_id,
         "album": (
@@ -505,41 +508,72 @@ def can_view(user, image: Image) -> bool:
     if visibility == VISIBILITY_PUBLIC:
         return True
     #: ``shared`` 只来自相册，授权记录按相册发放，单图不会单独共享。
-    if visibility == "shared" and image.album is not None and user is not None:
-        return (
-            AlbumShare.get_or_none(
-                (AlbumShare.album == image.album)
-                & (AlbumShare.grantee == user)
-            )
-            is not None
-        )
+    if visibility == "shared" and image.album is not None:
+        return share_for(user, image.album) is not None
     return False
 
 
+def effective_plaza(image: Image, album: Album | None = None) -> bool:
+    """Single-image flag wins; otherwise the album's plaza switch decides."""
+    if image.plaza is not None:
+        return bool(image.plaza)
+    if album is None:
+        album = image.album
+    return bool(album.plaza) if album is not None else False
+
+
+def _public_condition():
+    """Effective visibility is public (image override or album)."""
+    return (Image.visibility == VISIBILITY_PUBLIC) | (
+        Image.visibility.is_null()
+        & ((Image.album.is_null()) | (Album.visibility == VISIBILITY_PUBLIC))
+    )
+
+
 def visible_query(user):
-    """Images visible to ``user`` (owners, public, shared albums)."""
+    """Images listed for ``user``: their own plus the albums shared with them.
+
+    Public visibility is deliberately absent: ``GET /api/v2/images`` is the
+    personal library, so another user's public album must not leak into it.
+    Public exposure is the plaza's job and requires an explicit publish.
+    """
     query = (
         Image.select(Image)
         .join(Album, JOIN.LEFT_OUTER, on=(Image.album == Album.id))
         .where(Image.status == STATUS_ENABLED)
     )
 
-    public_condition = (Image.visibility == VISIBILITY_PUBLIC) | (
-        Image.visibility.is_null()
-        & ((Image.album.is_null()) | (Album.visibility == VISIBILITY_PUBLIC))
-    )
-
     if user is None:
-        return query.where(public_condition)
+        #: 接口本身已要求登录，这里只是防御性兜底：匿名没有图库。
+        return query.where(False)
     if user.is_admin:
         return query
     shared_albums = AlbumShare.select(AlbumShare.album).where(
-        AlbumShare.grantee == user
+        (AlbumShare.grantee == user)
+        & (AlbumShare.expires_at.is_null() | (AlbumShare.expires_at > now()))
     )
     return query.where(
-        (Image.owner == user)
-        | public_condition
-        | (Image.album.in_(shared_albums))
+        (Image.owner == user) | (Image.album.in_(shared_albums))
+    )
+
+
+def plaza_query():
+    """Public images the owner published to the plaza.
+
+    Publishing is an exposure switch, not a permission: flagged images keep
+    their own visibility, so non-public ones stay out of the listing.
+    """
+    return (
+        Image.select(Image)
+        .join(Album, JOIN.LEFT_OUTER, on=(Image.album == Album.id))
+        .where(
+            (Image.status == STATUS_ENABLED)
+            & _public_condition()
+            & (
+                (Image.plaza.is_null(False) & Image.plaza)
+                | (Image.plaza.is_null() & Album.plaza)
+            )
+        )
     )
 
 

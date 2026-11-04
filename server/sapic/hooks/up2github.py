@@ -4,7 +4,7 @@
 Driver contract (v2): ``upimg_save(filename, stream, upload_path, backend=...)``
 returns ``{"code": 0, "path": <repo key>, "size": <bytes>, "etag": <blob sha>}``
 plus ``src``, the ``download_url`` GitHub reports for the new blob (public
-repositories only; the service layer falls back to ``/i/<sha>`` without it).
+repositories only; the service layer falls back to ``/raw/<sha>`` without it).
 
 ``etag`` is the blob sha GitHub assigns, which lets :func:`upimg_delete` remove
 the object without a round trip; the credentials come from ``backend["config"]``

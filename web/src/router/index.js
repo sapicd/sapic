@@ -12,10 +12,17 @@ const routes = [
   },
   { path: '/upload', redirect: { name: 'upload' } },
   {
+    path: '/plaza',
+    name: 'plaza',
+    component: () => import('@/views/PlazaView.vue'),
+    meta: { title: '广场' },
+  },
+  {
     path: '/images',
     name: 'images',
     component: () => import('@/views/ImagesView.vue'),
-    meta: { title: '图片' },
+    //: 图片列表是个人图库，未登录没有内容可看。
+    meta: { requiresAuth: true, title: '图片' },
   },
   {
     path: '/images/:sha',

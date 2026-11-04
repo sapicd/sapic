@@ -4,7 +4,7 @@
 Driver contract (v2): ``upimg_save(filename, stream, upload_path, backend=...)``
 returns ``{"code": 0, "path": <bucket key>, "size": <bytes>, "etag": <hash>}``
 plus ``src`` when the backend has a public ``domain``. Without it the service
-layer falls back to ``/i/<sha>``.
+layer falls back to ``/raw/<sha>``.
 
 The credentials come from ``backend["config"]`` (``bucket`` / ``access_key`` /
 ``secret_key`` / ``basedir`` / ``domain``). The SDK is optional and only
