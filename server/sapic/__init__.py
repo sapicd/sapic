@@ -27,6 +27,7 @@ def create_app(config: dict | None = None) -> Flask:
     from .cli import sa_cli
     from .libs.auth import init_app as init_auth
     from .libs.hook import init_app as init_hooks
+    from .libs.storage import sync_backends
     from .migrations import auto_upgrade
     from .views import register_blueprints
 
@@ -47,6 +48,9 @@ def create_app(config: dict | None = None) -> Flask:
     auto_upgrade()
     init_auth(app)
     init_hooks(app)
+    #: 启用的存储钩子必须有对应的后端行才能被上传链路选中。
+    with app.app_context():
+        sync_backends()
     register_blueprints(app)
     register_error_handlers(app)
     app.cli.add_command(sa_cli)

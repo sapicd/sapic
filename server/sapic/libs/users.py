@@ -11,8 +11,19 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from ..basis.db import db
 from ..basis.errors import ApiError, ErrorCode
-from ..models import User
+from ..models import (
+    Album,
+    AlbumShare,
+    ApiToken,
+    Image,
+    StorageBackend,
+    UploadTicket,
+    User,
+    UserBackend,
+    UserSetting,
+)
 from ..models.base import now
+from ..models.storage import SCOPE_USER
 from ..models.user import (
     STATUS_DISABLED,
     STATUS_NORMAL,
@@ -20,7 +31,7 @@ from ..models.user import (
     STATUS_REJECTED,
 )
 from .albums import default_album
-from .images import create_image, image_src
+from .images import create_image, delete_image, image_src
 
 logger = logging.getLogger(__name__)
 
@@ -225,9 +236,11 @@ def resolve_oidc_user(
         email = None
 
     #: 新用户的正常入口：按 provider 信息建号，并立刻建好兜底相册。
+    #: 账号名只取稳定标识（优先 provider 给的用户名，其次 subject/uid），
+    #: 昵称会随用户改名而变化，只写进 nickname 作显示名。
     with db.atomic():
         user = User.create(
-            username=_oidc_username(username or nickname),
+            username=_oidc_username(username or subject),
             email=email,
             #: OIDC 账号没有本地密码，随机值让密码登录不可能成功。
             password_hash=generate_password_hash(secrets.token_urlsafe(32)),
@@ -311,6 +324,60 @@ def update_avatar(
     return user
 
 
+def purge_user(user: User) -> None:
+    """Delete an account together with everything it owns.
+
+    Unlike ``delete_image`` (soft delete), the rows go away for real: the
+    username and the image ``sha`` have to become reusable, so replicas are
+    removed from the storage backends first. Images other people uploaded into
+    this account's albums are moved to their own default album instead of being
+    dropped with the album.
+    """
+    album_ids = [album.id for album in Album.select().where(Album.owner == user)]
+    personal = [
+        backend.id
+        for backend in StorageBackend.select().where(
+            (StorageBackend.owner == user) & (StorageBackend.scope == SCOPE_USER)
+        )
+    ]
+
+    with db.atomic():
+        if album_ids:
+            for image in Image.select().where(
+                (Image.album.in_(album_ids)) & (Image.owner != user)
+            ):
+                if image.owner is not None:
+                    image.album = default_album(image.owner)
+                    image.save(only=[Image.album])
+
+        for image in Image.select().where(Image.owner == user):
+            delete_image(image)
+            image.delete_instance()
+
+        AlbumShare.delete().where(AlbumShare.grantee == user).execute()
+        if album_ids:
+            AlbumShare.delete().where(AlbumShare.album.in_(album_ids)).execute()
+        UploadTicket.delete().where(UploadTicket.owner == user).execute()
+        if album_ids:
+            #: 别人的票据指向被删相册时只解除引用，票据本身留给其所有者。
+            UploadTicket.update(album=None).where(
+                UploadTicket.album.in_(album_ids)
+            ).execute()
+            Album.delete().where(Album.id.in_(album_ids)).execute()
+
+        if personal:
+            UploadTicket.update(backend=None).where(
+                UploadTicket.backend.in_(personal)
+            ).execute()
+            UserBackend.delete().where(UserBackend.backend.in_(personal)).execute()
+            StorageBackend.delete().where(StorageBackend.id.in_(personal)).execute()
+
+        ApiToken.delete().where(ApiToken.owner == user).execute()
+        UserSetting.delete().where(UserSetting.user == user).execute()
+        UserBackend.delete().where(UserBackend.user == user).execute()
+        user.delete_instance()
+
+
 def serialize_user(user: User, include_private: bool = False) -> dict:
     data = {
         "id": user.id,
@@ -337,6 +404,7 @@ __all__ = [
     "change_password",
     "create_user",
     "normalize_username",
+    "purge_user",
     "resolve_oidc_user",
     "serialize_user",
     "update_avatar",

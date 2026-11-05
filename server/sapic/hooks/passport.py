@@ -27,7 +27,7 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     requests = None
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __author__ = "staugur"
 __description__ = "使用 Passport 统一登录（OIDC）"
 __catalog__ = "auth"
@@ -163,12 +163,8 @@ def _identity(claims: dict, issuer: str) -> dict:
     subject = str(claims.get("sub") or "").strip()
     if not subject:
         raise ValueError("subject is missing from the provider claims")
-    username = (
-        claims.get("preferred_username")
-        or claims.get("username")
-        or claims.get("name")
-        or ""
-    )
+    #: Passport 的 sub 就是用户 uid（22 位小写），昵称会随用户改名而变化，
+    #: 所以本地账号名一律取 uid，昵称只作显示名。
     #: Passport 只把验证过的手机号/邮箱入库，缺字段按已验证处理。
     verified = claims.get("email_verified", True)
     if isinstance(verified, str):
@@ -176,8 +172,8 @@ def _identity(claims: dict, issuer: str) -> dict:
     return {
         "issuer": str(claims.get("iss") or issuer),
         "subject": subject,
-        "username": str(username or ""),
-        "nickname": str(claims.get("name") or claims.get("nickname") or ""),
+        "username": subject,
+        "nickname": str(claims.get("nickname") or claims.get("name") or ""),
         "email": str(claims.get("email") or ""),
         #: 只有 provider 明确验证过的邮箱才允许自动关联本地老账号。
         "email_verified": bool(verified),

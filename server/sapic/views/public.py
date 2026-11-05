@@ -95,6 +95,11 @@ def image(sha: str):
         raise ApiError("permission denied", ErrorCode.FORBIDDEN, 403)
 
     public = effective_visibility(row) == VISIBILITY_PUBLIC
+    #: 外链登记：公开图交给浏览器直连源站，私有图由 sapic 转发（不暴露源站）。
+    if row.source_url:
+        if public:
+            return redirect(row.source_url)
+        return _cached(_proxy(row.source_url, row.mime), public=False)
     for replica in replicas_for(row):
         path = local_path(replica)
         if path is not None:

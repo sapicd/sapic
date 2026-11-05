@@ -21,8 +21,14 @@ from .base import BaseModel, JSONTextField, now
 from .image import Image
 from .user import User
 
-SCOPE_GLOBAL = "global"
+#: 系统级后端：管理员维护，可授权给用户使用（站点默认存储）。
+SCOPE_SYSTEM = "system"
+#: 用户自定义后端：归属 ``owner``，只有本人可用（预留能力，需站点开关放开）。
 SCOPE_USER = "user"
+#: 兼容早期数据：v2 早期把系统级写作 ``global``，迁移里已归一为 ``system``。
+SCOPE_GLOBAL = "global"
+#: 视为「系统后端」的 scope 取值（读路径同时接受旧值，部署期间不会读丢）。
+SYSTEM_SCOPES = (SCOPE_SYSTEM, SCOPE_GLOBAL)
 
 VISIBILITY_PUBLIC = "public"
 VISIBILITY_PRIVATE = "private"
@@ -40,7 +46,7 @@ class StorageBackend(BaseModel):
     hook_name = CharField(max_length=64)
     #: Driver specific options; secret values are encrypted before storage.
     config = JSONTextField(null=True)
-    scope = CharField(max_length=16, default=SCOPE_GLOBAL)
+    scope = CharField(max_length=16, default=SCOPE_SYSTEM)
     owner = ForeignKeyField(
         User, backref="storage_backends", column_name="owner_id", null=True
     )

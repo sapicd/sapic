@@ -24,8 +24,9 @@ from peewee import (
 from playhouse.migrate import SchemaMigrator, migrate
 
 from ..basis.db import db
-from ..models import ALL_MODELS, Album, Image, User
+from ..models import ALL_MODELS, Album, Image, StorageBackend, User
 from ..models.base import BaseModel, JSONTextField, now
+from ..models.storage import SCOPE_SYSTEM
 
 #: Substrings identifying transient lock errors raised by concurrent workers.
 _LOCK_ERRORS = ("locked", "busy", "deadlock")
@@ -163,12 +164,42 @@ def _v005_plaza() -> None:
         migrate(*operations)
 
 
+def _v006_image_source_url() -> None:
+    """Add ``images.source_url`` for external links that are not downloaded.
+
+    Imported links keep their bytes at the origin: the row only records the
+    URL, and ``/raw/<sha>`` redirects (public) or relays (private) to it.
+    """
+    columns = {column.name for column in db.get_columns("images")}
+    if "source_url" in columns:
+        return
+    migrate(
+        SchemaMigrator.from_database(db).add_column(
+            "images", "source_url", CharField(max_length=1024, null=True)
+        )
+    )
+
+
+def _v007_storage_scope_system() -> None:
+    """Rename the system backend scope from ``global`` to ``system``.
+
+    ``scope`` is where "system default" and "user defined" part ways: system
+    rows are the admin maintained defaults (optionally granted to users), user
+    rows belong to their owner. The rename is data only and idempotent.
+    """
+    StorageBackend.update(scope=SCOPE_SYSTEM).where(
+        StorageBackend.scope == "global"
+    ).execute()
+
+
 MIGRATIONS = [
     (1, "initial", _v001_initial),
     (2, "album_ownership", _v002_album_ownership),
     (3, "image_tags", _v003_image_tags),
     (4, "image_visibility", _v004_image_visibility_without_shared),
     (5, "plaza", _v005_plaza),
+    (6, "image_source_url", _v006_image_source_url),
+    (7, "storage_scope_system", _v007_storage_scope_system),
 ]
 
 

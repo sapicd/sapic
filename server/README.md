@@ -79,9 +79,14 @@ gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent
 | DELETE | `/api/v2/auth/identities/<name>` | 解除绑定（需当前密码） |
 | POST | `/api/v2/uploads` | 上传（multipart，字段 `file` 或 `url`） |
 | GET | `/api/v2/images` | 图片列表（游标分页，权限过滤） |
+| POST | `/api/v2/images/import` | 批量登记外链（不下载文件，`items` 为链接数组，可指定 `album_id`） |
+| POST | `/api/v2/images/batch/delete` | 批量删除（`shas`，≤100） |
+| PATCH | `/api/v2/images/batch` | 批量修改：`album_id` / `visibility` / `plaza` / `tags` |
 | GET/PATCH/DELETE | `/api/v2/images/<sha>` | 详情 / 修改 / 删除 |
 | GET/POST | `/api/v2/albums` | 相册列表 / 创建 |
 | PATCH/DELETE | `/api/v2/albums/<id>` | 修改 / 删除（非空拒绝） |
+| GET/POST | `/api/v2/backends` | 存储后端列表 / 新增（仅管理员） |
+| PATCH/DELETE | `/api/v2/backends/<id>` | 改优先级、启停、按后端覆盖配置 / 删除（仍有副本则 409） |
 | GET | `/raw/<sha>` | 图片读取（公开图 302 到后端直链；私有图鉴权后输出，支持 Range） |
 
 认证方式：Cookie 会话（写操作需要 `X-CSRF-Token`）或 `Authorization: Bearer <PAT>`。
@@ -89,6 +94,7 @@ gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent
 统一登录（OIDC，由 `passport` 钩子提供）：
 
 - 登录顺序：身份已绑定 → 直接登录；未绑定但 provider 已验证的邮箱与本地已验证账号一致 → 自动关联；否则按 provider 信息自动建号（新用户的主要入口，同时创建默认相册）。
+- 新账号的本地用户名取 provider 的稳定标识（Passport 即 `sub`／uid，22 位小写），昵称仅写入 `nickname` 作显示名——昵称可改、可重复，不适合当账号名。
 - 邮箱关联始终启用，且要求**provider 与本地账号的邮箱都验证过**：provider 缺 `email_verified` 字段按已验证处理、显式 `false` 不关联；本地邮箱需先通过验证流程，避免「抢填他人邮箱」的账号被接管。
 - 邮箱验证：注册时自动寄出令牌，也可在「账号设置」重新发送（`POST /api/v2/auth/email/verify`），提交令牌到 `POST /api/v2/auth/email/confirm` 后置为已验证；修改邮箱会重置为未验证，旧令牌随之失效。找回密码（`/auth/password/forgot`）同样只对已验证邮箱签发令牌。
 - 已登录用户可在「账号设置 → 统一登录」绑定/解绑；解绑需输入当前密码，避免 OIDC 专用账号（随机密码）把自己锁在门外。
@@ -109,13 +115,18 @@ gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent
 
 - 广场是**曝光渠道**，不改变任何权限：`visibility` 仍然决定谁能看，只有有效可见性为 `public` 的图片会进入列表。
 - 发布必须显式：相册级开关 `albums.plaza`，单图三态 `images.plaza`（`NULL` 跟随相册、`true` 强制发布、`false` 强制排除）。
-- 站点设置 `plaza_enabled`（默认开）关闭后接口返回 404，导航入口也随之隐藏。
+- 站点设置 `plaza_enabled` **默认关闭**（个人图床不需要公开曝光渠道，公开 UGC 还会带来内容审核负担）；开启后 `GET /api/v2/plaza` 才可用，关闭时接口 404、前端所有广场入口随之隐藏。
 - 迁移 `v005 plaza` 添加这两列，存量图片默认不上广场。
 
 ## 当前实现范围
 
-- 已完成：应用工厂、Peewee 模型、迁移框架、健康检查、注册/登录/找回密码/PAT、上传与读取、相册权限、相册共享成员（增减成员与调整权限）、存储后端优先级。
-- 待实现：用户自定义存储后端管理 API、上传票据（Upload Ticket）、多副本异步复制与对账、管理后台 API、第三方插件安装持久化。
+- 已完成：应用工厂、Peewee 模型、迁移框架、健康检查、注册/登录/找回密码/PAT、上传与读取、相册权限、相册共享成员（增减成员与调整权限）、存储后端管理与优先级。
+- 待实现：上传票据（Upload Ticket）、副本对账/自动回填、用户自定义存储后端的 API/UI
+  （数据层见 `scope="user"` + 站点开关 `allow_user_backends`）、第三方插件安装持久化。
+
+存储后端：启用的存储钩子（`catalog=upload`）在启动时与每次解析后端时自动补一行 `storage_backends`，
+凭据来自「钩子配置」，可按后端覆盖。上传写入 `priority` 最小的启用后端；仍有副本的后端不能禁用/删除，
+删掉某驱动的最后一行等同于停用该钩子（否则下次同步会重建）。
 
 ## 测试
 

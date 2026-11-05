@@ -3,9 +3,11 @@ import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { api, errorMessage } from '@/api/client'
+import { useSiteStore } from '@/stores/site'
 import { formatTime } from '@/utils/format'
 
 const router = useRouter()
+const site = useSiteStore()
 
 const VISIBILITIES = [
   { label: '公开', value: 'public' },
@@ -263,7 +265,7 @@ onMounted(load)
             {{ VISIBILITY_TEXT[row.visibility] || row.visibility }}
           </template>
         </el-table-column>
-        <el-table-column label="广场" width="90">
+        <el-table-column v-if="site.plazaEnabled" label="广场" width="90">
           <template #default="{ row }">
             <el-tag v-if="row.plaza" size="small" type="success" effect="plain">
               已发布
@@ -331,7 +333,7 @@ onMounted(load)
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="发布到广场">
+        <el-form-item v-if="site.plazaEnabled" label="发布到广场">
           <el-switch v-model="form.plaza" />
           <span class="form-suffix">仅公开相册的图片会出现在广场</span>
         </el-form-item>

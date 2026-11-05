@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from flask import Blueprint
 
+from ..libs.mail import smtp_ready
 from ..libs.settings import get_setting
 from ..utils.web import ok
 from ..version import __version__
@@ -32,9 +33,11 @@ def site():
             "upload_count_limit": get_setting("upload_count_limit", 10),
             "upload_allowed_ext": get_setting("upload_allowed_ext", ""),
             "allow_video": bool(get_setting("allow_video", True)),
-            "plaza_enabled": bool(get_setting("plaza_enabled", True)),
+            "plaza_enabled": bool(get_setting("plaza_enabled", False)),
             "allow_register": bool(get_setting("allow_register", True)),
             "password_login": bool(get_setting("password_login", True)),
+            #: 只有配置了 SMTP 才能寄验证码/重置链接，前端据此隐藏不可用的入口。
+            "mail_enabled": smtp_ready(),
             "allow_anonymous_upload": bool(
                 get_setting("allow_anonymous_upload", False)
             ),

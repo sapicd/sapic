@@ -11,6 +11,7 @@ from datetime import datetime
 from hashlib import sha1
 from mimetypes import guess_type
 from os.path import splitext
+from posixpath import basename as posix_basename
 from urllib.error import HTTPError, URLError
 from urllib.parse import unquote, urljoin, urlparse
 from urllib.request import (
@@ -34,10 +35,12 @@ from ..models.image import STATUS_DELETED, STATUS_ENABLED
 from ..models.storage import STATE_OK
 from .albums import resolve_album, share_for
 from .hook import get_hook_manager
+from .settings import get_setting
 from .storage import (
     delete_object,
     driver_backend,
     list_backends,
+    queue_replicas,
     replicas_for,
     save_object,
 )
@@ -143,6 +146,9 @@ def image_src(
         album.visibility if album is not None else VISIBILITY_PUBLIC
     )
     if visibility == VISIBILITY_PUBLIC:
+        #: 外链登记的图片字节不在 sapic，公开图直接指向源站。
+        if image.source_url:
+            return image.source_url
         rows = replicas if replicas is not None else replicas_for(image)
         #: 只看优先级最高的副本，与 /raw/<sha> 的输出顺序保持一致。
         if rows and rows[0].url:
@@ -179,6 +185,8 @@ def serialize_image(
         ),
         "created_at": image.created_at,
         "expire_at": image.expire_at,
+        #: 外链登记（未下载）的图片，UI 据此打标并提示删除不影响源站。
+        "external": bool(image.source_url),
         "src": image_src(image, album, replicas),
     }
 
@@ -488,7 +496,75 @@ def create_image(
             backend=runtime,
         )
         raise
+
+    #: 其余启用的后端异步补副本：失败只记录在副本行上，不影响本次上传。
+    if len(backends) > 1 and get_setting("storage_replica"):
+        queue_replicas(
+            current_app._get_current_object(),
+            image.id,
+            backends[1:],
+            sha,
+            object_name,
+            stream,
+            upload_path,
+        )
     return image
+
+
+#: Only absolute http(s) links may be imported as external references.
+EXTERNAL_SCHEMES = ("http", "https")
+
+
+def create_external_image(
+    owner,
+    url: str,
+    filename: str = "",
+    title: str = "",
+    album: Album | None = None,
+) -> Image:
+    """Register an external link without downloading the file.
+
+    The bytes stay at the origin: public images link straight to the source and
+    private ones are relayed through ``/raw/<sha>``. No replica row is written,
+    so deleting the record never touches the source.
+    """
+    url = (url or "").strip()
+    parsed = urlparse(url)
+    if parsed.scheme.lower() not in EXTERNAL_SCHEMES or not parsed.netloc:
+        raise ApiError(
+            "url must be an absolute http(s) link", ErrorCode.PARAM_ERROR
+        )
+    if len(url) > 1024:
+        raise ApiError("url is too long", ErrorCode.PARAM_ERROR)
+
+    name = secure_filename(filename or posix_basename(parsed.path))
+    if not name:
+        name = "external"
+    mime = guess_type(name)[0] or guess_type(parsed.path)[0] or ""
+    suffix = splitext(name)[-1].lower()
+
+    if owner is not None and Image.get_or_none(
+        (Image.owner == owner)
+        & (Image.source_url == url)
+        & (Image.status == STATUS_ENABLED)
+    ):
+        raise ApiError("link already imported", ErrorCode.CONFLICT, 409)
+
+    return Image.create(
+        sha=make_sha(name),
+        owner=owner,
+        album=album if album is not None else resolve_album(owner),
+        filename=name[:255],
+        title=(title or "")[:255],
+        size=0,
+        mime=(mime or "")[:64],
+        is_video=suffix in VIDEO_EXTS,
+        status=STATUS_ENABLED,
+        visibility=None,
+        source_url=url,
+        created_at=now(),
+        updated_at=now(),
+    )
 
 
 def effective_visibility(image: Image) -> str:
@@ -594,5 +670,7 @@ def delete_image(image: Image) -> None:
     image.save(only=[Image.status, Image.deleted_at, Image.updated_at])
 
     for replica in list(image.replicas):
-        delete_object(image, replica)
+        #: 只有成功的副本才真的有对象要删（storing/failed 的没有落盘）。
+        if replica.state == STATE_OK:
+            delete_object(image, replica)
         replica.delete_instance()

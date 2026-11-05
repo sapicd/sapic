@@ -116,6 +116,26 @@ async function revokeAdmin(user) {
   patch(user, { is_admin: false }, '已取消管理员权限')
 }
 
+async function remove(user) {
+  try {
+    await ElMessageBox.confirm(
+      `删除「${user.nickname || user.username}」会同时删除其相册、图片与令牌，且无法恢复。确定继续吗？`,
+      '删除用户',
+      { type: 'warning', confirmButtonText: '删除' },
+    )
+  } catch (error) {
+    return
+  }
+  try {
+    await api.del(`/users/${user.id}`)
+    users.value = users.value.filter((item) => item.id !== user.id)
+    refreshCounts()
+    ElMessage.success('用户已删除')
+  } catch (error) {
+    ElMessage.error(errorMessage(error, '删除失败'))
+  }
+}
+
 function search() {
   loadUsers(true)
 }
@@ -200,7 +220,7 @@ onMounted(() => loadUsers(true))
         <el-table-column label="注册时间" width="180">
           <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="200" align="right">
+        <el-table-column label="操作" width="240" align="right">
           <template #default="{ row }">
             <template v-if="!isSelf(row)">
               <template v-if="row.status === -1">
@@ -235,6 +255,9 @@ onMounted(() => loadUsers(true))
               </el-button>
               <el-button v-else link type="danger" size="small" @click="revokeAdmin(row)">
                 取消管理员
+              </el-button>
+              <el-button link type="danger" size="small" @click="remove(row)">
+                删除
               </el-button>
             </template>
             <span v-else class="user-cell__nick">当前账号</span>

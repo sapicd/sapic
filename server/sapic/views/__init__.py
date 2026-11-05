@@ -13,6 +13,7 @@ API_PREFIX = "/api/v2"
 def register_blueprints(app) -> None:
     from .albums import bp as albums_bp
     from .auth import bp as auth_bp
+    from .backends import bp as backends_bp
     from .health import bp as health_bp
     from .hooks import bp as hooks_bp
     from .images import bp as images_bp
@@ -32,6 +33,7 @@ def register_blueprints(app) -> None:
         albums_bp,
         plaza_bp,
         settings_bp,
+        backends_bp,
         hooks_bp,
         users_bp,
     ):

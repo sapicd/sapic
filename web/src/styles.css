@@ -653,6 +653,12 @@ a {
   white-space: normal;
 }
 
+/*: 邮件令牌输入框跟在标签后面换行显示，不需要占满整行。 */
+.email-verify__token {
+  flex: 0 0 260px;
+  max-width: 100%;
+}
+
 .auth__footer {
   margin-top: 14px;
   text-align: center;
@@ -889,6 +895,46 @@ a {
   box-shadow: var(--app-shadow);
 }
 
+.image-card.is-selected {
+  border-color: var(--el-color-primary);
+  box-shadow: 0 0 0 2px rgba(14, 159, 142, 0.35);
+}
+
+.image-card__check {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(4px);
+}
+
+/*: 批量操作条：点了「批量处理」才出现在图片列表标题下方。 */
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  backdrop-filter: var(--app-blur);
+}
+
+.bulk-bar__count {
+  font-weight: 600;
+  color: #2a3642;
+}
+
+/*: 退出批量推到操作条最右侧，与前面的动作按钮分开。 */
+.bulk-bar__exit {
+  margin-left: auto;
+}
+
 .image-card__media {
   position: relative;
   aspect-ratio: 4 / 3;
@@ -1045,6 +1091,20 @@ a {
   margin-left: 6px;
   font-size: 12px;
   color: var(--app-text-muted);
+}
+
+/*: 副本行下方的对象路径 / 失败原因，等宽字体方便对着云端控制台核对。 */
+.replica-meta {
+  margin-top: 4px;
+  font-family: Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  word-break: break-all;
+  color: var(--app-text-muted);
+}
+
+.replica-meta--error {
+  color: var(--el-color-danger);
 }
 
 .detail-info__tags {
@@ -1339,5 +1399,116 @@ a {
   .node-field__help {
     white-space: normal;
     overflow-x: visible;
+  }
+}
+
+/*: 左侧导航外壳：后台管理与账号设置共用，左栏切页、右栏内容。 */
+.side-shell {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.side-nav {
+  position: sticky;
+  top: 96px;
+  flex: 0 0 168px;
+  padding: 12px;
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  backdrop-filter: var(--app-blur);
+}
+
+.side-nav__title {
+  padding: 4px 10px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--app-text-muted);
+}
+
+.side-nav__menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/*: 同一套样式既给 router-link 也给 button，按钮需抹掉浏览器默认外观。 */
+.side-nav__link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  border: 0;
+  background: none;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  color: #2a3642;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.side-nav__link:hover {
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.side-nav__link.is-active {
+  color: var(--el-color-primary);
+  background: rgba(14, 159, 142, 0.14);
+}
+
+.side-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/*: 侧栏布局下表单不再铺满整行，过宽的输入框很别扭。 */
+.side-main__form {
+  max-width: 460px;
+}
+
+@media (max-width: 768px) {
+  .side-shell {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .side-nav {
+    position: static;
+    flex-basis: auto;
+    width: 100%;
+    padding: 8px;
+  }
+
+  .side-nav__title {
+    display: none;
+  }
+
+  .side-nav__menu {
+    flex-direction: row;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .side-nav__menu::-webkit-scrollbar {
+    display: none;
+  }
+
+  .side-nav__link {
+    width: auto;
+    height: 34px;
+    padding: 0 8px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .side-main {
+    width: 100%;
   }
 }

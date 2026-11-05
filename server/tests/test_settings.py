@@ -5,6 +5,7 @@ import pytest
 
 from sapic.basis.conf import _check_config_value
 from sapic.basis.vars import DEFAULT_SECRET_KEY
+from sapic.libs.settings import get_setting
 from sapic.models import User
 
 
@@ -155,3 +156,98 @@ def test_register_review_and_reserved_username(app, client):
         json={"username": "bobby", "password": "secret123"},
     )
     assert denied.status_code == 403
+
+
+def smtp_block(**overrides):
+    config = {
+        "host": "smtp.example.com",
+        "port": 587,
+        "user": "operator",
+        "password": "s3cret",
+        "from": "sapic@example.com",
+        "tls": True,
+    }
+    config.update(overrides)
+    return config
+
+
+def test_smtp_settings_are_masked_and_kept(app, client):
+    """密钥只回掩码；回传掩码表示不改密码，否则每次保存都会清空它。"""
+    csrf = register_and_login(client)
+    promote_admin(app)
+
+    response = client.put(
+        "/api/v2/settings",
+        json={"smtp": smtp_block()},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 200, response.get_json()
+    smtp = response.get_json()["data"]["items"]["smtp"]
+    assert smtp["host"] == "smtp.example.com"
+    assert smtp["port"] == 587
+    assert smtp["password"] == "********"
+    assert "s3cret" not in response.get_data(as_text=True)
+
+    with app.app_context():
+        assert get_setting("smtp")["password"] == "s3cret"
+
+    echoed = client.put(
+        "/api/v2/settings",
+        json={"smtp": {**smtp, "port": 25}},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert echoed.status_code == 200, echoed.get_json()
+    with app.app_context():
+        config = get_setting("smtp")
+    assert config["password"] == "s3cret"
+    assert config["port"] == 25
+
+    #: 公开信息只说「邮件可用」，不泄露服务器与账号。
+    site = client.get("/api/v2/site").get_json()["data"]
+    assert site["mail_enabled"] is True
+    assert "smtp.example.com" not in str(site)
+
+    #: 清空 host 即停用邮件，前端据此隐藏验证入口。
+    client.put(
+        "/api/v2/settings",
+        json={"smtp": {**smtp, "host": ""}},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert client.get("/api/v2/site").get_json()["data"]["mail_enabled"] is False
+
+
+def test_smtp_settings_reject_bad_values(app, client):
+    csrf = register_and_login(client)
+    promote_admin(app)
+
+    for payload in (
+        {"smtp": "smtp.example.com"},
+        {"smtp": smtp_block(port=0)},
+        {"smtp": smtp_block(port="abc")},
+        {"smtp": smtp_block(tls="yes")},
+        {"smtp": {**smtp_block(), "unexpected": 1}},
+    ):
+        response = client.put(
+            "/api/v2/settings",
+            json=payload,
+            headers={"X-CSRF-Token": csrf},
+        )
+        assert response.status_code == 400, payload
+        assert response.get_json()["code"] == "PARAM_ERROR"
+
+
+def test_smtp_test_mail_requires_configuration(app, client):
+    csrf = register_and_login(client)
+    promote_admin(app)
+
+    response = client.post(
+        "/api/v2/settings/smtp/test",
+        json={"to": "ops@example.com"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 503
+    assert response.get_json()["code"] == "SERVICE_UNAVAILABLE"
+
+    #: 非管理员不能借测试接口探测服务器配置。
+    other = app.test_client()
+    assert other.post("/api/v2/settings/smtp/test", json={}).status_code in (401, 403)

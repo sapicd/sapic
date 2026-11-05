@@ -7,7 +7,7 @@ v1 代码已归档在 `V1/`，仅供对照，不参与 v2 构建；v1 的项目�
 
 技术栈（后端）：Python 3.10+，Flask，Peewee，Redis，psycopg(binary)，PyMySQL，PyJWT。
 前端：`web/` 是独立的 Vue 3 + Vite + Element Plus 应用，与后端通过 `/api` 与 `/raw/` 交互。
-详细架构见 `ARCH.md`，贡献流程见 `CONTRIBUTING.md`。
+详细架构见 `ARCH.md`，部署与运维见 `DEPLOY.md`，贡献流程见 `CONTRIBUTING.md`。
 
 > Python 版本下限是 **3.10**，可自由使用 3.10 语法（`X | Y` 联合类型、match 语句、内置泛型
 > `dict[str]` 等）。新增代码统一带类型注解，与既有 `sapic/` 模块风格一致。
@@ -40,7 +40,7 @@ v1 代码已归档在 `V1/`，仅供对照，不参与 v2 构建；v1 的项目�
 │   │   ├── utils/
 │   │   │   ├── common.py 纯工具函数（不依赖 Flask 上下文，如游标编解码）
 │   │   │   └── web.py    Web 工具（依赖 Flask 上下文：响应信封、分页）
-│   │   ├── views/        Flask 蓝图与路由（auth/settings/users/uploads/images/albums/health/public/hooks）
+│   │   ├── views/        Flask 蓝图与路由（auth/settings/users/backends/uploads/images/albums/plaza/site/health/public/hooks）
 │   │   ├── models/       Peewee 模型（BaseModel）
 │   │   ├── migrations/   Peewee 迁移框架（flask sa 命令入口）
 │   │   └── hooks/        内置钩子，一个 .py 即一个插件（up2local 等）
@@ -211,11 +211,17 @@ def manifest(self, name: str) -> dict | None:
   provider 信息建号」（新用户主要入口）；解绑需校验当前密码，避免 OIDC 专用账号锁死自己
 - 邮箱验证：注册自动寄令牌，`POST /api/v2/auth/email/verify` 重发、`POST /api/v2/auth/email/confirm`
   提交令牌后置 `email_verified=True`；改邮箱会重置为未验证，且 `resolve_oidc_user` 要求本地已验证
-- 后台页面已拆分：`/admin` 站点设置（`AdminView`）、`/admin/hooks` 钩子管理（`HooksView`）、
-  `/admin/users` 用户管理（`UsersView`），各自挂 `admin.*` 插槽；不要把它们再合并回一页
-- 用户管理走 `GET/PATCH /api/v2/users`（仅管理员，`views/users.py`）：列表支持关键词与状态筛选
+- 后台是**一个入口 + 一个壳**：顶部导航只有「后台管理」，进入后由 `layout/AdminLayout.vue`
+  的侧栏在 `/admin/setting` 站点设置（`AdminView`）、`/admin/hooks` 钩子管理（`HooksView`）、
+  `/admin/backends` 存储后端（`BackendsView`）、`/admin/users` 用户管理（`UsersView`）之间切换，
+  各自挂 `admin.*` 插槽；不要把侧栏再拆成多个顶部导航入口，也不要把这些页面合并回一页；
+  新增后台页面时挂到 `/admin` 父路由下（`/admin` 本身只做重定向）并在 `AdminLayout` 的侧栏里登记
+- 用户管理走 `GET/PATCH/DELETE /api/v2/users`（仅管理员，`views/users.py`）：列表支持关键词与状态筛选
   （`-2` 已拒绝 / `-1` 待审核 / `0` 已禁用 / `1` 正常），PATCH 可改 `status` 与 `is_admin`；
-  禁用/拒绝会自增 `session_version` 让既有会话失效，且管理员不能改自己的状态或撤销自己的管理员权限
+  禁用/拒绝会自增 `session_version` 让既有会话失效，且管理员不能改自己的状态或撤销自己的管理员权限、
+  也不能删除自己。DELETE 走 `libs/users.purge_user`：**硬删除**（用户名与图片 sha 要能被重新占用），
+  连带删除其相册、图片与副本（副本先调 `upimg_delete` 清文件）、PAT、上传票据、用户设置与个人存储后端；
+  别人上传到其相册的图片会移回上传者自己的默认相册
 - **只有 `status=1`（正常）的账号能登录、持有会话或使用 PAT**（`libs/users.authenticate` /
   `libs/auth._load_current_user` / `resolve_pat` 同一口径）：待审核与已拒绝都按未激活处理，
   OIDC 建号走审核时也不发会话（重定向 `/login?oidc=inactive`）
@@ -251,12 +257,19 @@ def manifest(self, name: str) -> dict | None:
 - 图片列表（`GET /api/v2/images`，`libs.images.visible_query`）是**个人图库**：只返回自己的图片 +
   共享给自己的相册，**不包含他人的公开图片**（否则等于绕过了广场的显式发布）；接口要求登录，匿名 401。
   公开图仍可按 `src` / `/raw/<sha>` 访问，那是图床的外链语义，与列表无关。
-- 图片广场（`GET /api/v2/plaza`，匿名可读，站点设置 `plaza_enabled` 可关）是**曝光渠道而非权限**：
+- 图片广场（`GET /api/v2/plaza`，匿名可读）是**曝光渠道而非权限**，且**默认关闭**：个人自建图床用
+  不到公开曝光，开启 `plaza_enabled` 才生效（专业版/社区部署按需打开，开启即意味着承担 UGC 审核与
+  投诉成本）。
   只有有效可见性为 `public` 的图片会进列表，且必须显式发布（`albums.plaza` 相册开关 +
   `images.plaza` 单图三态，`NULL` 跟随相册）；迁移 `v005` 加列，存量默认不发布。
+  站点设置 `plaza_enabled` 关掉后，后端 `GET /plaza` 直接 404，前端同时隐藏一切广场入口
+  （导航项、相册列表/编辑里的发布开关、图片详情里的广场行与单图设置），`/plaza` 路由回退首页。
 - 图片地址（`src`）：公开图直接返回优先级最高副本的直链（钩子 `upimg_save` 返回的 `src`），
   私有图固定走 `/raw/<sha>` 由 sapic 鉴权后输出；私有远程副本在 `/raw/` 内流式转发，不做 302，
   避免暴露源站地址。没有直链的后端（未配 `domain` 的本地存储）同样回落到 `/raw/<sha>`。
+- 外链登记（`images.source_url`，`POST /images/import`）不下载文件、不写副本：公开图 `src` 直接是源站地址，
+  私有图经 `/raw/<sha>` 转发；删除只删元数据。批量操作走 `POST /images/batch/delete` 与
+  `PATCH /images/batch`（≤100 张，只允许自己的图片，移动目标需 `can_write`）。
 - 存储 key 固定为 `{用户}/{年}/{月}/{日}/{ASCII 文件名}-{sha 片段}.{ext}`（`libs.images.upload_path_for` +
   `create_image`），后缀保证同名文件不被覆盖；文件名经 `secure_filename` 清洗，主体被整段清空时用
   `{yyyyMMddHHmmss}{6 位随机}` 兜底（不同中文名不会撞成同一个 `image`），删除按 `object_key` 执行。
@@ -300,6 +313,8 @@ __state__ = "enabled"       # enabled / disabled
 | `action_<name>(payload=None, context=None, values=None)` | dict | `{code, message, toast, refresh}` |
 | `data_<name>(query=None, context=None)` | dict | `{items: [...], total: int}` |
 
+- 存储驱动（`catalog=upload`）的 `config_schema` 字段由**存储后端**消费，不在「钩子配置」里出现：
+  后端行新增/修改时按 `required` 校验、缺项标「待配置」，`driver_backend()` 仍兼容钩子级默认值
 - `config_schema` / `actions` / `data_sources` / `slots` 全部经 `sapic/libs/ui.py` 的
   `clean_*` 清洗：未知类型/键被丢弃、`href` 仅允许 `http(s)` 与站内 `/`、
   `action` 必须声明于 manifest，否则被静默忽略（防 XSS / 越权）
@@ -349,9 +364,13 @@ __state__ = "enabled"       # enabled / disabled
 
 ## 已知技术债（改动时注意）
 
-- 存储后端优先级已支持，但**多副本异步复制与对账**尚未实现（仍取第一条成功结果）
-- 用户自定义存储后端管理 API、上传票据（Upload Ticket）仍在待实现列表，相关页面
-  （如 `AdminView`）已留占位提示
+- 存储后端已可管理（`/api/v2/backends` + `/admin/backends`）：上传同步写 `priority` 最小的启用后端，
+  其余启用的后端由后台线程池异步补副本（站点设置 `storage_replica`，默认开；失败只记在副本行上，
+  不影响上传）。**副本对账/自动补建**（新增后端后回填历史图片、CRC 校验）仍未实现
+- 用户自定义存储（`storage_backends.scope="user"` + `owner`）的**数据与解析层已就绪**
+  （`list_backends()` 按归属过滤、`UserBackend.priority` 覆盖、站点开关 `allow_user_backends`），
+  但用户端 CRUD API/UI 未实现；管理员后台只管理 `scope="system"` 的行。上传票据（Upload Ticket）
+  仍在待实现列表
 - 钩子的插槽/动作目前是「声明即信任」+ 词表清洗，暂无插件市场与签名校验
 
 ## 编码前思考

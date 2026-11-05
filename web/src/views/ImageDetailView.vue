@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { api, errorMessage } from '@/api/client'
 import HookSlot from '@/components/hook/HookSlot.vue'
+import { useSiteStore } from '@/stores/site'
 import { absoluteUrl, formatSize, formatTime } from '@/utils/format'
 
 const VISIBILITY_LABELS = { public: '公开', private: '私有', shared: '共享' }
@@ -16,6 +17,7 @@ const VISIBILITIES = [
 
 const route = useRoute()
 const router = useRouter()
+const site = useSiteStore()
 
 const image = ref(null)
 const replicas = ref([])
@@ -183,7 +185,7 @@ onMounted(load)
               {{ effective.follow ? '跟随相册' : '单图覆盖' }}
             </span>
           </el-descriptions-item>
-          <el-descriptions-item label="广场">
+          <el-descriptions-item v-if="site.plazaEnabled" label="广场">
             <el-tag
               size="small"
               :type="image.plaza_effective ? 'success' : 'info'"
@@ -244,6 +246,10 @@ onMounted(load)
             <span v-if="replica.size" class="detail-info__muted">
               {{ formatSize(replica.size) }}
             </span>
+            <div v-if="replica.key" class="replica-meta">{{ replica.key }}</div>
+            <div v-if="replica.error" class="replica-meta replica-meta--error">
+              {{ replica.error }}
+            </div>
           </el-descriptions-item>
         </el-descriptions>
 
@@ -282,7 +288,7 @@ onMounted(load)
               />
             </el-select>
           </el-descriptions-item>
-          <el-descriptions-item label="广场">
+          <el-descriptions-item v-if="site.plazaEnabled" label="广场">
             <el-select v-model="form.plaza" style="width: 100%">
               <el-option
                 v-for="option in plazaOptions"

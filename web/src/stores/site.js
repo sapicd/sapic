@@ -22,8 +22,11 @@ export const useSiteStore = defineStore('site', {
     allowVideo: true,
     allowRegister: true,
     passwordLogin: true,
+    //: 未配置 SMTP 时验证邮件发不出去，相关入口直接隐藏。
+    mailEnabled: false,
     allowAnonymousUpload: false,
-    plazaEnabled: true,
+    //: 与后端默认值一致：个人图床形态下广场是关闭的。
+    plazaEnabled: false,
     version: '',
     loaded: false,
   }),
@@ -76,6 +79,7 @@ export const useSiteStore = defineStore('site', {
         this.allowVideo = data?.allow_video !== false
         this.allowRegister = data?.allow_register !== false
         this.passwordLogin = data?.password_login !== false
+        this.mailEnabled = Boolean(data?.mail_enabled)
         this.allowAnonymousUpload = Boolean(data?.allow_anonymous_upload)
         this.plazaEnabled = data?.plaza_enabled !== false
         this.version = data?.version || ''

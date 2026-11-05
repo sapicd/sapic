@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+import io
+
 import pytest
 
-from sapic.models import User
+from sapic.models import Album, Image, ImageBackend, User
 
 
 def register(client, username, password="secret123"):
@@ -122,6 +124,48 @@ def test_admin_cannot_lock_itself(app, client, admin):
         headers={"X-CSRF-Token": admin},
     )
     assert demote.status_code == 403
+
+
+def test_admin_deletes_user_with_owned_data(app, client, admin):
+    bobby_client = app.test_client()
+    register(bobby_client, "bobby")
+    csrf = bobby_client.post(
+        "/api/v2/auth/login",
+        json={"username": "bobby", "password": "secret123"},
+    ).get_json()["data"]["csrf"]
+    bobby_client.post(
+        "/api/v2/uploads",
+        data={"file": (io.BytesIO(b"fake-image-bytes"), "photo.png")},
+        content_type="multipart/form-data",
+        headers={"X-CSRF-Token": csrf},
+    )
+    bobby = user_id(app, "bobby")
+
+    response = client.delete(
+        "/api/v2/users/%d" % bobby, headers={"X-CSRF-Token": admin}
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["data"] == {"deleted": True}
+    with app.app_context():
+        assert User.get_or_none(User.id == bobby) is None
+        #: 账号名与图片 sha 都要能被重新使用，所以是硬删除而不是软删除。
+        assert Album.select().where(Album.owner == bobby).count() == 0
+        assert Image.select().where(Image.owner == bobby).count() == 0
+        assert ImageBackend.select().count() == 0
+
+
+def test_admin_cannot_delete_itself_or_missing_user(app, client, admin):
+    alice = user_id(app, "alice")
+    headers = {"X-CSRF-Token": admin}
+
+    assert client.delete("/api/v2/users/%d" % alice, headers=headers).status_code == 403
+    assert client.delete("/api/v2/users/9999", headers=headers).status_code == 404
+
+
+def test_delete_user_requires_admin(client):
+    register_and_login(client)
+    assert client.delete("/api/v2/users/1").status_code == 403
 
 
 def test_admin_rejects_invalid_updates(app, client, admin):

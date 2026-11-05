@@ -42,10 +42,11 @@ def test_storage_priority_order(app):
         StorageBackend.create(name="s3-a", hook_name="up2s3", priority=10)
         StorageBackend.create(name="s3-b", hook_name="up2s3", priority=20)
 
+        #: 启动时会为启用的存储钩子自动建行（up2local），这里只比较本用例的行。
         names = [
             backend.name
-            for backend in StorageBackend.select().order_by(
-                StorageBackend.priority
-            )
+            for backend in StorageBackend.select()
+            .where(StorageBackend.hook_name == "up2s3")
+            .order_by(StorageBackend.priority)
         ]
         assert names == ["s3-a", "s3-b"]

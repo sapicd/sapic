@@ -7,11 +7,16 @@ import { useSiteStore } from '@/stores/site'
 
 const site = useSiteStore()
 
+//: 先给 smtp 一个空壳，加载失败时表单绑定也不会炸。
+const form = ref({
+  smtp: { host: '', port: 25, user: '', password: '', from: '', tls: false },
+})
 const loading = ref(false)
-const form = ref({})
 const editable = ref([])
 const tab = ref('site')
 const saving = ref(false)
+const testMailTo = ref('')
+const testingMail = ref(false)
 
 async function loadSettings() {
   loading.value = true
@@ -41,6 +46,21 @@ async function saveSettings() {
     ElMessage.error(errorMessage(error, '保存失败'))
   } finally {
     saving.value = false
+  }
+}
+
+//: 测试邮件走服务端已保存的配置，改完要先生效再测。
+async function sendTestMail() {
+  testingMail.value = true
+  try {
+    const data = await api.post('/settings/smtp/test', {
+      json: { to: testMailTo.value.trim() || undefined },
+    })
+    ElMessage.success(`测试邮件已发送至 ${data?.to || ''}`)
+  } catch (error) {
+    ElMessage.error(`发送失败：${errorMessage(error, '未知错误')}`)
+  } finally {
+    testingMail.value = false
   }
 }
 
@@ -139,6 +159,12 @@ onMounted(loadSettings)
             <el-form-item label="允许视频">
               <el-switch v-model="form.allow_video" />
             </el-form-item>
+            <el-form-item label="多副本上传">
+              <el-switch v-model="form.storage_replica" />
+              <span class="form-suffix">
+                主后端同步写入，其余启用的后端在后台异步补副本（失败不影响上传）
+              </span>
+            </el-form-item>
           </el-form>
         </el-tab-pane>
 
@@ -147,6 +173,12 @@ onMounted(loadSettings)
             <el-form-item label="图片广场">
               <el-switch v-model="form.plaza_enabled" />
               <span class="form-suffix">仅展示作者主动发布的公开图片</span>
+            </el-form-item>
+            <el-form-item label="用户自定义存储">
+              <el-switch v-model="form.allow_user_backends" />
+              <span class="form-suffix">
+                预留能力：打开后用户自己的存储后端（scope=user）参与其上传，需配套的用户端管理界面
+              </span>
             </el-form-item>
             <el-form-item label="开放注册">
               <el-switch v-model="form.allow_register" />
@@ -167,6 +199,49 @@ onMounted(loadSettings)
                 v-model="form.external_base_url"
                 placeholder="如 https://img.example.com，用于拼接图片外链"
               />
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+
+        <el-tab-pane label="邮件" name="mail">
+          <el-form label-width="120px">
+            <el-form-item label="SMTP 服务器">
+              <el-input
+                v-model="form.smtp.host"
+                placeholder="smtp.example.com，留空表示停用邮件"
+              />
+            </el-form-item>
+            <el-form-item label="端口">
+              <el-input-number v-model="form.smtp.port" :min="1" :max="65535" />
+              <span class="form-suffix">25 / 465（SSL）/ 587（STARTTLS）</span>
+            </el-form-item>
+            <el-form-item label="STARTTLS">
+              <el-switch v-model="form.smtp.tls" />
+              <span class="form-suffix">465 端口走 SSL，这里不勾选</span>
+            </el-form-item>
+            <el-form-item label="用户名">
+              <el-input v-model="form.smtp.user" placeholder="可留空，表示无需认证" />
+            </el-form-item>
+            <el-form-item label="密码 / 授权码">
+              <el-input
+                v-model="form.smtp.password"
+                type="password"
+                show-password
+                placeholder="可留空，表示无需认证"
+              />
+              <span class="form-suffix">已保存的密钥不会回显，保持 ******** 即不修改</span>
+            </el-form-item>
+            <el-form-item label="发件人">
+              <el-input v-model="form.smtp.from" placeholder="sapic@example.com" />
+            </el-form-item>
+            <el-form-item label="测试收件人">
+              <el-input v-model="testMailTo" placeholder="留空发给当前管理员邮箱" />
+            </el-form-item>
+            <el-form-item>
+              <el-button :loading="testingMail" @click="sendTestMail">
+                发送测试邮件
+              </el-button>
+              <span class="form-suffix">先保存再用已保存的配置测试</span>
             </el-form-item>
           </el-form>
         </el-tab-pane>

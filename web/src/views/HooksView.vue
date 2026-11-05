@@ -1,8 +1,11 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import { api, errorMessage } from '@/api/client'
 import HookConfigForm from '@/components/hook/HookConfigForm.vue'
+
+const router = useRouter()
 
 const CATALOGS = {
   upload: '存储',
@@ -32,6 +35,15 @@ const enabledCount = computed(
 //: 禁用的钩子不可用，配置项也就没有必要暴露出来。
 const enabledConfigs = computed(() =>
   configs.value.filter((item) => item.enabled),
+)
+
+//: 存储驱动（catalog=upload）的凭据只在「存储后端」配置，这里不再重复一份表单。
+const uploadConfigs = computed(() =>
+  enabledConfigs.value.filter((item) => item.catalog === 'upload'),
+)
+
+const otherConfigs = computed(() =>
+  enabledConfigs.value.filter((item) => item.catalog !== 'upload'),
 )
 
 async function loadHooks() {
@@ -245,16 +257,31 @@ onMounted(refresh)
 
         <el-tab-pane label="钩子配置" name="config">
           <p class="hint">
-            这里保存各钩子的默认配置；具体存储后端中已填写的同名字段会覆盖此处的值。
+            这里配置鉴权、处理、邮件类钩子的参数；存储驱动的凭据统一在「存储后端」里填写。
           </p>
 
+          <el-alert
+            v-if="uploadConfigs.length"
+            type="info"
+            :closable="false"
+            show-icon
+            style="margin-bottom: 16px"
+          >
+            <template #title>
+              存储驱动（{{ uploadConfigs.map((item) => item.title).join('、') }}）的凭据在「存储后端」配置
+            </template>
+            <el-button link type="primary" @click="router.push({ name: 'admin-backends' })">
+              去存储后端
+            </el-button>
+          </el-alert>
+
           <el-empty
-            v-if="!enabledConfigs.length"
+            v-if="!otherConfigs.length"
             description="没有需要配置的钩子（禁用的钩子不显示配置项）"
             :image-size="60"
           />
           <HookConfigForm
-            v-for="item in enabledConfigs"
+            v-for="item in otherConfigs"
             :key="item.name"
             :config="item"
             :saving="saving === item.name"

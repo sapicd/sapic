@@ -3,14 +3,21 @@
 
 from __future__ import annotations
 
-from flask import Blueprint, request
+from flask import Blueprint, g, request
 
 from ..basis.errors import ApiError, ErrorCode
 from ..libs.auth import admin_required
+from ..libs.mail import SMTP_DEFAULTS, send_test_mail, smtp_ready
 from ..libs.settings import DEFAULTS, get_setting, set_setting
 from ..utils.web import ok
 
 bp = Blueprint("settings", __name__)
+
+#: 前端把这个占位符原样回传时表示「密码没改」，服务端保留库里的旧值；
+#: 读取设置时也用它替换真实密码，密钥永远不会出现在响应里。
+SMTP_PASSWORD_MASK = "********"
+
+_SMTP_FIELDS = {"host", "port", "user", "password", "from", "tls"}
 
 #: Editable string settings.
 _STR_KEYS = {
@@ -31,14 +38,20 @@ _STR_KEYS = {
 }
 
 #: Integer settings and their inclusive bounds.
-_INT_KEYS = {"upload_count_limit": (1, 100), "upload_max_size": (1, 1024)}
+_INT_KEYS = {
+    "upload_count_limit": (1, 100),
+    "upload_max_size": (1, 1024),
+    "user_backend_limit": (1, 20),
+}
 
 _BOOL_KEYS = {
     "allow_anonymous_upload",
     "allow_register",
+    "allow_user_backends",
     "allow_video",
     "password_login",
     "plaza_enabled",
+    "storage_replica",
     "register_review",
 }
 
@@ -46,19 +59,73 @@ _FLOAT_KEYS = {"site_background_opacity": (0.0, 1.0)}
 
 #: Keys the admin UI may write; everything else in ``DEFAULTS`` is internal.
 EDITABLE_KEYS = sorted(
-    _STR_KEYS | set(_INT_KEYS) | _BOOL_KEYS | set(_FLOAT_KEYS)
+    _STR_KEYS | set(_INT_KEYS) | _BOOL_KEYS | set(_FLOAT_KEYS) | {"smtp"}
 )
 
 
+def _smtp_payload() -> dict:
+    """SMTP config with the password replaced by a mask."""
+    config = dict(SMTP_DEFAULTS)
+    config.update(get_setting("smtp", {}) or {})
+    config["password"] = SMTP_PASSWORD_MASK if config.get("password") else ""
+    return config
+
+
 def _payload_of_settings() -> dict:
+    items = {key: get_setting(key) for key in DEFAULTS}
+    items["smtp"] = _smtp_payload()
+    return {"items": items, "editable": EDITABLE_KEYS}
+
+
+def _clean_smtp(value) -> dict:
+    """Normalise the SMTP block, keeping the stored password on mask echo."""
+    if not isinstance(value, dict):
+        raise ApiError("smtp must be an object", ErrorCode.PARAM_ERROR)
+    unknown = set(value) - _SMTP_FIELDS
+    if unknown:
+        raise ApiError(
+            "unknown smtp field: %s" % sorted(unknown)[0], ErrorCode.PARAM_ERROR
+        )
+
+    current = dict(get_setting("smtp", {}) or {})
+
+    def pick(key: str, default):
+        return value[key] if key in value else current.get(key, default)
+
+    try:
+        port = int(pick("port", 25))
+    except (TypeError, ValueError) as exc:
+        raise ApiError("smtp.port must be an integer", ErrorCode.PARAM_ERROR) from exc
+    if not 1 <= port <= 65535:
+        raise ApiError(
+            "smtp.port must be between 1 and 65535", ErrorCode.PARAM_ERROR
+        )
+
+    tls = pick("tls", False)
+    if not isinstance(tls, bool):
+        raise ApiError("smtp.tls must be a boolean", ErrorCode.PARAM_ERROR)
+
+    password = pick("password", "")
+    password = "" if password is None else str(password)
+    #: 掩码原样回传表示不改密码，否则前端每次保存都会把密钥清空。
+    if password == SMTP_PASSWORD_MASK:
+        password = str(current.get("password") or "")
+
     return {
-        "items": {key: get_setting(key) for key in DEFAULTS},
-        "editable": EDITABLE_KEYS,
+        "host": str(pick("host", "") or "").strip()[:255],
+        "port": port,
+        "user": str(pick("user", "") or "").strip()[:255],
+        "password": password[:255],
+        "from": str(pick("from", SMTP_DEFAULTS["from"]) or "").strip()[:255],
+        "tls": tls,
     }
 
 
 def _clean(key: str, value):
     """Validate one setting value, raising ``ApiError`` when out of contract."""
+    if key == "smtp":
+        return _clean_smtp(value)
+
     if key in _STR_KEYS:
         if not isinstance(value, str):
             raise ApiError("%s must be a string" % key, ErrorCode.PARAM_ERROR)
@@ -121,3 +188,19 @@ def write_settings():
     for key, value in updated.items():
         set_setting(key, value)
     return ok(_payload_of_settings())
+
+
+@bp.post("/settings/smtp/test")
+@admin_required
+def test_smtp():
+    """Send a probe mail so the operator can verify the SMTP settings."""
+    data = request.get_json(silent=True) or {}
+    to = str(data.get("to") or "").strip() or (getattr(g.user, "email", "") or "")
+    if not to:
+        raise ApiError("email is required", ErrorCode.PARAM_ERROR)
+    if not smtp_ready():
+        raise ApiError(
+            "mail service is not configured", ErrorCode.SERVICE_UNAVAILABLE, 503
+        )
+    send_test_mail(to)
+    return ok({"sent": True, "to": to})

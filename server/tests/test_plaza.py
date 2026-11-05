@@ -3,7 +3,16 @@
 
 import io
 
+import pytest
+
 from sapic.libs.settings import set_setting
+
+
+@pytest.fixture(autouse=True)
+def plaza_enabled(app):
+    #: 广场默认是关闭的（个人图床形态），这里的用例显式打开。
+    with app.app_context():
+        set_setting("plaza_enabled", True)
 
 
 def register_and_login(client):

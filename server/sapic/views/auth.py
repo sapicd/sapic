@@ -26,7 +26,7 @@ from ..libs.auth import (
     logout_user,
 )
 from ..libs.hook import get_hook_manager
-from ..libs.mail import send_mail
+from ..libs.mail import send_mail, smtp_ready
 from ..libs.settings import get_setting
 from ..libs.storage import hook_config
 from ..libs.users import (
@@ -403,7 +403,7 @@ def forgot_password():
 
     payload = {"sent": True}
     #: Without SMTP configured, expose the token to local/dev clients only.
-    if reset_token and not (get_setting("smtp", {}) or {}).get("host"):
+    if reset_token and not smtp_ready():
         if current_app.config.get("TESTING") or current_app.debug:
             payload["reset_token"] = reset_token
     return ok(payload, status=202)
@@ -442,10 +442,17 @@ def send_email_verification():
 
     token = _mail_verification(user)
     payload = {"sent": True}
-    #: Without SMTP configured, expose the token to local/dev clients only.
-    if not (get_setting("smtp", {}) or {}).get("host"):
+    if not smtp_ready():
+        #: 本地/测试环境没有邮件服务，直接把令牌回给调用方；线上则明确报错，
+        #: 不能假装「已发送」让用户等一封永远到不了的邮件。
         if current_app.config.get("TESTING") or current_app.debug:
             payload["verify_token"] = token
+        else:
+            raise ApiError(
+                "mail service is not configured",
+                ErrorCode.SERVICE_UNAVAILABLE,
+                503,
+            )
     return ok(payload, status=202)
 
 

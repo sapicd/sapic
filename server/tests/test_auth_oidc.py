@@ -4,7 +4,7 @@
 from urllib.parse import parse_qs, urlparse
 
 from sapic.libs.settings import set_setting
-from sapic.libs.users import bind_oidc_identity, create_user
+from sapic.libs.users import bind_oidc_identity, create_user, resolve_oidc_user
 from sapic.models import User
 
 CONFIG = {
@@ -145,8 +145,7 @@ def test_exchange_prefers_userinfo_claims(app, monkeypatch):
     fake = FakeRequests(
         userinfo={
             "sub": "u-9",
-            "preferred_username": "bobby",
-            "name": "Bobby",
+            "nickname": "Bobby",
             "email": "bobby@example.com",
         }
     )
@@ -162,7 +161,8 @@ def test_exchange_prefers_userinfo_claims(app, monkeypatch):
     assert claims == {
         "issuer": CONFIG["issuer"],
         "subject": "u-9",
-        "username": "bobby",
+        #: 账号名取 uid（sub），昵称只作显示名。
+        "username": "u-9",
         "nickname": "Bobby",
         "email": "bobby@example.com",
         "email_verified": True,
@@ -282,6 +282,16 @@ def test_new_account_is_created_with_a_default_album(app, client, monkeypatch):
 
     albums = client.get("/api/v2/albums").get_json()["data"]["items"]
     assert [album["name"] for album in albums] == ["默认相册"]
+
+
+def test_new_account_names_the_user_after_the_uid(app):
+    with app.app_context():
+        #: provider 只给昵称（会随改名变化）时，账号名取 uid（subject）。
+        user = resolve_oidc_user(
+            issuer=CONFIG["issuer"], subject="kz3n8qvx2mp7rt9wf4yds", nickname="阿伟"
+        )
+        assert user.username == "kz3n8qvx2mp7rt9wf4yds"
+        assert user.nickname == "阿伟"
 
 
 def test_start_rejects_an_unknown_provider(client):

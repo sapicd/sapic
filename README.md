@@ -1,5 +1,8 @@
 # sapic
 
+> 当前主线是 v2（`server/` + `web/`）：部署见 [DEPLOY.md](./DEPLOY.md)，架构见 [ARCH.md](./ARCH.md)。
+> 以下内容为 v1 存档说明（代码在 `V1/`），不适用于 v2。
+
 基于Flask的Web自建图床，
 支持存储到本地、又拍云、七牛云、阿里云OSS、腾讯云COS、GitHub、Gitee(码云)等，
 支持第三方扩展存储到[AWS S3](https://aws.amazon.com/s3/)、[sm.ms](https://sm.ms/)、[superbed聚合图床](https://www.superbed.cn)等。

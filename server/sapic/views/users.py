@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """User management API (admin only).
 
-The admin UI only needs to review registrations, enable/disable accounts and
-grant the admin flag, so the surface stays deliberately small: listing plus a
-single PATCH. Destructive operations (delete, password reset) are left out --
-an account owns albums, images and tokens, so removing it is a separate
-decision rather than a table-row toggle.
+The admin UI needs to review registrations, enable/disable accounts, grant the
+admin flag and remove accounts for good: listing, a single PATCH and DELETE.
+Deleting is the one destructive operation here -- ``purge_user`` takes the
+account's albums, images, replicas and tokens with it, so it is done in one
+transaction rather than as a table-row toggle.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from flask import Blueprint, g, request
 
 from ..basis.errors import ApiError, ErrorCode
 from ..libs.auth import admin_required
-from ..libs.users import serialize_user
+from ..libs.users import purge_user, serialize_user
 from ..models import User
 from ..models.base import now
 from ..models.user import (
@@ -130,3 +130,17 @@ def update_user(user_id: int):
     fields.append(User.updated_at)
     user.save(only=fields)
     return ok({"user": _serializer(user)})
+
+
+@bp.delete("/users/<int:user_id>")
+@admin_required
+def delete_user(user_id: int):
+    user = User.get_or_none(User.id == user_id)
+    if user is None:
+        raise ApiError("user not found", ErrorCode.NOT_FOUND, 404)
+    #: 删掉自己会立刻失去登录凭据，也容易把站点删成没人管的状态。
+    if user.id == g.user.id:
+        raise ApiError("cannot delete your own account", ErrorCode.FORBIDDEN, 403)
+
+    purge_user(user)
+    return ok({"deleted": True})

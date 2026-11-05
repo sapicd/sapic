@@ -37,11 +37,6 @@ const menus = computed(() => {
     items.push({ name: 'albums', label: '相册', icon: 'FolderOpened' })
     items.push({ name: 'settings', label: '设置', icon: 'Setting' })
   }
-  if (session.isAdmin) {
-    items.push({ name: 'admin', label: '站点设置', icon: 'Tools' })
-    items.push({ name: 'admin-hooks', label: '钩子', icon: 'Connection' })
-    items.push({ name: 'admin-users', label: '用户', icon: 'UserFilled' })
-  }
   return items
 })
 
@@ -49,6 +44,9 @@ const activeName = computed(() => {
   if (route.name === 'image-detail') return 'images'
   return String(route.name || '')
 })
+
+//: 后台统一从这一个入口进，具体页面由 AdminLayout 的侧栏切换。
+const adminActive = computed(() => route.path.startsWith('/admin'))
 
 const initial = computed(() => (session.displayName || '?').slice(0, 1).toUpperCase())
 
@@ -106,14 +104,20 @@ async function onCommand(command) {
               <el-icon><component :is="item.icon" /></el-icon>
               <span>{{ item.label }}</span>
             </router-link>
+
+            <router-link
+              v-if="session.isAdmin"
+              :to="{ name: 'admin' }"
+              class="app-nav__item"
+              :class="{ 'is-active': adminActive }"
+            >
+              <el-icon><Tools /></el-icon>
+              <span>后台管理</span>
+            </router-link>
           </nav>
 
           <div class="app-user">
-            <el-dropdown
-              v-if="session.authenticated"
-              trigger="click"
-              @command="onCommand"
-            >
+            <el-dropdown v-if="session.authenticated" trigger="click" @command="onCommand">
               <span class="app-user__name">
                 <el-avatar
                   class="app-user__avatar"
@@ -127,13 +131,7 @@ async function onCommand(command) {
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="images">我的图片</el-dropdown-item>
-                  <el-dropdown-item command="albums">我的相册</el-dropdown-item>
-                  <el-dropdown-item command="settings">账号设置</el-dropdown-item>
-                  <el-dropdown-item v-if="session.isAdmin" command="admin" divided>
-                    站点管理
-                  </el-dropdown-item>
-                  <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                  <el-dropdown-item command="logout">退出登录</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>

@@ -8,6 +8,8 @@ os.environ.setdefault("sapic_env", "dev")
 
 from sapic import create_app
 from sapic.basis.db import db
+from sapic.libs.settings import set_setting
+from sapic.libs.storage import flush_replicas
 from sapic.migrations import upgrade
 
 
@@ -25,7 +27,11 @@ def app(tmp_path):
     )
     with app.app_context():
         upgrade()
+        #: 多副本是后台异步写的，默认关掉以免无关用例出现竞态；
+        #: tests/test_replicas.py 会自己打开。
+        set_setting("storage_replica", False)
     yield app
+    flush_replicas()
     if not db.is_closed():
         db.close()
 

@@ -47,6 +47,8 @@ class Image(BaseModel):
     plaza = BooleanField(null=True)
     #: Free-form labels, stored as a JSON array; NULL means "no tags".
     tags = JSONTextField(null=True)
+    #: External link registered without downloading; NULL for stored objects.
+    source_url = CharField(max_length=1024, null=True)
     created_at = IntegerField(default=now)
     updated_at = IntegerField(default=now)
     expire_at = IntegerField(null=True)

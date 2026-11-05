@@ -21,7 +21,7 @@ bp = Blueprint("plaza", __name__)
 
 @bp.get("/plaza")
 def plaza():
-    if not get_setting("plaza_enabled", True):
+    if not get_setting("plaza_enabled", False):
         raise ApiError("plaza is disabled", ErrorCode.NOT_FOUND, 404)
 
     try:
