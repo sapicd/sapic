@@ -67,7 +67,7 @@ async function submit() {
         </el-button>
       </el-form>
       <div v-if="site.passwordLogin" class="auth__footer">
-        已有账号？<router-link :to="{ name: 'login' }">登录</router-link>
+        已有账号？<router-link :to="{ name: 'login' }"> 登录 </router-link>
       </div>
     </el-card>
   </div>

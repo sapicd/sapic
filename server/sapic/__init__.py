@@ -27,6 +27,7 @@ def create_app(config: dict | None = None) -> Flask:
     from .cli import sa_cli
     from .libs.auth import init_app as init_auth
     from .libs.hook import init_app as init_hooks
+    from .libs.images import sweep_expired
     from .libs.storage import sync_backends
     from .migrations import auto_upgrade
     from .views import register_blueprints
@@ -58,6 +59,11 @@ def create_app(config: dict | None = None) -> Flask:
     @app.before_request
     def _request_id():
         g.request_id = request.headers.get("X-Request-Id") or uuid4().hex[:16]
+
+    @app.before_request
+    def _purge_expired_images():
+        #: 到期图片的兜底清理：没有 cron 也能落地，节流与批大小在 libs 内。
+        sweep_expired()
 
     @app.after_request
     def _attach_request_id(response):

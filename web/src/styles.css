@@ -698,6 +698,102 @@ a {
   color: var(--app-text);
 }
 
+/*: 表格操作列：统一链接按钮的排布，间距由 gap 控制，
+   不再依赖 el-button 相邻兄弟的 margin-left（中间夹 el-link 时会错位）。 */
+.row-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.row-links .el-button + .el-button {
+  margin-left: 0;
+}
+
+/*: 钩子市场：名称与模块名两行显示，避免占满一列。 */
+/*: 表格下方的分页条：贴右，和上方工具栏的元信息对齐。 */
+.table-pager {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.market-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.market-module {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: var(--app-text-muted);
+}
+
+/*: pip 日志原样展示，保留换行与缩进。 */
+.install-log {
+  max-height: 280px;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  overflow: auto;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.install-log.is-error {
+  color: var(--el-color-danger);
+  background: var(--el-color-danger-light-9);
+}
+
+/*: 危险操作区：与普通表单项拉开距离，左侧说明、右侧按钮。 */
+.danger-zone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 12px 14px;
+  border: 1px solid var(--el-color-danger-light-7);
+  border-radius: 10px;
+  background: var(--el-color-danger-light-9);
+}
+
+.danger-zone__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.danger-zone__text strong {
+  font-size: 13px;
+  color: var(--el-color-danger);
+}
+
+/*: 用户列表状态列：标签与拒绝理由上下排，理由过长时省略。 */
+.user-status {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.user-status .user-cell__nick {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .hook-name__title {
   margin-top: 2px;
   font-size: 12px;
@@ -865,9 +961,10 @@ a {
   color: var(--el-text-color-secondary);
   line-height: 1.5;
   margin-top: 4px;
-  /*: 说明文字保持一行，过窄时横向滚动，不折成多行挤压布局。 */
-  white-space: nowrap;
-  overflow-x: auto;
+  /*: 说明文字按容器宽度折行：nowrap + overflow-x 会让每个字段底部常驻一条横向滚动条。 */
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 /* ============================================================
@@ -944,6 +1041,7 @@ a {
 }
 
 .image-card__media img,
+.image-card__media video,
 .image-card__media .el-image {
   width: 100%;
   height: 100%;
@@ -951,7 +1049,15 @@ a {
   transition: transform 0.35s ease;
 }
 
+/*: 网格里的视频只取首帧做封面，不显示控制条。 */
+.image-card__media video {
+  object-fit: cover;
+  background: #000;
+  pointer-events: none;
+}
+
 .image-card:hover .image-card__media img,
+.image-card:hover .image-card__media video,
 .image-card:hover .image-card__media .el-image {
   transform: scale(1.05);
 }
@@ -1046,6 +1152,29 @@ a {
   justify-content: center;
 }
 
+/*: 元数据「链接」行：地址可折行，右侧三种分享格式点击即复制。 */
+.detail-link {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.detail-link__url {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.detail-link__formats {
+  display: flex;
+  flex-shrink: 0;
+  gap: 10px;
+  font-size: 12px;
+}
+
 .detail-block {
   margin-top: 16px;
 }
@@ -1082,6 +1211,15 @@ a {
   margin: 0 auto;
 }
 
+/*: 详情页视频走原生播放器，和图片一样限制高度。 */
+.detail-preview video {
+  display: block;
+  width: 100%;
+  max-height: 78vh;
+  border-radius: 12px;
+  background: #000;
+}
+
 .detail-actions {
   display: flex;
   gap: 8px;
@@ -1093,7 +1231,13 @@ a {
   color: var(--app-text-muted);
 }
 
-/*: 副本行下方的对象路径 / 失败原因，等宽字体方便对着云端控制台核对。 */
+/*: 副本名带虚线，提示悬浮能看到对象路径。 */
+.replica-label {
+  border-bottom: 1px dashed var(--el-border-color);
+  cursor: help;
+}
+
+/*: 副本行的失败原因，等宽字体方便对着云端控制台核对。 */
 .replica-meta {
   margin-top: 4px;
   font-family: Menlo, Consolas, monospace;
@@ -1145,11 +1289,13 @@ a {
   transform: translateY(1px);
 }
 
-.el-button--primary:not(.is-plain) {
+/*: 发光阴影只给实心主色按钮；链接/文字按钮也带 --primary，
+   不排除会在文字背后糊出一圈淡绿底色，看着像多了个图标。 */
+.el-button--primary:not(.is-plain):not(.is-link):not(.is-text) {
   box-shadow: 0 8px 18px rgba(14, 159, 142, 0.24);
 }
 
-.el-button--primary:not(.is-plain):hover {
+.el-button--primary:not(.is-plain):not(.is-link):not(.is-text):hover {
   box-shadow: 0 10px 22px rgba(14, 159, 142, 0.32);
 }
 
@@ -1394,12 +1540,6 @@ a {
     text-align: left;
     line-height: 1.5;
   }
-
-  /*: 窄屏放不下一行，恢复换行避免横向滚动。 */
-  .node-field__help {
-    white-space: normal;
-    overflow-x: visible;
-  }
 }
 
 /*: 左侧导航外壳：后台管理与账号设置共用，左栏切页、右栏内容。 */
@@ -1463,14 +1603,48 @@ a {
   background: rgba(14, 159, 142, 0.14);
 }
 
+/*: 侧栏底部版本入口：贴底显示当前版本，有新版本时带红色标签。 */
+.side-nav__foot {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--app-border);
+}
+
+.side-nav__version {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--app-text-muted);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.side-nav__version:hover {
+  background: rgba(255, 255, 255, 0.58);
+}
+
 .side-main {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-/*: 侧栏布局下表单不再铺满整行，过宽的输入框很别扭。 */
+/*: 侧栏布局下表单不铺满整行（过宽的输入框很别扭），但也不必窄到浪费右栏空间。 */
 .side-main__form {
-  max-width: 460px;
+  max-width: 720px;
+}
+
+/*: 说明文字独占一行，避免和开关、链接挤在一起后又横向溢出。 */
+.side-main__form .el-form-item__content > .node-field__help {
+  flex: 0 0 100%;
 }
 
 @media (max-width: 768px) {

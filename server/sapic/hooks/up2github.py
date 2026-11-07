@@ -9,6 +9,10 @@ repositories only; the service layer falls back to ``/raw/<sha>`` without it).
 ``etag`` is the blob sha GitHub assigns, which lets :func:`upimg_delete` remove
 the object without a round trip; the credentials come from ``backend["config"]``
 (``token`` / ``repo`` / ``branch`` / ``basedir``).
+
+``upimg_url`` serves private repositories: ``raw.githubusercontent.com`` ignores
+tokens, so the service layer reads the object through the contents API with the
+raw media type and relays the body itself.
 """
 
 from __future__ import annotations
@@ -21,7 +25,7 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     requests = None
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __author__ = "staugur"
 __description__ = "将图片保存到GitHub"
 __catalog__ = "upload"
@@ -234,6 +238,33 @@ def upimg_delete(sha, upload_path, filename, basedir, save_result, backend=None,
     if response.status_code not in (200, 204):
         return {"code": response.status_code or 1, "msg": _error(response)}
     return {"code": 0}
+
+
+def upimg_url(save_result, filename="", backend=None, expires=300, **kwargs):
+    """Authenticated read address for a private repository.
+
+    ``raw.githubusercontent.com`` ignores tokens, so a private object is read
+    through the contents API with the raw media type; sapic relays the body and
+    the token never reaches the browser. ``expires`` does not apply — the token
+    authorises each request.
+    """
+    config = _config(backend)
+    error = _check(config)
+    if error:
+        return {"code": 1, "msg": error}
+
+    key = str((save_result or {}).get("path") or "").strip()
+    if not key:
+        return {"code": 1, "msg": "The object key is required"}
+    repo = str(config["repo"]).strip()
+    url = "%s/repos/%s/contents/%s" % (API, repo, key)
+    branch = str(config.get("branch") or "").strip()
+    if branch:
+        url = "%s?ref=%s" % (url, branch)
+
+    headers = _headers(str(config["token"]).strip())
+    headers["Accept"] = "application/vnd.github.raw"
+    return {"code": 0, "url": url, "headers": headers}
 
 
 def action_ping(values=None, context=None, **kwargs):

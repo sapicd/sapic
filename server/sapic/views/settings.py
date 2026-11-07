@@ -5,7 +5,9 @@ from __future__ import annotations
 
 from flask import Blueprint, g, request
 
+from ..basis.common import as_bool
 from ..basis.errors import ApiError, ErrorCode
+from ..libs import release
 from ..libs.auth import admin_required
 from ..libs.mail import SMTP_DEFAULTS, send_test_mail, smtp_ready
 from ..libs.settings import DEFAULTS, get_setting, set_setting
@@ -40,8 +42,12 @@ _STR_KEYS = {
 #: Integer settings and their inclusive bounds.
 _INT_KEYS = {
     "upload_count_limit": (1, 100),
-    "upload_max_size": (1, 1024),
+    "upload_image_max_size": (1, 1024),
+    "upload_video_max_size": (1, 1024),
     "user_backend_limit": (1, 20),
+    #: 0 表示不启用（永久 / 不限制上限）。
+    "image_expire_default_days": (0, 3650),
+    "image_expire_max_days": (0, 3650),
 }
 
 _BOOL_KEYS = {
@@ -188,6 +194,13 @@ def write_settings():
     for key, value in updated.items():
         set_setting(key, value)
     return ok(_payload_of_settings())
+
+
+@bp.get("/settings/version")
+@admin_required
+def check_version():
+    """Current version against the newest release; ``?refresh=1`` skips the cache."""
+    return ok(release.release_info(refresh=as_bool(request.args.get("refresh"))))
 
 
 @bp.post("/settings/smtp/test")

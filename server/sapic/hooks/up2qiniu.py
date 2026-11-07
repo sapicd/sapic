@@ -6,6 +6,10 @@ returns ``{"code": 0, "path": <bucket key>, "size": <bytes>, "etag": <hash>}``
 plus ``src`` when the backend has a public ``domain``. Without it the service
 layer falls back to ``/raw/<sha>``.
 
+``upimg_url`` covers the private-bucket case: a backend marked ``private`` never
+links to ``src`` (the bucket refuses anonymous reads), so the service layer asks
+for a signed address (``private_download_url``) and relays the body itself.
+
 The credentials come from ``backend["config"]`` (``bucket`` / ``access_key`` /
 ``secret_key`` / ``basedir`` / ``domain``). The SDK is optional and only
 imported when the driver is actually used, with an English hint when it is
@@ -21,7 +25,7 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     Auth = BucketManager = put_data = None
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 __author__ = "staugur"
 __description__ = "将图片保存到七牛云"
 __catalog__ = "upload"
@@ -154,6 +158,30 @@ def upimg_save(filename, stream, upload_path="", backend=None, **kwargs):
         "etag": (ret or {}).get("hash") or sha256(data).hexdigest()[:32],
         "src": "%s/%s" % (domain, key),
     }
+
+
+def upimg_url(save_result, filename="", backend=None, expires=300, **kwargs):
+    """Signed read address for a private bucket.
+
+    Qiniu private downloads need the bound domain plus a token, so ``domain`` is
+    required for this driver even when the bucket is private.
+    """
+    config = _config(backend)
+    auth, error = _auth(config)
+    if error:
+        return {"code": 1, "msg": error}
+
+    domain = str(config.get("domain") or "").strip().rstrip("/")
+    key = str((save_result or {}).get("path") or "").strip()
+    if not domain or not key:
+        return {"code": 1, "msg": "The qiniu domain or object key parameter error"}
+    try:
+        url = auth.private_download_url(
+            "%s/%s" % (domain, key), expires=int(expires or 300)
+        )
+    except Exception as exc:
+        return {"code": 1, "msg": str(exc)}
+    return {"code": 0, "url": url}
 
 
 def upimg_delete(sha, upload_path, filename, basedir, save_result, backend=None, **kwargs):

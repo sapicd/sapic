@@ -50,7 +50,11 @@ class StorageBackend(BaseModel):
     owner = ForeignKeyField(
         User, backref="storage_backends", column_name="owner_id", null=True
     )
-    visibility = CharField(max_length=16, default=VISIBILITY_PRIVATE)
+    #: ``public``: the driver's URL is world-readable (bucket ACL + CDN), so public
+    #: images link straight to it. ``private``: the bucket rejects anonymous reads,
+    #: every access goes through ``/raw/<sha>`` and the driver hands out a
+    #: temporary read address (``upimg_url``) for the relay.
+    visibility = CharField(max_length=16, default=VISIBILITY_PUBLIC)
     #: Lower value means higher read/write priority.
     priority = IntegerField(default=100)
     enabled = BooleanField(default=True)

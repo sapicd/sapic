@@ -14,7 +14,7 @@ nginx ─┬─ /         → web/dist（Vue 3 SPA，静态文件 + SPA 回退�
 | 组件 | 要求 | 说明 |
 | --- | --- | --- |
 | Python | 3.10+ | 后端只跑在 `server/`，包 `sapic` 是本地包，**不要** `pip install` 它 |
-| 依赖 | `requirements/prod.txt`（离线可用 `base.txt` + gunicorn/gevent） | 装在仓库根的 `.venv/` |
+| 依赖 | `server/requirements/prod.txt`（离线可用 `base.txt` + gunicorn/gevent） | 装在仓库根的 `.venv/` |
 | Node.js | 18+，pnpm 8（`packageManager: pnpm@8.14.1`） | 只在构建前端时用到 |
 | 数据库 | PostgreSQL / MySQL 5.7+ / SQLite | 多 worker、多实例建议 PostgreSQL 或 MySQL |
 | Redis | 可选 | 当前只用于 `GET /api/v2/health` 探活，不配也能跑 |
@@ -49,10 +49,10 @@ make upgrade                      # 手动兜底执行迁移（启动时其实�
 cd /srv && git clone <repo> sapic && cd sapic
 python3 -m venv .venv
 ./.venv/bin/python -m pip install -U pip
-./.venv/bin/python -m pip install -r requirements/prod.txt
-# 需要 OIDC / 云存储 / 图片转码等钩子时再装可选依赖：
-./.venv/bin/python -m pip install -r requirements/hooks.txt
+./.venv/bin/python -m pip install -r server/requirements/prod.txt
 ```
+
+内置钩子（OIDC / 云存储 / 图片转码）的 SDK 已随 `base.txt` 一起装好，不需要再额外安装。
 
 ### 3.2 构建前端
 
@@ -134,7 +134,7 @@ server {
     server_name img.example.com;
     charset utf-8;
 
-    #: 必须 >= 后端 MAX_UPLOAD（sapic_maxupload，默认 20M）与站点设置 upload_max_size
+    #: 必须 >= 后端 MAX_UPLOAD（sapic_maxupload，默认 25M）与站点设置里的图片/视频上限
     client_max_body_size 25m;
 
     root /srv/sapic/web/dist;
@@ -176,9 +176,75 @@ server {
 
 - `sapic_proxyfix=1`（或环境变量）必须开：Flask 侧据此信任 `X-Forwarded-Proto/Host`，否则
   `request.is_secure` 为假，登录 Cookie 不会带 `Secure`，回调地址也可能拼错。
+- 上面的示例是 **nginx 自己终止 TLS**，所以 `X-Forwarded-Proto $scheme` 是对的。如果 nginx
+  前面还有一层 Traefik / WAF / 云负载均衡负责 TLS，`$scheme` 恒为 `http`，必须改成透传，
+  否则会把外层的 `https` 覆盖掉（容器镜像里的 `docker/nginx.conf` 已用 `map` 做兜底）：
+
+  ```nginx
+  map $http_x_forwarded_proto $fwd_proto {
+      default $http_x_forwarded_proto;
+      ""      $scheme;   #: 没有外层时回落到自身协议
+  }
+  # 各 location 内改用它
+  proxy_set_header X-Forwarded-Proto $fwd_proto;
+  ```
 - **前后端同源**：`/api`、`/raw/` 与静态资源必须在同一个域名/端口下，Cookie 会话才生效。
 - 想用 CDN 或独立图片域名时，配 `sapic_external_base_url=https://cdn.example.com`，
   `/raw` 链接会带该前缀。
+- **防盗链**：用户可在「个性化」里为自己的公开图开启 Referer 校验，拦截发生在 `/raw/`，
+  nginx 只要原样转发 `Referer`（默认就转发），不要清空它。图片走存储直链（存储后端配了加速域名、
+  或图片是外链登记）时 sapic 不在链路上，需要在 CDN/静态服务器侧另外配置：
+
+  ```nginx
+  location /upload/ {
+      #: 名单要与用户设置里的「允许引用的域名」保持一致
+      valid_referers none blocked server_names *.example.com;
+      if ($invalid_referer) { return 403; }
+  }
+  ```
+
+  阿里云 OSS / 腾讯云 COS 在控制台「防盗链」里配同一份白名单，并显式选择是否允许空 Referer。
+
+### 3.7 容器部署（Docker / Compose / Kubernetes）
+
+镜像内已经包含 gunicorn + nginx（nginx 托管 `web/dist`，只把 `/api`、`/raw` 两条前缀反代给后端；
+油猴脚本在 `/api/v2/userscript.user.js` 下，因此不需要单独开 location），默认监听 80 端口，
+不需要再单独部署前端。容器内监听端口可用 `SAPIC_HTTP_PORT`
+改（默认 `80`）：`docker/nginx.conf` 是带端口占位符的模板，由 entrypoint 渲染到
+`/etc/nginx/conf.d/default.conf`，健康检查也会跟着走同一个端口；宿主端口与容器端口解耦，
+`docker-compose.yml` 用 `SAPIC_PORT` 映射宿主、`SAPIC_HTTP_PORT` 决定容器内监听。
+
+```bash
+docker build -t sapic:local .
+docker run -d --name sapic -p 80:80 \
+    -e sapic_secretkey="$(openssl rand -hex 32)" \
+    -e sapic_db_url="sqlite:////app/server/data/sapic.db" \
+    -e sapic_external_base_url="https://sapic.example.com" \
+    -v sapic-data:/app/server/data \
+    sapic:local
+```
+
+多进程/多副本请用 PostgreSQL，SQLite 只适合单实例：
+
+```bash
+SAPIC_SECRET_KEY="$(openssl rand -hex 32)" POSTGRES_PASSWORD='强密码' docker compose up -d
+```
+
+`docker-compose.yml` 会一并拉起 PostgreSQL 16 与 Redis 7；`kube-sapic.yaml` 是单副本
+Deployment + Service + Ingress + PVC 的清单，使用前替换命名空间、域名、镜像 tag，并通过
+Secret 提供 `sapic_secretkey` 与 `sapic_db_url`。
+
+要点：
+
+- **唯一必须挂载的路径**是 `/app/server/data`：SQLite 数据库、上传文件（`upload/`）与后台安装的第三方钩子包（`hooks/`）都在这里；不挂卷等于每次重建容器丢数据。
+- 容器内 `sapic_proxyfix=true` 必须开启（compose 与 k8s 已配），否则日志与限流拿到的是 127.0.0.1。
+- 健康检查统一用 `GET /api/v2/health`：数据库不通返回 503，Redis 未配置不算失败。
+- 上传上限有三层，改大小时一起改：nginx `client_max_body_size`（容器内 32m）、`sapic_maxupload`（25）、后台 `upload_image_max_size` / `upload_video_max_size`。
+- 本地磁盘存储只能单副本（`Recreate` 策略）；要多副本必须换成对象存储类钩子并给 `/app/server/data` 配 RWX 卷。
+- 外层 HTTPS 交给宿主机反代或 Ingress（`kube-sapic.yaml` 里带 `nginx.ingress.kubernetes.io/proxy-body-size`），并把 `sapic_external_base_url` 设成对外地址，否则图片直链与审核邮件里的登录链接会是内网地址。
+- 前面再套一层 Traefik / WAF 时不用改配置：容器内 nginx 用 `map` **透传**上游的 `X-Forwarded-Proto`，不会再把 `https` 覆盖成 `http`（OIDC 回调地址与会话 Cookie 的 `Secure` 标志都依赖这个值）。前提是外层只**追加/转发**该头而不改写它；若 WAF 必须改写，用 `sapic_external_base_url` 兜住链接生成，并单独核对 OIDC 回调。
+- WAF 常见坑：`/api/v2/health` 要放行（否则探针被拦会反复重启）、`/raw/*` 关掉响应体检测（二进制图片会拖慢甚至误杀）、`/api/v2/hooks/*` 放宽超时（后台装钩子会跑 pip 几十秒）、请求体上限不小于 32m（取值链是 WAF ≥ nginx 32m > `sapic_maxupload` 25M > 站点单文件上限）。
+- 升级：拉新镜像重启即可，启动时自动执行数据库迁移（迁移幂等，多 worker 并发有重试保护）。
 
 ## 4. 配置项参考（`server/.cfg` 或 `sapic_*` 环境变量）
 
@@ -189,13 +255,15 @@ server {
 | `SECRET_KEY` | `sapic_secretkey` | 内置占位值 | Cookie 签名密钥，≥14 字节，生产必须替换 |
 | `DATABASE_URL` | `sapic_db_url` | `sqlite:///server/data/sapic.db` | 支持 `postgresql://` / `mysql://` / `sqlite:///` |
 | `REDIS_URL` | `sapic_redis_url` | 空 | 留空则不连 Redis |
-| `MAX_UPLOAD` | `sapic_maxupload` | `20` | 单文件上限（MB），同时映射 `MAX_CONTENT_LENGTH` |
+| `MAX_UPLOAD` | `sapic_maxupload` | `25` | 整个请求的上限（MB），同时映射 `MAX_CONTENT_LENGTH`；要 ≥ 站点设置里的最大值并留出 multipart 余量 |
 | `STORAGE_DIR` | `sapic_storagedir` | `server/data/upload` | 本地存储根目录，必须是绝对路径 |
 | `EXTERNAL_BASE_URL` | `sapic_external_base_url` | 空 | 图片链接前缀（CDN/独立域名） |
 | `PROXY_FIX` | `sapic_proxyfix` | `false` | 反代后必须开 |
 | `LOG_LEVEL` | `sapic_loglevel` | `INFO` | `DEBUG/INFO/WARNING/ERROR/CRITICAL` |
 | `SESSION_TTL` | `sapic_session_ttl` | `604800` | 登录态有效期（秒），≥60 |
-| `HOOK_PKG_STORAGE_DIR` | `sapic_hookpkgstoragedir` | 空 | 第三方钩子包目录 |
+| `HOOK_PKG_STORAGE_DIR` | `sapic_hookpkgstoragedir` | `server/data/hooks` | 第三方钩子包目录：`pip install --target` 的目标，并被加入 `sys.path`（**不作为扫描目录**，钩子靠模块名引入）；置空则关闭后台安装能力 |
+| `HOOK_MARKET_URL` | `sapic_hookmarketurl` | 官方 GitHub 的 `list.json` | 钩子市场列表地址，可指向镜像 |
+| `UPDATE_CHECK_URL` | `sapic_updatecheckurl` | 官方 GitHub 的 `releases/latest` | 后台版本更新检测的发布源；置空则关闭检测（纯内网部署用） |
 
 站点级设置（站点名、上传白名单/大小、注册与审核、`password_login`、默认相册可见性、广场开关、
 SMTP、钩子开关与配置）存在数据库 `settings` 表，进后台 `/admin/setting` 维护，不走环境变量。
@@ -219,15 +287,20 @@ sapic_db_url=sqlite:////data/sapic/sapic.db
 ## 6. 首次使用与常用配置
 
 1. 用管理员账号登录后台，`/admin/setting` 填站点名/背景/公告，按需打开或关闭注册、匿名上传、图片广场。
-2. 上传白名单 `upload_allowed_ext`、单文件大小 `upload_max_size`、视频开关 `allow_video` 在后台「站点设置」，
-   与进程级 `sapic_maxupload` 是**两层限制**，两边都要放开才能传大文件。
-3. 邮件（注册验证、找回密码）在后台配置 SMTP；不配也能用，但相关功能不可用。
-4. 统一登录（OIDC）：`/admin/hooks` 启用 `passport`，填 `issuer` / `client_id` / `client_secret`；
+2. 上传白名单 `upload_allowed_ext`、图片大小 `upload_image_max_size`（默认 10M）、
+   视频大小 `upload_video_max_size`（默认 20M）、视频开关 `allow_video` 在后台「站点设置」，
+   与进程级 `sapic_maxupload`（默认 25M，整个请求）是**两层限制**，两边都要放开才能传大文件。
+3. 图片有效期：`image_expire_default_days`（未指定时的默认寿命）与 `image_expire_max_days`
+   （单图上限）在后台「站点设置 → 上传」配置，单位天，`0` 表示永久 / 不限制；设了上限后不再允许
+   永久图片。到期图片会在请求期被节流清理（每进程最多每 5 分钟一批），想更准时可加 cron：
+   `flask sa purge-expired`（应用目录下、用部署用的 Python 执行）。
+4. 邮件（注册验证、找回密码）在后台配置 SMTP；不配也能用，但相关功能不可用。
+5. 统一登录（OIDC）：`/admin/hooks` 启用 `passport`，填 `issuer` / `client_id` / `client_secret`；
    在 Passport 侧登记回调地址 `https://img.example.com/api/v2/auth/oidc/passport/callback`。
    站内首次登录会用 provider 的稳定标识（uid）建号，昵称只作显示名。
    关闭 `password_login` 后只能走统一登录，建议先给管理员账号绑定 OIDC 再关。
-5. 存储后端：`up2local` 默认启用并自动创建 `local` 后端（写到 `STORAGE_DIR`）。要用云存储：
-   ① 先 `pip install -r requirements/hooks.txt` 装对应 SDK；② `/admin/hooks` 只负责启用该驱动
+6. 存储后端：`up2local` 默认启用并自动创建 `local` 后端（写到 `STORAGE_DIR`）。要用云存储：
+   ① 对应 SDK 已随 `base.txt` 安装，无需额外操作（第三方钩子才要自己装依赖）；② `/admin/hooks` 只负责启用该驱动
    （存储驱动的凭据不再在这里填）；③ 进 `/admin/backends` 编辑该后端，填写必填项（带 *，如 bucket /
    操作员 / 密码 / 加速域名），可用「检查」探测存储桶；④ 把它「上移」到第一位（或把优先级调到最小），
    之后新上传才会写到它。已有图片按副本所在后端读取，所以仍有副本的后端不允许禁用/删除。
@@ -238,7 +311,7 @@ sapic_db_url=sqlite:////data/sapic/sapic.db
 
 ```bash
 cd /srv/sapic && git pull
-./.venv/bin/python -m pip install -r requirements/prod.txt
+./.venv/bin/python -m pip install -r server/requirements/prod.txt
 cd web && pnpm install && pnpm run build
 systemctl restart sapic        # 启动时自动跑增量迁移
 ```
@@ -250,6 +323,55 @@ systemctl restart sapic        # 启动时自动跑增量迁移
 - `server/.cfg`（密钥与 DSN）。
 
 回滚：迁移幂等但不支持自动回退，回滚代码前先备份数据库；结构不兼容的版本需手工降级数据。
+
+### 7.1 从 v1 迁移数据
+
+v1 的数据在 Redis 里（`picbed:*` 键），文件在 `V1/src/static/upload`。迁移工具把它们写进 v2 的关系库与存储后端：
+
+```bash
+# 先看计划，不写任何东西
+./.venv/bin/python tools/migrate_v1_to_v2.py --dry-run \
+    --redis-url redis://127.0.0.1:6379/0 \
+    --v1-upload-dir /srv/sapic-v1/src/static/upload
+
+# 正式执行（默认读 server/.cfg 的 DATABASE_URL / STORAGE_DIR）
+./.venv/bin/python tools/migrate_v1_to_v2.py \
+    --redis-url redis://127.0.0.1:6379/0 \
+    --v1-upload-dir /srv/sapic-v1/src/static/upload
+```
+
+- **幂等**：用户按 `username`、相册按 `(owner, name)`、图片按 `sha` 去重，中断后直接重跑，只补缺的部分。
+- **sha 不变**：迁移保留 v1 的 `sha`，已发布的 `/raw/<sha>` 与直链继续有效。
+- **文件走存储驱动**：原文件重新写进当前主后端（默认 `up2local` 的 `STORAGE_DIR`），不是简单搬目录；
+  文件已丢失的图片会登记为外链（`source_url` 指向 v1 的 `src`），不会被丢弃。
+- **可见性**：v1 没有可见性概念、图片都是免登录直链，所以迁移出的相册与图片默认 `public`；
+  需要收紧用 `--visibility private`（会同时改相册与图片，老直链随即失效）。
+- 其余参数：`--only-user alice`、`--limit 100`、`--skip-images`、`--v2-db-url`、`--v2-storage-dir`。
+- 有失败项时退出码为 `1`，清单里给出 sha 与原因；修复后重跑即可。
+- 迁移前先停 v1 写入（或只读挂载 Redis），避免迁移期间新增图片没有进入快照。
+
+### 7.2 客户端接入（PicGo / uPic / Typora / CLI）
+
+v2 的原生接口是 `POST /api/v2/uploads`（字段 `file` 或 `url`，可带 `album_id` / `title` / `expire`），
+鉴权用 `Authorization: Bearer <PAT>`；PAT 在「设置 → 访问令牌」创建，勾选**上传图片**即可。
+
+为了让 v1 的 PicGo/uPic 配置零改动，v1 的路径 `POST /api/upload` 仍然可用（`views/legacy.py`）：
+
+| 项 | 值 |
+| --- | --- |
+| 接口地址 | `https://你的站点/api/upload` |
+| 文件字段 | `picbed`（表单文件域；也接受 URL 或 base64/Data-URI 字符串） |
+| 鉴权 | 表单 `token` 或请求头 `X-Token`，值为 **PAT**（不是 v1 的 LinkToken）；也可用 `Authorization: Bearer` |
+| 响应 | v1 信封 `{"code":0,"msg":"","sha":"...","src":"...","url":"...","is_video":false}` |
+| 可选字段 | `album`（相册名，不存在会自动创建）、`title`、`expire`（秒）、`filename`、`format`（如 `imgUrl`、`data.src`） |
+
+注意：
+
+- 兼容端点**不接受仅凭 Cookie 的上传**：浏览器会话必须带 `X-CSRF-Token`，客户端请改用 PAT；
+  未带令牌且站点关闭匿名上传时返回 `{"code":1,"msg":"anonymous upload is disabled"}`。
+- 若工具只支持自定义请求头，可直接用原生接口 + `Authorization: Bearer <PAT>`，响应是 v2 信封
+  `{"code":"OK","data":{"image":{...}}}`，取 `data.image.src`。
+- PicGo 等客户端的「自定义图床」一般把完整 URL 字段填 `src` 或 `url`，两者在兼容响应里是同一个地址。
 
 ## 8. 观测
 
@@ -265,9 +387,11 @@ systemctl restart sapic        # 启动时自动跑增量迁移
 | 启动报 `SECRET_KEY must be configured in production` | 没配 `sapic_secretkey`，或 `sapic_env` 被设成了 `dev` |
 | 启动报 `STORAGE_DIR must be an absolute path` | 用相对路径了，改成绝对路径 |
 | 登录成功但刷新就掉线 | 反代没配 `X-Forwarded-Proto` + `sapic_proxyfix=1`，Cookie 的 `Secure` 与站点协议不一致 |
-| 上传 413 | nginx `client_max_body_size` 与 `sapic_maxupload`、后台 `upload_max_size` 三者取最小值 |
+| 上传 413 | nginx `client_max_body_size`、`sapic_maxupload`、后台 `upload_image_max_size` / `upload_video_max_size` 取最小值 |
 | 上传提示 `file type is not allowed` | 后台 `upload_allowed_ext` 白名单没放开该后缀 |
 | 访问 `/raw/xxx` 404 | 图片被删除，或副本已不在对应后端（查 `image_backends.state`） |
 | OIDC 回调 400 `invalid oidc state` | 回调域名/协议与发起时不一致（`sapic_proxyfix`、Passport 侧回调地址） |
 | 前端刷新 404 | nginx 缺 `try_files $uri $uri/ /index.html` |
 | 后台看不到钩子 | hooks 目录未被扫描（`HOOK_PKG_STORAGE_DIR`）或依赖未装，看日志里的 ImportError |
+| 后台安装扩展报 `HOOK_PKG_STORAGE_DIR is not configured` | 该项被置空，填回目录（默认 `server/data/hooks`）并确保运行用户可写 |
+| 钩子市场列表加载失败 | 出网被拦或 GitHub 不可达；用 `sapic_hookmarketurl` 指向镜像，或在市场页「手动安装」直接填包名 |

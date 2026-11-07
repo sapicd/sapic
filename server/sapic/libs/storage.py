@@ -22,7 +22,7 @@ from peewee import IntegrityError
 from ..basis.errors import ApiError, ErrorCode
 from ..models import Image, ImageBackend, StorageBackend, UserBackend
 from ..models.base import now
-from ..models.image import STATUS_ENABLED
+from ..models.image import STATUS_ENABLED, is_expired
 from ..models.storage import (
     SCOPE_SYSTEM,
     SCOPE_USER,
@@ -30,17 +30,25 @@ from ..models.storage import (
     STATE_OK,
     STATE_STORING,
     SYSTEM_SCOPES,
+    VISIBILITY_PRIVATE,
+    VISIBILITY_PUBLIC,
 )
+from . import ext
 from .hook import get_hook_manager
 from .settings import get_setting, set_setting
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_BACKEND_NAME = "local"
+#: Driver that keeps objects on the local filesystem: ``/raw`` streams the file
+#: itself, so it needs no read address of its own.
+LOCAL_DRIVER = "up2local"
 #: Fallback priority; smaller wins, uploads go to the smallest enabled one.
 DEFAULT_PRIORITY = 100
 #: Priority step for a backend created automatically from a storage hook.
 PRIORITY_STEP = 10
+#: Lifetime of a temporary read address handed out by ``upimg_url``.
+READ_URL_EXPIRES = 300
 #: Two workers is enough: replicas are per-upload sequential and usually rare.
 _REPLICA_POOL = ThreadPoolExecutor(max_workers=2, thread_name_prefix="sapic-replica")
 _PENDING_REPLICAS: set[Future] = set()
@@ -57,7 +65,7 @@ def ensure_default_backend() -> StorageBackend:
             hook_name="up2local",
             config={},
             scope=SCOPE_SYSTEM,
-            visibility="private",
+            visibility=VISIBILITY_PUBLIC,
             priority=DEFAULT_PRIORITY,
             enabled=True,
         )
@@ -77,15 +85,101 @@ def _as_dict(row: StorageBackend) -> dict:
     }
 
 
+def private_readable(hook_name: str) -> bool:
+    """Whether a backend of ``hook_name`` can serve objects without a public URL.
+
+    Local objects are streamed by ``/raw`` from disk; remote ones need the driver
+    to hand out a temporary read address (``upimg_url``). Anything else can only
+    be used as a public link, so it is refused as a ``private`` backend up front
+    instead of failing on every read.
+    """
+    if hook_name == LOCAL_DRIVER:
+        return True
+    hook = get_hook_manager().get(hook_name)
+    return bool(hook is not None and ext.supports_private_read(hook.module))
+
+
+def clean_visibility(value) -> str:
+    """Normalise a backend ``visibility``; unknown values are a client error."""
+    text = str(value or "").strip().lower()
+    if not text:
+        return VISIBILITY_PUBLIC
+    if text not in (VISIBILITY_PUBLIC, VISIBILITY_PRIVATE):
+        raise ApiError("invalid visibility", ErrorCode.PARAM_ERROR)
+    return text
+
+
+def _assert_private_readable(hook_name: str, visibility: str) -> None:
+    """Refuse ``private`` for drivers that cannot sign a read request."""
+    if visibility == VISIBILITY_PRIVATE and not private_readable(hook_name):
+        raise ApiError(
+            "driver cannot read private objects: missing %s"
+            % ext.DRIVER_READ_FUNC,
+            ErrorCode.PARAM_ERROR,
+        )
+
+
+def public_src(replica: ImageBackend) -> str | None:
+    """Direct link of one replica, only when its backend is world-readable.
+
+    A ``private`` backend stores the same URL, but the bucket rejects anonymous
+    requests, so returning it would hand the browser a 403.
+    """
+    backend = replica.backend
+    if (backend.visibility or VISIBILITY_PRIVATE) != VISIBILITY_PUBLIC:
+        return None
+    return replica.url or None
+
+
+def object_url(replica: ImageBackend, expires: int = READ_URL_EXPIRES) -> dict | None:
+    """Ask the driver for a temporary read address of one replica.
+
+    Used by ``/raw`` for ``private`` backends: the driver signs the request (or
+    returns the headers it needs, as Upyun does) and sapic relays the body, so
+    the bucket stays closed and the address never reaches the browser. Returns
+    ``{"url": ..., "headers": {...}}`` or ``None`` when the driver refuses.
+    """
+    backend = replica.backend
+    image = replica.image
+    results = get_hook_manager().call(
+        ext.DRIVER_READ_FUNC,
+        include=[backend.hook_name],
+        sha=image.sha if image is not None else "",
+        filename=image.filename if image is not None else "",
+        save_result={
+            "path": replica.object_key,
+            "size": replica.size,
+            "etag": replica.etag,
+        },
+        backend=driver_backend(_as_dict(backend)),
+        expires=expires,
+    )
+    if not results:
+        return None
+    result = results[0] or {}
+    url = str(result.get("url") or "").strip()
+    if result.get("code") != 0 or not url:
+        logger.warning(
+            "upimg_url of %s failed: %s",
+            backend.hook_name,
+            str(result.get("msg") or "unknown error")[:200],
+        )
+        return None
+    headers = result.get("headers")
+    return {"url": url, "headers": dict(headers) if isinstance(headers, dict) else {}}
+
+
 def upload_drivers() -> list[dict]:
     """Enabled hooks that can actually store objects, with their config fields."""
     manager = get_hook_manager()
     drivers = []
     for manifest in manager.manifests():
-        if manifest.get("catalog") != "upload" or not manifest.get("enabled"):
+        if not manifest.get("enabled"):
             continue
         hook = manager.get(manifest["name"])
-        if hook is None or not callable(getattr(hook.module, "upimg_save", None)):
+        #: 契约判断收敛在 libs.ext：声明 upload 但没实现 upimg_save 的插件
+        #: 不能出现在后端下拉里，否则上传时才发现失败。
+        if hook is None or not ext.is_driver(hook.module):
             continue
         drivers.append(manifest)
     return drivers
@@ -155,7 +249,7 @@ def sync_backends() -> list[str]:
                 hook_name=name,
                 config=defaults,
                 scope=SCOPE_SYSTEM,
-                visibility="private",
+                visibility=VISIBILITY_PUBLIC,
                 priority=priority,
                 enabled=True,
             )
@@ -223,6 +317,10 @@ def backend_payload(row: StorageBackend, primary_id: int | None = None) -> dict:
         "enabled": bool(row.enabled),
         "scope": row.scope,
         "config": dict(row.config or {}),
+        #: ``public`` 直接给直链，``private`` 一律经 ``/raw`` 签名转发。
+        "visibility": row.visibility or VISIBILITY_PUBLIC,
+        #: 驱动能否私有读：不能时前端禁用「私有」选项，后端也会拒绝保存。
+        "private_readable": private_readable(row.hook_name),
         "replicas": _replica_count(row),
         "in_use": row.id == primary_id,
         #: 驱动声明的必填项还没填时，前端标「待配置」，上传会失败。
@@ -232,11 +330,18 @@ def backend_payload(row: StorageBackend, primary_id: int | None = None) -> dict:
 
 def _upload_manifest(hook_name: str) -> dict:
     """Validate that ``hook_name`` may back a storage row."""
-    manifest = get_hook_manager().manifest(hook_name)
+    manager = get_hook_manager()
+    manifest = manager.manifest(hook_name)
     if manifest is None:
         raise ApiError("hook not found: %s" % hook_name, ErrorCode.NOT_FOUND, 404)
-    if manifest.get("catalog") != "upload":
-        raise ApiError("hook is not a storage driver", ErrorCode.PARAM_ERROR)
+    hook = manager.get(hook_name)
+    if hook is None or not ext.is_driver(hook.module):
+        missing = ext.missing_callables(hook.module, ext.DRIVER_FUNCS) if hook else []
+        raise ApiError(
+            "hook is not a storage driver%s"
+            % (": missing %s" % missing[0] if missing else ""),
+            ErrorCode.PARAM_ERROR,
+        )
     if not manifest.get("enabled"):
         raise ApiError("hook is disabled", ErrorCode.CONFLICT, 409)
     return manifest
@@ -314,9 +419,12 @@ def create_backend(
     config=None,
     priority: int | None = None,
     enabled: bool = True,
+    visibility: str = VISIBILITY_PUBLIC,
 ) -> StorageBackend:
     """Add one configured instance of a storage driver."""
     manifest = _upload_manifest((hook_name or "").strip())
+    visibility = clean_visibility(visibility)
+    _assert_private_readable(manifest["name"], visibility)
     cleaned = clean_backend_config(manifest, config)
     merged = _hook_defaults(manifest)
     merged.update(cleaned)
@@ -338,7 +446,7 @@ def create_backend(
             hook_name=manifest["name"],
             config=cleaned,
             scope=SCOPE_SYSTEM,
-            visibility="private",
+            visibility=visibility,
             priority=int(priority),
             enabled=bool(enabled),
         )
@@ -378,6 +486,11 @@ def update_backend(
                 _guard_last_enabled(row)
         row.enabled = enabled
         fields.append(StorageBackend.enabled)
+    if "visibility" in data:
+        visibility = clean_visibility(data.get("visibility"))
+        _assert_private_readable(row.hook_name, visibility)
+        row.visibility = visibility
+        fields.append(StorageBackend.visibility)
     if "config" in data:
         manifest = _upload_manifest(row.hook_name)
         cleaned = clean_backend_config(manifest, data.get("config"))
@@ -547,12 +660,15 @@ def create_user_backend(
     config=None,
     priority: int | None = None,
     enabled: bool = True,
+    visibility: str = VISIBILITY_PUBLIC,
 ) -> StorageBackend:
     """Add a backend owned by ``user`` so their uploads can use their storage."""
     if not user_backends_allowed():
         raise ApiError("user backends are disabled", ErrorCode.FORBIDDEN, 403)
 
     manifest = _upload_manifest((hook_name or "").strip())
+    visibility = clean_visibility(visibility)
+    _assert_private_readable(manifest["name"], visibility)
     cleaned = clean_backend_config(manifest, config)
     #: 用户必须自己填齐必填项，不会回落到管理员在钩子页留下的默认凭据。
     _assert_configured(manifest, cleaned)
@@ -582,7 +698,7 @@ def create_user_backend(
             config=cleaned,
             scope=SCOPE_USER,
             owner=user,
-            visibility="private",
+            visibility=visibility,
             priority=int(priority),
             enabled=bool(enabled),
         )
@@ -622,7 +738,7 @@ def driver_backend(backend: dict) -> dict:
     config = hook_config(hook_name)
     #: A configured backend row always wins over the hook-wide defaults.
     config.update(dict(data.get("config") or {}))
-    if hook_name == "up2local" and not config.get("root"):
+    if hook_name == LOCAL_DRIVER and not config.get("root"):
         config["root"] = current_app.config["STORAGE_DIR"]
     data["config"] = config
     return data
@@ -704,8 +820,8 @@ def flush_replicas(timeout: float = 30.0) -> None:
 def _write_replicas(app: Flask, payload: dict) -> None:
     with app.app_context():
         image = Image.get_or_none(Image.id == payload["image_id"])
-        #: 图片可能已经被删除，那就没有必要再往别的后端写。
-        if image is None or image.status != STATUS_ENABLED:
+        #: 图片可能已经被删除或已过期，那就没有必要再往别的后端写。
+        if image is None or image.status != STATUS_ENABLED or is_expired(image):
             return
         for backend in payload["backends"]:
             try:
@@ -763,7 +879,7 @@ def _write_replica(image: Image, backend: dict, payload: dict) -> None:
 
 
 def local_path(replica: ImageBackend) -> Path | None:
-    if replica.backend.hook_name != "up2local":
+    if replica.backend.hook_name != LOCAL_DRIVER:
         return None
     config = driver_backend(_as_dict(replica.backend)).get("config") or {}
     path = Path(config["root"]) / replica.object_key

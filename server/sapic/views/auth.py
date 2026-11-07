@@ -13,6 +13,7 @@ from werkzeug.security import check_password_hash
 
 from ..basis.common import as_bool
 from ..basis.errors import ApiError, ErrorCode
+from ..libs import ext
 from ..libs.auth import (
     DEFAULT_PAT_SCOPES,
     PAT_SCOPES,
@@ -24,11 +25,13 @@ from ..libs.auth import (
     login_required,
     login_user,
     logout_user,
+    require_scope,
 )
 from ..libs.hook import get_hook_manager
 from ..libs.mail import send_mail, smtp_ready
 from ..libs.settings import get_setting
 from ..libs.storage import hook_config
+from ..libs.user_settings import get_user_settings, set_user_settings
 from ..libs.users import (
     authenticate,
     bind_oidc_identity,
@@ -37,6 +40,7 @@ from ..libs.users import (
     mark_email_verified,
     normalize_username,
     resolve_oidc_user,
+    self_delete,
     serialize_user,
     unbind_oidc_identity,
     update_avatar,
@@ -183,14 +187,11 @@ def _oidc_failure_flag(exc: ApiError) -> str:
 
 
 def _oidc_hook(name: str):
-    """Resolve an enabled hook that speaks the OIDC contract."""
+    """Resolve an enabled hook that implements the provider contract."""
     hook = get_hook_manager().get(name)
-    if (
-        hook is None
-        or not hook.enabled
-        or not callable(getattr(hook.module, "oidc_authorize_url", None))
-        or not callable(getattr(hook.module, "oidc_exchange", None))
-    ):
+    #: 契约判断在 libs.ext：只要包声明 __catalog__="auth" 并实现两个函数，
+    #: 第三方 Provider 无需改动核心代码即可接入 /auth/oidc/<name>。
+    if hook is None or not hook.enabled or not ext.is_provider(hook.module):
         raise ApiError("oidc provider is unavailable", ErrorCode.NOT_FOUND, 404)
     return hook
 
@@ -280,19 +281,25 @@ def oidc_callback(name: str):
     if not code:
         raise ApiError("missing oidc code", ErrorCode.PARAM_ERROR)
 
+    config = hook_config(name)
     try:
-        identity = hook.module.oidc_exchange(
-            config=hook_config(name),
-            code=code,
-            redirect_uri=_oidc_redirect_uri(name),
+        identity = ext.normalize_identity(
+            hook.module.oidc_exchange(
+                config=config,
+                code=code,
+                redirect_uri=_oidc_redirect_uri(name),
+            )
         )
+    except ValueError as exc:
+        #: 第三方 Provider 返回的 claims 缺 subject 时不能落库，按无效身份处理。
+        logger.warning("oidc provider %s returned an invalid identity: %s", name, exc)
+        return redirect("/login?oidc=invalid")
     except Exception:
         logger.exception("oidc token exchange failed for %s", name)
         return redirect("/login?oidc=error")
 
-    config = hook_config(name)
-    issuer = identity.get("issuer") or config.get("issuer") or ""
-    subject = identity.get("subject") or ""
+    issuer = identity["issuer"] or ext.provider_issuer(hook.module, config)
+    subject = identity["subject"]
     bind_uid = saved.get("bind_uid")
     if bind_uid:
         return _finish_bind(name, issuer, subject, bind_uid, saved)
@@ -302,10 +309,10 @@ def oidc_callback(name: str):
         user = resolve_oidc_user(
             issuer=issuer,
             subject=subject,
-            username=identity.get("username") or "",
-            nickname=identity.get("nickname") or "",
-            email=identity.get("email") or "",
-            email_verified=as_bool(identity.get("email_verified", False)),
+            username=identity["username"],
+            nickname=identity["nickname"],
+            email=identity["email"],
+            email_verified=identity["email_verified"],
             status=STATUS_PENDING if review else STATUS_NORMAL,
         )
     except ApiError as exc:
@@ -327,23 +334,19 @@ def read_identities():
     user = current_user()
     manager = get_hook_manager()
     items = []
-    for entry in manager.manifests():
-        if entry.get("catalog") != "auth" or not entry.get("enabled"):
+    for name, hook in sorted(manager.hooks.items()):
+        #: 任何满足 Provider 契约的第三方钩子都会出现在这里，无需核心登记。
+        if not hook.enabled or not ext.is_provider(hook.module):
             continue
-        name = entry["name"]
-        hook = manager.get(name)
-        if hook is None or not callable(
-            getattr(hook.module, "oidc_authorize_url", None)
-        ):
-            continue
-        config = hook_config(name)
+        namespace = ext.provider_issuer(hook.module, hook_config(name))
         items.append(
             {
                 "name": name,
-                "title": entry.get("title") or name,
+                "title": (manager.manifest(name) or {}).get("title") or name,
                 "bound": bool(
                     user.oidc_subject
-                    and (user.oidc_issuer or "") == (config.get("issuer") or "")
+                    and namespace
+                    and (user.oidc_issuer or "") == namespace
                 ),
                 "bind_url": url_for(
                     "auth.oidc_start", name=name, bind=1, next="/settings"
@@ -377,6 +380,22 @@ def unbind_identity(name: str):
 def logout():
     logout_user()
     return ok({"logged_out": True})
+
+
+@bp.delete("/auth/account")
+@login_required
+def delete_account():
+    """Self-service account deletion.
+
+    ``self_delete`` requires the current password and an empty gallery; admins
+    cannot remove themselves (another admin has to do it) so the console never
+    ends up without an owner.
+    """
+    user = current_user()
+    self_delete(user, str(_payload().get("password") or ""))
+    logout_user()
+    logger.info("Account %s deleted itself", user.username)
+    return ok({"deleted": True})
 
 
 @bp.post("/auth/password/forgot")
@@ -505,6 +524,19 @@ def edit_profile():
     return ok({"user": serialize_user(user, True)})
 
 
+@bp.get("/auth/settings")
+@login_required
+def read_settings():
+    """Per-user preferences: userscript switch and personal background."""
+    return ok({"settings": get_user_settings(g.user)})
+
+
+@bp.put("/auth/settings")
+@login_required
+def edit_settings():
+    return ok({"settings": set_user_settings(g.user, _payload())})
+
+
 @bp.put("/auth/password")
 @login_required
 def update_password():
@@ -545,16 +577,25 @@ def list_tokens():
 
 
 def _token_scopes(value) -> list[str]:
-    """Validate the requested scopes; empty falls back to the default set."""
-    if value in (None, "", []):
+    """Validate the requested scopes; only an omitted value falls back to the default set."""
+    if value is None:
         return list(DEFAULT_PAT_SCOPES)
     if not isinstance(value, list):
         raise ApiError("scopes must be a list", ErrorCode.PARAM_ERROR)
-    scopes = [str(item) for item in value]
-    if any(item not in PAT_SCOPES for item in scopes):
-        raise ApiError("invalid scope", ErrorCode.PARAM_ERROR)
-    if SCOPE_ADMIN in scopes and not g.user.is_admin:
-        raise ApiError("admin scope requires an admin account", ErrorCode.FORBIDDEN, 403)
+    scopes: list[str] = []
+    for item in value:
+        scope = str(item).strip()
+        if scope not in PAT_SCOPES:
+            raise ApiError("invalid scope", ErrorCode.PARAM_ERROR)
+        if scope not in scopes:
+            scopes.append(scope)
+    if not scopes:
+        raise ApiError("at least one scope is required", ErrorCode.PARAM_ERROR)
+    if SCOPE_ADMIN in scopes:
+        if not g.user.is_admin:
+            raise ApiError("admin scope requires an admin account", ErrorCode.FORBIDDEN, 403)
+        #: 签发 admin 令牌要求当前凭据本身带 admin，否则 write 令牌即可给自己提权。
+        require_scope(SCOPE_ADMIN)
     return scopes
 
 

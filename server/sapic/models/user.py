@@ -29,6 +29,8 @@ class User(BaseModel):
     avatar = CharField(max_length=255, default="")
     is_admin = BooleanField(default=False)
     status = IntegerField(default=STATUS_NORMAL)
+    #: Why a registration was rejected; cleared when the account is accepted.
+    status_reason = CharField(max_length=200, null=True)
     labels = JSONTextField(null=True)
     email_verified = BooleanField(default=False)
     #: Incremented to revoke all existing cookie sessions for this user.

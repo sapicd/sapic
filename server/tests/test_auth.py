@@ -155,6 +155,35 @@ def test_token_scope_validation(client):
     assert client.post(
         "/api/v2/auth/tokens", json={"scopes": ["admin"]}, headers=headers
     ).status_code == 403
+    #: 空列表不等于「默认集合」，显式不选权限要被拒绝而不是静默给全量。
+    assert client.post(
+        "/api/v2/auth/tokens", json={"scopes": []}, headers=headers
+    ).status_code == 400
+
+
+def test_admin_scope_requires_admin_credential(app, client):
+    """签发 admin 令牌要凭据本身带 admin：write 令牌不能给自己提权。"""
+    register(client)
+    headers = {"X-CSRF-Token": login(client)}
+    write_only = client.post(
+        "/api/v2/auth/tokens", json={"scopes": ["write"]}, headers=headers
+    ).get_json()["data"]["token"]
+    with app.app_context():
+        User.update(is_admin=True).where(User.username == USER["username"]).execute()
+
+    bearer = {"Authorization": "Bearer %s" % write_only}
+    assert client.post(
+        "/api/v2/auth/tokens", json={"scopes": ["admin"]}, headers=bearer
+    ).status_code == 403
+
+    #: Cookie 会话等价账号本身，不受 scope 约束。
+    issued = client.post(
+        "/api/v2/auth/tokens", json={"scopes": ["admin"]}, headers=headers
+    )
+    assert issued.status_code == 201
+    admin_token = {"Authorization": "Bearer %s" % issued.get_json()["data"]["token"]}
+    assert client.get("/api/v2/settings", headers=admin_token).status_code == 200
+    assert client.get("/api/v2/settings", headers=bearer).status_code == 403
 
 
 def test_password_reset_requires_a_verified_email(client):

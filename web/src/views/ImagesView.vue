@@ -445,7 +445,20 @@ onMounted(async () => {
           @click.stop
         />
         <div class="image-card__media" @click="handleCardClick(item)">
-          <el-image :src="item.src" fit="cover" lazy style="width: 100%; height: 100%" />
+          <video
+            v-if="item.is_video"
+            :src="item.src"
+            muted
+            playsinline
+            preload="metadata"
+          />
+          <el-image
+            v-else
+            :src="item.src"
+            fit="cover"
+            lazy
+            style="width: 100%; height: 100%"
+          />
           <div v-if="!batchMode" class="image-card__overlay" @click.stop>
             <el-button circle title="复制链接" @click="copy(absolute(item.src))">
               <el-icon><CopyDocument /></el-icon>
@@ -466,6 +479,9 @@ onMounted(async () => {
         <div class="image-card__meta">
           <div class="image-card__name">{{ item.title || item.filename }}</div>
           <div class="image-card__sub">
+            <el-tag v-if="item.is_video" size="small" type="warning" effect="plain">
+              视频
+            </el-tag>
             <el-tag v-if="item.external" size="small" type="info" effect="plain">
               外链
             </el-tag>

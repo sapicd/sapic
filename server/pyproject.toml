@@ -1,6 +1,6 @@
 # sapic v2 后端 —— 纯本地包，不发布到 PyPI，也不通过 pip 安装。
 #
-# - 依赖统一由仓库根 requirements/ 管理：base.txt / dev.txt / prod.txt
+# - 依赖统一由本目录 requirements/ 管理：base.txt / dev.txt / prod.txt
 # - 运行、测试均在 server/ 目录下执行即可（cwd 已在 sys.path，直接 import sapic）
 # - 本文件仅保留 pytest 等本地工具配置，不声明 [project] / [build-system]
 

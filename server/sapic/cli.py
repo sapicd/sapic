@@ -27,6 +27,18 @@ def upgrade_command():
         click.echo("database is up to date")
 
 
+@sa_cli.command("purge-expired")
+@click.option("-n", "--limit", default=1000, show_default=True, help="max images per run")
+def purge_expired_command(limit):
+    """Delete images whose expiry has passed (files and metadata)."""
+    from .libs.images import purge_expired
+
+    if db.is_closed():
+        db.connect()
+    removed = purge_expired(limit)
+    click.echo("purged expired images: %d" % removed)
+
+
 @sa_cli.command("create-admin")
 @click.option("-u", "--username", required=True, help="admin username")
 @click.option("-p", "--password", required=True, help="admin password")

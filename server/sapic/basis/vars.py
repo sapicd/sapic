@@ -39,5 +39,13 @@ SESSION_COOKIE_SALT = "sapic-login-state"
 #: Hook directory rescan interval, in seconds.
 HOOK_RELOAD_TIME = 600
 
+#: Official third-party hook listing (a JSON array hosted on GitHub).
+DEFAULT_HOOK_MARKET_URL = (
+    "https://api.github.com/repos/sapicd/awesome/contents/list.json"
+)
+
+#: Latest release feed used by the admin update check; empty disables it.
+DEFAULT_RELEASE_URL = "https://api.github.com/repos/sapicd/sapic/releases/latest"
+
 #: Documentation root used by front-end help links.
 DOCS_BASE_URL = "https://sapic.rtfd.vip/zh_cn/latest/"

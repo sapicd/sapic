@@ -62,17 +62,25 @@ def test_admin_reads_and_writes_settings(app, client):
 
     data = client.get("/api/v2/settings").get_json()["data"]["items"]
     assert data["site_name"] == "sapic"
-    assert data["upload_max_size"] == 20
+    #: 图片与视频有各自的默认上限（10M / 20M）。
+    assert data["upload_image_max_size"] == 10
+    assert data["upload_video_max_size"] == 20
 
     response = client.put(
         "/api/v2/settings",
-        json={"site_name": "我的图床", "upload_max_size": 5, "allow_video": False},
+        json={
+            "site_name": "我的图床",
+            "upload_image_max_size": 5,
+            "upload_video_max_size": 8,
+            "allow_video": False,
+        },
         headers={"X-CSRF-Token": csrf},
     )
     assert response.status_code == 200, response.get_json()
     items = response.get_json()["data"]["items"]
     assert items["site_name"] == "我的图床"
-    assert items["upload_max_size"] == 5
+    assert items["upload_image_max_size"] == 5
+    assert items["upload_video_max_size"] == 8
     assert items["allow_video"] is False
 
     site = client.get("/api/v2/site").get_json()["data"]
@@ -86,7 +94,7 @@ def test_settings_reject_invalid_value(app, client):
 
     response = client.put(
         "/api/v2/settings",
-        json={"upload_max_size": "abc"},
+        json={"upload_image_max_size": "abc"},
         headers={"X-CSRF-Token": csrf},
     )
     assert response.status_code == 400
@@ -105,7 +113,7 @@ def test_upload_respects_site_limits(app, client):
     promote_admin(app)
     client.put(
         "/api/v2/settings",
-        json={"upload_allowed_ext": "png", "upload_max_size": 1},
+        json={"upload_allowed_ext": "png", "upload_image_max_size": 1},
         headers={"X-CSRF-Token": csrf},
     )
 
@@ -125,6 +133,32 @@ def test_upload_respects_site_limits(app, client):
         headers={"X-CSRF-Token": csrf},
     )
     assert too_big.status_code == 413
+
+
+def test_upload_limits_are_per_media_type(app, client):
+    """图片与视频各有上限：视频可以比图片大，但同样会被阈值拦住。"""
+    mb = 1024 * 1024
+    csrf = register_and_login(client)
+    promote_admin(app)
+    client.put(
+        "/api/v2/settings",
+        json={"upload_image_max_size": 1, "upload_video_max_size": 3},
+        headers={"X-CSRF-Token": csrf},
+    )
+
+    def post(name, size):
+        return client.post(
+            "/api/v2/uploads",
+            data={"file": (io.BytesIO(b"x" * size), name)},
+            content_type="multipart/form-data",
+            headers={"X-CSRF-Token": csrf},
+        )
+
+    #: 2MB 图片超过 1MB 的图片上限。
+    assert post("photo.png", 2 * mb).status_code == 413
+    #: 同一个 2MB 的视频仍在 3MB 的视频上限内。
+    assert post("clip.mp4", 2 * mb).status_code == 201
+    assert post("clip2.mp4", 4 * mb).status_code == 413
 
 
 def test_register_review_and_reserved_username(app, client):

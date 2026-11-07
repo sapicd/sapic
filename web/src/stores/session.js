@@ -6,6 +6,8 @@ export const useSessionStore = defineStore('session', {
   state: () => ({
     user: null,
     csrf: '',
+    //: 个人偏好（油猴开关、背景图等），与后端 /auth/settings 一一对应。
+    settings: {},
     loaded: false,
   }),
 
@@ -29,8 +31,22 @@ export const useSessionStore = defineStore('session', {
     reset() {
       this.user = null
       this.csrf = ''
+      this.settings = {}
       this.loaded = true
       setCsrfToken('')
+    },
+
+    async loadSettings() {
+      if (!this.user) return {}
+      const data = await api.get('/auth/settings')
+      this.settings = data?.settings || {}
+      return this.settings
+    },
+
+    async saveSettings(payload) {
+      const data = await api.put('/auth/settings', { json: payload })
+      this.settings = data?.settings || {}
+      return this.settings
     },
 
     async load() {
@@ -44,12 +60,25 @@ export const useSessionStore = defineStore('session', {
       } finally {
         this.loaded = true
       }
+      //: 偏好加载失败不能影响登录态，背景退回站点默认即可。
+      if (this.user) {
+        try {
+          await this.loadSettings()
+        } catch (error) {
+          this.settings = {}
+        }
+      }
     },
 
     async login(credentials) {
       const data = await api.post('/auth/login', { json: credentials })
       this.apply(data)
       this.loaded = true
+      try {
+        await this.loadSettings()
+      } catch (error) {
+        this.settings = {}
+      }
       return data
     },
 
@@ -70,6 +99,12 @@ export const useSessionStore = defineStore('session', {
       this.csrf = data?.csrf || this.csrf
       setCsrfToken(this.csrf)
       return data
+    },
+
+    //: 注销后后端已清会话，这里只负责把前端状态一并归零。
+    async deleteAccount(password) {
+      await api.del('/auth/account', { json: { password } })
+      this.reset()
     },
   },
 })

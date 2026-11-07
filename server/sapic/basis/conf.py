@@ -19,6 +19,8 @@ from .vars import (
     BASE_DIR,
     CFG_FILE,
     DATA_DIR,
+    DEFAULT_HOOK_MARKET_URL,
+    DEFAULT_RELEASE_URL,
     DEFAULT_SECRET_KEY,
     ENV_PREFIX,
     LOG_LEVEL_TYPE,
@@ -40,6 +42,8 @@ _ENV_SUFFIX = {
     "PROXY_FIX": "proxyfix",
     "LOG_LEVEL": "loglevel",
     "HOOK_PKG_STORAGE_DIR": "hookpkgstoragedir",
+    "HOOK_MARKET_URL": "hookmarketurl",
+    "UPDATE_CHECK_URL": "updatecheckurl",
 }
 
 
@@ -58,8 +62,9 @@ class BaseConfig:
     #: Redis DSN, optional.
     REDIS_URL: str = ""
 
-    #: Upload limit per file, in MB.
-    MAX_UPLOAD: int = 20
+    #: Whole-request limit, in MB. Must stay above the site's per-type limits
+    #: (``upload_video_max_size`` 默认 20）: multipart 有额外开销，留一点余量。
+    MAX_UPLOAD: int = 25
     #: Local storage root; relative paths are resolved against ``server/``.
     STORAGE_DIR: str = join(DATA_DIR, "upload")
     #: Public base URL prepended to image links, empty means relative.
@@ -69,8 +74,15 @@ class BaseConfig:
     PROXY_FIX: bool = False
     LOG_LEVEL: LOG_LEVEL_TYPE = "INFO"
 
-    #: Directory holding extra hook packages, empty disables it.
-    HOOK_PKG_STORAGE_DIR: str = ""
+    #: Directory holding extra hook packages (``pip install --target`` target and
+    #: an extra hook scan path); empty disables web installation entirely.
+    HOOK_PKG_STORAGE_DIR: str = join(DATA_DIR, "hooks")
+
+    #: Third-party hook listing consumed by the admin market page.
+    HOOK_MARKET_URL: str = DEFAULT_HOOK_MARKET_URL
+
+    #: Latest release feed for the admin update check; empty disables it.
+    UPDATE_CHECK_URL: str = DEFAULT_RELEASE_URL
 
     #: Session lifetime (seconds).
     SESSION_TTL: int = 7 * 24 * 3600
@@ -205,6 +217,9 @@ def load_config(overrides: dict | None = None) -> dict:
     }
     config["MAX_CONTENT_LENGTH"] = config["MAX_UPLOAD"] * 1024 * 1024
     config["STORAGE_DIR"] = _absolute(config["STORAGE_DIR"])
+    #: 第三方钩子包目录会被写进 ``sys.path``，相对路径必须先按 ``server/`` 归一。
+    if config["HOOK_PKG_STORAGE_DIR"]:
+        config["HOOK_PKG_STORAGE_DIR"] = _absolute(config["HOOK_PKG_STORAGE_DIR"])
     config["EXTERNAL_BASE_URL"] = config["EXTERNAL_BASE_URL"].rstrip("/")
     config["LOG_LEVEL"] = config["LOG_LEVEL"].upper()
 

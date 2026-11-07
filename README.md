@@ -125,6 +125,9 @@ docker-compose exec webapp flask sa create -u 管理员账号 -p 密码 --isAdmi
 
 ## 文档
 
+v2 的文档源在 `docs/`（Sphinx + MyST），本地构建：`make docs`，产物在 `docs/_build/html`；
+同时支持 Read the Docs（`.readthedocs.yaml`）与 GitHub Actions 发布到 Pages。
+
 ### 客户端上传示例
 
 - [使用PicGo上传到自定义的 sapic 图床](https://sapic.rtfd.vip/zh-cn/latest/usage.html#upload-picgo)

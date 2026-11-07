@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { api, errorMessage } from '@/api/client'
@@ -40,6 +40,37 @@ const fileList = ref([])
 const urlList = ref([])
 const uploading = ref(false)
 const uploaded = ref([])
+//: 有效期以天为单位（0 = 永久），提交时换算成后端要的秒数。
+const expireDays = ref(0)
+
+//: 常见时长；站点设了上限时按上限过滤，「永久」也随之隐藏。
+const EXPIRE_PRESETS = [1, 7, 30, 90, 365]
+const expireOptions = computed(() => {
+  const max = site.imageExpireMaxDays
+  const preferred = site.imageExpireDefaultDays
+  const days = EXPIRE_PRESETS.filter((day) => !max || day <= max)
+  for (const extra of [max, preferred]) {
+    if (extra && (!max || extra <= max) && !days.includes(extra)) days.push(extra)
+  }
+  days.sort((a, b) => a - b)
+  const options = days.map((day) => ({ label: `${day} 天`, value: day }))
+  if (!max) options.unshift({ label: '永久', value: 0 })
+  return options
+})
+
+//: 站点设了上限时没有「永久」可选，默认就给到上限；否则用站点默认值。
+function initialExpireDays() {
+  if (site.imageExpireDefaultDays) return site.imageExpireDefaultDays
+  return site.imageExpireMaxDays || 0
+}
+
+watch(
+  () => site.loaded,
+  (loaded) => {
+    if (loaded) expireDays.value = initialExpireDays()
+  },
+  { immediate: true },
+)
 
 const pendingTotal = computed(() => fileList.value.length + urlList.value.length)
 
@@ -215,6 +246,7 @@ async function uploadOne(item) {
   form.append('file', item.raw)
   const target = item.albumId || albumId.value
   if (target) form.append('album_id', String(target))
+  if (expireDays.value) form.append('expire', String(expireDays.value * 86400))
 
   try {
     const data = await api.post('/uploads', { form })
@@ -238,6 +270,7 @@ async function uploadRemote(item) {
   const form = new FormData()
   form.append('url', item.url)
   if (albumId.value) form.append('album_id', String(albumId.value))
+  if (expireDays.value) form.append('expire', String(expireDays.value * 86400))
 
   try {
     const data = await api.post('/uploads', { form })
@@ -334,23 +367,34 @@ onBeforeUnmount(() => {
       <router-link :to="{ name: 'login', query: { redirect: '/' } }">登录</router-link>
     </el-alert>
 
-    <div v-if="session.authenticated" class="upload-hero__toolbar">
-      <span class="upload-hero__label">默认相册</span>
-      <el-select
-        v-model="albumId"
-        placeholder="未指定（使用默认相册）"
-        clearable
-        style="width: 220px"
-      >
+    <div class="upload-hero__toolbar">
+      <template v-if="session.authenticated">
+        <span class="upload-hero__label">默认相册</span>
+        <el-select
+          v-model="albumId"
+          placeholder="未指定（使用默认相册）"
+          clearable
+          style="width: 220px"
+        >
+          <el-option
+            v-for="album in uploadableAlbums"
+            :key="album.id"
+            :label="album.name"
+            :value="album.id"
+          />
+        </el-select>
+      </template>
+      <span class="upload-hero__label">有效期</span>
+      <el-select v-model="expireDays" style="width: 150px">
         <el-option
-          v-for="album in uploadableAlbums"
-          :key="album.id"
-          :label="album.name"
-          :value="album.id"
+          v-for="option in expireOptions"
+          :key="option.value"
+          :label="option.label"
+          :value="option.value"
         />
       </el-select>
       <span class="upload-hero__label upload-hero__label--hint">
-        选中文件后可逐个修改
+        {{ expireDays ? '到期后图片与文件会被删除' : '选中文件后可逐个修改' }}
       </span>
     </div>
 
@@ -371,8 +415,11 @@ onBeforeUnmount(() => {
       </div>
       <div class="upload-zone__text">拖拽文件到此处，或<em>点击选择</em>、粘贴图片</div>
       <div class="upload-zone__hint">
-        支持{{ site.allowVideo ? '图片与视频' : '图片' }} · 单文件不超过
-        {{ site.uploadMaxSize }} MB · 单次最多 {{ site.uploadCountLimit }} 个
+        支持{{ site.allowVideo ? '图片与视频' : '图片' }} · 图片不超过
+        {{ site.uploadImageMaxSize }} MB<span v-if="site.allowVideo"
+          >、视频不超过 {{ site.uploadVideoMaxSize }} MB</span
+        >
+        · 单次最多 {{ site.uploadCountLimit }} 个
       </div>
       <div class="upload-zone__note">
         支持 Ctrl/⌘ + V 粘贴图片或图片链接，加入列表后点「开始上传」
@@ -448,7 +495,15 @@ onBeforeUnmount(() => {
 
     <div v-if="uploaded.length" class="upload-results">
       <div v-for="item in uploaded" :key="item.sha" class="upload-result">
-        <el-image class="upload-result__thumb" :src="item.src" fit="cover" />
+        <video
+          v-if="item.is_video"
+          class="upload-result__thumb"
+          :src="item.src"
+          muted
+          playsinline
+          preload="metadata"
+        />
+        <el-image v-else class="upload-result__thumb" :src="item.src" fit="cover" />
         <div class="upload-result__body">
           <div class="upload-result__name">{{ item.filename }}</div>
           <div class="upload-result__link">{{ absolute(item.src) }}</div>

@@ -1,3 +1,5 @@
+import { localizeMessage } from './messages'
+
 const API_BASE = import.meta.env.VITE_API_BASE || '/api/v2'
 
 let csrfToken = ''
@@ -79,6 +81,9 @@ export const api = {
 }
 
 export function errorMessage(error, fallback = '操作失败') {
-  if (error instanceof ApiError) return error.message
-  return error?.message || fallback
+  //: ApiError.message 保留后端英文原文（排查用），展示前统一转成中文。
+  if (error instanceof ApiError) {
+    return localizeMessage(error.message, error.code) || fallback
+  }
+  return localizeMessage(error?.message) || fallback
 }

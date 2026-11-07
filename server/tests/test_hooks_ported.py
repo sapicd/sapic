@@ -195,13 +195,13 @@ def test_gitee_save_sends_the_token_as_a_parameter(app, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "name, vendor",
-    (("up2qiniu", "qiniu"), ("up2upyun", "upyun")),
+    "name, vendor, attr",
+    (("up2qiniu", "qiniu", "Auth"), ("up2upyun", "upyun", "UpYun")),
 )
-def test_sdk_drivers_report_a_missing_dependency(app, name, vendor):
+def test_sdk_drivers_report_a_missing_dependency(app, name, vendor, attr, monkeypatch):
+    """两个 SDK 现在随 base.txt 安装，这里模拟第三方环境缺包时的降级提示。"""
     module = module_of(app, name)
-    if getattr(module, "Auth", None) is not None or getattr(module, "UpYun", None):
-        pytest.skip("%s SDK is installed" % vendor)
+    monkeypatch.setattr(module, attr, None, raising=False)
 
     result = module.upimg_save("a.png", b"x", backend={"config": {}})
     assert result["code"] == 1

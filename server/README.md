@@ -10,12 +10,12 @@ sapic v2 后端，API-only（前端由独立的 Vue 应用提供）。
 
 ## 依赖安装
 
-本包是**纯本地包**，不发布 PyPI、也不 `pip install` 本包；依赖由仓库根的 `requirements/` 管理。
+本包是**纯本地包**，不发布 PyPI、也不 `pip install` 本包；依赖由本目录下的 `requirements/` 管理。
 在**仓库根**执行：
 
 ```bash
-make setup            # 开发 + 测试依赖 (requirements/dev.txt) + 前端依赖
-# 仅后端：python -m pip install -r requirements/dev.txt
+make setup            # 开发 + 测试依赖 (server/requirements/dev.txt) + 前端依赖
+# 仅后端（在 server/ 下）：python -m pip install -r requirements/dev.txt
 ```
 
 ## 配置
@@ -29,7 +29,7 @@ make setup            # 开发 + 测试依赖 (requirements/dev.txt) + 前端依
 | `sapic_db_url` | 数据库 DSN，如 `postgresql://user:pass@host:5432/sapic`、`mysql://...`、`sqlite:///tmp/sapic.db` | `sqlite:///<server>/data/sapic.db` |
 | `sapic_redis_url` | Redis DSN，如 `redis://:pass@host:6379/0` | 空（可选） |
 | `sapic_secretkey` | Web 应用密钥，**生产必须显式配置**（缺省时启动失败；`sapic_env=dev` 才允许回落内置值） | 内置串 |
-| `sapic_maxupload` | 上传上限，单位 MB | `20` |
+| `sapic_maxupload` | 整个上传请求的上限（MB，映射 `MAX_CONTENT_LENGTH`），要大于站点里图片/视频的单文件上限 | `25` |
 | `sapic_storagedir` | 本地存储目录 | `data/upload` |
 | `sapic_external_base_url` | 对外访问根地址，用于拼接图片外链 | 空（相对地址） |
 | `sapic_proxyfix` | 是否信任代理标头 | 关闭 |
@@ -44,6 +44,7 @@ cd server
 export FLASK_APP=sapic
 flask sa upgrade          # 建表 / 增量迁移（启动时已自动执行）
 flask sa create-admin -u admin -p 123456
+flask sa purge-expired    # 手动清理到期图片（请求期也会节流兜底清理）
 ```
 
 ## 启动
@@ -77,17 +78,19 @@ gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent
 | GET | `/api/v2/auth/oidc/<name>/callback` | 统一登录回调 |
 | GET | `/api/v2/auth/identities` | 可绑定的登录方式与绑定状态 |
 | DELETE | `/api/v2/auth/identities/<name>` | 解除绑定（需当前密码） |
-| POST | `/api/v2/uploads` | 上传（multipart，字段 `file` 或 `url`） |
+| POST | `/api/v2/uploads` | 上传（multipart，字段 `file` 或 `url`，可选 `expire` 有效期秒数与 `album_id`） |
 | GET | `/api/v2/images` | 图片列表（游标分页，权限过滤） |
 | POST | `/api/v2/images/import` | 批量登记外链（不下载文件，`items` 为链接数组，可指定 `album_id`） |
 | POST | `/api/v2/images/batch/delete` | 批量删除（`shas`，≤100） |
 | PATCH | `/api/v2/images/batch` | 批量修改：`album_id` / `visibility` / `plaza` / `tags` |
-| GET/PATCH/DELETE | `/api/v2/images/<sha>` | 详情 / 修改 / 删除 |
+| GET/PATCH/DELETE | `/api/v2/images/<sha>` | 详情 / 修改（含 `expire_at` 有效期）/ 删除 |
 | GET/POST | `/api/v2/albums` | 相册列表 / 创建 |
 | PATCH/DELETE | `/api/v2/albums/<id>` | 修改 / 删除（非空拒绝） |
 | GET/POST | `/api/v2/backends` | 存储后端列表 / 新增（仅管理员） |
 | PATCH/DELETE | `/api/v2/backends/<id>` | 改优先级、启停、按后端覆盖配置 / 删除（仍有副本则 409） |
 | GET | `/raw/<sha>` | 图片读取（公开图 302 到后端直链；私有图鉴权后输出，支持 Range） |
+| GET | `/api/v2/userscript.user.js` | 油猴脚本（Tampermonkey/Violentmonkey），需登录；受个人设置 `userscript_enabled` 控制，可用 `?token=`（`upload` scope）安装 |
+| GET/PUT | `/api/v2/auth/settings` | 个人偏好：`userscript_enabled` / `bg_image` / `bg_image_mobile` / `bg_opacity` |
 
 认证方式：Cookie 会话（写操作需要 `X-CSRF-Token`）或 `Authorization: Bearer <PAT>`。
 
@@ -110,6 +113,12 @@ gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent
 - **缓存**：公开图 `Cache-Control: public, max-age=31536000, immutable`；私有图 `private, max-age=31536000, immutable`（只允许浏览器缓存，共享缓存不缓存）。
 
 存储 key 形如 `{用户}/{年}/{月}/{日}/{ASCII 文件名}-{sha 片段}.{ext}`：后缀保证同名文件不会互相覆盖。文件名统一经 `secure_filename` 清洗（中文等非 ASCII 字符被丢弃），主体被整段清空时用 `{yyyyMMddHHmmss}{6 位随机}` 兜底，后缀始终保留；删除按 `ImageBackend.object_key` 执行。
+
+媒体元数据：上传时只从文件头读取 `width`/`height`（不引入图像库、不解码像素），并在落盘前**剥离 EXIF/XMP**（JPEG APP1、PNG `eXIf`/XMP 文本块、WebP `EXIF`/`XMP ` 块），拍摄时间、相机与 GPS 不会出现在存储对象里；GIF/BMP/ICO/SVG 与视频原样保存。
+
+图片有效期：上传时 `expire` 传秒数（`0`/不传 = 按站点默认，默认永久），之后可用 `PATCH /images/<sha>` 的 `expire_at`（秒级时间戳，`null` 取消）调整。到期后图片立即按不存在处理（`/raw/<sha>`、详情、列表、广场均 404/消失），并在后台被**硬删除**（对象文件 + 副本 + 记录）。清理由请求期节流兜底（每个进程最多每 5 分钟一批），也可用 `flask sa purge-expired` 交给 cron。站点设置 `image_expire_default_days` 控制默认寿命、`image_expire_max_days` 控制上限（后者生效后不再允许永久图片）。
+
+油猴脚本（`GET /api/v2/userscript.user.js`，需登录）：按用户生成 Tampermonkey/Violentmonkey 脚本，在任意网页 **Alt + 点击图片** 即可把它上传到本站。上传走 `POST /uploads` 的 `url` 字段（服务端抓取，绕过浏览器 CORS），脚本源码**不含任何令牌**：首次上传时弹窗要求粘贴一枚只勾选「上传图片」的 PAT，存在油猴存储里，可随时在脚本菜单里更换。脚本是否可安装由个人设置 `userscript_enabled` 决定（默认关），关掉后安装/更新地址立即 404；安装地址也接受 `?token=<PAT>`（`upload` scope），供无法携带 Cookie 的客户端使用。
 
 图片广场（`GET /api/v2/plaza`，匿名可访问）：
 

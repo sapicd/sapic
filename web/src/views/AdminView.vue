@@ -148,9 +148,23 @@ onMounted(loadSettings)
                 placeholder="jpg,png,gif,webp,mp4"
               />
             </el-form-item>
-            <el-form-item label="大小限制">
-              <el-input-number v-model="form.upload_max_size" :min="1" :max="1024" />
-              <span class="form-suffix">MB</span>
+            <el-form-item label="图片大小限制">
+              <el-input-number
+                v-model="form.upload_image_max_size"
+                :min="1"
+                :max="1024"
+              />
+              <span class="form-suffix">MB / 张</span>
+            </el-form-item>
+            <el-form-item label="视频大小限制">
+              <el-input-number
+                v-model="form.upload_video_max_size"
+                :min="1"
+                :max="1024"
+              />
+              <span class="form-suffix">
+                MB / 个；不要把进程级 sapic_maxupload 设得比它小
+              </span>
             </el-form-item>
             <el-form-item label="数量限制">
               <el-input-number v-model="form.upload_count_limit" :min="1" :max="100" />
@@ -158,6 +172,20 @@ onMounted(loadSettings)
             </el-form-item>
             <el-form-item label="允许视频">
               <el-switch v-model="form.allow_video" />
+            </el-form-item>
+            <el-form-item label="默认有效期">
+              <el-input-number
+                v-model="form.image_expire_default_days"
+                :min="0"
+                :max="3650"
+              />
+              <span class="form-suffix">天，0 表示永久保留</span>
+            </el-form-item>
+            <el-form-item label="有效期上限">
+              <el-input-number v-model="form.image_expire_max_days" :min="0" :max="3650" />
+              <span class="form-suffix">
+                天，0 表示不限制；设置后不再允许永久图片，未指定时按上限
+              </span>
             </el-form-item>
             <el-form-item label="多副本上传">
               <el-switch v-model="form.storage_replica" />

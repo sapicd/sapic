@@ -1,5 +1,6 @@
 import {
   ArrowDown,
+  Brush,
   Connection,
   CopyDocument,
   Delete,
@@ -27,6 +28,7 @@ import './styles.css'
 //: 菜单与节点图标都用字符串引用，只需要全局注册实际用到的那几个。
 const GLOBAL_ICONS = [
   ArrowDown,
+  Brush,
   Connection,
   CopyDocument,
   Delete,

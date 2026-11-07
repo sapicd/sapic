@@ -40,6 +40,9 @@ class Image(BaseModel):
     size = BigIntegerField(default=0)
     mime = CharField(max_length=64, default="")
     is_video = BooleanField(default=False)
+    #: Intrinsic pixel size; NULL for external links / unparsable payloads.
+    width = IntegerField(null=True)
+    height = IntegerField(null=True)
     status = CharField(max_length=16, default=STATUS_ENABLED)
     #: NULL means "inherit from album".
     visibility = CharField(max_length=16, null=True)
@@ -51,6 +54,7 @@ class Image(BaseModel):
     source_url = CharField(max_length=1024, null=True)
     created_at = IntegerField(default=now)
     updated_at = IntegerField(default=now)
+    #: NULL means "never expires"; otherwise the unix ts when the image dies.
     expire_at = IntegerField(null=True)
     deleted_at = IntegerField(null=True)
 
@@ -60,4 +64,23 @@ class Image(BaseModel):
             (("owner", "created_at", "id"), False),
             (("album", "created_at", "id"), False),
             (("status",), False),
+            (("expire_at",), False),
         )
+
+
+def not_expired(reference: int | None = None):
+    """``expire_at`` NULL is permanent; otherwise it must still be ahead."""
+    pivot = now() if reference is None else reference
+    return Image.expire_at.is_null() | (Image.expire_at > pivot)
+
+
+def live_condition():
+    """Rows that exist and have not reached their expiry."""
+    return (Image.status == STATUS_ENABLED) & not_expired()
+
+
+def is_expired(image: Image, reference: int | None = None) -> bool:
+    """Whether ``image`` is past its expiry at ``reference`` (default: now)."""
+    if image.expire_at is None:
+        return False
+    return image.expire_at <= (now() if reference is None else reference)

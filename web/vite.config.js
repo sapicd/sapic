@@ -31,6 +31,7 @@ export default defineConfig({
         target: 'http://127.0.0.1:9514',
         changeOrigin: false,
       },
+      //: 油猴脚本在 /api/v2 下，已被上面的 /api 代理覆盖，无需单列。
     },
   },
   build: {
@@ -40,7 +41,9 @@ export default defineConfig({
         //: element-plus 按需引入后没有单一入口，交给 Rollup 自行拆包（强行归并会把未用组件带上），
         //: 只把变化频率最低的 vue 家族单独提取。
         manualChunks(id) {
-          if (/[\\/]node_modules[\\/](vue|vue-router|pinia|@vue)[\\/]/.test(id)) return 'vue'
+          if (/[\\/]node_modules[\\/](vue|vue-router|pinia|@vue)[\\/]/.test(id)) {
+            return 'vue'
+          }
         },
       },
     },

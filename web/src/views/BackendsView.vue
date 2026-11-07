@@ -17,12 +17,17 @@ const form = reactive({
   name: '',
   hook_name: '',
   priority: null,
+  visibility: 'public',
   config: {},
 })
 
 const editing = computed(() => form.id !== null)
 const fields = computed(
   () => drivers.value.find((item) => item.name === form.hook_name)?.fields || [],
+)
+//: 驱动没有 upimg_url 时只能当公开后端用，后端保存时也会拒绝。
+const driverPrivateReadable = computed(
+  () => drivers.value.find((item) => item.name === form.hook_name)?.private_readable !== false,
 )
 
 async function load() {
@@ -44,6 +49,7 @@ function openCreate() {
     name: '',
     hook_name: drivers.value[0]?.name || '',
     priority: null,
+    visibility: 'public',
     config: {},
   })
   dialog.value = true
@@ -55,6 +61,7 @@ function openEdit(row) {
     name: row.name,
     hook_name: row.hook_name,
     priority: row.priority,
+    visibility: row.visibility || 'public',
     config: { ...(row.config || {}) },
   })
   dialog.value = true
@@ -65,8 +72,13 @@ async function save() {
     ElMessage.warning('请选择存储驱动')
     return
   }
+  if (form.visibility === 'private' && !driverPrivateReadable.value) {
+    ElMessage.warning('当前驱动不支持私有读，请改用公开直链或换驱动')
+    return
+  }
   const payload = {
     name: form.name.trim(),
+    visibility: form.visibility,
     config: form.config,
     priority: form.priority === null ? undefined : Number(form.priority),
   }
@@ -186,6 +198,8 @@ onMounted(load)
         上传同步写入「优先级最小」的启用后端，其余启用的后端在后台异步补副本（站点设置里可关闭），
         直链与读取都按优先级从高到低选副本；已有图片按副本所在后端读取，所以仍有副本的后端不能删除或禁用。
         启用存储钩子后会自动出现对应后端，<strong>驱动凭据只在这里填写</strong>（同一驱动可建多个后端各自一套配置）。
+        后端为<strong>公开</strong>时公开图直接用直链，为<strong>私有</strong>时（七牛 / 又拍 / GitHub 私有仓库，
+        或本地目录）所有图片都经 <code>/raw</code> 由服务端签名读取，桶始终不对外。
       </p>
 
       <el-table :data="items" size="small">
@@ -213,6 +227,25 @@ onMounted(load)
           </template>
         </el-table-column>
         <el-table-column prop="priority" label="优先级" width="90" />
+        <el-table-column label="访问方式" width="100">
+          <template #default="{ row }">
+            <el-tooltip
+              :content="
+                row.visibility === 'private'
+                  ? '桶私有读，所有访问经 /raw 由服务端签发读地址后转发'
+                  : '桶公有读，公开图直接使用驱动返回的直链'
+              "
+            >
+              <el-tag
+                size="small"
+                effect="plain"
+                :type="row.visibility === 'private' ? 'warning' : 'info'"
+              >
+                {{ row.visibility === 'private' ? '私有' : '公开' }}
+              </el-tag>
+            </el-tooltip>
+          </template>
+        </el-table-column>
         <el-table-column label="副本" width="80">
           <template #default="{ row }">
             <el-tooltip content="仅统计写入成功的副本" placement="top">
@@ -276,6 +309,23 @@ onMounted(load)
         </el-form-item>
         <el-form-item label="名称">
           <el-input v-model="form.name" placeholder="留空则按驱动名自动生成" />
+        </el-form-item>
+        <el-form-item label="访问方式">
+          <el-select v-model="form.visibility" style="width: 100%">
+            <el-option label="公开直链（公有读桶 + CDN）" value="public" />
+            <el-option
+              label="私有代理（私有桶，经 /raw 转发）"
+              value="private"
+              :disabled="!driverPrivateReadable"
+            />
+          </el-select>
+          <div class="hint">
+            公开：公开图直接使用驱动返回的直链（需桶公有读、可配域名）。
+            私有：桶保持私有读，任何访问都先经 sapic 鉴权，再由服务端凭驱动签发的临时读地址转发。
+            <template v-if="!driverPrivateReadable">
+              当前驱动未实现 upimg_url，只能作为公开后端。
+            </template>
+          </div>
         </el-form-item>
         <el-form-item label="优先级（越小越先写入）">
           <el-input-number

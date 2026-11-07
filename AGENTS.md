@@ -15,13 +15,14 @@ v1 代码已归档在 `V1/`，仅供对照，不参与 v2 构建；v1 的项目�
 ## 目录结构
 
 后端在 `server/`，包名 `sapic`，是**纯本地包**（不发布 PyPI、也不做 `pip install`）。
-命令均在 `server/` 下执行，`cwd` 已在 `sys.path`，可直接 `import sapic`；依赖由仓库根
-`requirements/` 管理（base/dev/prod），装在仓库根的 `.venv/`，不要手动 `activate`。
+命令均在 `server/` 下执行，`cwd` 已在 `sys.path`，可直接 `import sapic`；依赖由
+`server/requirements/` 管理（base/dev/prod/hooks），装在仓库根的 `.venv/`，不要手动 `activate`。
 
 ```
 .
 ├── server/               v2 后端（包名 sapic，纯本地包，不发布 PyPI）
 │   ├── pyproject.toml    仅 pytest 等本地工具配置（依赖见 requirements/）
+│   ├── requirements/     依赖：base.txt（运行时，含内置钩子的 SDK）/ dev.txt / prod.txt
 │   ├── .gitignore
 │   ├── sapic/            v2 后端包（import sapic）
 │   │   ├── __init__.py   create_app() 工厂
@@ -36,18 +37,20 @@ v1 代码已归档在 `V1/`，仅供对照，不参与 v2 构建；v1 的项目�
 │   │   ├── libs/         通用基类、接口类与功能封装（auth/images/albums/storage/users/mail/settings）
 │   │   │   ├── auth.py   会话 / PAT / CSRF 与权限装饰器
 │   │   │   ├── hook.py   HookManager：清单 / 插槽 / 动作 / 数据集
-│   │   │   └── ui.py     声明式 UI 词表与清洗（唯一可信来源）
+│   │   │   ├── media.py  文件头解析：宽高探测 + EXIF/XMP 剥离（零依赖）
+│   │   │   ├── ui.py     声明式 UI 词表与清洗（唯一可信来源）
+│   │   │   ├── user_settings.py 个人偏好键值（默认值 / 校验白名单）
+│   │   │   └── userscript.py     油猴脚本源码生成（不嵌令牌）
 │   │   ├── utils/
 │   │   │   ├── common.py 纯工具函数（不依赖 Flask 上下文，如游标编解码）
 │   │   │   └── web.py    Web 工具（依赖 Flask 上下文：响应信封、分页）
-│   │   ├── views/        Flask 蓝图与路由（auth/settings/users/backends/uploads/images/albums/plaza/site/health/public/hooks）
+│   │   ├── views/        Flask 蓝图与路由（auth/settings/users/backends/uploads/images/albums/plaza/site/health/public/hooks/userscript）
 │   │   ├── models/       Peewee 模型（BaseModel）
 │   │   ├── migrations/   Peewee 迁移框架（flask sa 命令入口）
 │   │   └── hooks/        内置钩子，一个 .py 即一个插件（up2local 等）
 │   └── tests/            pytest 测试（test_*.py，pyproject 的 testpaths=["tests"]）
 ├── web/                  v2 前端（Vue 3 + Vite + Element Plus）
 ├── V1/                   v1 旧代码与文档，仅存档
-├── requirements/             依赖：base.txt（运行时）/ dev.txt（开发+测试）/ prod.txt（部署）
 ├── Makefile              常用命令入口
 └── README.md
 ```
@@ -71,8 +74,7 @@ v1 代码已归档在 `V1/`，仅供对照，不参与 v2 构建；v1 的项目�
 
 ```bash
 make setup            # 安装开发依赖（后端 dev.txt + 前端 pnpm install）
-make setup-hooks      # 钩子可选依赖 (requirements/hooks.txt：requests/pillow/qiniu/upyun)
-make install-prod     # 生产部署依赖 (requirements/prod.txt：base + gunicorn + gevent)
+make install-prod     # 生产部署依赖 (server/requirements/prod.txt：base + gunicorn + gevent)
 make config           # 打印当前生效配置 (python -c load_config)
 make upgrade          # 手动兜底：建表 / 增量迁移（启动时已自动执行）
 make create-admin     # 创建管理员，需 U=admin P='密码'
@@ -197,6 +199,26 @@ def manifest(self, name: str) -> dict | None:
 - 批量操作优先 `atomic()` 事务；查询用 Peewee 表达式，杜绝字符串拼接
 - 测试用临时 SQLite（`sapic_db_url=sqlite:///...`），不要依赖具体数据库方言
 
+## v1 兼容与数据迁移 ★
+
+上线替换 v1 依赖两个东西，改动时别破坏它们的契约：
+
+- **兼容端点** `POST /api/upload`（`views/legacy.py`，挂在根路径而不是 `/api/v2`）：PicGo/uPic/Typora
+  写死了这个地址，响应必须是 v1 信封 `{code, msg, sha, src, url, ...}`，错误也要转成 `{code:1,msg}`
+  （不能泄漏 v2 的 `code:"FORBIDDEN"`）。表单字段沿用 v1：`picbed`（文件 / URL / base64+DataURI）、
+  `album`（字符串名，缺失即默认相册）、`expire`、`title`、`filename`、`format`。
+- **鉴权**同 v2：Session（必须带 CSRF）、`Authorization: Bearer <PAT>`、或老客户端的 `token`/`X-Token`
+  表单字段（值是 PAT，**不是** v1 的 LinkToken）。`libs/auth.LEGACY_CSRF_ENDPOINT` 让全局 CSRF
+  中间件放过这个端点，由视图自己校验并给出「用访问令牌」的提示；不要把这条例外扩大到别的端点。
+- **上传策略**（后缀白名单、图片/视频大小、匿名开关）统一在 `libs/images.py`
+  的 `check_upload_limits` / `anonymous_upload_allowed`，兼容层与原生 `/api/v2/uploads` 共用，
+  不要各写一套。
+- **迁移脚本** `tools/migrate_v1_to_v2.py`：读 v1 Redis（`picbed:accounts` / `account:<u>` /
+  `index:global` / `image:<sha>` + TTL），写 `users`/`albums`/`images`/`image_backends`。必须保持
+  幂等（用户按 username、相册按 `(owner,name)`、图片按 sha 去重）、支持 `--dry-run`、保留 v1 sha
+  （`/raw/<sha>` 是已发布的链接）、文件走 `save_object` 重传而不是搬目录；文件缺失时登记
+  `source_url` 外链而不是丢弃。改表结构时同步检查这个脚本的字段映射。
+
 ## 站点设置
 
 - 默认值集中在 `sapic/libs/settings.py` 的 `DEFAULTS`，读写统一走 `get_setting` / `set_setting`
@@ -205,6 +227,10 @@ def manifest(self, name: str) -> dict | None:
 - 前台展示字段由公开接口 `GET /api/v2/site` 输出，前端在 `stores/site.js` 消费
 - 上传类设置（后缀白名单 / 大小 / 数量 / 视频）在 `views/uploads.py` 生效，注册类设置在 `views/auth.py` 生效；
   新增配置项必须同时接入「后台表单 + 实际生效点」，不要留下只存不用的配置
+- 单文件大小上限**按媒体类型分开**：`upload_image_max_size`（默认 10M）与 `upload_video_max_size`（默认 20M），
+  由 `views/uploads.py` 的 `_size_limit_mb()` 按后缀选择；URL 抓取时类型未知，先按两者较大值截断，拿到文件名后再按类型校验。
+  进程级 `MAX_UPLOAD`（`sapic_maxupload`，默认 25M）映射 `MAX_CONTENT_LENGTH`，是整个请求的硬门槛，
+  必须大于站点里最大的单文件上限（multipart 有开销），三者取最小值才是实际上限
 - `password_login`（默认开）关闭后 `views/auth.py` 的登录与注册接口直接 403，登录页只渲染统一登录入口
 - 统一登录（OIDC）：`passport` 钩子提供 provider 能力，`views/auth.py` 负责发起/回调与绑定，
   `libs/users.py` 的 `resolve_oidc_user` 处理「已绑定 → 登录 / 双方邮箱均已验证 → 自动关联 / 否则按
@@ -216,12 +242,24 @@ def manifest(self, name: str) -> dict | None:
   `/admin/backends` 存储后端（`BackendsView`）、`/admin/users` 用户管理（`UsersView`）之间切换，
   各自挂 `admin.*` 插槽；不要把侧栏再拆成多个顶部导航入口，也不要把这些页面合并回一页；
   新增后台页面时挂到 `/admin` 父路由下（`/admin` 本身只做重定向）并在 `AdminLayout` 的侧栏里登记
+- 版本更新检测只在后台：`GET /api/v2/settings/version`（admin，`libs/release.py`，24h 进程内缓存、
+  失败降级为 `error` 不抛错），`AdminLayout` 侧栏底部显示当前版本与「可更新」标签，点开看详情与发布页；
+  `sapic_updatecheckurl` 置空即关闭（内网部署不允许出网时）。版本比较在 `utils/common.is_newer_version`，
+  只做「数字段 + 同号正式版优先」的 semver 子集，不引入额外依赖
 - 用户管理走 `GET/PATCH/DELETE /api/v2/users`（仅管理员，`views/users.py`）：列表支持关键词与状态筛选
   （`-2` 已拒绝 / `-1` 待审核 / `0` 已禁用 / `1` 正常），PATCH 可改 `status` 与 `is_admin`；
   禁用/拒绝会自增 `session_version` 让既有会话失效，且管理员不能改自己的状态或撤销自己的管理员权限、
   也不能删除自己。DELETE 走 `libs/users.purge_user`：**硬删除**（用户名与图片 sha 要能被重新占用），
   连带删除其相册、图片与副本（副本先调 `upimg_delete` 清文件）、PAT、上传票据、用户设置与个人存储后端；
   别人上传到其相册的图片会移回上传者自己的默认相册
+- 注册审核：`register_review` 开时新账号是 `-1`，PATCH `{status: -2, reason}` 记录拒绝理由到
+  `users.status_reason`（迁移 v010，换成其他状态自动清空）。只有「待审核 → 通过/拒绝」这一跳才发
+  审核结果邮件（`libs/users.notify_review`，仅发给已验证邮箱，失败只记日志）；启用/禁用不算审核动作，
+  别顺手发邮件
+- **自助注销**（`DELETE /api/v2/auth/account`，`libs/users.self_delete`）：必须提交当前密码，
+  名下有未删除图片直接 409 并告知数量（不能让 `purge_user` 悄悄删掉图），管理员不能自删
+  （避免后台失去入口，由其他管理员在 `DELETE /users` 处理）。成功后 `logout_user()` 清会话，
+  前端「账号信息」页底部的危险操作区负责二次确认；不要把注销做成不带密码的 GET/一键按钮
 - **只有 `status=1`（正常）的账号能登录、持有会话或使用 PAT**（`libs/users.authenticate` /
   `libs/auth._load_current_user` / `resolve_pat` 同一口径）：待审核与已拒绝都按未激活处理，
   OIDC 建号走审核时也不发会话（重定向 `/login?oidc=inactive`）
@@ -264,15 +302,44 @@ def manifest(self, name: str) -> dict | None:
   `images.plaza` 单图三态，`NULL` 跟随相册）；迁移 `v005` 加列，存量默认不发布。
   站点设置 `plaza_enabled` 关掉后，后端 `GET /plaza` 直接 404，前端同时隐藏一切广场入口
   （导航项、相册列表/编辑里的发布开关、图片详情里的广场行与单图设置），`/plaza` 路由回退首页。
+- **个人 RSS 已整体移除，不要恢复**（v1 的 `/feed`）：匿名聚合出口会把「某用户有哪些图、何时上传」
+  整份暴露给任何抓取方，而它带来的只是低频的站外订阅。已删除 `views/feed.py`、`libs/feed.py`、
+  `libs.images.feed_query`、站点设置 `rss_enabled` 与用户设置 `rss_enabled`；MIGRATION #26 标 ⛔。
+  需要分享就发单图直链，不要再造「公开列表类」的匿名出口。
+- 油猴脚本（`GET /api/v2/userscript.user.js`，`libs/userscript.build_userscript`）按用户生成，
+  挂在 API 前缀下（反代只需 `/api/` 一条规则；v1 的 `/sapic.user.js` 根路径已移除，脚本
+  `@updateURL` 指向新地址）：
+  受个人设置 `userscript_enabled`（默认关）控制，关掉即 404。**源码里绝不嵌令牌**——v1 把 LinkToken
+  写进脚本的做法已废弃；脚本首次上传时让用户粘贴只含 `upload` scope 的 PAT，存在油猴存储里。
+  上传走 `POST /uploads` 的 `url` 字段（服务端抓取，GM_xmlhttpRequest 免 CORS），不要改成浏览器直传二进制。
+  该端点刻意不用 `login_required`：GET 会要求 `read`，而安装地址只应需要 `upload`。
+- 个人偏好（油猴开关、个人背景）走 `GET/PUT /api/v2/auth/settings`，落在 `user_settings` 键值表，
+  键、默认值与校验集中在 `libs/user_settings.py` 的 `DEFAULTS`（未知键直接 400，不要绕过它写库）。
+  个人背景优先于站点背景；`bg_opacity` 为 `null` 表示跟随站点。新增偏好必须同时接进设置页与生效点。
+- 分享模板（`tpl`）：`libs.images.share_templates` 生成 `URL` / `HTML` / `Markdown` / `rST` 四项，
+  键名与 v1 的 `gen_url_tpl` 保持一致（视频的 Markdown/rST 用 `<figure><iframe>`），
+  由 `serialize_image` 随图片一起返回；详情页「复制与分享」直接消费，不要再在前端手拼模板。
 - 图片地址（`src`）：公开图直接返回优先级最高副本的直链（钩子 `upimg_save` 返回的 `src`），
   私有图固定走 `/raw/<sha>` 由 sapic 鉴权后输出；私有远程副本在 `/raw/` 内流式转发，不做 302，
   避免暴露源站地址。没有直链的后端（未配 `domain` 的本地存储）同样回落到 `/raw/<sha>`。
 - 外链登记（`images.source_url`，`POST /images/import`）不下载文件、不写副本：公开图 `src` 直接是源站地址，
   私有图经 `/raw/<sha>` 转发；删除只删元数据。批量操作走 `POST /images/batch/delete` 与
   `PATCH /images/batch`（≤100 张，只允许自己的图片，移动目标需 `can_write`）。
+- 图片有效期（`images.expire_at`，`NULL` = 永久）：上传传 `expire`（秒，v1 同语义），
+  `PATCH /images/<sha>` 传 `expire_at`（绝对时间戳，`null` 取消）。**到期即视为不存在**——
+  `/raw`、详情、列表、广场、相册计数统一走 `models.image.live_condition()`（`status=enabled`
+  且未过期），不要只判断 `status`。清理任务 `libs.images.purge_expired` 硬删除副本与记录
+  （过期不是软删），由 `before_request` 节流兜底（每进程 5 分钟、单批 200 张）+ 运维命令
+  `flask sa purge-expired`。站点设置 `image_expire_default_days`（未指定时的默认寿命）与
+  `image_expire_max_days`（上限，`0` 不限制）均为 0 时表示永久；上限生效后不再允许永久图片。
 - 存储 key 固定为 `{用户}/{年}/{月}/{日}/{ASCII 文件名}-{sha 片段}.{ext}`（`libs.images.upload_path_for` +
   `create_image`），后缀保证同名文件不被覆盖；文件名经 `secure_filename` 清洗，主体被整段清空时用
   `{yyyyMMddHHmmss}{6 位随机}` 兜底（不同中文名不会撞成同一个 `image`），删除按 `object_key` 执行。
+- 媒体元数据由 `libs/media.py` 处理，**零依赖**（只读文件头，不引 Pillow；Pillow 只服务于 `pic2webp` 钩子）：
+  `create_image` 在 `process_stream` 之前调 `strip_metadata()`（JPEG 去 APP1 的 EXIF/XMP、PNG 去 `eXIf`
+  与 XMP 文本块、WebP 去 `EXIF`/`XMP ` 块并修 RIFF 长度与 VP8X 标志），落盘字节不留拍摄时间/相机/GPS；
+  之后对处理过的字节调 `image_size()` 写入 `images.width/height`（外链登记与不可解析载荷为 `NULL`）。
+  两个函数失败都只返回 `None` / 原字节，**任何解析异常都不允许中断上传**。
 
 ## 钩子（插件）开发规范 ★
 
@@ -326,8 +393,30 @@ __state__ = "enabled"       # enabled / disabled
   `text/alert/badge/image/code/divider`、`input/number/password/textarea/switch/select/radio`、
   `button/link/dropdown/dropdown_item`
 - `action` 返回里的 `toast` 仅当 `level` 在白名单内才会透传给前端；`refresh=True` 触发前端刷新
-- 钩子自带的私有依赖：在 `requirements/` 下加文件并用 `try/except ImportError` 兜底英文提示，
-  **不要**在 `requirements/base.txt` 强制引入可选 SDK
+- 钩子自带的私有依赖：在 `server/requirements/` 下加文件并用 `try/except ImportError` 兜底英文提示，
+  **不要**在 `server/requirements/base.txt` 强制引入可选 SDK
+
+### 第三方钩子包与市场 ★
+
+`libs/hook_pkg.py` 负责装包，`views/hooks.py` 只做路由与权限，端点全部 `admin_required`：
+
+| 端点 | 作用 |
+| --- | --- |
+| `GET /hooks/market` | 拉官方 `list.json`（`sapic_hookmarketurl` 可换镜像），6 小时缓存，合并本地 `installed` / `loaded` |
+| `POST /hooks/install` | `pip install --target <HOOK_PKG_STORAGE_DIR>`；包名与 `index_url` 先校验，180s 超时 |
+| `GET /hooks/packages` | 目标目录里的 `*.dist-info` 清单（不跑 `pip list`，避免子进程开销） |
+| `POST /hooks/import` | 把模块名写入 `hooks_imported`，非法钩子会回滚 |
+| `DELETE /hooks/import/<module>?purge=1` | 顺带删除包文件；只删目标目录内、防 `../` 穿越 |
+
+- `HOOK_PKG_STORAGE_DIR` 默认 `data/hooks`，**只做 `sys.path` 条目、不做扫描目录**（append 不 insert）：
+  `pip install --target` 会连带装依赖，逐个 `exec` 这些文件等于执行无关第三方代码，第三方钩子统一走
+  `hooks_imported` 的模块名。`init_app` 负责建目录，置空即关闭后台安装能力（`package_dir()` 返回 `None`）。
+- 装包等于在服务端执行代码：目标目录永远来自配置而非请求，pip 用列表参数（无 shell），
+  新增入口不要引入「客户端指定路径 / 解压上传 zip」这类能力。
+- 重装包后必须让 `sys.modules` 缓存失效，`HookManager._load_imported` 已做 `invalidate_caches()` +
+  `pop()`，不要绕过它直接 `importlib.import_module`。
+- 多 worker 部署下 `ensure_fresh`（1s 节流）会比对 `hooks_state` / `hooks_imported` 并把已登记模块的
+  源文件 mtime 计入签名，安装/启停/升级才会传播到其他进程；改这块逻辑时别退回「只看内置目录签名」。
 
 ## 前端规范（Vue 3 / Element Plus）
 
@@ -341,9 +430,22 @@ __state__ = "enabled"       # enabled / disabled
   后端已替换好占位符的最终地址，按钮只调用节点自带且后端已校验的 `action`
 - 不在 HTML 属性写内联 JS，用户输入渲染前做转义防 XSS
 - 统一走 `api/client.js` 的封装（信封解析、CSRF、401 回调、错误归一），不要散落 `fetch`
+- **图标用字符串名引用时必须全局注册**：菜单 / 侧栏 / 设置分栏等通过 `icon: 'Brush'` +
+  `<component :is="icon" />` 使用图标，模板里不会报错但图标静默不渲染，必须在 `web/src/main.js`
+  的 `GLOBAL_ICONS` 里补上（同时补对应的具名 import）。新增/改动菜单项时要顺手核对一遍
+- **界面固定中文，不做多语言**：不要在模板里引入 `vue-i18n` / `t()`，用户可见文案直接写中文；
+  Element Plus 自带文案由 `App.vue` 的 `<el-config-provider :locale="zhCn">` 统一提供
+  （`html lang` 在 `index.html` 里固定 `zh-CN`）
+- **接口错误文案**：后端 `message` 固定英文原文，界面中文由 `web/src/api/messages.js` 的
+  `localizeMessage(message, code)` 转换（精确词典 → `%` 模板规则 → `ErrorCode` 兜底），
+  展示统一走 `api/client.js` 的 `errorMessage(error, fallback)`，不要直接 `ElMessage.error(error.message)`。
+  新增/修改后端 `ApiError` 文案时同步这个词典，否则只能退化到按 `code` 的中文兜底
 - Element Plus 按需引入（`unplugin-auto-import` + `unplugin-vue-components`）：模板直接写 `<el-xxx>`，
   脚本直接用 `ElMessage` / `ElMessageBox` 等 API，**不要**再显式 `import ... from 'element-plus'`，
   组件样式由插件按需注入；中文化由 `App.vue` 的 `<el-config-provider :locale>` 统一提供
+- 视频按 `images.is_video` 切换渲染：详情页用原生 `<video controls playsinline>`（限制 `max-height`），
+  图片列表 / 广场 / 上传结果用 `<video muted preload="metadata">` 取首帧当封面（`pointer-events: none`
+  让点击落到卡片上）。不要拿 `el-image` 渲染视频，那只会显示裂图
 - 生产部署把 `web/dist` 交给静态服务器，并将 `/api`、`/raw/` 反向代理到后端
 
 ## 文档与变更记录
@@ -352,12 +454,12 @@ __state__ = "enabled"       # enabled / disabled
 - 每次新增功能、修复问题或行为变更，确保：
   1. 后端测试（`make test`，pytest，写在 `tests/`）通过
   2. 涉及数据结构的变更在 `sapic/migrations/` 注册迁移
-  3. 涉及依赖的变更同步更新 `requirements/` 三档文件并 `make install-prod` 复核
+  3. 涉及依赖的变更同步更新 `server/requirements/` 三档文件并 `make install-prod` 复核
 - 对外 API 行为（响应字段、错误码、枚举值）不可随意破坏性变更，前端依赖它们
 
 ## 持续集成 / 质量
 
-- CI 在 `.github/workflows/ci.yml`：v2 用 `requirements/dev.txt` 安装、跑 `pytest`；
+- CI 在 `.github/workflows/ci.yml`：v2 用 `server/requirements/dev.txt` 安装、跑 `pytest`；
   v1 用 `V1/requirements/dev.txt` 跑遗留 unittest（互不影响）
 - 提交前保证：导入可用、应用能启动（`make dev` 或 `make config` 正常）、`make test` 全绿
 - 建议同步更新 `ARCH.md` 中的目录/扩展点清单描述

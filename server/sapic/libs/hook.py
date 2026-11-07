@@ -14,6 +14,7 @@ Keeps the v1 plugin contract (metadata fields, ``upimg_save`` /
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import inspect
 import logging
 import sys
@@ -27,7 +28,7 @@ from types import ModuleType
 from flask import current_app
 
 from ..basis.vars import HOOK_RELOAD_TIME
-from . import ui
+from . import ext, ui
 from .settings import get_setting
 
 logger = logging.getLogger(__name__)
@@ -149,6 +150,20 @@ class HookManager:
             digest.update(
                 ("%s:%s:%s" % (name, stat.st_mtime_ns, stat.st_size)).encode()
             )
+        #: 第三方包不在扫描目录里，靠已登记模块的源文件 mtime 感知重装/升级，
+        #: 否则多 worker 部署里只有处理安装请求的那个进程会换到新版本。
+        for module_name in self._imported:
+            try:
+                spec = importlib.util.find_spec(module_name)
+                origin = getattr(spec, "origin", None) if spec else None
+                stat = Path(origin).stat() if origin else None
+            except (ImportError, OSError, ValueError, AttributeError):
+                continue
+            if stat is None:
+                continue
+            digest.update(
+                ("%s:%s:%s" % (module_name, stat.st_mtime_ns, stat.st_size)).encode()
+            )
         return digest.hexdigest()
 
     def _load(self, name: str, file: Path) -> Hook | None:
@@ -202,8 +217,15 @@ class HookManager:
         )
 
     def _load_imported(self, module_name: str) -> Hook | None:
-        """Load a third-party hook from an importable module name."""
+        """Load a third-party hook from an importable module name.
+
+        The module cache is dropped first: a package reinstalled by the admin
+        keeps its old ``sys.modules`` entry otherwise, which would pin the
+        previous version until the process restarts.
+        """
         try:
+            importlib.invalidate_caches()
+            sys.modules.pop(module_name, None)
             module = importlib.import_module(module_name)
         except Exception:
             logger.exception("Failed to import hook module %s", module_name)
@@ -243,6 +265,15 @@ class HookManager:
         if not force and now - self._last_scan < 1:
             return
         if force or not self._hooks:
+            self.reload()
+            return
+        #: 启用状态与导入列表由所有 worker 共享（存在 settings 里），任何一个
+        #: 进程处理了安装/卸载/启停，其他进程也要换到新快照，否则改动只对
+        #: 命中的那个 worker 生效。
+        if (
+            self._read_states() != self._states
+            or self._read_imported() != self._imported
+        ):
             self.reload()
             return
         if now - self._last_scan >= self.reload_interval:
@@ -343,6 +374,10 @@ class HookManager:
             "version": str(hook.meta.get("__version__") or ""),
             "enabled": hook.enabled,
             "family": hook.family,
+            #: Extension kind declared by ``__catalog__`` plus whether the module
+            #: actually implements that contract (see :mod:`sapic.libs.ext`).
+            "kind": ext.kind_of(hook.module),
+            "warnings": ext.warnings_of(hook.module),
             "ui_version": ui.UI_VERSION,
             "config_schema": ui.clean_fields(data.get("config_schema")),
             "actions": ui.clean_actions(data.get("actions")),
@@ -489,12 +524,26 @@ class HookManager:
 
 
 def init_app(app) -> None:
-    from pathlib import Path as _Path
+    """Register the hook manager on ``app.extensions["hooks"]``.
 
-    paths = [_Path(__file__).resolve().parent.parent / "hooks"]
-    extra = app.config.get("HOOK_PKG_STORAGE_DIR")
+    ``HOOK_PKG_STORAGE_DIR`` is a ``sys.path`` entry only, **not** a scan path:
+    ``pip install --target`` also drops every dependency there, and scanning
+    those files would execute unrelated third-party code as if it were a hook.
+    Third-party hooks therefore enter through ``hooks_imported`` (module name),
+    and the directory is appended (not prepended) so a stray package can never
+    shadow a built-in one.
+    """
+    paths = [Path(__file__).resolve().parent.parent / "hooks"]
+    extra = str(app.config.get("HOOK_PKG_STORAGE_DIR") or "").strip()
     if extra:
-        paths.append(_Path(extra))
+        directory = Path(extra)
+        try:
+            directory.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            logger.exception("Failed to create hook package directory %s", directory)
+        else:
+            if str(directory) not in sys.path:
+                sys.path.append(str(directory))
     app.extensions["hooks"] = HookManager(
         paths,
         HOOK_RELOAD_TIME,

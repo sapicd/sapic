@@ -12,7 +12,7 @@ from ..libs.images import album_image_count
 from ..libs.users import normalize_username
 from ..models import Album, AlbumShare, Image, User
 from ..models.base import now
-from ..models.image import STATUS_ENABLED
+from ..models.image import live_condition
 from ..models.share import PERMISSION_READ, PERMISSION_WRITE
 from ..models.user import STATUS_NORMAL
 from ..utils.web import ok
@@ -194,9 +194,10 @@ def delete_album(album_id: int):
         raise ApiError(
             "default album cannot be deleted", ErrorCode.CONFLICT, 409
         )
+    #: 过期图片等同于已删除，不该挡住相册删除。
     count = (
         Image.select()
-        .where((Image.album == album) & (Image.status == STATUS_ENABLED))
+        .where((Image.album == album) & live_condition())
         .count()
     )
     if count:

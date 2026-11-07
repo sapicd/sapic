@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { api, errorMessage } from '@/api/client'
@@ -33,6 +33,7 @@ const site = useSiteStore()
 //: 账号设置分区块展示，左栏切换；区块 key 同时写进 ?tab= 便于刷新与分享。
 const SECTIONS = [
   { key: 'profile', label: '账号信息', icon: 'UserFilled' },
+  { key: 'preferences', label: '个性化', icon: 'Brush' },
   { key: 'password', label: '修改密码', icon: 'Key' },
   { key: 'tokens', label: '访问令牌', icon: 'Connection' },
   { key: 'identities', label: '统一登录', icon: 'Link' },
@@ -81,6 +82,88 @@ function onAvatarUploaded(data) {
 
 const password = reactive({ old_password: '', new_password: '' })
 const changing = ref(false)
+
+//: 自助注销：后端要求当前密码 + 名下无图片，管理员需由其他管理员删除。
+const deleteDialog = ref(false)
+const deletePassword = ref('')
+const deleting = ref(false)
+
+function openDeleteAccount() {
+  deletePassword.value = ''
+  deleteDialog.value = true
+}
+
+async function confirmDeleteAccount() {
+  if (!deletePassword.value) {
+    ElMessage.warning('请输入当前密码')
+    return
+  }
+  deleting.value = true
+  try {
+    await session.deleteAccount(deletePassword.value)
+    deleteDialog.value = false
+    ElMessage.success('账号已注销')
+    router.push({ name: 'home' })
+  } catch (error) {
+    ElMessage.error(errorMessage(error, '注销失败'))
+  } finally {
+    deleting.value = false
+  }
+}
+
+//: 个性化设置（/auth/settings）：油猴脚本开关、个人背景图与防盗链。
+const prefs = reactive({
+  userscript_enabled: false,
+  bg_image: '',
+  bg_image_mobile: '',
+  bg_opacity: null,
+  hotlink_enabled: false,
+  hotlink_allow_hosts: '',
+  hotlink_allow_empty: true,
+})
+const savingPrefs = ref(false)
+
+//: 滑块只能绑数值：null 表示跟随站点，展示时用站点值兜底，拖动即写入个人值。
+const opacityValue = computed({
+  get: () => prefs.bg_opacity ?? site.backgroundOpacity,
+  set: (value) => {
+    prefs.bg_opacity = value
+  },
+})
+
+//: 恢复「跟随站点」：清掉个人值而不是写入当前站点值，否则站点改遮罩时这里不会再跟。
+function followSiteOpacity() {
+  prefs.bg_opacity = null
+}
+
+//: 脚本随开关实时失效，安装/更新链接用当前站点根地址拼出来即可。
+//: 路径在 /api/v2 下，所以不需要额外的前端路由或反向代理规则。
+const userscriptUrl = computed(
+  () => new URL('/api/v2/userscript.user.js', window.location.origin).toString(),
+)
+
+function syncPrefs() {
+  const saved = session.settings || {}
+  prefs.userscript_enabled = saved.userscript_enabled ?? false
+  prefs.bg_image = saved.bg_image || ''
+  prefs.bg_image_mobile = saved.bg_image_mobile || ''
+  prefs.bg_opacity = saved.bg_opacity ?? null
+  prefs.hotlink_enabled = saved.hotlink_enabled ?? false
+  prefs.hotlink_allow_hosts = saved.hotlink_allow_hosts || ''
+  prefs.hotlink_allow_empty = saved.hotlink_allow_empty ?? true
+}
+
+async function savePrefs() {
+  savingPrefs.value = true
+  try {
+    await session.saveSettings({ ...prefs })
+    ElMessage.success('个性化设置已保存')
+  } catch (error) {
+    ElMessage.error(errorMessage(error, '保存失败'))
+  } finally {
+    savingPrefs.value = false
+  }
+}
 
 const tokens = ref([])
 const tokensLoading = ref(false)
@@ -210,6 +293,11 @@ function openTokenDialog() {
 }
 
 async function createToken() {
+  //: 后端不再把空列表当默认权限，空选直接拦在前端。
+  if (!tokenForm.scopes.length) {
+    ElMessage.warning('请至少选择一项权限')
+    return
+  }
   tokenSaving.value = true
   try {
     const expiresIn = Number(tokenForm.expires_in || 0) * 24 * 3600
@@ -294,6 +382,7 @@ async function unbindIdentity(item) {
 
 onMounted(() => {
   syncProfile()
+  syncPrefs()
   loadTokens()
   loadIdentities()
   const flag = typeof route.query.identity === 'string' ? route.query.identity : ''
@@ -370,8 +459,8 @@ onMounted(() => {
               <span class="node-field__help">
                 {{
                   site.mailEnabled
-                    ? '验证后才能用该邮箱找回密码、关联统一登录'
-                    : '站点未配置邮件服务，暂时无法验证邮箱'
+                    ? '验证后才能用该邮箱找回密码、关联统一登录。'
+                    : '站点未配置邮件服务，暂时无法验证邮箱。'
                 }}
               </span>
             </div>
@@ -394,7 +483,7 @@ onMounted(() => {
               </el-button>
             </div>
             <div class="node-field__help">
-              上传后拖动、缩放裁剪，保存的图片会存入你的默认相册
+              上传后拖动、缩放裁剪，保存的图片会存入你的默认相册。
             </div>
           </el-form-item>
           <div class="form-actions">
@@ -412,6 +501,102 @@ onMounted(() => {
           :context="{ user: session.user }"
           style="margin-top: 12px"
         />
+
+        <div class="danger-zone">
+          <div class="danger-zone__text">
+            <strong>注销账号</strong>
+            <span class="node-field__help">
+              {{
+                session.isAdmin
+                  ? '管理员账号需由其他管理员在后台删除，避免后台失去入口。'
+                  : '需先删除名下全部图片；注销后账号、相册与令牌一并删除，无法恢复。'
+              }}
+            </span>
+          </div>
+          <el-button
+            type="danger"
+            plain
+            :disabled="session.isAdmin"
+            @click="openDeleteAccount"
+          >
+            注销账号
+          </el-button>
+        </div>
+      </el-card>
+
+      <el-card v-else-if="activeSection === 'preferences'">
+        <template #header>个性化</template>
+        <el-form class="side-main__form" label-position="top">
+          <el-form-item label="油猴脚本（Tampermonkey）">
+            <el-switch v-model="prefs.userscript_enabled" />
+            <div class="node-field__help">
+              开启后可安装/更新脚本；关闭后安装地址立即 404。脚本源码不含令牌，首次上传时会要求粘贴只勾选「上传图片」的 PAT。
+            </div>
+            <el-link
+              v-if="prefs.userscript_enabled"
+              type="primary"
+              :href="userscriptUrl"
+              target="_blank"
+              rel="noopener"
+              style="margin-top: 4px"
+            >
+              安装 / 更新脚本
+            </el-link>
+            <div v-if="prefs.userscript_enabled" class="node-field__help">
+              保存后开关才会生效；安装时需在本站保持登录。
+            </div>
+          </el-form-item>
+          <el-form-item label="背景图（PC 端）">
+            <el-input
+              v-model="prefs.bg_image"
+              placeholder="留空跟随站点背景；支持 http(s) 链接或站内 / 路径"
+            />
+          </el-form-item>
+          <el-form-item label="背景图（移动端）">
+            <el-input v-model="prefs.bg_image_mobile" placeholder="留空沿用 PC 端背景" />
+          </el-form-item>
+          <el-form-item label="背景遮罩">
+            <el-slider v-model="opacityValue" :min="0" :max="1" :step="0.1" show-input />
+            <div class="node-field__help">
+              自定义后不再跟随站点；当前站点遮罩为 {{ site.backgroundOpacity }}。
+              <el-link
+                v-if="prefs.bg_opacity !== null"
+                type="primary"
+                :underline="false"
+                @click="followSiteOpacity"
+              >
+                恢复跟随站点
+              </el-link>
+            </div>
+          </el-form-item>
+          <el-form-item label="防盗链">
+            <el-switch v-model="prefs.hotlink_enabled" />
+            <div class="node-field__help">
+              开启后只允许本站与下方域名引用你的公开图片，其余来源返回 403。仅对由
+              sapic 输出的 /raw 链接生效；配置了加速域名的存储请在其 CDN/nginx 上单独设置。
+            </div>
+          </el-form-item>
+          <template v-if="prefs.hotlink_enabled">
+            <el-form-item label="允许引用的域名">
+              <el-input
+                v-model="prefs.hotlink_allow_hosts"
+                placeholder="如 blog.example.com,*.example.org（逗号分隔）"
+              />
+              <div class="node-field__help">
+                *.example.com 只匹配子域，不包含 example.com 本身；本站域名始终放行。
+              </div>
+            </el-form-item>
+            <el-form-item label="允许空来源">
+              <el-switch v-model="prefs.hotlink_allow_empty" />
+              <div class="node-field__help">
+                浏览器直接打开图片、聊天工具预览等请求不带来源；关闭后这些访问同样会被拒绝。
+              </div>
+            </el-form-item>
+          </template>
+          <el-button type="primary" :loading="savingPrefs" @click="savePrefs">
+            保存
+          </el-button>
+        </el-form>
       </el-card>
 
       <el-card v-else-if="activeSection === 'password'">
@@ -490,7 +675,7 @@ onMounted(() => {
         </el-table>
       </el-card>
 
-      <el-card v-else>
+      <el-card v-else-if="activeSection === 'identities'">
         <template #header>统一登录</template>
         <p class="hint">
           绑定后可用对应的平台账号登录本站；解除绑定需要输入当前密码。关闭「密码登录」后，
@@ -539,6 +724,32 @@ onMounted(() => {
     </section>
 
     <AvatarCropper v-model="cropperVisible" @uploaded="onAvatarUploaded" />
+
+    <el-dialog v-model="deleteDialog" title="注销账号" width="420px">
+      <el-alert
+        type="error"
+        :closable="false"
+        show-icon
+        title="账号、相册与访问令牌会被永久删除，且无法恢复。"
+      />
+      <el-form label-position="top" style="margin-top: 12px">
+        <el-form-item label="当前密码">
+          <el-input
+            v-model="deletePassword"
+            type="password"
+            show-password
+            placeholder="确认是本人操作"
+            @keyup.enter="confirmDeleteAccount"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="deleteDialog = false">取消</el-button>
+        <el-button type="danger" :loading="deleting" @click="confirmDeleteAccount">
+          确认注销
+        </el-button>
+      </template>
+    </el-dialog>
 
     <el-dialog v-model="tokenDialog" title="新建令牌" width="440px">
       <el-form label-position="top">

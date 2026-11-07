@@ -1,7 +1,7 @@
 # sapic v2 — 常用命令入口
 #
 # 约定：
-#   - 后端在 server/，包名 sapic（本地包，不发布 PyPI、也不安装；依赖走 requirements/）
+#   - 后端在 server/，包名 sapic（本地包，不发布 PyPI、也不安装；依赖走 server/requirements/）
 #   - 命令均在 server/ 下执行，cwd 已在 sys.path，直接 import sapic，无需 pip install
 #   - 前端在 web/，独立 pnpm 工程（make 会自动检测/安装 pnpm）
 #   - 变量可在命令行覆盖，如 make dev PORT=8080
@@ -10,6 +10,7 @@ PY ?= $(shell [ -x $(CURDIR)/.venv/bin/python ] && echo $(CURDIR)/.venv/bin/pyth
 PNPM ?= pnpm
 PNPM_VERSION ?= 8.14.1
 SERVER_DIR ?= server
+REQ_DIR ?= $(SERVER_DIR)/requirements
 FLASK_APP ?= sapic
 HOST ?= 0.0.0.0
 PORT ?= 9514
@@ -20,14 +21,13 @@ P ?=
 export FLASK_APP
 
 .DEFAULT_GOAL := help
-.PHONY: help setup setup-hooks install-prod config upgrade create-admin test dev serve \
-	web-dev web-build clean ensure-pnpm
+.PHONY: help setup install-prod config upgrade create-admin test dev serve \
+	web-dev web-build docs clean ensure-pnpm docker compose-up
 
 help:
 	@echo "安装"
 	@echo "  setup          安装开发依赖（后端 dev.txt + 前端 pnpm install）"
-	@echo "  setup-hooks    安装钩子可选依赖 (requirements/hooks.txt)"
-	@echo "  install-prod   安装生产部署依赖 (requirements/prod.txt)"
+	@echo "  install-prod   安装生产部署依赖 ($(REQ_DIR)/prod.txt)"
 	@echo ""
 	@echo "后端（均在 $(SERVER_DIR)/ 下执行，本地包无需安装）"
 	@echo "  dev            启动开发服务器 (HOST=$(HOST) PORT=$(PORT)，改代码自动重载)"
@@ -41,19 +41,22 @@ help:
 	@echo "  web-dev        启动 Vite 开发服务器 (127.0.0.1:5173)"
 	@echo "  web-build      构建到 web/dist"
 	@echo ""
+	@echo "文档"
+	@echo "  docs           构建 Sphinx 文档到 docs/_build/html"
+	@echo ""
+	@echo "容器"
+	@echo "  docker         构建镜像 sapic:local（多阶段，含前端构建）"
+	@echo "  compose-up     启动 compose 编排 (需 S=会话密钥)"
+	@echo ""
 	@echo "清理"
 	@echo "  clean          清理缓存与构建产物"
 
 setup: ensure-pnpm
-	$(PY) -m pip install -r requirements/dev.txt
+	$(PY) -m pip install -r $(REQ_DIR)/dev.txt
 	cd web && $(PNPM) install
 
-# 钩子可选依赖：只有要启用 passport/up2github 等钩子时才需要单独安装
-setup-hooks:
-	$(PY) -m pip install -r requirements/hooks.txt
-
 install-prod:
-	$(PY) -m pip install -r requirements/prod.txt
+	$(PY) -m pip install -r $(REQ_DIR)/prod.txt
 
 # 确保 pnpm 可用：优先 corepack，失败再回退到 npm 全局安装
 ensure-pnpm:
@@ -90,7 +93,21 @@ web-dev: ensure-pnpm
 web-build: ensure-pnpm
 	cd web && $(PNPM) run build
 
+# Sphinx 文档：依赖只有 sphinx / myst-parser / furo，装在同一个 venv 里即可
+docs:
+	$(PY) -m pip install -q -r docs/requirements.txt
+	cd docs && $(PY) -m sphinx -b html -W --keep-going . _build/html
+	@echo "文档已构建：docs/_build/html/index.html"
+
+# 容器产物：镜像内已完成前端构建，无需先跑 web-build
+docker:
+	docker build -t sapic:local .
+
+compose-up:
+	@test -n "$(S)" || (echo "用法: make compose-up S='随机密钥'（可用 openssl rand -hex 32 生成）"; exit 1)
+	SAPIC_SECRET_KEY="$(S)" docker compose up -d
+
 clean:
-	rm -rf .pytest_cache web/dist
+	rm -rf .pytest_cache web/dist docs/_build
 	find $(SERVER_DIR)/sapic $(SERVER_DIR)/tests -name '__pycache__' -type d -prune -exec rm -rf {} + 2>/dev/null || true
 	find $(SERVER_DIR)/sapic $(SERVER_DIR)/tests -name '*.py[co]' -delete 2>/dev/null || true

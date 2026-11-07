@@ -14,7 +14,7 @@ from flask import Blueprint, g, request
 
 from ..basis.errors import ApiError, ErrorCode
 from ..libs.auth import admin_required
-from ..libs.users import purge_user, serialize_user
+from ..libs.users import notify_review, purge_user, serialize_user
 from ..models import User
 from ..models.base import now
 from ..models.user import (
@@ -92,6 +92,9 @@ def update_user(user_id: int):
         raise ApiError("payload must be a JSON object", ErrorCode.PARAM_ERROR)
 
     fields = []
+    previous_status = user.status
+    reason = ""
+    reviewed = False
     if "status" in data:
         status = data.get("status")
         #: bool 是 int 的子类（True == 1），必须先排除。
@@ -105,10 +108,22 @@ def update_user(user_id: int):
             )
         user.status = status
         fields.append(User.status)
+        #: 拒绝理由只对「已拒绝」有意义，换成别的状态就清掉，免得页面上留着旧原因。
+        if status == STATUS_REJECTED:
+            reason = str(data.get("reason") or "").strip()[:200]
+            user.status_reason = reason
+        else:
+            user.status_reason = None
+        fields.append(User.status_reason)
         if status != STATUS_NORMAL:
             #: 禁用/拒绝后立刻让该用户已登录的会话失效。
             user.session_version = int(user.session_version or 0) + 1
             fields.append(User.session_version)
+        #: 只有「待审核 → 通过/拒绝」才是审核决定，启用/禁用不发审核邮件。
+        reviewed = previous_status == STATUS_PENDING and status in (
+            STATUS_NORMAL,
+            STATUS_REJECTED,
+        )
 
     if "is_admin" in data:
         is_admin = data.get("is_admin")
@@ -129,6 +144,10 @@ def update_user(user_id: int):
     user.updated_at = now()
     fields.append(User.updated_at)
     user.save(only=fields)
+
+    if reviewed:
+        #: 投递失败由 send_mail 内部吞掉并记日志，审核结果照常返回。
+        notify_review(user, user.status, reason)
     return ok({"user": _serializer(user)})
 
 

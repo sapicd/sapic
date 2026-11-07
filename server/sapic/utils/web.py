@@ -12,6 +12,7 @@ from typing import Any
 from flask import Response, current_app, jsonify, request
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
+from ..basis.errors import ApiError, ErrorCode
 from ..basis.vars import SESSION_COOKIE_NAME, SESSION_COOKIE_SALT
 from .common import decode_cursor, encode_cursor
 
@@ -77,6 +78,28 @@ def ok(data=None, message: str = "", status: int = 200, **extra):
         payload["data"] = data
     payload.update(extra)
     return json_response(payload, status)
+
+
+def page_params(default_size: int = 20, max_size: int = 100) -> tuple[int, int]:
+    """``(page, page_size)`` from the query string, for in-memory pagination.
+
+    Invalid values answer ``PARAM_ERROR`` instead of silently falling back, so a
+    typo in a client never looks like "the list is empty". ``page`` starts at 1
+    and ``page_size`` is clamped to ``[1, max_size]``.
+    """
+
+    def _int(name: str, fallback: int) -> int:
+        raw = request.args.get(name)
+        if raw is None or not str(raw).strip():
+            return fallback
+        try:
+            return int(raw)
+        except (TypeError, ValueError) as exc:
+            raise ApiError("invalid %s" % name, ErrorCode.PARAM_ERROR) from exc
+
+    page = max(_int("page", 1), 1)
+    page_size = min(max(_int("page_size", default_size), 1), max_size)
+    return page, page_size
 
 
 def paginate(

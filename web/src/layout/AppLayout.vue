@@ -20,10 +20,15 @@ const aboutVisible = ref(false)
 let viewport = null
 
 const backgroundStyle = computed(() => {
-  const url = (mobile.value && site.backgroundMobile) || site.background
+  //: 个人背景优先于站点背景；透明度用 ?? 而非 ||，0 是合法的「完全透明」。
+  const personal = mobile.value
+    ? session.settings.bg_image_mobile || session.settings.bg_image
+    : session.settings.bg_image
+  const url = personal || (mobile.value && site.backgroundMobile) || site.background
+  const opacity = session.settings.bg_opacity ?? site.backgroundOpacity
   return {
     backgroundImage: `url("${url || '/background.jpg'}")`,
-    '--app-overlay': String(site.backgroundOpacity),
+    '--app-overlay': String(opacity),
   }
 })
 

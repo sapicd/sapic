@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { errorMessage } from '@/api/client'
@@ -40,11 +40,13 @@ const OIDC_ERRORS = {
   },
 }
 
-const oidcError = ref(null)
+const oidcStatus = ref('')
+
+const oidcError = computed(() => OIDC_ERRORS[oidcStatus.value] || null)
 
 onMounted(() => {
   const status = typeof route.query.oidc === 'string' ? route.query.oidc : ''
-  oidcError.value = OIDC_ERRORS[status] || null
+  oidcStatus.value = OIDC_ERRORS[status] ? status : ''
 })
 
 async function submit() {
@@ -80,7 +82,7 @@ async function submit() {
         show-icon
         :title="oidcError.title"
         :description="oidcError.description"
-        @close="oidcError = null"
+        @close="oidcStatus = ''"
       />
       <el-alert
         v-if="!site.passwordLogin"
@@ -116,7 +118,7 @@ async function submit() {
       <HookSlot slot="login.after_form" />
 
       <div v-if="site.passwordLogin && site.allowRegister" class="auth__footer">
-        还没有账号？<router-link :to="{ name: 'register' }">注册</router-link>
+        还没有账号？<router-link :to="{ name: 'register' }"> 注册 </router-link>
       </div>
     </el-card>
   </div>

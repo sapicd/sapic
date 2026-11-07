@@ -31,6 +31,7 @@ from ..libs.storage import (
     list_backends,
     list_user_backend_rows,
     primary_backend_id,
+    private_readable,
     update_backend,
     update_user_backend,
     upload_drivers,
@@ -39,7 +40,7 @@ from ..libs.storage import (
     user_backends_allowed,
 )
 from ..models import StorageBackend
-from ..models.storage import SCOPE_USER
+from ..models.storage import SCOPE_USER, VISIBILITY_PUBLIC
 from ..utils.web import ok
 
 bp = Blueprint("backends", __name__)
@@ -59,6 +60,8 @@ def _drivers() -> list[dict]:
             "title": manifest["title"],
             "description": manifest["description"],
             "fields": manifest["config_schema"],
+            #: 能否作为「私有」后端：驱动要能签发临时读地址（本地驱动除外）。
+            "private_readable": private_readable(manifest["name"]),
         }
         for manifest in upload_drivers()
     ]
@@ -119,6 +122,7 @@ def add_my_backend():
         config=data.get("config"),
         priority=data.get("priority"),
         enabled=data.get("enabled", True),
+        visibility=data.get("visibility") or VISIBILITY_PUBLIC,
     )
     return ok(_my_payload(), status=201)
 
@@ -156,6 +160,7 @@ def add_backend():
         config=data.get("config"),
         priority=data.get("priority"),
         enabled=data.get("enabled", True),
+        visibility=data.get("visibility") or VISIBILITY_PUBLIC,
     )
     return ok(_payload(), status=201)
 

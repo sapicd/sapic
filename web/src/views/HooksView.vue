@@ -1,9 +1,10 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { api, errorMessage } from '@/api/client'
 import HookConfigForm from '@/components/hook/HookConfigForm.vue'
+import { formatTime } from '@/utils/format'
 
 const router = useRouter()
 
@@ -12,6 +13,16 @@ const CATALOGS = {
   processor: '处理',
   auth: '鉴权',
   mail: '邮件',
+}
+
+//: 市场列表的 status 由第三方数据给出，只做展示映射，不认识的值原样显示。
+const MARKET_STATUS = {
+  stable: '正式版',
+  production: '正式版',
+  ga: '正式版',
+  beta: '公测版',
+  rc: '预发布',
+  archive: '已封存',
 }
 
 const tab = ref('hooks')
@@ -27,6 +38,24 @@ const removing = ref('')
 const importDialog = ref(false)
 const importModule = ref('')
 const importing = ref(false)
+
+//: 钩子市场：远端列表 + 本地安装状态（后端合并好的 installed/loaded）。
+//: 列表由后端分页，这里只保存当前页与总数。
+const marketItems = ref([])
+const marketMeta = ref({ configured: true, storage_dir: '', updated_at: 0 })
+const marketError = ref('')
+const marketLoading = ref(false)
+const marketLoaded = ref(false)
+const marketTotal = ref(0)
+const marketPage = ref(1)
+const marketPageSize = ref(10)
+const busyItem = ref('')
+
+const installForm = ref({ package: '', module: '', index_url: '', upgrade: false })
+const installDialog = ref(false)
+const installing = ref(false)
+const installLog = ref('')
+const installResult = ref(true)
 
 const enabledCount = computed(
   () => manifests.value.filter((item) => item.enabled).length,
@@ -177,6 +206,139 @@ async function pingHook(item, values) {
   }
 }
 
+//: 市场列表走 GitHub 接口，切到该页签再拉，避免每次进后台都请求外网。
+watch(tab, (value) => {
+  if (value === 'market' && !marketLoaded.value) loadMarket()
+})
+
+async function loadMarket(refreshNow = false) {
+  marketLoading.value = true
+  marketError.value = ''
+  try {
+    const data = await api.get('/hooks/market', {
+      query: {
+        page: marketPage.value,
+        page_size: marketPageSize.value,
+        ...(refreshNow ? { refresh: 1 } : {}),
+      },
+    })
+    marketItems.value = data?.items || []
+    marketTotal.value = data?.total || 0
+    //: 列表变短时后端把页码收敛到最后一页，前端跟着同步。
+    if (data?.page) marketPage.value = data.page
+    marketMeta.value = {
+      configured: data?.configured !== false,
+      storage_dir: data?.storage_dir || '',
+      market_url: data?.market_url || '',
+      updated_at: data?.updated_at || 0,
+    }
+    marketLoaded.value = true
+  } catch (error) {
+    marketError.value = errorMessage(error, '加载钩子市场失败')
+  } finally {
+    marketLoading.value = false
+  }
+}
+
+//: 刷新远端缓存时回到第一页，否则停留在原来的页码容易看到空表。
+function refreshMarket() {
+  marketPage.value = 1
+  return loadMarket(true)
+}
+
+function changeMarketPage(page) {
+  marketPage.value = page
+  loadMarket()
+}
+
+function changeMarketPageSize(size) {
+  marketPageSize.value = size
+  marketPage.value = 1
+  loadMarket()
+}
+
+function openInstall(item) {
+  installForm.value = {
+    package: item?.package || '',
+    module: item?.module || '',
+    index_url: '',
+    upgrade: Boolean(item?.installed),
+  }
+  installLog.value = ''
+  installResult.value = true
+  installDialog.value = true
+}
+
+function openCustomInstall() {
+  installForm.value = { package: '', module: '', index_url: '', upgrade: false }
+  installLog.value = ''
+  installResult.value = true
+  installDialog.value = true
+}
+
+async function submitInstall() {
+  const packageName = installForm.value.package.trim()
+  if (!packageName) {
+    ElMessage.warning('请输入包名')
+    return
+  }
+  installing.value = true
+  installLog.value = ''
+  try {
+    const data = await api.post('/hooks/install', {
+      json: { ...installForm.value, package: packageName },
+    })
+    const result = data?.install || {}
+    installResult.value = Boolean(result.ok)
+    installLog.value = result.output || ''
+    if (result.ok) {
+      ElMessage.success('安装成功')
+      installDialog.value = false
+      await Promise.all([refresh(), loadMarket()])
+    }
+  } catch (error) {
+    installResult.value = false
+    installLog.value = errorMessage(error, '安装失败')
+  } finally {
+    installing.value = false
+  }
+}
+
+async function importMarketItem(item) {
+  busyItem.value = item.module
+  try {
+    await api.post('/hooks/import', { json: { module: item.module } })
+    ElMessage.success('钩子已引入')
+    await Promise.all([refresh(), loadMarket()])
+  } catch (error) {
+    ElMessage.error(errorMessage(error, '引入失败'))
+  } finally {
+    busyItem.value = ''
+  }
+}
+
+async function purgePackage(item) {
+  try {
+    await ElMessageBox.confirm(
+      `确定卸载「${item.name}」吗？会删除 ${marketMeta.value.storage_dir || '包目录'} 下的包文件，且不可恢复。`,
+      '卸载第三方包',
+      { type: 'warning' },
+    )
+  } catch (error) {
+    return
+  }
+  busyItem.value = item.module
+  try {
+    await api.del(`/hooks/import/${item.module}`, { query: { purge: 1 } })
+    ElMessage.success('已卸载')
+    await Promise.all([refresh(), loadMarket()])
+  } catch (error) {
+    ElMessage.error(errorMessage(error, '卸载失败'))
+  } finally {
+    busyItem.value = ''
+  }
+}
+
 onMounted(refresh)
 </script>
 
@@ -290,6 +452,158 @@ onMounted(refresh)
             @ping="(values) => pingHook(item, values)"
           />
         </el-tab-pane>
+
+        <el-tab-pane label="钩子市场" name="market">
+          <el-alert
+            v-if="!marketMeta.configured"
+            type="warning"
+            :closable="false"
+            show-icon
+            style="margin-bottom: 12px"
+            title="未配置第三方包目录，暂时不能在后台安装扩展"
+            description="设置 sapic_hookpkgstoragedir（如 data/hooks）后重启服务；该目录会被加入 sys.path 并作为钩子扫描路径。"
+          />
+
+          <div class="toolbar hook-toolbar">
+            <el-button :loading="marketLoading" @click="refreshMarket">
+              刷新列表
+            </el-button>
+            <el-button @click="openCustomInstall">手动安装</el-button>
+            <span class="toolbar__meta">
+              共 {{ marketTotal }} 个扩展<template v-if="marketMeta.updated_at">
+                · 列表缓存于 {{ formatTime(marketMeta.updated_at) }}</template
+              >
+            </span>
+          </div>
+
+          <el-alert
+            v-if="marketError"
+            type="warning"
+            :closable="false"
+            show-icon
+            style="margin-bottom: 12px"
+            :title="marketError"
+          />
+          <p class="hint">
+            列表取自官方仓库的 list.json（可用 sapic_hookmarketurl 指向镜像）。安装会把包
+            pip 到 <code>{{ marketMeta.storage_dir || '包目录' }}</code
+            >，再「引入」后即出现在「钩子扩展」里。
+          </p>
+
+          <el-empty
+            v-if="!marketLoading && !marketItems.length"
+            description="没有可用的市场数据"
+            :image-size="60"
+          />
+          <el-table
+            v-else
+            v-loading="marketLoading"
+            :data="marketItems"
+            row-key="module"
+            style="width: 100%"
+          >
+            <el-table-column label="名称" min-width="150">
+              <template #default="{ row }">
+                <div class="market-name">
+                  <span>{{ row.name }}</span>
+                  <el-tag v-if="row.loaded" size="small" type="success" effect="plain">
+                    已加载
+                  </el-tag>
+                </div>
+                <span class="market-module">{{ row.module }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="description"
+              label="描述"
+              min-width="200"
+              show-overflow-tooltip
+            />
+            <el-table-column label="作者" width="120" show-overflow-tooltip>
+              <template #default="{ row }">
+                <el-link
+                  v-if="row.home"
+                  type="primary"
+                  :underline="false"
+                  :href="row.home"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  {{ row.author || row.name }}
+                </el-link>
+                <span v-else>{{ row.author || '-' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="100">
+              <template #default="{ row }">
+                <el-tag size="small" effect="plain">
+                  {{ MARKET_STATUS[row.status] || row.status || '未知' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="已装版本" width="110">
+              <template #default="{ row }">
+                {{ row.installed_version || (row.loaded ? '已加载' : '-') }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="230" align="right">
+              <template #default="{ row }">
+                <div class="row-links">
+                  <el-button
+                    v-if="row.package"
+                    link
+                    type="primary"
+                    @click="openInstall(row)"
+                  >
+                    {{ row.installed ? '更新' : '安装' }}
+                  </el-button>
+                  <el-button
+                    v-if="!row.loaded"
+                    link
+                    type="primary"
+                    :loading="busyItem === row.module"
+                    @click="importMarketItem(row)"
+                  >
+                    引入
+                  </el-button>
+                  <el-button
+                    v-if="row.pypi"
+                    link
+                    type="primary"
+                    tag="a"
+                    :href="row.pypi"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    PyPI
+                  </el-button>
+                  <el-button
+                    v-if="row.installed_version"
+                    link
+                    type="danger"
+                    :loading="busyItem === row.module"
+                    @click="purgePackage(row)"
+                  >
+                    卸载
+                  </el-button>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <div v-if="marketTotal > 0" class="table-pager">
+            <el-pagination
+              background
+              :current-page="marketPage"
+              :page-size="marketPageSize"
+              :page-sizes="[10, 20, 50]"
+              :total="marketTotal"
+              layout="sizes, prev, pager, next"
+              @current-change="changeMarketPage"
+              @size-change="changeMarketPageSize"
+            />
+          </div>
+        </el-tab-pane>
       </el-tabs>
     </el-card>
 
@@ -314,6 +628,50 @@ onMounted(refresh)
         <el-button @click="importDialog = false">取消</el-button>
         <el-button type="primary" :loading="importing" @click="importHook">
           导入
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="installDialog" title="安装第三方钩子包" width="560px">
+      <el-form label-position="top">
+        <el-form-item label="包名">
+          <el-input
+            v-model="installForm.package"
+            placeholder="如 sapic-hook-cos，可带版本：sapic-hook-cos==1.0.0"
+            @keyup.enter="submitInstall"
+          />
+        </el-form-item>
+        <el-form-item label="模块名（可选）">
+          <el-input
+            v-model="installForm.module"
+            placeholder="安装完成后要引入的模块，如 sapic_hook_cos"
+          />
+        </el-form-item>
+        <el-form-item label="镜像地址（可选）">
+          <el-input
+            v-model="installForm.index_url"
+            placeholder="https://pypi.tuna.tsinghua.edu.cn/simple"
+          />
+        </el-form-item>
+        <el-form-item label="覆盖已安装版本">
+          <el-switch v-model="installForm.upgrade" />
+        </el-form-item>
+      </el-form>
+
+      <el-alert
+        type="warning"
+        :closable="false"
+        show-icon
+        title="安装会在服务端执行 pip，只安装可信来源的包；过程可能持续数十秒。"
+      />
+      <pre v-if="installLog" class="install-log" :class="{ 'is-error': !installResult }">{{
+        installLog
+      }}</pre>
+
+      <template #footer>
+        <el-button @click="installDialog = false">关闭</el-button>
+        <el-button type="primary" :loading="installing" @click="submitInstall">
+          开始安装
         </el-button>
       </template>
     </el-dialog>

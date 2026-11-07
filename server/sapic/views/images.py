@@ -15,13 +15,14 @@ from ..libs.images import (
     create_external_image,
     delete_image,
     normalize_tags,
+    resolve_expire_at,
     serialize_image,
     tag_condition,
     visible_query,
 )
 from ..models import Album, Image
 from ..models.base import now
-from ..models.image import STATUS_ENABLED
+from ..models.image import live_condition
 from ..utils.web import ok, paginate
 
 bp = Blueprint("images", __name__)
@@ -32,9 +33,8 @@ MAX_IMPORT = 50
 
 
 def _get_image(sha: str) -> Image:
-    image = Image.get_or_none(
-        (Image.sha == sha) & (Image.status == STATUS_ENABLED)
-    )
+    #: 过期图片等同于不存在：清理任务还没跑时也不能读、不能改。
+    image = Image.get_or_none((Image.sha == sha) & live_condition())
     if image is None:
         raise ApiError("image not found", ErrorCode.NOT_FOUND, 404)
     return image
@@ -256,8 +256,10 @@ def update_image(sha: str):
 
     data = request.get_json(silent=True) or request.form.to_dict()
 
+    fields = []
     if "title" in data:
         image.title = (data.get("title") or "")[:255]
+        fields.append(Image.title)
     if "album_id" in data:
         album_id = data.get("album_id")
         #: 每张图片必须归属相册：置空会让私有图在 effective_visibility 里跌回
@@ -270,6 +272,7 @@ def update_image(sha: str):
         if album is None:
             raise ApiError("album not found", ErrorCode.NOT_FOUND, 404)
         image.album = album
+        fields.append(Image.album)
     if "visibility" in data:
         visibility = data.get("visibility")
         #: ``shared`` 只在相册维度有意义（授权是按相册发放的），单图只能
@@ -277,26 +280,27 @@ def update_image(sha: str):
         if visibility not in (None, "public", "private"):
             raise ApiError("invalid visibility", ErrorCode.PARAM_ERROR)
         image.visibility = visibility
+        fields.append(Image.visibility)
     if "tags" in data:
         image.tags = normalize_tags(data.get("tags"))
+        fields.append(Image.tags)
     if "plaza" in data:
         plaza = data.get("plaza")
         #: 三态：空值跟随相册，布尔值强制发布/排除。
         if plaza is not None and not isinstance(plaza, bool):
             raise ApiError("invalid plaza flag", ErrorCode.PARAM_ERROR)
         image.plaza = plaza
+        fields.append(Image.plaza)
+    if "expire_at" in data:
+        #: 绝对值时间戳，空值表示取消有效期（永久保留）。
+        image.expire_at = resolve_expire_at(data.get("expire_at"))
+        fields.append(Image.expire_at)
+    if not fields:
+        raise ApiError("nothing to update", ErrorCode.PARAM_ERROR)
 
     image.updated_at = now()
-    image.save(
-        only=[
-            Image.title,
-            Image.album,
-            Image.visibility,
-            Image.plaza,
-            Image.tags,
-            Image.updated_at,
-        ]
-    )
+    fields.append(Image.updated_at)
+    image.save(only=fields)
     return ok({"image": serialize_image(image, image.album)})
 
 

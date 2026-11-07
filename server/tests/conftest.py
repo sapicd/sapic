@@ -23,6 +23,8 @@ def app(tmp_path):
             "REDIS_URL": "",
             "MAX_UPLOAD": 20,
             "STORAGE_DIR": str(tmp_path / "upload"),
+            #: 第三方钩子包目录也要隔离，避免用例往仓库的 data/ 里写文件。
+            "HOOK_PKG_STORAGE_DIR": str(tmp_path / "hooks"),
         }
     )
     with app.app_context():

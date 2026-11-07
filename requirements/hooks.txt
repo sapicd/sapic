@@ -1,9 +1,0 @@
-#: Optional hook dependencies — install only what you enable.
-#:   up2github / up2gitee  -> requests
-#:   up2qiniu              -> qiniu
-#:   up2upyun              -> upyun
-#:   pic2webp              -> pillow
-pillow>=9.4.0
-qiniu==7.15.0
-upyun==2.5.5
-requests==2.34.2

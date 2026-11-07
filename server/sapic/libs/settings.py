@@ -27,9 +27,16 @@ DEFAULTS = {
     "allow_anonymous_upload": False,
     "upload_notice": "",
     "upload_allowed_ext": "jpg,jpeg,png,gif,webp,bmp,ico,svg,mp4,webm,mov",
-    "upload_max_size": 20,
+    #: 单文件大小上限（MB），按媒体类型分开：视频通常比图片大。
+    "upload_image_max_size": 10,
+    "upload_video_max_size": 20,
     "upload_count_limit": 10,
     "allow_video": True,
+    #: 图片有效期（天）。``default`` 是客户端未指定时给新图设的寿命，
+    #: ``max`` 是单图允许申请的上限；两者 0 都表示不启用该规则（默认永久）。
+    #: 上限生效后「永久图片」被禁止，未指定时按上限处理。
+    "image_expire_default_days": 0,
+    "image_expire_max_days": 0,
     #: 上传只同步写「优先级最小」的后端，其余启用的后端在后台异步补副本。
     #: 关掉后只保留单副本（省空间/流量），失败也不会影响上传结果。
     "storage_replica": True,

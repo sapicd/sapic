@@ -29,10 +29,19 @@ def site():
             "announcement": get_setting("site_announcement", ""),
             "about": get_setting("site_about", ""),
             "upload_notice": get_setting("upload_notice", ""),
-            "upload_max_size": get_setting("upload_max_size", 20),
+            #: 按媒体类型分开的单文件上限（MB）。
+            "upload_image_max_size": get_setting("upload_image_max_size", 10),
+            "upload_video_max_size": get_setting("upload_video_max_size", 20),
             "upload_count_limit": get_setting("upload_count_limit", 10),
             "upload_allowed_ext": get_setting("upload_allowed_ext", ""),
             "allow_video": bool(get_setting("allow_video", True)),
+            #: 单位天：默认有效期与单图上限，0 表示永久 / 不限制。
+            "image_expire_default_days": int(
+                get_setting("image_expire_default_days", 0) or 0
+            ),
+            "image_expire_max_days": int(
+                get_setting("image_expire_max_days", 0) or 0
+            ),
             "plaza_enabled": bool(get_setting("plaza_enabled", False)),
             "allow_register": bool(get_setting("allow_register", True)),
             "password_login": bool(get_setting("password_login", True)),

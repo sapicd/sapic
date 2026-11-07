@@ -36,6 +36,22 @@ SCOPE_ADMIN = "admin"
 PAT_SCOPES = (SCOPE_READ, SCOPE_UPLOAD, SCOPE_WRITE, SCOPE_ADMIN)
 DEFAULT_PAT_SCOPES = (SCOPE_READ, SCOPE_UPLOAD, SCOPE_WRITE)
 
+#: Endpoint → scopes accepted for a ``?token=`` credential. Userscript managers
+#: cannot set request headers when fetching the installer, so that single
+#: endpoint reads the token from the URL; ``write``/``admin`` are never allowed
+#: there. Everything else is header/session only.
+QUERY_TOKEN_SCOPES: dict[str, tuple[str, ...]] = {
+    "userscript.script": (SCOPE_UPLOAD,),
+}
+
+#: Token authentication rewrites ``last_used_at``; throttling keeps a polling
+#: client from turning every request into a write.
+TOUCH_INTERVAL = 60
+
+#: v1 upload clients (PicGo/uPic/Typora) cannot send ``X-CSRF-Token``, so the
+#: compatibility endpoint checks it itself and offers the PAT route instead.
+LEGACY_CSRF_ENDPOINT = "legacy.upload"
+
 
 def hash_token(token: str) -> str:
     return sha256(token.encode("utf-8")).hexdigest()
@@ -78,6 +94,20 @@ def current_csrf() -> str:
     return getattr(g, "csrf", "") or ""
 
 
+def current_token() -> str:
+    """Plaintext of the PAT that authenticated this request, if any."""
+    return getattr(g, "auth_token", "") or ""
+
+
+def _query_token() -> str:
+    """``?token=`` is accepted only where a client cannot send headers."""
+    if request.method not in SAFE_METHODS:
+        return ""
+    if request.endpoint not in QUERY_TOKEN_SCOPES:
+        return ""
+    return (request.args.get("token") or "").strip()
+
+
 def resolve_pat(token: str) -> tuple[User, list[str]] | None:
     """Resolve a personal access token to its owner and scope list."""
     row = ApiToken.get_or_none(ApiToken.token_hash == hash_token(token))
@@ -89,13 +119,15 @@ def resolve_pat(token: str) -> tuple[User, list[str]] | None:
     #: 待审核/已拒绝/已禁用的账号一律不放行，令牌与登录态同一口径。
     if user is None or user.status != STATUS_NORMAL:
         return None
-    #: Best effort, never fail the request because of statistics.
-    try:
-        ApiToken.update(last_used_at=now()).where(
-            ApiToken.id == row.id
-        ).execute()
-    except Exception:
-        pass
+    moment = now()
+    if row.last_used_at is None or moment - int(row.last_used_at) >= TOUCH_INTERVAL:
+        #: Best effort, never fail the request because of statistics.
+        try:
+            ApiToken.update(last_used_at=moment).where(
+                ApiToken.id == row.id
+            ).execute()
+        except Exception:
+            pass
     return user, row.scope_list
 
 
@@ -103,16 +135,32 @@ def _load_current_user() -> None:
     g.user = None
     g.auth_type = None
     g.token_scopes = []
+    g.auth_token = ""
     g.csrf = ""
     g.login_state = None
     g.login_state_cleared = False
 
     auth = request.headers.get("Authorization", "")
     if auth.lower().startswith("bearer "):
-        resolved = resolve_pat(auth[7:].strip())
+        token = auth[7:].strip()
+        resolved = resolve_pat(token)
         if resolved is not None:
             g.user, g.token_scopes = resolved
             g.auth_type = "token"
+            g.auth_token = token
+            return
+
+    token = _query_token()
+    if token:
+        resolved = resolve_pat(token)
+        allowed = QUERY_TOKEN_SCOPES.get(request.endpoint or "", ())
+        #: URL 里的令牌只用于取油猴脚本，宽权限令牌不允许走 query。
+        if resolved is not None and any(
+            scope in allowed for scope in resolved[1]
+        ):
+            g.user, g.token_scopes = resolved
+            g.auth_type = "token"
+            g.auth_token = token
             return
 
     state = get_cookie_state(_session_ttl(), SESSION_COOKIE_NAME)
@@ -141,17 +189,25 @@ def _load_current_user() -> None:
     g.csrf = state.get("csrf", "")
 
 
+def csrf_valid() -> bool:
+    """Whether the request carries the session's CSRF token."""
+    token = request.headers.get("X-CSRF-Token") or request.form.get("_csrf", "")
+    expected = current_csrf()
+    if not token or not expected:
+        return False
+    return hmac.compare_digest(str(token), str(expected))
+
+
 def _csrf_protect() -> None:
     if request.method in SAFE_METHODS:
         return
     if getattr(g, "auth_type", None) != "session":
         #: Bearer tokens are not vulnerable to CSRF.
         return
-    token = request.headers.get("X-CSRF-Token") or request.form.get("_csrf", "")
-    expected = current_csrf()
-    if not token or not expected or not hmac.compare_digest(
-        str(token), str(expected)
-    ):
+    if request.endpoint == LEGACY_CSRF_ENDPOINT:
+        #: 老客户端不会带 CSRF 头，兼容端点在视图里自行校验并返回 v1 信封。
+        return
+    if not csrf_valid():
         raise ApiError("invalid csrf token", ErrorCode.FORBIDDEN, 403)
 
 

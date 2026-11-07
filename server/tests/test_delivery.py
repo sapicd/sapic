@@ -38,7 +38,7 @@ def use_remote_replica(app, sha, url, private=False):
             hook_name="up2github",
             config={},
             scope="global",
-            visibility="private",
+            visibility="public",
             priority=1,
             enabled=True,
         )
@@ -83,7 +83,7 @@ def test_public_image_links_to_the_backend_domain(app, client, tmp_path):
                 "domain": "https://cdn.example.com",
             },
             scope="global",
-            visibility="private",
+            visibility="public",
             priority=1,
             enabled=True,
         )
@@ -126,7 +126,7 @@ def test_highest_priority_replica_decides_the_link(app, client):
             hook_name="up2github",
             config={},
             scope="global",
-            visibility="private",
+            visibility="public",
             priority=200,
             enabled=True,
         )
@@ -175,9 +175,10 @@ def test_private_remote_replica_is_relayed_not_redirected(app, client, monkeypat
     remote = FakeRemote()
     seen = {}
 
-    def fake_open(target, headers=None):
+    def fake_open(target, headers=None, allow_private=False):
         seen["url"] = target
         seen["headers"] = headers or {}
+        seen["allow_private"] = allow_private
         return remote
 
     monkeypatch.setattr("sapic.views.public.open_remote", fake_open)
@@ -187,6 +188,8 @@ def test_private_remote_replica_is_relayed_not_redirected(app, client, monkeypat
     assert response.data == b"remote-bytes"
     assert seen["url"] == url
     assert seen["headers"].get("Range") == "bytes=0-4"
+    #: 后端地址由服务端产生，允许指向内网（自建 MinIO），不是用户输入。
+    assert seen["allow_private"] is True
     assert response.headers["Accept-Ranges"] == "bytes"
     assert "private" in response.headers["Cache-Control"]
     assert remote.closed is True

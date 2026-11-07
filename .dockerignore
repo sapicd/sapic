@@ -1,0 +1,14 @@
+.git
+.github
+.codebuddy
+.venv
+.pytest_cache
+**/__pycache__
+**/*.py[co]
+server/data
+web/node_modules
+web/dist
+V1
+tools
+*.md
+!server/requirements/*.txt

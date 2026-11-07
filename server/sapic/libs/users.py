@@ -7,6 +7,7 @@ import logging
 import re
 import secrets
 
+from flask import current_app
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from ..basis.db import db
@@ -23,6 +24,7 @@ from ..models import (
     UserSetting,
 )
 from ..models.base import now
+from ..models.image import STATUS_ENABLED
 from ..models.storage import SCOPE_USER
 from ..models.user import (
     STATUS_DISABLED,
@@ -32,6 +34,8 @@ from ..models.user import (
 )
 from .albums import default_album
 from .images import create_image, delete_image, image_src
+from .mail import send_mail
+from .settings import get_setting
 
 logger = logging.getLogger(__name__)
 
@@ -324,6 +328,81 @@ def update_avatar(
     return user
 
 
+#: 审核结果邮件标题，状态值 → 文案。
+REVIEW_SUBJECTS = {
+    STATUS_NORMAL: "账号审核通过",
+    STATUS_REJECTED: "账号审核未通过",
+}
+
+
+def notify_review(user: User, status: int, reason: str = "") -> bool:
+    """Mail the review result to the applicant.
+
+    Only verified mailboxes are used: an unverified address may belong to
+    someone else. Delivery failures are swallowed by :func:`send_mail`, so a
+    broken SMTP setup never turns a successful review into an error.
+    """
+    if not user.email or not user.email_verified:
+        return False
+    subject = REVIEW_SUBJECTS.get(status)
+    if subject is None:
+        return False
+
+    site = str(get_setting("site_name", "sapic") or "sapic")
+    base = str(current_app.config.get("EXTERNAL_BASE_URL") or "").rstrip("/")
+    name = user.nickname or user.username
+    if status == STATUS_NORMAL:
+        body = "\n".join(
+            [
+                "%s，你好：" % name,
+                "",
+                "你在 %s 的注册申请已审核通过，现在可以登录了。" % site,
+                "登录地址：%s/login" % base,
+                "",
+                "如果这不是你本人的操作，请忽略本邮件。",
+            ]
+        )
+    else:
+        body = "\n".join(
+            [
+                "%s，你好：" % name,
+                "",
+                "很遗憾，你在 %s 的注册申请未通过审核。" % site,
+                "原因：%s" % (reason or "未填写"),
+                "",
+                "如有疑问，请联系站点管理员。",
+            ]
+        )
+    return send_mail(user.email, "[%s] %s" % (site, subject), body)
+
+
+def self_delete(user: User, password: str) -> None:
+    """Delete the caller's own account after a password re-check.
+
+    Two guards keep this from destroying data by accident: an admin cannot wipe
+    the console's own entry point (another admin must do it), and an account
+    still holding images has to delete them first — otherwise ``purge_user``
+    would remove them without the owner ever seeing what went away.
+    """
+    if user.is_admin:
+        raise ApiError(
+            "admins cannot delete their own account", ErrorCode.FORBIDDEN, 403
+        )
+    if not password or not check_password_hash(user.password_hash or "", password):
+        raise ApiError("password is incorrect", ErrorCode.FORBIDDEN, 403)
+
+    owned = Image.select().where(
+        (Image.owner == user) & (Image.status == STATUS_ENABLED)
+    ).count()
+    if owned:
+        raise ApiError(
+            "delete your %d image(s) before closing the account" % owned,
+            ErrorCode.CONFLICT,
+            409,
+        )
+    purge_user(user)
+
+
 def purge_user(user: User) -> None:
     """Delete an account together with everything it owns.
 
@@ -392,6 +471,7 @@ def serialize_user(user: User, include_private: bool = False) -> dict:
     }
     if include_private:
         data["email"] = user.email
+        data["status_reason"] = user.status_reason or ""
     return data
 
 
@@ -404,6 +484,7 @@ __all__ = [
     "change_password",
     "create_user",
     "normalize_username",
+    "notify_review",
     "purge_user",
     "resolve_oidc_user",
     "serialize_user",

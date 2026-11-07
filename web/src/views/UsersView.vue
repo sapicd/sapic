@@ -91,8 +91,25 @@ function approve(user) {
   patch(user, { status: 1 }, '已通过审核')
 }
 
+//: 拒绝理由会写进通知邮件，所以先收集再提交，而不是一键拒绝。
+const rejectDialog = ref(false)
+const rejectReason = ref('')
+const rejecting = ref(null)
+
 function reject(user) {
-  patch(user, { status: -2 }, '已拒绝该注册申请')
+  rejecting.value = user
+  rejectReason.value = ''
+  rejectDialog.value = true
+}
+
+async function confirmReject() {
+  if (!rejecting.value) return
+  await patch(
+    rejecting.value,
+    { status: -2, reason: rejectReason.value.trim() },
+    '已拒绝该注册申请',
+  )
+  rejectDialog.value = false
 }
 
 function disable(user) {
@@ -202,11 +219,20 @@ onMounted(() => loadUsers(true))
         <el-table-column prop="email" label="邮箱" min-width="180">
           <template #default="{ row }">{{ row.email || '-' }}</template>
         </el-table-column>
-        <el-table-column label="状态" width="90">
+        <el-table-column label="状态" width="150">
           <template #default="{ row }">
-            <el-tag size="small" :type="metaOf(row.status).type">
-              {{ metaOf(row.status).label }}
-            </el-tag>
+            <div class="user-status">
+              <el-tag size="small" :type="metaOf(row.status).type">
+                {{ metaOf(row.status).label }}
+              </el-tag>
+              <span
+                v-if="row.status === -2 && row.status_reason"
+                class="user-cell__nick"
+                :title="row.status_reason"
+              >
+                {{ row.status_reason }}
+              </span>
+            </div>
           </template>
         </el-table-column>
         <el-table-column label="角色" width="90">
@@ -274,5 +300,27 @@ onMounted(() => loadUsers(true))
         </el-button>
       </div>
     </el-card>
+
+    <el-dialog v-model="rejectDialog" title="拒绝注册申请" width="440px">
+      <el-form label-position="top">
+        <el-form-item label="拒绝理由">
+          <el-input
+            v-model="rejectReason"
+            type="textarea"
+            :rows="3"
+            maxlength="200"
+            show-word-limit
+            placeholder="会写进通知邮件，可留空"
+          />
+        </el-form-item>
+      </el-form>
+      <p class="hint">
+        拒绝后账号状态变为「已拒绝」并吊销既有会话；若该用户邮箱已验证，会收到一封含理由的通知邮件。
+      </p>
+      <template #footer>
+        <el-button @click="rejectDialog = false">取消</el-button>
+        <el-button type="danger" @click="confirmReject">确认拒绝</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>

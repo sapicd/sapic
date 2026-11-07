@@ -87,7 +87,15 @@ onMounted(() => load(true))
     <div v-else class="image-grid">
       <div v-for="item in items" :key="item.sha" class="image-card">
         <div class="image-card__media" @click="openDetail(item)">
+          <video
+            v-if="item.is_video"
+            :src="item.src"
+            muted
+            playsinline
+            preload="metadata"
+          />
           <el-image
+            v-else
             :src="item.src"
             fit="cover"
             lazy
@@ -105,6 +113,9 @@ onMounted(() => load(true))
         <div class="image-card__meta">
           <div class="image-card__name">{{ item.title || item.filename }}</div>
           <div class="image-card__sub">
+            <el-tag v-if="item.is_video" size="small" type="warning" effect="plain">
+              视频
+            </el-tag>
             <el-tag v-if="item.album" size="small" effect="plain">
               {{ item.album.name }}
             </el-tag>

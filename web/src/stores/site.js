@@ -16,10 +16,15 @@ export const useSiteStore = defineStore('site', {
     announcement: '',
     about: '',
     uploadNotice: '',
-    uploadMaxSize: 20,
+    //: 单文件上限（MB）按媒体类型分开。
+    uploadImageMaxSize: 10,
+    uploadVideoMaxSize: 20,
     uploadCountLimit: 10,
     uploadAllowedExt: '',
     allowVideo: true,
+    //: 图片有效期（天）：0 表示默认永久 / 不限制上限。
+    imageExpireDefaultDays: 0,
+    imageExpireMaxDays: 0,
     allowRegister: true,
     passwordLogin: true,
     //: 未配置 SMTP 时验证邮件发不出去，相关入口直接隐藏。
@@ -73,10 +78,13 @@ export const useSiteStore = defineStore('site', {
         this.announcement = data?.announcement || ''
         this.about = data?.about || ''
         this.uploadNotice = data?.upload_notice || ''
-        this.uploadMaxSize = Number(data?.upload_max_size ?? 20)
+        this.uploadImageMaxSize = Number(data?.upload_image_max_size ?? 10)
+        this.uploadVideoMaxSize = Number(data?.upload_video_max_size ?? 20)
         this.uploadCountLimit = Number(data?.upload_count_limit ?? 10)
         this.uploadAllowedExt = data?.upload_allowed_ext || ''
         this.allowVideo = data?.allow_video !== false
+        this.imageExpireDefaultDays = Number(data?.image_expire_default_days ?? 0)
+        this.imageExpireMaxDays = Number(data?.image_expire_max_days ?? 0)
         this.allowRegister = data?.allow_register !== false
         this.passwordLogin = data?.password_login !== false
         this.mailEnabled = Boolean(data?.mail_enabled)

@@ -23,7 +23,14 @@ const image = ref(null)
 const replicas = ref([])
 const loading = ref(false)
 const saving = ref(false)
-const form = reactive({ title: '', visibility: '', tags: [], plaza: 'inherit' })
+const form = reactive({
+  title: '',
+  visibility: '',
+  tags: [],
+  plaza: 'inherit',
+  //: 有效期用 Date 驱动日期选择器，提交时换算成后端要的秒级时间戳。
+  expireAt: null,
+})
 
 //: 生效可见性 = 单图覆盖，否则跟随相册（无相册时后端按公开处理）。
 const effective = computed(() => {
@@ -64,11 +71,24 @@ async function load() {
     //: 单图的广场开关是三态，null 表示跟随相册。
     const plaza = image.value?.plaza
     form.plaza = plaza === null || plaza === undefined ? 'inherit' : plaza ? 'on' : 'off'
+    form.expireAt = image.value?.expire_at
+      ? new Date(image.value.expire_at * 1000)
+      : null
   } catch (error) {
     ElMessage.error(errorMessage(error, '加载图片失败'))
   } finally {
     loading.value = false
   }
+}
+
+//: 与后端同口径：不能设到过去；站点有上限时也不能超过上限。
+function disabledExpireDate(date) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  if (date.getTime() < today.getTime()) return true
+  const max = site.imageExpireMaxDays
+  if (!max) return false
+  return date.getTime() > Date.now() + max * 86400000
 }
 
 async function save() {
@@ -80,6 +100,9 @@ async function save() {
         visibility: form.visibility || null,
         tags: form.tags,
         plaza: form.plaza === 'inherit' ? null : form.plaza === 'on',
+        expire_at: form.expireAt
+          ? Math.floor(form.expireAt.getTime() / 1000)
+          : null,
       },
     })
     if (data?.image) image.value = { ...image.value, ...data.image }
@@ -113,14 +136,49 @@ function openAlbum() {
   router.push({ name: 'images', query: { album: image.value.album.id } })
 }
 
-async function copy() {
+async function copyText(text) {
   try {
-    await navigator.clipboard.writeText(absoluteUrl(image.value?.src))
+    await navigator.clipboard.writeText(text)
     ElMessage.success('已复制到剪贴板')
   } catch (error) {
     ElMessage.warning('复制失败，请手动复制')
   }
 }
+
+//: 图片地址统一补成绝对地址，复制出去或在新标签打开才可用。
+const srcUrl = computed(() => absoluteUrl(image.value?.src))
+
+//: /raw/<sha> 是 sapic 的兜底出口（私有图、未配加速域名的本地存储），又长又没信息量，
+//: 元数据里不展示地址本身，只留三种分享格式；复制地址仍可用顶部的「复制链接」。
+const srcIsRaw = computed(() => {
+  if (!srcUrl.value) return false
+  try {
+    return new URL(srcUrl.value).pathname.startsWith('/raw/')
+  } catch (error) {
+    return false
+  }
+})
+
+function copy() {
+  copyText(srcUrl.value)
+}
+
+//: 模板由后端按 v1 的 gen_url_tpl 生成；src 是相对地址时补全，复制出去才可用。
+const shareFormats = computed(() => {
+  const tpl = image.value?.tpl
+  const src = image.value?.src || ''
+  if (!tpl || !src) return []
+  const absolute = absoluteUrl(src)
+  const fix = (text) => {
+    const value = String(text || '')
+    return absolute !== src ? value.split(src).join(absolute) : value
+  }
+  return [
+    { key: 'HTML', label: 'HTML', value: fix(tpl.HTML) },
+    { key: 'Markdown', label: 'Markdown', value: fix(tpl.Markdown) },
+    { key: 'rST', label: 'rST', value: fix(tpl.rST) },
+  ].filter((item) => item.value)
+})
 
 onMounted(load)
 </script>
@@ -143,7 +201,15 @@ onMounted(load)
     <el-row v-if="image" :gutter="16">
       <el-col :xs="24" :md="14">
         <div class="detail-preview">
+          <video
+            v-if="image.is_video"
+            :src="image.src"
+            controls
+            playsinline
+            preload="metadata"
+          />
           <el-image
+            v-else
             :src="image.src"
             fit="contain"
             :preview-src-list="[absoluteUrl(image.src)]"
@@ -203,8 +269,18 @@ onMounted(load)
           <el-descriptions-item label="大小">
             {{ formatSize(image.size) }}
           </el-descriptions-item>
+          <el-descriptions-item label="尺寸">
+            <span v-if="image.width && image.height">
+              {{ image.width }} × {{ image.height }}
+            </span>
+            <span v-else class="detail-info__muted">未知</span>
+          </el-descriptions-item>
           <el-descriptions-item label="上传时间">
             {{ formatTime(image.created_at) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="过期时间">
+            <span v-if="image.expire_at">{{ formatTime(image.expire_at) }}</span>
+            <span v-else class="detail-info__muted">永久</span>
           </el-descriptions-item>
           <el-descriptions-item v-if="image.tags?.length" label="标签">
             <div class="detail-info__tags">
@@ -219,6 +295,31 @@ onMounted(load)
               </el-tag>
             </div>
           </el-descriptions-item>
+          <el-descriptions-item label="快捷链接">
+            <div class="detail-link">
+              <a
+                v-if="srcUrl && !srcIsRaw"
+                class="detail-link__url"
+                :href="srcUrl"
+                target="_blank"
+                rel="noopener"
+                :title="srcUrl"
+              >
+                {{ srcUrl }}
+              </a>
+              <div v-if="shareFormats.length" class="detail-link__formats">
+                <el-link
+                  v-for="item in shareFormats"
+                  :key="item.key"
+                  type="primary"
+                  :underline="false"
+                  @click="copyText(item.value)"
+                >
+                  {{ item.label }}
+                </el-link>
+              </div>
+            </div>
+          </el-descriptions-item>
         </el-descriptions>
 
         <el-descriptions
@@ -230,11 +331,14 @@ onMounted(load)
           border
           class="detail-sheet detail-block"
         >
-          <el-descriptions-item
-            v-for="replica in replicas"
-            :key="replica.backend"
-            :label="replica.backend"
-          >
+          <el-descriptions-item v-for="replica in replicas" :key="replica.backend">
+            <!-- 对象路径占位太长，悬浮在副本名上提示，行内只保留状态 -->
+            <template #label>
+              <el-tooltip v-if="replica.key" :content="replica.key" placement="top">
+                <span class="replica-label">{{ replica.backend }}</span>
+              </el-tooltip>
+              <span v-else>{{ replica.backend }}</span>
+            </template>
             <el-tag
               size="small"
               :type="replica.state === 'ok' ? 'success' : 'info'"
@@ -246,7 +350,6 @@ onMounted(load)
             <span v-if="replica.size" class="detail-info__muted">
               {{ formatSize(replica.size) }}
             </span>
-            <div v-if="replica.key" class="replica-meta">{{ replica.key }}</div>
             <div v-if="replica.error" class="replica-meta replica-meta--error">
               {{ replica.error }}
             </div>
@@ -297,6 +400,16 @@ onMounted(load)
                 :value="option.value"
               />
             </el-select>
+          </el-descriptions-item>
+          <el-descriptions-item label="有效期">
+            <el-date-picker
+              v-model="form.expireAt"
+              type="datetime"
+              placeholder="留空表示永久保留"
+              :disabled-date="disabledExpireDate"
+              clearable
+              style="width: 100%"
+            />
           </el-descriptions-item>
           <el-descriptions-item label="操作">
             <el-button type="primary" :loading="saving" @click="save">

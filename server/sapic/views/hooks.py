@@ -13,12 +13,14 @@ import re
 
 from flask import Blueprint, abort, request
 
+from ..basis.common import as_bool
 from ..basis.errors import ApiError, ErrorCode
-from ..libs import ui
+from ..libs import hook_pkg, ui
 from ..libs.auth import admin_required, current_user, login_required
-from ..libs.hook import get_hook_manager
+from ..libs.hook import MAX_IMPORTED, get_hook_manager
 from ..libs.settings import get_setting, set_setting
-from ..utils.web import ok
+from ..utils.common import slice_page
+from ..utils.web import ok, page_params
 
 bp = Blueprint("hooks", __name__)
 
@@ -118,6 +120,39 @@ def update_hook(name):
     return ok({"name": name, "enabled": hook.enabled})
 
 
+def _register_imported(module: str) -> dict:
+    """Add ``module`` to the loaded set and return its manifest.
+
+    Shared by the import dialog and the market installer; a module that turns
+    out not to be a hook is rolled back so it never stays in the list.
+    """
+    if _manager().get(module) is not None:
+        raise ApiError("hook already loaded", ErrorCode.CONFLICT, 409)
+
+    imported = _list_setting("hooks_imported")
+    #: 管理器只认前 MAX_IMPORTED 个，多写的会被静默丢弃，这里提前拦住。
+    if module not in imported and len(imported) >= MAX_IMPORTED:
+        raise ApiError(
+            "too many imported hooks (max %d)" % MAX_IMPORTED,
+            ErrorCode.PARAM_ERROR,
+        )
+    imported.append(module)
+    set_setting("hooks_imported", imported)
+    _manager().reload()
+
+    manifest = _manager().manifest(module)
+    if manifest is None:
+        set_setting(
+            "hooks_imported", [item for item in imported if item != module]
+        )
+        _manager().reload()
+        raise ApiError(
+            "module is not a valid hook (needs __version__ and __author__)",
+            ErrorCode.PARAM_ERROR,
+        )
+    return manifest
+
+
 @bp.post("/hooks/import")
 @admin_required
 def import_hook():
@@ -130,38 +165,114 @@ def import_hook():
     module = str(data.get("module") or "").strip()
     if not MODULE_RE.match(module):
         raise ApiError("invalid module name", ErrorCode.PARAM_ERROR)
-    if _manager().get(module) is not None:
-        raise ApiError("hook already loaded", ErrorCode.CONFLICT, 409)
-
-    imported = _list_setting("hooks_imported")
-    imported.append(module)
-    set_setting("hooks_imported", imported)
-    _manager().reload()
-
-    manifest = _manager().manifest(module)
-    if manifest is None:
-        #: Roll back so an unloadable module does not stay in the list.
-        set_setting(
-            "hooks_imported", [item for item in imported if item != module]
-        )
-        _manager().reload()
-        raise ApiError(
-            "module is not a valid hook (needs __version__ and __author__)",
-            ErrorCode.PARAM_ERROR,
-        )
-    return ok({"item": manifest})
+    return ok({"item": _register_imported(module)})
 
 
 @bp.delete("/hooks/import/<module>")
 @admin_required
 def remove_hook(module: str):
-    """Stop loading an imported hook; the package itself is untouched."""
+    """Stop loading an imported hook.
+
+    ``?purge=1`` also deletes the package files from ``HOOK_PKG_STORAGE_DIR``;
+    without it the installed package stays usable by other deployments.
+    """
+    purge = as_bool(request.args.get("purge"))
     imported = _list_setting("hooks_imported")
-    if module not in imported:
+    if module not in imported and not purge:
         abort(404)
-    set_setting("hooks_imported", [item for item in imported if item != module])
+
+    if module in imported:
+        set_setting("hooks_imported", [item for item in imported if item != module])
+    files = hook_pkg.remove_package(module) if purge else []
     _manager().reload()
-    return ok({"module": module, "removed": True})
+    return ok({"module": module, "removed": True, "files": files})
+
+
+@bp.get("/hooks/packages")
+@admin_required
+def packages():
+    """Packages installed into the hook package directory."""
+    directory = hook_pkg.package_dir()
+    items = [
+        {"name": name, "version": version}
+        for name, version in sorted(hook_pkg.installed_versions().items())
+    ]
+    return ok(
+        {
+            "items": items,
+            "storage_dir": str(directory) if directory else "",
+            "configured": directory is not None,
+        }
+    )
+
+
+@bp.post("/hooks/install")
+@admin_required
+def install_package():
+    """``pip install`` a third-party hook package into the configured directory.
+
+    A failing pip run is answered with ``ok: false`` and the pip log instead of
+    an error envelope: the admin needs that output to fix the requirement.
+    """
+    data = request.get_json(silent=True) or {}
+    if not isinstance(data, dict):
+        raise ApiError("payload must be a JSON object", ErrorCode.PARAM_ERROR)
+
+    package = str(data.get("package") or "").strip()
+    index_url = str(data.get("index_url") or "").strip()
+    upgrade = bool(data.get("upgrade"))
+    module = str(data.get("module") or "").strip()
+    if module and not MODULE_RE.match(module):
+        raise ApiError("invalid module name", ErrorCode.PARAM_ERROR)
+
+    result = hook_pkg.install(package, index_url=index_url, upgrade=upgrade)
+    if not result["ok"]:
+        return ok({"install": result, "manifest": None})
+
+    _manager().reload()
+    manifest = _manager().manifest(module) if module else None
+    #: 包目录名与模块名相同时，扫描已自动加载；否则补一次按模块名导入。
+    if module and manifest is None and _manager().get(module) is None:
+        manifest = _register_imported(module)
+    return ok({"install": result, "manifest": manifest})
+
+
+@bp.get("/hooks/market")
+@admin_required
+def hook_market():
+    """Official third-party hook listing, one page at a time.
+
+    The listing is cached whole (six hours), so paging is a slice of that cache;
+    the local install/loaded state is merged into the page only, which keeps the
+    response small no matter how long the upstream list grows.
+    """
+    page, page_size = page_params(
+        hook_pkg.MARKET_PAGE_SIZE, hook_pkg.MAX_MARKET_PAGE_SIZE
+    )
+    data = hook_pkg.market_items(refresh=as_bool(request.args.get("refresh")))
+    located = slice_page(data["items"], page, page_size)
+
+    loaded = _manager().hooks
+    items = []
+    for entry in located["items"]:
+        hook = loaded.get(entry["module"])
+        item = dict(entry)
+        item["loaded"] = hook is not None
+        item["enabled"] = bool(hook.enabled) if hook is not None else False
+        item["installed"] = bool(item["installed_version"]) or hook is not None
+        items.append(item)
+    located["items"] = items
+
+    directory = hook_pkg.package_dir()
+    return ok(
+        {
+            **located,
+            "updated_at": data["updated_at"],
+            "market_url": hook_pkg.market_url(),
+            "storage_dir": str(directory) if directory else "",
+            "configured": directory is not None,
+        }
+    )
 
 
 @bp.get("/hooks/config")

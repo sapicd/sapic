@@ -26,7 +26,7 @@ from playhouse.migrate import SchemaMigrator, migrate
 from ..basis.db import db
 from ..models import ALL_MODELS, Album, Image, StorageBackend, User
 from ..models.base import BaseModel, JSONTextField, now
-from ..models.storage import SCOPE_SYSTEM
+from ..models.storage import SCOPE_SYSTEM, VISIBILITY_PUBLIC
 
 #: Substrings identifying transient lock errors raised by concurrent workers.
 _LOCK_ERRORS = ("locked", "busy", "deadlock")
@@ -192,6 +192,80 @@ def _v007_storage_scope_system() -> None:
     ).execute()
 
 
+def _index_columns(index) -> tuple:
+    """Index columns across Peewee versions (``IndexMetadata`` or a tuple)."""
+    columns = getattr(index, "columns", None)
+    if columns is None and isinstance(index, (tuple, list)):
+        columns = index[1]
+    return tuple(columns or ())
+
+
+def _v008_image_expire_at() -> None:
+    """Make the expiry sweep cheap: index ``images.expire_at``.
+
+    Old databases may predate the column entirely (it only existed in the
+    model), so the column is added first and both steps stay idempotent.
+    Fresh databases already get the index from ``Meta.indexes``; the check is
+    by column (not name) because the auto-generated names differ between
+    ``create_tables`` and the migrator.
+    """
+    migrator = SchemaMigrator.from_database(db)
+    columns = {column.name for column in db.get_columns("images")}
+    if "expire_at" not in columns:
+        migrate(migrator.add_column("images", "expire_at", IntegerField(null=True)))
+    indexed = {_index_columns(index) for index in db.get_indexes("images")}
+    if ("expire_at",) not in indexed:
+        migrate(migrator.add_index("images", ("expire_at",), False))
+
+
+def _v009_image_dimensions() -> None:
+    """Record the intrinsic pixel size measured at upload time."""
+    columns = {column.name for column in db.get_columns("images")}
+    migrator = SchemaMigrator.from_database(db)
+    operations = []
+    for name in ("width", "height"):
+        if name not in columns:
+            operations.append(
+                migrator.add_column("images", name, IntegerField(null=True))
+            )
+    if operations:
+        migrate(*operations)
+
+
+def _v010_user_status_reason() -> None:
+    """Keep the rejection reason so the applicant can be told why.
+
+    v1 stored it in the account hash; v2 needs a column before the review mail
+    can quote it.
+    """
+    columns = {column.name for column in db.get_columns("users")}
+    if "status_reason" in columns:
+        return
+    migrator = SchemaMigrator.from_database(db)
+    migrate(migrator.add_column("users", "status_reason", CharField(null=True)))
+
+
+def _v011_storage_visibility() -> None:
+    """Make ``storage_backends.visibility`` meaningful.
+
+    The column existed since v001 but nothing read it, so every row still holds
+    the old default (``private``). Rows become ``public`` to keep the behaviour
+    deployments already have — public images link straight to the driver URL —
+    and new rows default to ``public`` as well. ``private`` is now an explicit
+    per-backend choice.
+    """
+    columns = {column.name for column in db.get_columns("storage_backends")}
+    if "visibility" not in columns:
+        migrate(
+            SchemaMigrator.from_database(db).add_column(
+                "storage_backends",
+                "visibility",
+                CharField(max_length=16, default=VISIBILITY_PUBLIC),
+            )
+        )
+    StorageBackend.update(visibility=VISIBILITY_PUBLIC).execute()
+
+
 MIGRATIONS = [
     (1, "initial", _v001_initial),
     (2, "album_ownership", _v002_album_ownership),
@@ -200,6 +274,10 @@ MIGRATIONS = [
     (5, "plaza", _v005_plaza),
     (6, "image_source_url", _v006_image_source_url),
     (7, "storage_scope_system", _v007_storage_scope_system),
+    (8, "image_expire_at", _v008_image_expire_at),
+    (9, "image_dimensions", _v009_image_dimensions),
+    (10, "user_status_reason", _v010_user_status_reason),
+    (11, "storage_visibility", _v011_storage_visibility),
 ]
 
 

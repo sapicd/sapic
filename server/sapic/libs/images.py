@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import logging
 import socket
 from contextlib import closing
 from datetime import datetime
@@ -12,6 +13,7 @@ from hashlib import sha1
 from mimetypes import guess_type
 from os.path import splitext
 from posixpath import basename as posix_basename
+from time import monotonic
 from urllib.error import HTTPError, URLError
 from urllib.parse import unquote, urljoin, urlparse
 from urllib.request import (
@@ -31,19 +33,38 @@ from ..basis.errors import ApiError, ErrorCode
 from ..models import Album, AlbumShare, Image, ImageBackend, StorageBackend
 from ..models.album import VISIBILITY_PUBLIC
 from ..models.base import now
-from ..models.image import STATUS_DELETED, STATUS_ENABLED
+from ..models.image import (
+    STATUS_DELETED,
+    STATUS_ENABLED,
+    live_condition,
+    not_expired,
+)
 from ..models.storage import STATE_OK
 from .albums import resolve_album, share_for
 from .hook import get_hook_manager
+from .media import image_size, strip_metadata
 from .settings import get_setting
 from .storage import (
     delete_object,
     driver_backend,
     list_backends,
+    public_src,
     queue_replicas,
     replicas_for,
     save_object,
 )
+
+logger = logging.getLogger(__name__)
+
+#: 有效期按天配置：``0`` 表示不启用该规则（默认永久 / 不限制上限）。
+EXPIRE_DEFAULT_KEY = "image_expire_default_days"
+EXPIRE_MAX_KEY = "image_expire_max_days"
+DAY_SECONDS = 86400
+
+#: 到期清理节流：每个进程最多每 5 分钟扫一次，单次最多删 200 张。
+SWEEP_INTERVAL = 300
+SWEEP_BATCH = 200
+_last_sweep = 0.0
 
 IMAGE_EXTS = {
     ".jpg",
@@ -136,9 +157,10 @@ def image_src(
 ) -> str:
     """Direct link for public images, stable ``/raw/<sha>`` for the rest.
 
-    Public payloads link to the highest priority replica that reported a public
-    URL, which keeps sapic out of the data path; private images must stay behind
-    ``/raw/<sha>`` so the visibility check keeps applying.
+    Public payloads link to the highest priority replica whose backend is
+    world-readable, which keeps sapic out of the data path; private images — and
+    every image living on a ``private`` backend — must stay behind ``/raw/<sha>``
+    so the visibility check keeps applying.
     """
     if album is None:
         album = image.album
@@ -150,10 +172,41 @@ def image_src(
         if image.source_url:
             return image.source_url
         rows = replicas if replicas is not None else replicas_for(image)
-        #: 只看优先级最高的副本，与 /raw/<sha> 的输出顺序保持一致。
-        if rows and rows[0].url:
-            return rows[0].url
+        #: 仍然只看优先级最高的副本（与 /raw 的输出顺序一致）；但它若在私有桶里，
+        #: 匿名请求会 403，这种情况回落到 /raw，而不是借用低优先级副本的直链。
+        if rows:
+            src = public_src(rows[0])
+            if src:
+                return src
     return public_url(image.sha)
+
+
+def share_templates(
+    src: str, filename: str = "", title: str = "", is_video: bool = False
+) -> dict:
+    """Copy-paste snippets, mirroring v1's ``gen_url_tpl`` output.
+
+    The keys (``URL`` / ``HTML`` / ``Markdown`` / ``rST``) are part of the v1
+    contract, so an old template or script keeps working. Video Markdown/rST
+    use a ``<figure><iframe>`` like v1 did, because Markdown has no video syntax.
+    """
+    if is_video:
+        frame = (
+            "<figure><iframe src='%s' frameborder=0 "
+            "allow='allowfullscreen'></iframe></figure>" % src
+        )
+        return {
+            "URL": src,
+            "HTML": "<video src='%s' title='%s' controls></video>" % (src, title),
+            "rST": ".. raw:: html\n\n\t%s" % frame,
+            "Markdown": frame,
+        }
+    return {
+        "URL": src,
+        "HTML": "<img src='%s' title='%s' alt='%s'>" % (src, title, filename),
+        "rST": ".. image:: %s" % src,
+        "Markdown": "![%s](%s)" % (filename, src),
+    }
 
 
 def serialize_image(
@@ -161,6 +214,7 @@ def serialize_image(
     album: Album | None = None,
     replicas: list[ImageBackend] | None = None,
 ) -> dict:
+    src = image_src(image, album, replicas)
     return {
         "sha": image.sha,
         "filename": image.filename,
@@ -168,6 +222,9 @@ def serialize_image(
         "size": image.size,
         "mime": image.mime,
         "is_video": bool(image.is_video),
+        #: 上传时从文件头解析，外链登记与不可解析的载荷为 NULL。
+        "width": image.width,
+        "height": image.height,
         "visibility": image.visibility,
         #: NULL means "follow the album"; the effective value is for display.
         "plaza": image.plaza,
@@ -187,7 +244,14 @@ def serialize_image(
         "expire_at": image.expire_at,
         #: 外链登记（未下载）的图片，UI 据此打标并提示删除不影响源站。
         "external": bool(image.source_url),
-        "src": image_src(image, album, replicas),
+        "src": src,
+        #: 详情页的「分享代码」区块；模板里的地址就是上面的 src。
+        "tpl": share_templates(
+            src,
+            filename=image.filename,
+            title=image.title or "",
+            is_video=bool(image.is_video),
+        ),
     }
 
 
@@ -286,12 +350,17 @@ def _is_public_host(hostname: str) -> bool:
 
 
 def open_remote(
-    url: str, timeout: int = REMOTE_TIMEOUT, headers: dict | None = None
+    url: str,
+    timeout: int = REMOTE_TIMEOUT,
+    headers: dict | None = None,
+    allow_private: bool = False,
 ):
-    """Open a validated public http(s) URL for streaming.
+    """Open an http(s) URL for streaming.
 
     Redirects are validated hop by hop, so the caller must close the returned
-    response when done.
+    response when done. ``allow_private`` is for addresses the server produced
+    itself (a storage backend read URL): a self-hosted MinIO on ``10.x`` has to
+    work there. Never pass it for user supplied URLs — that is the SSRF guard.
     """
     opener = build_opener(_NoRedirect(), ProxyHandler({}))
     target = url
@@ -299,7 +368,7 @@ def open_remote(
         parsed = urlparse(target)
         if parsed.scheme not in ("http", "https") or not parsed.hostname:
             raise ApiError("only http(s) url is supported", ErrorCode.PARAM_ERROR)
-        if not _is_public_host(parsed.hostname):
+        if not allow_private and not _is_public_host(parsed.hostname):
             raise ApiError("url host is not allowed", ErrorCode.FORBIDDEN, 403)
         request_headers = {
             "User-Agent": REMOTE_USER_AGENT,
@@ -396,6 +465,119 @@ def process_stream(
     return processed, filename, mime
 
 
+def expire_limit_seconds() -> int:
+    """Site-wide cap for requested lifetimes; ``0`` means unlimited."""
+    try:
+        days = int(get_setting(EXPIRE_MAX_KEY, 0) or 0)
+    except (TypeError, ValueError):
+        return 0
+    return days * DAY_SECONDS if days > 0 else 0
+
+
+def expire_default_seconds() -> int:
+    """Lifetime applied when the client does not ask for one."""
+    try:
+        days = int(get_setting(EXPIRE_DEFAULT_KEY, 0) or 0)
+    except (TypeError, ValueError):
+        days = 0
+    seconds = days * DAY_SECONDS if days > 0 else 0
+    limit = expire_limit_seconds()
+    if not seconds:
+        #: 上限本身已禁止永久图片时，未指定就按上限处理，否则规则形同虚设。
+        return limit
+    return min(seconds, limit) if limit else seconds
+
+
+def resolve_expire_seconds(raw) -> int:
+    """Validate the ``expire`` upload parameter (seconds, ``0``/empty = default).
+
+    Returns the lifetime in seconds; ``0`` means the image never expires.
+    """
+    if raw in (None, "", 0, "0"):
+        return expire_default_seconds()
+    try:
+        seconds = int(raw)
+    except (TypeError, ValueError) as exc:
+        raise ApiError("invalid expire", ErrorCode.PARAM_ERROR) from exc
+    if seconds <= 0:
+        raise ApiError("invalid expire", ErrorCode.PARAM_ERROR)
+    limit = expire_limit_seconds()
+    if limit and seconds > limit:
+        raise ApiError(
+            "expire exceeds the site limit of %d days" % (limit // DAY_SECONDS),
+            ErrorCode.PARAM_ERROR,
+        )
+    return seconds
+
+
+def resolve_expire_at(raw) -> int | None:
+    """Validate an absolute ``expire_at`` for PATCH; ``None`` clears it."""
+    if raw in (None, "", 0, "0"):
+        return None
+    try:
+        timestamp = int(raw)
+    except (TypeError, ValueError) as exc:
+        raise ApiError("invalid expire_at", ErrorCode.PARAM_ERROR) from exc
+    moment = now()
+    #: 过去的时间等于「立即删除」，让调用方用 DELETE 表达这个意图。
+    if timestamp <= moment:
+        raise ApiError("expire_at must be in the future", ErrorCode.PARAM_ERROR)
+    limit = expire_limit_seconds()
+    if limit and timestamp > moment + limit:
+        raise ApiError(
+            "expire_at exceeds the site limit of %d days" % (limit // DAY_SECONDS),
+            ErrorCode.PARAM_ERROR,
+        )
+    return timestamp
+
+
+def anonymous_upload_allowed() -> bool:
+    """Anonymous uploads are on when either the deploy flag or the site setting is."""
+    if current_app.config.get("ALLOW_ANONYMOUS_UPLOAD", False):
+        return True
+    return bool(get_setting("allow_anonymous_upload", False))
+
+
+def allowed_suffixes() -> set[str]:
+    """Site-level extension whitelist; empty means "no extra restriction"."""
+    raw = str(get_setting("upload_allowed_ext", "") or "")
+    return {
+        "." + item.strip().lower().lstrip(".")
+        for item in raw.split(",")
+        if item.strip()
+    }
+
+
+def size_limit_mb(filename: str) -> int:
+    """Per-type single file limit: videos and images have separate budgets."""
+    video = splitext(filename)[-1].lower() in VIDEO_EXTS
+    key = "upload_video_max_size" if video else "upload_image_max_size"
+    default = 20 if video else 10
+    try:
+        return int(get_setting(key, default) or default)
+    except (TypeError, ValueError):
+        return default
+
+
+def fetch_limit_mb() -> int:
+    """Cap for a URL fetch, where the media type is unknown until downloaded."""
+    return max(size_limit_mb("probe.mp4"), size_limit_mb("probe.png"))
+
+
+def check_upload_limits(filename: str, size: int) -> None:
+    """Enforce the site settings that apply to every upload (native or legacy)."""
+    suffix = splitext(filename)[-1].lower()
+    allowed = allowed_suffixes()
+    if allowed and suffix not in allowed:
+        raise ApiError("file type is not allowed", ErrorCode.PARAM_ERROR)
+    if suffix in VIDEO_EXTS and not get_setting("allow_video", True):
+        raise ApiError("video upload is disabled", ErrorCode.FORBIDDEN, 403)
+
+    limit_mb = size_limit_mb(filename)
+    if size > limit_mb * 1024 * 1024:
+        raise ApiError("file exceeds %d MB" % limit_mb, ErrorCode.PARAM_ERROR, 413)
+
+
 def create_image(
     owner,
     filename: str,
@@ -425,10 +607,14 @@ def create_image(
     if not stream:
         raise ApiError("empty file", ErrorCode.PARAM_ERROR)
 
+    #: 先剥掉 EXIF/XMP 再处理：落盘的字节里不留拍摄时间、相机与 GPS。
+    stream = strip_metadata(stream, suffix)
     stream, filename, mime = process_stream(stream, filename, mime)
     suffix = splitext(filename)[-1].lower()
     if not stream:
         raise ApiError("empty file", ErrorCode.PARAM_ERROR)
+    #: 尺寸取「实际落盘」的字节：pic2webp 之类的处理器可能换掉格式。
+    dimensions = image_size(stream, suffix)
 
     sha = make_sha(filename)
     #: 同一用户同一天可能上传同名文件，key 里加一段 sha 片段避免互相覆盖。
@@ -465,6 +651,8 @@ def create_image(
                 size=len(stream),
                 mime=(mime or "")[:64],
                 is_video=suffix in VIDEO_EXTS,
+                width=dimensions[0] if dimensions else None,
+                height=dimensions[1] if dimensions else None,
                 status=STATUS_ENABLED,
                 visibility=None,
                 created_at=now(),
@@ -547,6 +735,7 @@ def create_external_image(
         (Image.owner == owner)
         & (Image.source_url == url)
         & (Image.status == STATUS_ENABLED)
+        & not_expired()
     ):
         raise ApiError("link already imported", ErrorCode.CONFLICT, 409)
 
@@ -598,7 +787,7 @@ def effective_plaza(image: Image, album: Album | None = None) -> bool:
     return bool(album.plaza) if album is not None else False
 
 
-def _public_condition():
+def public_condition():
     """Effective visibility is public (image override or album)."""
     return (Image.visibility == VISIBILITY_PUBLIC) | (
         Image.visibility.is_null()
@@ -616,7 +805,7 @@ def visible_query(user):
     query = (
         Image.select(Image)
         .join(Album, JOIN.LEFT_OUTER, on=(Image.album == Album.id))
-        .where(Image.status == STATUS_ENABLED)
+        .where(live_condition())
     )
 
     if user is None:
@@ -643,8 +832,8 @@ def plaza_query():
         Image.select(Image)
         .join(Album, JOIN.LEFT_OUTER, on=(Image.album == Album.id))
         .where(
-            (Image.status == STATUS_ENABLED)
-            & _public_condition()
+            live_condition()
+            & public_condition()
             & (
                 (Image.plaza.is_null(False) & Image.plaza)
                 | (Image.plaza.is_null() & Album.plaza)
@@ -656,7 +845,7 @@ def plaza_query():
 def album_image_count(album: Album) -> int:
     return (
         Image.select(fn.COUNT(Image.id))
-        .where((Image.album == album) & (Image.status == STATUS_ENABLED))
+        .where((Image.album == album) & live_condition())
         .scalar()
         or 0
     )
@@ -674,3 +863,52 @@ def delete_image(image: Image) -> None:
         if replica.state == STATE_OK:
             delete_object(image, replica)
         replica.delete_instance()
+
+
+def expired_query():
+    """Enabled images whose ``expire_at`` has been reached."""
+    return Image.select(Image).where(
+        (Image.status == STATUS_ENABLED)
+        & Image.expire_at.is_null(False)
+        & (Image.expire_at <= now())
+    )
+
+
+def purge_image(image: Image) -> None:
+    """Delete an expired image for good: files first, then the row.
+
+    Expiry means "gone", not "hidden", so the metadata is dropped instead of
+    being soft deleted: the sha is never reused, and keeping dead rows only
+    makes the sweeper's ``WHERE`` slower.
+    """
+    delete_image(image)
+    image.delete_instance()
+
+
+def purge_expired(limit: int = SWEEP_BATCH) -> int:
+    """Hard delete up to ``limit`` expired images, returning how many went."""
+    removed = 0
+    for image in list(expired_query().order_by(Image.expire_at).limit(limit)):
+        purge_image(image)
+        removed += 1
+    return removed
+
+
+def sweep_expired(interval: int = SWEEP_INTERVAL, limit: int = SWEEP_BATCH) -> int:
+    """Opportunistic cleanup so expiry works without a cron job.
+
+    Called from a ``before_request`` hook, hence the per-process throttle: at
+    most one small batch every ``interval`` seconds. Failures are logged and
+    swallowed, a broken storage driver must never break a request.
+    """
+    global _last_sweep
+    moment = monotonic()
+    if moment - _last_sweep < interval:
+        return 0
+    #: 先记时间戳：清理本身报错也不会让每个请求都重试一次。
+    _last_sweep = moment
+    try:
+        return purge_expired(limit)
+    except Exception:  # pragma: no cover - defensive
+        logger.exception("failed to purge expired images")
+        return 0

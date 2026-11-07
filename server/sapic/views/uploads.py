@@ -3,20 +3,20 @@
 
 from __future__ import annotations
 
-from os.path import splitext
-
-from flask import Blueprint, current_app, request
+from flask import Blueprint, request
 
 from ..basis.errors import ApiError, ErrorCode
 from ..libs.albums import can_write
 from ..libs.auth import SCOPE_UPLOAD, current_user, require_scope
 from ..libs.images import (
-    VIDEO_EXTS,
+    anonymous_upload_allowed,
+    check_upload_limits,
     create_image,
     download_image,
+    fetch_limit_mb,
+    resolve_expire_seconds,
     serialize_image,
 )
-from ..libs.settings import get_setting
 from ..models import Album
 from ..models.user import STATUS_DISABLED, STATUS_PENDING, STATUS_REJECTED
 from ..utils.web import ok
@@ -24,37 +24,6 @@ from ..utils.web import ok
 bp = Blueprint("uploads", __name__)
 
 BLOCKED_STATUS = (STATUS_REJECTED, STATUS_PENDING, STATUS_DISABLED)
-
-
-def anonymous_upload_allowed() -> bool:
-    """Anonymous uploads are on when either the deploy flag or the site setting is."""
-    if current_app.config.get("ALLOW_ANONYMOUS_UPLOAD", False):
-        return True
-    return bool(get_setting("allow_anonymous_upload", False))
-
-
-def _allowed_suffixes() -> set[str]:
-    """Site-level extension whitelist; empty means "no extra restriction"."""
-    raw = str(get_setting("upload_allowed_ext", "") or "")
-    return {
-        "." + item.strip().lower().lstrip(".")
-        for item in raw.split(",")
-        if item.strip()
-    }
-
-
-def _check_upload_limits(filename: str, size: int) -> None:
-    """Enforce the site settings that apply to every native upload."""
-    suffix = splitext(filename)[-1].lower()
-    allowed = _allowed_suffixes()
-    if allowed and suffix not in allowed:
-        raise ApiError("file type is not allowed", ErrorCode.PARAM_ERROR)
-    if suffix in VIDEO_EXTS and not get_setting("allow_video", True):
-        raise ApiError("video upload is disabled", ErrorCode.FORBIDDEN, 403)
-
-    limit_mb = int(get_setting("upload_max_size", 20) or 20)
-    if size > limit_mb * 1024 * 1024:
-        raise ApiError("file exceeds %d MB" % limit_mb, ErrorCode.PARAM_ERROR, 413)
 
 
 @bp.post("/uploads")
@@ -82,13 +51,15 @@ def upload():
         mime = file.mimetype or ""
         stream = file.stream.read()
     else:
-        #: URL 上传由服务端抓取，下载阶段就按大小上限截断，避免把整段内容读进内存。
-        limit_mb = int(get_setting("upload_max_size", 20) or 20)
-        stream, filename, mime = download_image(remote_url, limit_mb * 1024 * 1024)
+        #: URL 上传由服务端抓取：下载前还不知道类型，先按两类里较大的上限截断，
+        #: 拿到真实文件名后再走 check_upload_limits 按类型判定。
+        stream, filename, mime = download_image(
+            remote_url, fetch_limit_mb() * 1024 * 1024
+        )
 
     if not stream:
         raise ApiError("empty file", ErrorCode.PARAM_ERROR)
-    _check_upload_limits(filename, len(stream))
+    check_upload_limits(filename, len(stream))
 
     album = None
     album_id = request.form.get("album_id")
@@ -104,12 +75,8 @@ def upload():
         if album is None or not can_write(user, album):
             raise ApiError("album not found", ErrorCode.NOT_FOUND, 404)
 
-    expire = 0
-    if request.form.get("expire"):
-        try:
-            expire = int(request.form.get("expire"))
-        except (TypeError, ValueError) as exc:
-            raise ApiError("invalid expire", ErrorCode.PARAM_ERROR) from exc
+    #: ``expire`` 是秒数（与 v1 一致），空值按站点默认有效期，0 表示永久。
+    expire = resolve_expire_seconds(request.form.get("expire"))
 
     image = create_image(
         owner=user,
