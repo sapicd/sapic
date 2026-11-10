@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html  lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>libs.hook</title>
+    
+      <link rel="stylesheet" href="../../_static/pygments.css">
+      <link rel="stylesheet" href="../../_static/theme.css">
+      <link rel="stylesheet" href="../../_static/sphinx_press_theme.css">
+          <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+          <link rel="stylesheet" href="../../_static/css/theme.css " type="text/css" />
+          <link rel="stylesheet" href="../../_static/sphinxcontrib-httpexample.css" type="text/css" />
+      
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+
+      <!-- sphinx script_files -->
+        <script src="../../_static/documentation_options.js?v=c6c5d30b"></script>
+        <script src="../../_static/doctools.js?v=9bcbadda"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../_static/sphinxcontrib-httpexample.js"></script>
+        <script src="../../_static/translations.js?v=beaddf03"></script>
+
+      
+      <script src="../../_static/theme-vendors.js"></script>
+      <script src="../../_static/theme.js" defer></script>
+    
+  <link rel="index" title="索引" href="../../genindex.html" />
+  <link rel="search" title="搜索" href="../../search.html" /> 
+  </head>
+
+  <body>
+    <div id="app" class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="../../index.html" class="home-link">
+    
+      <span class="site-name">sapic</span>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+
+
+  
+    <div class="nav-item">
+      <a href="http://demo.sapicd.com"
+        class="nav-link external">
+          Demo <outboundlink/>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://github.com/sapicd/sapic"
+        class="nav-link external">
+          GitHub <outboundlink/>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://gitee.com/staugur/picbed"
+        class="nav-link external">
+          Gitee <outboundlink/>
+      </a>
+    </div>
+  
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+
+
+  
+    <div class="nav-item">
+      <a href="http://demo.sapicd.com"
+        class="nav-link external">
+          Demo <outboundlink/>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://github.com/sapicd/sapic"
+        class="nav-link external">
+          GitHub <outboundlink/>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://gitee.com/staugur/picbed"
+        class="nav-link external">
+          Gitee <outboundlink/>
+      </a>
+    </div>
+  
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">快速搜索</span>
+    <div class="searchformwrapper">
+      <form class="search" action="../../search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="搜索" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="../../index.html#sapic">sapic - 简约不小气的自建图床程序</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 "><a href="../../install.html" class="reference internal ">部署安装</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../docker.html" class="reference internal ">使用Docker部署</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../usage.html" class="reference internal ">使用说明 - 概述</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../linktoken.html" class="reference internal ">使用说明 - LinkToken及应用</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../cli.html" class="reference internal ">使用说明 - sapicli</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../admin.html" class="reference internal ">使用说明 - 站点管理</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../hook.html" class="reference internal ">钩子</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../api.html" class="reference internal ">RESTful API</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../module.html" class="reference internal ">Modules API</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../faq.html" class="reference internal ">FAQ</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../changelog.html" class="reference internal ">更新日志</a>
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+    
+      <li><a href="../index.html">模块代码</a> &raquo;</li>
+    
+    <li>libs.hook</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main" v-pre>
+            
+  <h1>libs.hook 源代码</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    libs.hook</span>
+<span class="sd">    ~~~~~~~~~</span>
+
+<span class="sd">    As a proxy to dynamically load and unload hook methods.</span>
+
+<span class="sd">    :copyright: (c) 2019 by staugur.</span>
+<span class="sd">    :license: BSD 3-Clause, see LICENSE for more details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sys</span><span class="w"> </span><span class="kn">import</span> <span class="n">modules</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">os</span><span class="w"> </span><span class="kn">import</span> <span class="n">listdir</span><span class="p">,</span> <span class="n">getpid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">join</span><span class="p">,</span>
+    <span class="n">dirname</span><span class="p">,</span>
+    <span class="n">abspath</span><span class="p">,</span>
+    <span class="n">isdir</span><span class="p">,</span>
+    <span class="n">isfile</span><span class="p">,</span>
+    <span class="n">splitext</span><span class="p">,</span>
+    <span class="n">basename</span><span class="p">,</span>
+    <span class="n">getmtime</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jinja2</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChoiceLoader</span><span class="p">,</span> <span class="n">FileSystemLoader</span><span class="p">,</span> <span class="n">PackageLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flask</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">render_template</span><span class="p">,</span>
+    <span class="n">render_template_string</span><span class="p">,</span>
+    <span class="n">abort</span><span class="p">,</span>
+    <span class="n">send_from_directory</span><span class="p">,</span>
+    <span class="n">url_for</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">markupsafe</span><span class="w"> </span><span class="kn">import</span> <span class="n">Markup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.tool</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Attribution</span><span class="p">,</span>
+    <span class="n">is_valid_verion</span><span class="p">,</span>
+    <span class="n">is_match_appversion</span><span class="p">,</span>
+    <span class="n">logger</span><span class="p">,</span>
+    <span class="n">parse_author_mail</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils._compat</span><span class="w"> </span><span class="kn">import</span> <span class="n">string_types</span><span class="p">,</span> <span class="n">integer_types</span><span class="p">,</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">text_type</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">config</span><span class="w"> </span><span class="kn">import</span> <span class="n">GLOBAL</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_storage</span>
+
+
+<div class="viewcode-block" id="HookManager">
+<a class="viewcode-back" href="../../module.html#libs.hook.HookManager">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HookManager</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">app</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">hooks_dir</span><span class="o">=</span><span class="s2">&quot;hooks&quot;</span><span class="p">,</span>
+        <span class="n">reload_time</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span>
+        <span class="n">third_hooks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Receive initialization parameters and</span>
+<span class="sd">        pass options to :meth:`init_app` method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__storage</span> <span class="o">=</span> <span class="n">get_storage</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__hf</span> <span class="o">=</span> <span class="n">hooks_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__hook_dir</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))),</span> <span class="bp">self</span><span class="o">.</span><span class="n">__hf</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__MAX_RELOAD_TIME</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">GLOBAL</span><span class="p">[</span><span class="s2">&quot;HookReloadTime&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">reload_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__third_hooks</span> <span class="o">=</span> <span class="n">third_hooks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__last_load_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="c1">#: hook static endpoint and url_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__static_endpoint</span> <span class="o">=</span> <span class="s2">&quot;assets&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__static_url_path</span> <span class="o">=</span> <span class="s2">&quot;/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__static_endpoint</span><span class="p">)</span>
+        <span class="c1">#: local and thirds hooks data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__hooks</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1">#: Initialize app via a factory</span>
+        <span class="k">if</span> <span class="n">app</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_app</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+
+<div class="viewcode-block" id="HookManager.init_app">
+<a class="viewcode-back" href="../../module.html#libs.hook.HookManager.init_app">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__init_load_hooks</span><span class="p">()</span>
+        <span class="c1">#: Register template variable</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">jinja_env</span><span class="o">.</span><span class="n">globals</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">intpl</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">call_intpl</span><span class="p">,</span>
+            <span class="n">get_call_list</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_call_list</span><span class="p">,</span>
+            <span class="n">emit_assets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">emit_assets</span><span class="p">,</span>
+            <span class="n">es</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">emit_assets</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1">#: Custom add multiple template folders.</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">jinja_loader</span> <span class="o">=</span> <span class="n">ChoiceLoader</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">app</span><span class="o">.</span><span class="n">jinja_loader</span><span class="p">,</span>
+                <span class="n">FileSystemLoader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__get_valid_tpl</span><span class="p">),</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1">#: Add a static rule for plugins</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">add_url_rule</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/&lt;hook_name&gt;/&lt;path:filename&gt;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__static_url_path</span><span class="p">),</span>
+            <span class="n">endpoint</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__static_endpoint</span><span class="p">,</span>
+            <span class="n">view_func</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_send_static_file</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1">#: register extension with app</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">extensions</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="s2">&quot;extensions&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">extensions</span><span class="p">[</span><span class="s2">&quot;hookmanager&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">getpid</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__last_load_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">hlt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__storage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hookloadtime&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="n">hlt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pid</span><span class="p">)</span>
+
+    <span class="nd">@__last_load_time</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__last_load_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">timestamp</span><span class="p">,</span> <span class="p">(</span><span class="n">integer_types</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;The value of last_load_time type error&quot;</span><span class="p">)</span>
+        <span class="n">hlt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__storage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hookloadtime&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">timestamp</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">hlt</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">hlt</span><span class="p">)}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">hlt</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_pid</span><span class="p">]</span> <span class="o">=</span> <span class="n">timestamp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__storage</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;hookloadtime&quot;</span><span class="p">,</span> <span class="n">hlt</span><span class="p">)</span>
+
+    <span class="nd">@__last_load_time</span><span class="o">.</span><span class="n">deleter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__last_load_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;hookloadtime&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__storage</span><span class="o">.</span><span class="n">list</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">__storage</span><span class="p">[</span><span class="s2">&quot;hookloadtime&quot;</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">__last_load_time</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__ensure_reloaded</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">hlt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__storage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hookloadtime&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">myself</span> <span class="o">=</span> <span class="n">hlt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">myself</span> <span class="ow">or</span> <span class="p">(</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">myself</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">__MAX_RELOAD_TIME</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__hooks</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__last_load_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__third_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__storage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hookthirds&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
+
+    <span class="nd">@__third_hooks</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__third_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">third_hook_module_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;添加/删除第三方钩子</span>
+
+<span class="sd">        :param str,list third_hook_module_name: 模块名</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">third_hook_module_name</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">hooks</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__storage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hookthirds&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">third_hook_module_name</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">third_hook_module_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;:delete&quot;</span><span class="p">):</span>
+                <span class="n">delete_name</span> <span class="o">=</span> <span class="n">third_hook_module_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">delete_name</span> <span class="ow">in</span> <span class="n">hooks</span><span class="p">:</span>
+                    <span class="n">hooks</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">delete_name</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">hooks</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">third_hook_module_name</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">third_hook_module_name</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="n">hooks</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">third_hook_module_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__storage</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;hookthirds&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">hooks</span><span class="p">)))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__get_state_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__storage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hookstate&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="s2">&quot;DISABLED.</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">name</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="s2">&quot;ENABLED.</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;enabled&quot;</span>
+        <span class="k">elif</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;disabled&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_state_storage</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">state</span>
+        <span class="k">return</span> <span class="n">s</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__set_state_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__storage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hookstate&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="s2">&quot;DISABLED.</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">name</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="s2">&quot;ENABLED.</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="s2">&quot;disabled&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="s2">&quot;enabled&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__storage</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;hookstate&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__get_fileorparent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">ask_dir</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">py</span> <span class="o">=</span> <span class="n">abspath</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="vm">__file__</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.pyc&quot;</span><span class="p">,</span> <span class="s2">&quot;.py&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">dirname</span><span class="p">(</span><span class="n">py</span><span class="p">)</span> <span class="k">if</span> <span class="n">ask_dir</span> <span class="k">else</span> <span class="n">py</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__init_load_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__scan_local</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__scan_third</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__scan_local</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__hook_dir</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__hook_dir</span><span class="p">):</span>
+                <span class="n">fn</span><span class="p">,</span> <span class="n">fs</span> <span class="o">=</span> <span class="n">splitext</span><span class="p">(</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+                <span class="n">fa</span><span class="p">,</span> <span class="n">fm</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__hook_dir</span><span class="p">,</span> <span class="n">f</span><span class="p">),</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">.</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__hf</span><span class="p">,</span> <span class="n">fn</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fa</span><span class="p">)</span> <span class="ow">and</span> <span class="n">fn</span> <span class="o">!=</span> <span class="s2">&quot;__init__&quot;</span> <span class="ow">and</span> <span class="n">fs</span> <span class="o">==</span> <span class="s2">&quot;.py&quot;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">fm</span> <span class="ow">in</span> <span class="n">modules</span><span class="p">:</span>
+                        <span class="c1">#: The mtime timestamp of the file when the module</span>
+                        <span class="c1">#: was first imported.</span>
+                        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">modules</span><span class="p">[</span><span class="n">fm</span><span class="p">],</span> <span class="s2">&quot;__mtime__&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">getmtime</span><span class="p">(</span><span class="n">fa</span><span class="p">):</span>
+                            <span class="k">del</span> <span class="n">modules</span><span class="p">[</span><span class="n">fm</span><span class="p">]</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">fo</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="n">fm</span><span class="p">,</span> <span class="n">fromlist</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__hook_dir</span><span class="p">])</span>
+                    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">fo</span><span class="p">,</span> <span class="s2">&quot;__version__&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span>
+                        <span class="n">fo</span><span class="p">,</span> <span class="s2">&quot;__author__&quot;</span>
+                    <span class="p">):</span>
+                        <span class="n">fo</span><span class="o">.</span><span class="n">__mtime__</span> <span class="o">=</span> <span class="n">getmtime</span><span class="p">(</span><span class="n">fa</span><span class="p">)</span>
+                        <span class="n">fo</span><span class="o">.</span><span class="n">__family__</span> <span class="o">=</span> <span class="s2">&quot;local&quot;</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">__hooks</span><span class="p">[</span><span class="n">fm</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_meta</span><span class="p">(</span><span class="n">fo</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__scan_third</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__third_hooks</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__third_hooks</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">hn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__third_hooks</span><span class="p">:</span>
+                <span class="c1">#: hn: the name of the hook module that can be imported</span>
+                <span class="k">if</span> <span class="n">hn</span> <span class="ow">in</span> <span class="n">modules</span><span class="p">:</span>
+                    <span class="n">hm</span> <span class="o">=</span> <span class="n">modules</span><span class="p">[</span><span class="n">hn</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">hm</span><span class="p">,</span> <span class="s2">&quot;__mtime__&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">getmtime</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">__get_fileorparent</span><span class="p">(</span><span class="n">hm</span><span class="p">)</span>
+                    <span class="p">):</span>
+                        <span class="k">del</span> <span class="n">modules</span><span class="p">[</span><span class="n">hn</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">ho</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="n">hn</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ho</span><span class="p">,</span> <span class="s2">&quot;__version__&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ho</span><span class="p">,</span> <span class="s2">&quot;__author__&quot;</span><span class="p">):</span>
+                    <span class="c1">#: 语义化版本号</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_valid_verion</span><span class="p">(</span><span class="n">ho</span><span class="o">.</span><span class="n">__version__</span><span class="p">):</span>
+                        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: irregular version number&quot;</span> <span class="o">%</span> <span class="n">hn</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                    <span class="c1">#: 匹配扩展要求的应用版本</span>
+                    <span class="n">appversion</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ho</span><span class="p">,</span> <span class="s2">&quot;__appversion__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_match_appversion</span><span class="p">(</span><span class="n">appversion</span><span class="p">):</span>
+                        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                            <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: app version number does not match for </span><span class="si">%s</span><span class="s2">&quot;</span>
+                            <span class="o">%</span> <span class="p">(</span><span class="n">hn</span><span class="p">,</span> <span class="n">appversion</span><span class="p">)</span>
+                        <span class="p">)</span>
+                        <span class="k">continue</span>
+                    <span class="n">ho</span><span class="o">.</span><span class="n">__mtime__</span> <span class="o">=</span> <span class="n">getmtime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__get_fileorparent</span><span class="p">(</span><span class="n">ho</span><span class="p">))</span>
+                    <span class="n">ho</span><span class="o">.</span><span class="n">__family__</span> <span class="o">=</span> <span class="s2">&quot;third&quot;</span>
+                    <span class="n">ho</span><span class="o">.</span><span class="n">__module_name__</span> <span class="o">=</span> <span class="n">hn</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__hooks</span><span class="p">[</span><span class="n">hn</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_meta</span><span class="p">(</span><span class="n">ho</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__get_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f_obj</span><span class="p">):</span>
+        <span class="c1">#: 钩子友好的可见名，非模块名</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span>
+            <span class="n">f_obj</span><span class="p">,</span>
+            <span class="s2">&quot;__hookname__&quot;</span><span class="p">,</span>
+            <span class="n">f_obj</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_state_storage</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">f_obj</span><span class="p">,</span> <span class="s2">&quot;__state__&quot;</span><span class="p">,</span> <span class="s2">&quot;enabled&quot;</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">author</span><span class="p">,</span> <span class="n">mail</span><span class="p">)</span> <span class="o">=</span> <span class="n">parse_author_mail</span><span class="p">(</span><span class="n">f_obj</span><span class="o">.</span><span class="n">__author__</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Attribution</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;author&quot;</span><span class="p">:</span> <span class="n">author</span><span class="p">,</span>
+                <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="n">mail</span><span class="p">,</span>
+                <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">f_obj</span><span class="o">.</span><span class="n">__version__</span><span class="p">,</span>
+                <span class="s2">&quot;appversion&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">f_obj</span><span class="p">,</span> <span class="s2">&quot;__appversion__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">f_obj</span><span class="p">,</span> <span class="s2">&quot;__description__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="s2">&quot;state&quot;</span><span class="p">:</span> <span class="n">state</span><span class="p">,</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;proxy&quot;</span><span class="p">:</span> <span class="n">f_obj</span><span class="p">,</span>
+                <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">time</span><span class="p">(),</span>
+                <span class="s2">&quot;catalog&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">f_obj</span><span class="p">,</span> <span class="s2">&quot;__catalog__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="s2">&quot;tplpath&quot;</span><span class="p">:</span> <span class="n">join</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__get_fileorparent</span><span class="p">(</span><span class="n">f_obj</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span> <span class="s2">&quot;templates&quot;</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;atspath&quot;</span><span class="p">:</span> <span class="n">join</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__get_fileorparent</span><span class="p">(</span><span class="n">f_obj</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span> <span class="s2">&quot;static&quot;</span>
+                <span class="p">),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__get_valid_tpl</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">h</span><span class="o">.</span><span class="n">tplpath</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all_hooks</span> <span class="k">if</span> <span class="n">isdir</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">tplpath</span><span class="p">)]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_all_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all hooks, enabled and disabled, returns list&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__ensure_reloaded</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__hooks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__init_load_hooks</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">hooks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__hooks</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hooks</span><span class="p">:</span>
+                <span class="n">h</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_state</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all_hooks</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_all_hooks_for_api</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;query hook for admin api&quot;&quot;&quot;</span>
+        <span class="n">hooks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all_hooks</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">h</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="n">h</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+                <span class="n">version</span><span class="o">=</span><span class="n">h</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+                <span class="n">appversion</span><span class="o">=</span><span class="n">h</span><span class="o">.</span><span class="n">appversion</span><span class="p">,</span>
+                <span class="n">author</span><span class="o">=</span><span class="n">h</span><span class="o">.</span><span class="n">author</span><span class="p">,</span>
+                <span class="n">email</span><span class="o">=</span><span class="n">h</span><span class="o">.</span><span class="n">email</span><span class="p">,</span>
+                <span class="n">catalog</span><span class="o">=</span><span class="n">h</span><span class="o">.</span><span class="n">catalog</span><span class="p">,</span>
+                <span class="n">state</span><span class="o">=</span><span class="n">h</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+                <span class="n">ltime</span><span class="o">=</span><span class="n">h</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                <span class="n">mtime</span><span class="o">=</span><span class="n">h</span><span class="o">.</span><span class="n">proxy</span><span class="o">.</span><span class="n">__mtime__</span><span class="p">,</span>
+                <span class="n">family</span><span class="o">=</span><span class="n">h</span><span class="o">.</span><span class="n">proxy</span><span class="o">.</span><span class="n">__family__</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hooks</span>
+        <span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_map_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all hooks, enabled and disabled, returns dict&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">h</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all_hooks</span><span class="p">}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_enabled_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all enabled hooks, return list&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all_hooks</span> <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s2">&quot;enabled&quot;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_enabled_map_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get map enabled hooks, return dict&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="n">h</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_map_hooks</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s2">&quot;enabled&quot;</span>
+        <span class="p">}</span>
+
+<div class="viewcode-block" id="HookManager.disable">
+<a class="viewcode-back" href="../../module.html#libs.hook.HookManager.disable">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">disable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;禁用钩子&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_map_hooks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__set_state_storage</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;disabled&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HookManager.enable">
+<a class="viewcode-back" href="../../module.html#libs.hook.HookManager.enable">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">enable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;启用钩子&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_map_hooks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__set_state_storage</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;enabled&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HookManager.reload">
+<a class="viewcode-back" href="../../module.html#libs.hook.HookManager.reload">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__hooks</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__last_load_time</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__init_load_hooks</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="HookManager.add_third_hook">
+<a class="viewcode-back" href="../../module.html#libs.hook.HookManager.add_third_hook">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_third_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">third_hook_module_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;添加第三方钩子</span>
+
+<span class="sd">        :param str third_hook_module_name: 钩子可直接导入的模块名</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">third_hook_module_name</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__third_hooks</span> <span class="o">=</span> <span class="n">third_hook_module_name</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;app&quot;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">jinja_loader</span><span class="o">.</span><span class="n">loaders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">PackageLoader</span><span class="p">(</span><span class="n">third_hook_module_name</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">jinja_loader</span><span class="o">.</span><span class="n">loaders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">PackageLoader</span><span class="p">(</span><span class="n">third_hook_module_name</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                    <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="HookManager.remove_third_hook">
+<a class="viewcode-back" href="../../module.html#libs.hook.HookManager.remove_third_hook">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_third_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">third_hook_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;移除第三方钩子</span>
+
+<span class="sd">        :param str third_hook_name: 钩子名（非模块名）</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">third_hook_name</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="n">third_hook_name</span><span class="p">,</span> <span class="n">is_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">p</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">__family__</span> <span class="o">==</span> <span class="s2">&quot;third&quot;</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">&quot;__module_name__&quot;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__third_hooks</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">:delete&quot;</span> <span class="o">%</span> <span class="n">p</span><span class="o">.</span><span class="n">__module_name__</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="HookManager.proxy">
+<a class="viewcode-back" href="../../module.html#libs.hook.HookManager.proxy">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">is_enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;代理到钩子中执行方法</span>
+
+<span class="sd">        :param str name: 钩子名称（__hookname__），非其模块名</span>
+<span class="sd">        :param bool is_enabled: True表示仅从已启用钩子中查找方法，否则查找所有</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">is_enabled</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_enabled_map_hooks</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_enabled_map_hooks</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;proxy&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_map_hooks</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_map_hooks</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;proxy&quot;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="HookManager.get_call_list">
+<a class="viewcode-back" href="../../module.html#libs.hook.HookManager.get_call_list">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_call_list</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">_callname</span><span class="p">,</span> <span class="n">_include</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_exclude</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_type</span><span class="o">=</span><span class="s2">&quot;all&quot;</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取所有启用钩子的某个类型对应的方法/变量&quot;&quot;&quot;</span>
+        <span class="n">hooks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_enabled_hooks</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">_include</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_include</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_include</span><span class="p">:</span>
+                    <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">_exclude</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_exclude</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">_exclude</span><span class="p">:</span>
+                    <span class="k">continue</span>
+            <span class="n">hin</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">tpl</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">proxy</span><span class="p">,</span> <span class="s2">&quot;intpl_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">_callname</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">cn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">proxy</span><span class="p">,</span> <span class="n">_callname</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">_type</span> <span class="o">==</span> <span class="s2">&quot;func&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">cn</span><span class="p">):</span>
+                    <span class="n">hin</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">_type</span> <span class="o">==</span> <span class="s2">&quot;tpl&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">tpl</span><span class="p">:</span>
+                    <span class="n">hin</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">_type</span> <span class="o">==</span> <span class="s2">&quot;bool&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">cn</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                    <span class="n">hin</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">cn</span><span class="p">)</span> <span class="ow">or</span> <span class="n">tpl</span><span class="p">:</span>
+                    <span class="n">hin</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="n">hin</span><span class="p">:</span>
+                <span class="n">hooks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">h</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">h</span><span class="o">.</span><span class="n">description</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">hooks</span></div>
+
+
+<div class="viewcode-block" id="HookManager.call">
+<a class="viewcode-back" href="../../module.html#libs.hook.HookManager.call">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">_funcname</span><span class="p">,</span>
+        <span class="n">_include</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">_exclude</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">_every</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">_mode</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Try to execute the func method in all enabled hooks.</span>
+
+<span class="sd">        .. versionchanged:: 1.7.0</span>
+<span class="sd">            add param `_mode` and `_every`</span>
+
+<span class="sd">        .. versionchanged:: 1.9.0</span>
+<span class="sd">            _mode add any_false</span>
+
+<span class="sd">        .. deprecated:: 1.8.0</span>
+<span class="sd">            _callback replaced by `_every`;</span>
+<span class="sd">            args replaced by `_args`;</span>
+<span class="sd">            kwargs replaced by `_kwargs`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_enabled_hooks</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">_include</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_include</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_include</span><span class="p">:</span>
+                    <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">_exclude</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_exclude</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">_exclude</span><span class="p">:</span>
+                    <span class="k">continue</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">proxy</span><span class="p">,</span> <span class="n">_funcname</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_args</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+                        <span class="n">_kwargs</span><span class="p">,</span> <span class="nb">dict</span>
+                    <span class="p">):</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_kwargs</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">**</span><span class="n">_kwargs</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_args</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">_args</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">()</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="s2">&quot;code&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+                            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;code&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
+
+                <span class="n">result</span><span class="p">[</span><span class="s2">&quot;sender&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">name</span>
+                <span class="c1">#: Use `_every` to change the hook execution result</span>
+                <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">_every</span><span class="p">):</span>
+                    <span class="n">r</span> <span class="o">=</span> <span class="n">_every</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;code&quot;</span> <span class="ow">in</span> <span class="n">r</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="s2">&quot;sender&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">r</span><span class="p">:</span>
+                            <span class="n">r</span><span class="p">[</span><span class="s2">&quot;sender&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">name</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">r</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">_mode</span> <span class="o">==</span> <span class="s2">&quot;any_true&quot;</span><span class="p">:</span>
+                    <span class="c1">#: 任意钩子处理成功时则中止后续</span>
+                    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;code&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">break</span>
+
+                <span class="k">elif</span> <span class="n">_mode</span> <span class="o">==</span> <span class="s2">&quot;any_false&quot;</span><span class="p">:</span>
+                    <span class="c1">#: 任意钩子处理失败时则中止后续</span>
+                    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;code&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">break</span>
+
+        <span class="k">return</span> <span class="n">response</span></div>
+
+
+<div class="viewcode-block" id="HookManager.call_intpl">
+<a class="viewcode-back" href="../../module.html#libs.hook.HookManager.call_intpl">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">call_intpl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_tplname</span><span class="p">,</span> <span class="n">_include</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_exclude</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">context</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;在模板中渲染</span>
+
+<span class="sd">        :param _tplname: 扩展点名称</span>
+<span class="sd">        :param list _include: 仅查找哪些钩子</span>
+<span class="sd">        :param list _exclude: 排除哪些钩子</span>
+<span class="sd">        :kerword context: 渲染模板时传递的变量</span>
+<span class="sd">        :type _tplname: str or function</span>
+<span class="sd">        :returns: Markup HTML</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_enabled_hooks</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">_include</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_include</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_include</span><span class="p">:</span>
+                    <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">_exclude</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_exclude</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">_exclude</span><span class="p">:</span>
+                    <span class="k">continue</span>
+            <span class="c1">#: tpl is a file or html code or a func</span>
+            <span class="n">tpl</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">proxy</span><span class="p">,</span> <span class="s2">&quot;intpl_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">_tplname</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">tpl</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">tpl</span><span class="p">):</span>
+                <span class="n">tpl</span> <span class="o">=</span> <span class="n">tpl</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">tpl</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;html&quot;</span><span class="p">,</span> <span class="s2">&quot;htm&quot;</span><span class="p">,</span> <span class="s2">&quot;xhtml&quot;</span><span class="p">):</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="n">render_template</span><span class="p">(</span><span class="n">tpl</span><span class="p">,</span> <span class="o">**</span><span class="n">context</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="n">render_template_string</span><span class="p">(</span><span class="n">tpl</span><span class="p">,</span> <span class="o">**</span><span class="n">context</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">content</span><span class="p">:</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Markup</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">))</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_send_static_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hook_name</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_enabled_map_hooks</span><span class="p">[</span><span class="n">hook_name</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">abort</span><span class="p">(</span><span class="mi">404</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">send_from_directory</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">atspath</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+
+<div class="viewcode-block" id="HookManager.emit_assets">
+<a class="viewcode-back" href="../../module.html#libs.hook.HookManager.emit_assets">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">emit_assets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hook_name</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">_raw</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">_external</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;在模板中快速构建出扩展中静态文件的地址。</span>
+
+<span class="sd">        当然，可以用 :func:`flask.url_for` 代替。</span>
+
+<span class="sd">        如果文件以 `.css` 结尾，那么将返回 `&lt;link&gt;` ，例如::</span>
+
+<span class="sd">            &lt;link rel=&quot;stylesheet&quot; href=&quot;/assets/hook/hi.css&quot;&gt;</span>
+
+<span class="sd">        如果文件以 `.js` 结尾，那么将返回 `&lt;script&gt;` ，例如::</span>
+
+<span class="sd">            &lt;script type=&quot;text/javascript&quot; src=&quot;/assets/hook/hi.js&quot;&gt;&lt;/script&gt;</span>
+
+<span class="sd">        其他类型文件，仅仅返回文件地址，例如::</span>
+
+<span class="sd">            /assets/hook/img/logo.png</span>
+<span class="sd">            /assets/hook/attachment/test.zip</span>
+
+<span class="sd">        以下是一个完整的使用示例：</span>
+
+<span class="sd">        .. code-block:: html</span>
+
+<span class="sd">            &lt;!DOCTYPE html&gt;</span>
+<span class="sd">            &lt;html&gt;</span>
+<span class="sd">            &lt;head&gt;</span>
+<span class="sd">                &lt;title&gt;Hello World&lt;/title&gt;</span>
+<span class="sd">                {{ emit_assets(&#39;demo&#39;,&#39;css/demo.css&#39;) }}</span>
+<span class="sd">            &lt;/head&gt;</span>
+<span class="sd">            &lt;body&gt;</span>
+<span class="sd">                &lt;div class=&quot;logo&quot;&gt;</span>
+<span class="sd">                    &lt;img src=&quot;{{ emit_assets(&#39;demo&#39;, &#39;img/logo.png&#39;) }}&quot;&gt;</span>
+<span class="sd">                &lt;/div&gt;</span>
+<span class="sd">                &lt;div class=&quot;showJsPath&quot;&gt;</span>
+<span class="sd">                    &lt;scan&gt;</span>
+<span class="sd">                        {{ emit_assets(&#39;demo&#39;, &#39;js/demo.js&#39;, _raw=True) }}</span>
+<span class="sd">                    &lt;/scan&gt;</span>
+<span class="sd">                &lt;/div&gt;</span>
+<span class="sd">            &lt;/body&gt;</span>
+<span class="sd">            &lt;/html&gt;</span>
+
+<span class="sd">        :param hook_name: 钩子名</span>
+
+<span class="sd">        :param path filename: 钩子包下static目录中的文件</span>
+
+<span class="sd">        :param bool _raw: True则只生成文件地址，不解析css、js，默认False</span>
+
+<span class="sd">        :param bool _external: 转发到url_for的_external</span>
+
+<span class="sd">        :returns: html code with :class:`~flask.Markup`</span>
+
+<span class="sd">        .. versionadded:: 1.9.0</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">uri</span> <span class="o">=</span> <span class="n">url_for</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__static_endpoint</span><span class="p">,</span>
+            <span class="n">hook_name</span><span class="o">=</span><span class="n">hook_name</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+            <span class="n">_external</span><span class="o">=</span><span class="n">_external</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">_raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.css&quot;</span><span class="p">):</span>
+                <span class="n">uri</span> <span class="o">=</span> <span class="s1">&#39;&lt;link rel=&quot;stylesheet&quot; href=&quot;</span><span class="si">%s</span><span class="s1">&quot;&gt;&#39;</span> <span class="o">%</span> <span class="n">uri</span>
+            <span class="k">elif</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.js&quot;</span><span class="p">):</span>
+                <span class="n">uri</span> <span class="o">=</span> <span class="s1">&#39;&lt;script type=&quot;text/javascript&quot; src=&quot;</span><span class="si">%s</span><span class="s1">&quot;&gt;&lt;/script&gt;&#39;</span> <span class="o">%</span> <span class="n">uri</span>
+        <span class="k">return</span> <span class="n">Markup</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2020, staugur.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 8.2.3 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a>.
+</div>
+            </div>
+          </div>
+      </page>
+    </div>
+    
+    
+  </body>
+</html>

@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html  lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+      <title>RESTful API</title>
+    
+          <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+          <link rel="stylesheet" href="_static/theme.css " type="text/css" />
+          <link rel="stylesheet" href="_static/sphinxcontrib-httpexample.css" type="text/css" />
+      
+      <!-- sphinx script_files -->
+        <script src="_static/documentation_options.js?v=c6c5d30b"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="_static/sphinxcontrib-httpexample.js?v=31a81d62"></script>
+        <script src="_static/translations.js?v=beaddf03"></script>
+
+      
+      <!-- bundled in js (rollup iife) -->
+      <!-- <script src="_static/theme-vendors.js"></script> -->
+      <script src="_static/theme.js" defer></script>
+    
+      <link rel="shortcut icon" href="_static/favicon.png"/>
+  <link rel="index" title="索引" href="genindex.html" />
+  <link rel="search" title="搜索" href="search.html" />
+  <link rel="next" title="Modules API" href="module.html" />
+  <link rel="prev" title="钩子" href="hook.html" /> 
+  </head>
+
+  <body>
+    <div id="app">
+    <div class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="index.html" class="home-link">
+    
+      <img class="logo" src="_static/logo.png" alt="logo"/>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+
+
+  
+    <div class="nav-item">
+      <a href="https://sapicd.com"
+        class="nav-link external">
+          Demo <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://github.com/sapicd/sapic"
+        class="nav-link external">
+          GitHub <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://gitee.com/staugur/picbed"
+        class="nav-link external">
+          Gitee <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+
+
+  
+    <div class="nav-item">
+      <a href="https://sapicd.com"
+        class="nav-link external">
+          Demo <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://github.com/sapicd/sapic"
+        class="nav-link external">
+          GitHub <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://gitee.com/staugur/picbed"
+        class="nav-link external">
+          Gitee <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">快速搜索</span>
+    <div class="searchformwrapper">
+      <form class="search" action="search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="搜索" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="index.html#sapic">sapic - 简约不小气的自建图床程序</a></span>
+      </p>
+      <ul class="current">
+        
+          <li class="toctree-l1 ">
+            
+              <a href="install.html" class="reference internal ">部署安装</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="docker.html" class="reference internal ">使用Docker部署</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="usage.html" class="reference internal ">使用说明 - 概述</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="linktoken.html" class="reference internal ">使用说明 - LinkToken及应用</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="cli.html" class="reference internal ">使用说明 - sapicli</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="admin.html" class="reference internal ">使用说明 - 站点管理</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="hook.html" class="reference internal ">钩子</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 current">
+            
+              <a href="#" class="reference internal current">RESTful API</a>
+            
+
+            
+              <ul>
+                
+                  <li class="toctree-l2"><a href="#api-index" class="reference internal">1. api.index</a></li>
+                
+                  <li class="toctree-l2"><a href="#api-login" class="reference internal">2. api.login</a></li>
+                
+                  <li class="toctree-l2"><a href="#api-register" class="reference internal">3. api.register</a></li>
+                
+                  <li class="toctree-l2"><a href="#api-waterfall" class="reference internal">4. api.waterfall</a></li>
+                
+                  <li class="toctree-l2"><a href="#api-shamgr" class="reference internal">5. api.shamgr</a></li>
+                
+                  <li class="toctree-l2"><a href="#api-album" class="reference internal">6. api.album</a></li>
+                
+                  <li class="toctree-l2"><a href="#api-upload" class="reference internal">7. api.upload</a></li>
+                
+                  <li class="toctree-l2"><a href="#api-my" class="reference internal">8. api.my</a></li>
+                
+                  <li class="toctree-l2"><a href="#api-ep" class="reference internal">9. api.ep</a></li>
+                
+                  <li class="toctree-l2"><a href="#api-load" class="reference internal">10. api.load</a></li>
+                
+              </ul>
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="module.html" class="reference internal ">Modules API</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="faq.html" class="reference internal ">FAQ</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="changelog.html" class="reference internal ">更新日志</a>
+            
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+    
+    <li>RESTful API</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+  <li class="prev">
+    <a href="hook.html"
+       title="上一章">← 钩子</a>
+  </li>
+  <li class="next">
+    <a href="module.html"
+       title="下一章">Modules API →</a>
+  </li>
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main" v-pre>
+            
+  <section id="restful-api">
+<span id="picbed-api"></span><h1>RESTful API<a class="headerlink" href="#restful-api" title="Link to this heading">¶</a></h1>
+<p><strong>约定：</strong></p>
+<ul>
+<li><p>API返回均为JSON，除了api.index接口返回的字符串，其他都是对象，基本字段code、msg。</p>
+<p>code值为number，0表示处理成功，否则失败，此时msg有错误消息。</p>
+<p>API返回的msg支持中英文，它检测Accept-Language头或cookie的locale字段，zh-CN则返回中文。</p>
+<p>API返回的基本字段可以修改，可以用下面三个查询参数修改返回的基本格式：</p>
+<ul class="simple">
+<li><p>status_name规定数据状态的字段名称，默认code</p></li>
+<li><p>ok_code规定成功的状态码，默认0，ok_code=bool则会返回布尔类型，其他值均认为是number类型</p></li>
+<li><p>msg_name规定状态信息的字段名称，默认msg</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>curl<span class="w"> </span><span class="s2">&quot;http://127.0.0.1/api/xx?status_name=status&amp;ok_code=200&quot;</span>
+-<span class="w"> </span>请求成功
+<span class="w">    </span><span class="o">{</span><span class="s2">&quot;status&quot;</span>:<span class="w"> </span><span class="m">200</span>,<span class="w"> </span><span class="s2">&quot;msg&quot;</span>:<span class="w"> </span>null<span class="o">}</span>
+-<span class="w"> </span>请求失败
+<span class="w">    </span><span class="o">{</span><span class="s2">&quot;status&quot;</span>:<span class="w"> </span>-1,<span class="w"> </span><span class="s2">&quot;msg&quot;</span>:<span class="w"> </span><span class="s2">&quot;errmessage&quot;</span><span class="o">}</span>
+
+$<span class="w"> </span>curl<span class="w"> </span><span class="s2">&quot;http://127.0.0.1/api/xx?status_name=success&amp;ok_code=bool&amp;msg_name=message&quot;</span>
+-<span class="w"> </span>请求成功
+<span class="w">    </span><span class="o">{</span><span class="s2">&quot;success&quot;</span>:<span class="w"> </span>true,<span class="w"> </span><span class="s2">&quot;message&quot;</span>:<span class="w"> </span>null<span class="o">}</span>
+-<span class="w"> </span>请求失败
+<span class="w">    </span><span class="o">{</span><span class="s2">&quot;success&quot;</span>:<span class="w"> </span>false,<span class="w"> </span><span class="s2">&quot;message&quot;</span>:<span class="w"> </span><span class="s2">&quot;errmessage&quot;</span><span class="o">}</span>
+
+$<span class="w"> </span>curl<span class="w"> </span><span class="s2">&quot;http://127.0.0.1:9514/api/xx?ok_code=abc&quot;</span>
+-<span class="w"> </span>ok_code不是number类型或bool值，则一律返回默认
+<span class="o">{</span><span class="s2">&quot;code&quot;</span>:<span class="w"> </span><span class="m">0</span>,<span class="w"> </span><span class="s2">&quot;msg&quot;</span>:<span class="w"> </span>null<span class="o">}</span>
+</pre></div>
+</div>
+</li>
+<li><p>API返回的响应头可能有以下两个公共字段。</p>
+<ul>
+<li><p>当内置Token钩子开启后</p>
+<p>Access-Control-Allow-Headers: Authorization</p>
+</li>
+<li><p>当管理员在控制台CORS-Origin设置后</p>
+<p>Access-Control-Allow-Origin: *或具体来源</p>
+</li>
+</ul>
+</li>
+<li><p>API返回非200状态码时，404、405、413、500都返回JSON基本格式，msg是状态码名字</p></li>
+<li><p>以下接口要求boolean类型的，值可以是true、True、1、on、yes, 均认为是真，反之则假！</p></li>
+<li><p>以下接口，顶部的 <code class="docutils literal notranslate"><span class="pre">api.xxx</span></code> 这部分就叫端点，endpoint，下面是普通用户可能用到的。</p></li>
+</ul>
+<section id="api-index">
+<h2>1. api.index<a class="headerlink" href="#api-index" title="Link to this heading">¶</a></h2>
+<dl class="http any">
+<dt class="sig sig-object http" id="any--api-, -api-index">
+<span class="sig-name descname"><span class="pre">ANY</span> </span><span class="sig-name descname"><span class="pre">/api/,</span> <span class="pre">/api/index</span></span><a class="headerlink" href="#any--api-, -api-index" title="Link to this definition">¶</a></dt>
+<dd><p>Api首页，仅用来表明登录态，允许 <a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-4.3.3">POST</a> <a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-4.3.1">GET</a> 方法</p>
+<p>返回: Hello sapic(未登录)/&lt;username&gt;(已登录)</p>
+</dd></dl>
+
+</section>
+<section id="api-login">
+<h2>2. api.login<a class="headerlink" href="#api-login" title="Link to this heading">¶</a></h2>
+<dl class="http post">
+<dt class="sig sig-object http" id="post--api-login">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/api/login</span></span><a class="headerlink" href="#post--api-login" title="Link to this definition">¶</a></dt>
+<dd><p>登录接口</p>
+<dl class="field-list simple">
+<dt class="field-odd">Form Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>username</strong> – 用户名</p></li>
+<li><p><strong>password</strong> – 登录密码</p></li>
+<li><p><strong>set_state</strong> – boolean: 是否设置登录态</p></li>
+<li><p><strong>remember</strong> – boolean: 是否记住我(7d)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Response JSON Object<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>sid</strong> (<em>string</em>) – SessionId</p></li>
+<li><p><strong>expire</strong> (<em>string</em>) – 过期时间戳</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>示例：</strong></p>
+<div class="http-example docutils container">
+<div class="http-example-http docutils container" id="id1">
+<p><span class="caption-text">http</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/api/login</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/x-www-form-urlencoded</span>
+
+<span class="nt">username</span><span class="o">=</span><span class="s">xxx</span><span class="p">&amp;</span><span class="nt">password</span><span class="o">=</span><span class="s">your-password-here</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-curl docutils container" id="id2">
+<p><span class="caption-text">curl</span></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-i<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://127.0.0.1:9514/api/login<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/x-www-form-urlencoded&quot;</span><span class="w"> </span>--data-raw<span class="w"> </span><span class="s1">&#39;username=xxx&amp;password=your-password-here&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-python-requests docutils container" id="id3">
+<p><span class="caption-text">python-requests</span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;http://127.0.0.1:9514/api/login&#39;</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/x-www-form-urlencoded&#39;</span><span class="p">},</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;xxx&#39;</span><span class="p">,</span> <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="s1">&#39;your-password-here&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-response docutils container" id="id4">
+<p><span class="caption-text">response</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/api/login</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/x-www-form-urlencoded</span>
+
+<span class="nt">username</span><span class="o">=</span><span class="s">xxx</span><span class="p">&amp;</span><span class="nt">password</span><span class="o">=</span><span class="s">your-password-here</span>
+</pre></div>
+</div>
+</div>
+</div>
+</dd></dl>
+
+</section>
+<section id="api-register">
+<h2>3. api.register<a class="headerlink" href="#api-register" title="Link to this heading">¶</a></h2>
+<dl class="http post">
+<dt class="sig sig-object http" id="post--api-register">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/api/register</span></span><a class="headerlink" href="#post--api-register" title="Link to this definition">¶</a></dt>
+<dd><p>注册接口</p>
+<dl class="field-list simple">
+<dt class="field-odd">Form Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>username</strong> – 用户名</p></li>
+<li><p><strong>password</strong> – 密码</p></li>
+<li><p><strong>avatar</strong> – 头像地址</p></li>
+<li><p><strong>nickname</strong> – 昵称</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.5">404 Not Found</a></span> – 管理员关闭注册时</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>示例：</strong></p>
+<div class="http-example docutils container">
+<div class="http-example-http docutils container" id="id5">
+<p><span class="caption-text">http</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/api/register</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/x-www-form-urlencoded</span>
+
+<span class="nt">username</span><span class="o">=</span><span class="s">xxx</span><span class="p">&amp;</span><span class="nt">password</span><span class="o">=</span><span class="s">your-password-here</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-curl docutils container" id="id6">
+<p><span class="caption-text">curl</span></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-i<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://127.0.0.1:9514/api/register<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/x-www-form-urlencoded&quot;</span><span class="w"> </span>--data-raw<span class="w"> </span><span class="s1">&#39;username=xxx&amp;password=your-password-here&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-python-requests docutils container" id="id7">
+<p><span class="caption-text">python-requests</span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;http://127.0.0.1:9514/api/register&#39;</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/x-www-form-urlencoded&#39;</span><span class="p">},</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;xxx&#39;</span><span class="p">,</span> <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="s1">&#39;your-password-here&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-response docutils container" id="id8">
+<p><span class="caption-text">response</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/api/register</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/x-www-form-urlencoded</span>
+
+<span class="nt">username</span><span class="o">=</span><span class="s">xxx</span><span class="p">&amp;</span><span class="nt">password</span><span class="o">=</span><span class="s">your-password-here</span>
+</pre></div>
+</div>
+</div>
+</div>
+</dd></dl>
+
+</section>
+<section id="api-waterfall">
+<h2>4. api.waterfall<a class="headerlink" href="#api-waterfall" title="Link to this heading">¶</a></h2>
+<dl class="http get">
+<dt class="sig sig-object http" id="get--api-waterfall">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/waterfall</span></span><a class="headerlink" href="#get--api-waterfall" title="Link to this definition">¶</a></dt>
+<dd><p>图片列表接口，要求登录，也允许 <a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-4.3.3">POST</a> 方法查询。</p>
+<dl class="field-list simple">
+<dt class="field-odd">Query Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sort</strong> (<em>string</em>) – 根据图片上传时间排序，asc正序，desc倒序</p></li>
+<li><p><strong>page</strong> (<em>number</em>) – 页数，从1开始</p></li>
+<li><p><strong>limit</strong> (<em>number</em>) – 一次性返回条数，默认10</p></li>
+<li><p><strong>is_mgr</strong> (<em>boolean</em>) – 要求以管理员级别查询（当然用户也得是管理员才行）</p></li>
+<li><p><strong>album</strong> (<em>string</em>) – 查询相册，可以用逗号分隔查询多个相册</p></li>
+</ul>
+</dd>
+<dt class="field-even">Form Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>album</strong> – 等于query查询参数的album</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Response JSON Object<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>count</strong> (<em>number</em>) – 用户的图片总数</p></li>
+<li><p><strong>pageCount</strong> (<em>number</em>) – 根据limit和count计算的总页数</p></li>
+</ul>
+</dd>
+<dt class="field-even">Response JSON Array of Objects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>albums</strong> – 用户的相册列表</p></li>
+<li><p><strong>data</strong> – 用户的图片列表（其中字段参考shamgr接口）</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4">403 Forbidden</a></span> – 未登录时</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>示例：</strong></p>
+<div class="http-example docutils container">
+<div class="http-example-http docutils container" id="id9">
+<p><span class="caption-text">http</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/waterfall?limit=1</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Authorization</span><span class="o">:</span> <span class="l">LinkToken Your-LinkToken-Value</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-curl docutils container" id="id10">
+<p><span class="caption-text">curl</span></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-i<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="s1">&#39;http://127.0.0.1:9514/api/waterfall?limit=1&amp;limit=1&#39;</span><span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: LinkToken Your-LinkToken-Value&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-python-requests docutils container" id="id11">
+<p><span class="caption-text">python-requests</span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;http://127.0.0.1:9514/api/waterfall?limit=1&amp;limit=1&amp;limit=1&#39;</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="s1">&#39;LinkToken Your-LinkToken-Value&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-response docutils container" id="id12">
+<p><span class="caption-text">response</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/waterfall?limit=1&amp;limit=1&amp;limit=1&amp;limit=1</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Authorization</span><span class="o">:</span> <span class="l">LinkToken Your-LinkToken-Value</span>
+</pre></div>
+</div>
+</div>
+</div>
+</dd></dl>
+
+</section>
+<section id="api-shamgr">
+<h2>5. api.shamgr<a class="headerlink" href="#api-shamgr" title="Link to this heading">¶</a></h2>
+<dl class="http get">
+<dt class="sig sig-object http" id="get--api-shamgr--string-sha-">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/shamgr/&lt;string:sha&gt;</span></span><a class="headerlink" href="#get--api-shamgr--string-sha-" title="Link to this definition">¶</a></dt>
+<dd><p>图片详情接口</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sha</strong> (<em>string</em>) – 图片的唯一标识</p></li>
+</ul>
+</dd>
+<dt class="field-even">Response JSON Object<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>data</strong> (<em>object</em>) – 图片详情（上述接口的图片列表中包含的就是此详情数据）</p></li>
+<li><p><strong>album</strong> – 相册（当前及下方字段位于data内）</p></li>
+<li><p><strong>src</strong> – 图片在sapic中的链接</p></li>
+<li><p><strong>sender</strong> – 图片保存者（钩子名）</p></li>
+<li><p><strong>tpl</strong> (<em>object</em>) – URL文本复制的模板</p></li>
+<li><p><strong>agent</strong> – 上传来源UserAgent</p></li>
+<li><p><strong>filename</strong> – 最终保存到服务器文件名</p></li>
+<li><p><strong>sha</strong> – 图片唯一标识</p></li>
+<li><p><strong>status</strong> – 状态</p></li>
+<li><p><strong>user</strong> – 所属用户</p></li>
+<li><p><strong>upload_path</strong> – 图片前缀路径</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.5">404 Not Found</a></span> – 没有对应图片时</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>示例：</strong></p>
+<div class="http-example docutils container">
+<div class="http-example-http docutils container" id="id13">
+<p><span class="caption-text">http</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/shamgr/sha1.xxxxxxx</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-curl docutils container" id="id14">
+<p><span class="caption-text">curl</span></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-i<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://127.0.0.1:9514/api/shamgr/sha1.xxxxxxx
+</pre></div>
+</div>
+</div>
+<div class="http-example-python-requests docutils container" id="id15">
+<p><span class="caption-text">python-requests</span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;http://127.0.0.1:9514/api/shamgr/sha1.xxxxxxx&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-response docutils container" id="id16">
+<p><span class="caption-text">response</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/shamgr/sha1.xxxxxxx</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+</pre></div>
+</div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="http delete">
+<dt class="sig sig-object http" id="delete--api-shamgr--string-sha-">
+<span class="sig-name descname"><span class="pre">DELETE</span> </span><span class="sig-name descname"><span class="pre">/api/shamgr/&lt;string:sha&gt;</span></span><a class="headerlink" href="#delete--api-shamgr--string-sha-" title="Link to this definition">¶</a></dt>
+<dd><p>图片删除接口，要求登录，只有图片所属用户和管理员允许删除。</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sha</strong> (<em>string</em>) – 图片的唯一标识</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.5">404 Not Found</a></span> – 没有对应图片时</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4">403 Forbidden</a></span> – 未登录或图片所属用户与请求用户不匹配</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>示例：</strong></p>
+<div class="http-example docutils container">
+<div class="http-example-http docutils container" id="id17">
+<p><span class="caption-text">http</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">DELETE</span> <span class="nn">/api/shamgr/sha1.xxxxxxx</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Authorization</span><span class="o">:</span> <span class="l">LinkToken Your-LinkToken-Value</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-curl docutils container" id="id18">
+<p><span class="caption-text">curl</span></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-i<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>http://127.0.0.1:9514/api/shamgr/sha1.xxxxxxx<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: LinkToken Your-LinkToken-Value&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-python-requests docutils container" id="id19">
+<p><span class="caption-text">python-requests</span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">requests</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s1">&#39;http://127.0.0.1:9514/api/shamgr/sha1.xxxxxxx&#39;</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="s1">&#39;LinkToken Your-LinkToken-Value&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="http put">
+<dt class="sig sig-object http" id="put--api-shamgr--string-sha-">
+<span class="sig-name descname"><span class="pre">PUT</span> </span><span class="sig-name descname"><span class="pre">/api/shamgr/&lt;string:sha&gt;</span></span><a class="headerlink" href="#put--api-shamgr--string-sha-" title="Link to this definition">¶</a></dt>
+<dd><p>图片数据更新接口，要求登录，只有图片所属用户和管理员允许修改。</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sha</strong> (<em>string</em>) – 图片的唯一标识</p></li>
+</ul>
+</dd>
+<dt class="field-even">Query Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>Action</strong> (<em>string</em>) – 更新指令，目前仅支持一个updateAlbum（更新相册名）</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Form Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>album</strong> – 相册名</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.5">404 Not Found</a></span> – 没有对应图片时</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4">403 Forbidden</a></span> – 未登录或图片所属用户与请求用户不匹配</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>示例：</strong></p>
+<div class="http-example docutils container">
+<div class="http-example-http docutils container" id="id20">
+<p><span class="caption-text">http</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">PUT</span> <span class="nn">/api/shamgr/sha1.xxxxxxx?Action=updateAlbum</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Authorization</span><span class="o">:</span> <span class="l">LinkToken Your-LinkToken-Value</span>
+
+album=newName
+</pre></div>
+</div>
+</div>
+<div class="http-example-curl docutils container" id="id21">
+<p><span class="caption-text">curl</span></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-i<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span><span class="s1">&#39;http://127.0.0.1:9514/api/shamgr/sha1.xxxxxxx?Action=updateAlbum&amp;Action=updateAlbum&#39;</span><span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: LinkToken Your-LinkToken-Value&quot;</span><span class="w"> </span>--data-raw<span class="w"> </span><span class="s1">&#39;album=newName&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-python-requests docutils container" id="id22">
+<p><span class="caption-text">python-requests</span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">requests</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s1">&#39;http://127.0.0.1:9514/api/shamgr/sha1.xxxxxxx?Action=updateAlbum&amp;Action=updateAlbum&amp;Action=updateAlbum&#39;</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="s1">&#39;LinkToken Your-LinkToken-Value&#39;</span><span class="p">},</span> <span class="n">data</span><span class="o">=</span><span class="s1">&#39;album=newName&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="http post">
+<dt class="sig sig-object http" id="post--api-shamgr--string-sha-">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/api/shamgr/&lt;string:sha&gt;</span></span><a class="headerlink" href="#post--api-shamgr--string-sha-" title="Link to this definition">¶</a></dt>
+<dd><p>与PUT类似，也是图片更新接口，要求登录，只有图片所属用户允许操作。</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sha</strong> (<em>string</em>) – 图片的唯一标识</p></li>
+</ul>
+</dd>
+<dt class="field-even">Query Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>Action</strong> (<em>string</em>) – 更新指令，目前仅支持一个overrideUpload（覆盖上传）</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Form Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>picbed</strong> – 上传字段，表单图片文件</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.5">404 Not Found</a></span> – 没有对应图片时</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4">403 Forbidden</a></span> – 未登录或图片所属用户与请求用户不匹配</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>示例：</strong></p>
+<div class="http-example docutils container">
+<div class="http-example-http docutils container" id="id23">
+<p><span class="caption-text">http</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/api/shamgr/sha1.xxxxxxx?Action=overrideUpload</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Authorization</span><span class="o">:</span> <span class="l">LinkToken Your-LinkToken-Value</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">multipart/form-data</span>
+
+picbed=@new-image-path
+</pre></div>
+</div>
+</div>
+<div class="http-example-curl docutils container" id="id24">
+<p><span class="caption-text">curl</span></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-i<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s1">&#39;http://127.0.0.1:9514/api/shamgr/sha1.xxxxxxx?Action=overrideUpload&amp;Action=overrideUpload&#39;</span><span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: multipart/form-data&quot;</span><span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: LinkToken Your-LinkToken-Value&quot;</span><span class="w"> </span>--data-raw<span class="w"> </span><span class="s1">&#39;picbed=@new-image-path&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-python-requests docutils container" id="id25">
+<p><span class="caption-text">python-requests</span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;http://127.0.0.1:9514/api/shamgr/sha1.xxxxxxx?Action=overrideUpload&amp;Action=overrideUpload&amp;Action=overrideUpload&#39;</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;multipart/form-data&#39;</span><span class="p">,</span> <span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="s1">&#39;LinkToken Your-LinkToken-Value&#39;</span><span class="p">},</span> <span class="n">data</span><span class="o">=</span><span class="s1">&#39;picbed=@new-image-path&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</dd></dl>
+
+</section>
+<section id="api-album">
+<h2>6. api.album<a class="headerlink" href="#api-album" title="Link to this heading">¶</a></h2>
+<dl class="http get">
+<dt class="sig sig-object http" id="get--api-album">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/api/album</span></span><a class="headerlink" href="#get--api-album" title="Link to this definition">¶</a></dt>
+<dd><p>用户相册列表接口，要求登录，也允许 <a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-4.3.3">POST</a> 方法查询。</p>
+<dl class="field-list simple">
+<dt class="field-odd">Response JSON Array of Objects<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> – 相册列表</p></li>
+</ul>
+</dd>
+<dt class="field-even">Response JSON Object<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>counter</strong> (<em>object</em>) – 每个相册中的图片数</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>示例：</strong></p>
+<div class="http-example docutils container">
+<div class="http-example-http docutils container" id="id26">
+<p><span class="caption-text">http</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/album</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Authorization</span><span class="o">:</span> <span class="l">LinkToken Your-LinkToken-Value</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-curl docutils container" id="id27">
+<p><span class="caption-text">curl</span></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-i<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://127.0.0.1:9514/api/album<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: LinkToken Your-LinkToken-Value&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-python-requests docutils container" id="id28">
+<p><span class="caption-text">python-requests</span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;http://127.0.0.1:9514/api/album&#39;</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="s1">&#39;LinkToken Your-LinkToken-Value&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-response docutils container" id="id29">
+<p><span class="caption-text">response</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/api/album</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Authorization</span><span class="o">:</span> <span class="l">LinkToken Your-LinkToken-Value</span>
+</pre></div>
+</div>
+</div>
+</div>
+</dd></dl>
+
+</section>
+<section id="api-upload">
+<span id="picbed-api-upload"></span><h2>7. api.upload<a class="headerlink" href="#api-upload" title="Link to this heading">¶</a></h2>
+<dl class="http post">
+<dt class="sig sig-object http" id="post--api-upload">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/api/upload</span></span><a class="headerlink" href="#post--api-upload" title="Link to this definition">¶</a></dt>
+<dd><p>图片上传接口，默认不允许匿名（可由管理员开启允许），有两种上传方式，
+文件域表单和base64。</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">在 1.2.0 版本发生变更: </span>v1.2.0新增一种图片链接上传（目前共三种上传方式），picbed字段值为URL形式时，
+会尝试下载图片（URL符合规则且下载的确实是图片类型才能成功）。</p>
+<p>上传方式优先级：文件域 &gt; Image URL &gt; Image base64</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">在 1.9.0 版本发生变更: </span>增加title和expire字段，前者设置图片描述，后者添加为临时图片</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">在 1.13.0 版本发生变更: </span>真正实现上传限制！</p>
+<p>之前的版本在后台设置的上传限制仅仅在首页上传时由前端限制，后端接口并无限制，
+现在『弯道超车』目前三种上传方式都有size接口读取上传大小进而限制。</p>
+<p>增加了 <cite>_upload_field</cite> 指定上传字段。</p>
+<p>允许上传视频（beta）！</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>获取上传数据的字段默认是picbed，管理员可以在控制台修改，但是不建议改，
+如果要改，首页上传会自动更新，但引用uploader.js在外部上传的话，那就需要
+设置 <strong>name</strong> 值，具体参考 <a class="reference internal" href="linktoken.html#linktoken-upload-plugin"><span class="std std-ref">外部上传图片插件</span></a> ，有一个name选项
+可以设置其他值。</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Query Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>format</strong> (<em>string</em>) – 指定图片地址的显示字段</p></li>
+</ul>
+</dd>
+<dt class="field-even">Form Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>format</strong> – 等于query查询参数的format</p></li>
+<li><p><strong>album</strong> – 图片所属相册（匿名时总是直接设置为anonymous）</p></li>
+<li><p><strong>_upload_field</strong> – 指定上传字段，否则依次读取后台设置、默认值（picbed）</p></li>
+<li><p><strong>picbed</strong> – 上传字段名（可由后台设置）</p></li>
+<li><p><strong>title</strong> – 图片简单描述，页面显示时作为title</p></li>
+<li><p><strong>expire</strong> – 表明上传临时图片，int类型，单位秒，过期删除数据（不会物理删除图片）</p></li>
+<li><p><strong>filename</strong> – 使用 <strong>base64/url</strong> 方式上传时此值有效，设定文件名</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Response JSON Object<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>string</em>) – 最终保存到服务器的文件名</p></li>
+<li><p><strong>sender</strong> (<em>string</em>) – 保存图片的钩子名</p></li>
+<li><p><strong>api</strong> (<em>string</em>) – 图片详情接口的地址</p></li>
+<li><p><strong>src</strong> (<em>string</em>) – 图片地址</p></li>
+<li><p><strong>tpl</strong> (<em>object</em>) – 复制模板</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4">403 Forbidden</a></span> – 管理员不允许匿名上传且用户未登录时</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition tip">
+<p class="admonition-title">小技巧</p>
+<ul>
+<li><p>当接口获取不到文件时，判断picbed字段值，如果以http://或https://开头，
+那么进入Image URL上传流程，否则进入Image Base64上传流程。</p></li>
+<li><p>Image URL上传，程序会从url中尝试查找出文件名，无效时判定失败，除非手动设置文件名。</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">在 1.4.0 版本发生变更: </span>优化了图片链接上传，程序自动尝试从链接查找文件名，无果也无妨，
+继续请求url，根据其返回内容、类型猜测文件后缀。</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">在 1.10.0 版本发生变更: </span>猜测文件名使用 <a class="reference internal" href="module.html#utils.web.guess_filename_from_url" title="utils.web.guess_filename_from_url"><code class="xref py py-func docutils literal notranslate"><span class="pre">utils.web.guess_filename_from_url()</span></code></a> ，相比之前，
+额外允许从url本身查询参数filename获取图片文件名。</p>
+</div>
+<p>程序通过 <a class="reference internal" href="module.html#utils.web.ImgUrlFileStorage" title="utils.web.ImgUrlFileStorage"><code class="xref py py-class docutils literal notranslate"><span class="pre">utils.web.ImgUrlFileStorage</span></code></a> 处理，使用get方式请求
+url，只有返回状态码是2xx或3xx且Content-Type是image类型时才有效。</p>
+<p>简而言之，是真正的图片链接才行。当然，还是有被伪造的可能。</p>
+</li>
+<li><p>base64方式上传允许 <a class="reference external" href="https://developer.mozilla.org/docs/Web/HTTP/data_URIs">Data URI</a> 形式的！</p>
+<p>程序通过 <a class="reference internal" href="module.html#utils.web.Base64FileStorage" title="utils.web.Base64FileStorage"><code class="xref py py-class docutils literal notranslate"><span class="pre">utils.web.Base64FileStorage</span></code></a> 处理，
+使用b64decode解码（非url安全）</p>
+</li>
+<li><p>图片地址src是可以自定义的，利用format参数，允许使用最多一个点号。</p>
+<p>举例，默认返回{code:0, src:xx}</p>
+<ul>
+<li><p>format=imgUrl  （这种情况最少需要两个字符）</p>
+<p>{code:0, imgUrl:xx}</p>
+</li>
+<li><p>format=data.src</p>
+<p>{code:0, data:{src:xx}}</p>
+</li>
+</ul>
+<p>大概是这两种情况，src字段改名或者改为子对象中的字段。</p>
+<p>再结合顶部约定处的公共查询参数自定义返回的基本字段，此处src定制灵活度
+很高。</p>
+</li>
+</ul>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>上传流程：</p>
+<ol class="arabic simple">
+<li><p>登录及匿名上传判断</p></li>
+<li><p>获取文件（三种方式）</p></li>
+<li><p>如果文件有效，初始化相关参数，交给上传类钩子处理图片流并回传结果进行后续处理</p></li>
+<li><p>返回响应数据</p></li>
+</ol>
+</div>
+<p><strong>请求与响应示例：</strong></p>
+<div class="http-example docutils container">
+<div class="http-example-http docutils container" id="id30">
+<p><span class="caption-text">http</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/api/upload</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Authorization</span><span class="o">:</span> <span class="l">LinkToken Your-LinkToken-Value</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-response docutils container" id="id31">
+<p><span class="caption-text">response</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/api/upload</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Authorization</span><span class="o">:</span> <span class="l">LinkToken Your-LinkToken-Value</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p><strong>文件域上传示例：</strong></p>
+<ul>
+<li><p>curl</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: LinkToken xxxx&quot;</span><span class="w"> </span>-XPOST<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>http://127.0.0.1:9514/api/upload<span class="w"> </span>-F<span class="w"> </span><span class="s2">&quot;picbed=@上传的图片路径&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p>python</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">files</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;picbed&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;图片&quot;</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+<span class="p">}</span>
+<span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="s2">&quot;LinkToken xxxx&quot;</span><span class="p">}</span>
+<span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+    <span class="s2">&quot;http://127.0.0.1:9514/api/upload&quot;</span><span class="p">,</span>
+    <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span>
+    <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+<span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>Image Base64上传示例：</strong></p>
+<ul>
+<li><p>curl</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: LinkToken xxxx&quot;</span><span class="w"> </span>-XPOST<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>http://127.0.0.1:9514/api/upload<span class="w"> </span>-d<span class="w"> </span><span class="nv">picbed</span><span class="o">=</span><span class="s2">&quot;图片base64编码&quot;</span><span class="w"> </span>-d<span class="w"> </span><span class="nv">filename</span><span class="o">=</span><span class="s2">&quot;test.jpg&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p>python</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="s2">&quot;LinkToken xxxx&quot;</span><span class="p">}</span>
+<span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+    <span class="s2">&quot;http://127.0.0.1:9514/api/upload&quot;</span><span class="p">,</span>
+    <span class="n">data</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">picbed</span><span class="o">=</span><span class="s2">&quot;data:image/jpg;base64,图片base64编码&quot;</span>
+    <span class="p">),</span>
+    <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+<span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+<li><p>ajax</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">({</span>
+<span class="w">    </span><span class="nx">url</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;http://127.0.0.1:9514/api/upload&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">method</span><span class="o">:</span><span class="s1">&#39;POST&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="nx">picbed</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;data:image/png;base64,图片base64编码&#39;</span><span class="p">},</span>
+<span class="w">    </span><span class="nx">success</span><span class="o">:</span><span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">){</span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">res</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>Image URL上传示例：</strong></p>
+<ul>
+<li><p>curl</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nv">url</span><span class="o">=</span>https://hbimg.huabanimg.com/6b7b7456a3cb7b1b149be2463dca29c18e8c03c2bd0c-DcxKZ5
+$<span class="w"> </span>curl<span class="w"> </span>-XPOST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: LinkToken xxxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>http://127.0.0.1:9514/api/upload<span class="w"> </span>-d<span class="w"> </span><span class="nv">picbed</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">url</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">&quot;code&quot;</span>:<span class="w"> </span><span class="m">0</span>
+<span class="w">    </span><span class="s2">&quot;src&quot;</span>:<span class="w"> </span><span class="s2">&quot;xxx&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;filename&quot;</span>:<span class="w"> </span><span class="s2">&quot;xx&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;sender&quot;</span>:<span class="w"> </span><span class="s2">&quot;up2local&quot;</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</li>
+<li><p>python</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="s2">&quot;LinkToken xxxx&quot;</span><span class="p">}</span>
+<span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+    <span class="s2">&quot;http://127.0.0.1:9514/api/upload&quot;</span><span class="p">,</span>
+    <span class="n">data</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">picbed</span><span class="o">=</span><span class="s2">&quot;https://xxxx.com/your-image.png&quot;</span>
+    <span class="p">),</span>
+    <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+<span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</dd></dl>
+
+</section>
+<section id="api-my">
+<h2>8. api.my<a class="headerlink" href="#api-my" title="Link to this heading">¶</a></h2>
+<blockquote>
+<div><p>修改用户资料、密码等</p>
+</div></blockquote>
+</section>
+<section id="api-ep">
+<h2>9. api.ep<a class="headerlink" href="#api-ep" title="Link to this heading">¶</a></h2>
+<blockquote>
+<div><p>专为钩子实现的接口</p>
+</div></blockquote>
+</section>
+<section id="api-load">
+<span id="picbed-api-load"></span><h2>10. api.load<a class="headerlink" href="#api-load" title="Link to this heading">¶</a></h2>
+<dl class="http post">
+<dt class="sig sig-object http" id="post--api-load">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/api/load</span></span><a class="headerlink" href="#post--api-load" title="Link to this definition">¶</a></dt>
+<dd><p>图片导入接口，即可以将已存在其他位置的远程图片导入到系统中。</p>
+<p>目前仅支持通过接口方式，提交JSON数组。</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">在 1.13.1 版本发生变更: </span>兼容了视频导入</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Request JSON Array of Objects<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<em>str</em>) – 图片地址</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – 图片文件名[建议填写]</p></li>
+<li><p><strong>title</strong> (<em>str</em>) – 描述[可选]</p></li>
+<li><p><strong>album</strong> (<em>str</em>) – 相册[可选]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Request Headers<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc7231#section-3.1.1.5">Content-Type</a></span> – application/json</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Response JSON Object<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>code</strong> (<em>int</em>) – 除非传参错误，否则都是0，主要是success字段</p></li>
+<li><p><strong>count</strong> (<em>object</em>) – success、fail数量</p></li>
+</ul>
+</dd>
+<dt class="field-even">Response JSON Array of Objects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>success</strong> (<em>array</em>) – 成功导入的地址</p></li>
+<li><p><strong>fail</strong> (<em>array</em>) – 导入失败</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4">403 Forbidden</a></span> – 用户未登录时</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>导入流程：</p>
+<ol class="arabic simple">
+<li><dl class="simple">
+<dt>筛选json数据（传参），把合法url及可以提取出filename的放入todo留待处理</dt><dd><p>使用 <a class="reference internal" href="module.html#utils.web.guess_filename_from_url" title="utils.web.guess_filename_from_url"><code class="xref py py-func docutils literal notranslate"><span class="pre">utils.web.guess_filename_from_url()</span></code></a> 尝试解析filename，
+文件名无效时（符合管理员控制台允许的图片后缀或默认后缀），扔到fail</p>
+</dd>
+</dl>
+</li>
+<li><p>处理todo中合法数据，保存成功的放到success，失败的放到fail</p></li>
+</ol>
+<p>由于图片直接导入，只写入些逻辑数据，所以不会调用存储钩子，故此
+图片钩子名保留为：<strong>load</strong></p>
+</div>
+<p><strong>请求与响应示例：</strong></p>
+<div class="http-example docutils container">
+<div class="http-example-http docutils container" id="id32">
+<p><span class="caption-text">http</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/api/load</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+<span class="na">Authorization</span><span class="o">:</span> <span class="l">LinkToken Your-LinkToken-Value</span>
+
+<span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://static.saintic.com/misc/test.jpg&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;album&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://hbimg.huabanimg.com/6b7b7456a3cb7b1b149be2463dca29c18e8c03c2bd0c-DcxKZ5&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;filename&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;huaban-logo.png&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Huaban.com Logo&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;xxx&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="s2">&quot;skipped&quot;</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-curl docutils container" id="id33">
+<p><span class="caption-text">curl</span></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-i<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://127.0.0.1:9514/api/load<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: LinkToken Your-LinkToken-Value&quot;</span><span class="w"> </span>--data-raw<span class="w"> </span><span class="s1">&#39;[{&quot;url&quot;: &quot;https://static.saintic.com/misc/test.jpg&quot;, &quot;album&quot;: &quot;test&quot;}, {&quot;url&quot;: &quot;https://hbimg.huabanimg.com/6b7b7456a3cb7b1b149be2463dca29c18e8c03c2bd0c-DcxKZ5&quot;, &quot;filename&quot;: &quot;huaban-logo.png&quot;, &quot;title&quot;: &quot;Huaban.com Logo&quot;}, {&quot;url&quot;: &quot;xxx&quot;}, &quot;skipped&quot;]&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-python-requests docutils container" id="id34">
+<p><span class="caption-text">python-requests</span></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;http://127.0.0.1:9514/api/load&#39;</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">,</span> <span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="s1">&#39;LinkToken Your-LinkToken-Value&#39;</span><span class="p">},</span> <span class="n">json</span><span class="o">=</span><span class="p">[{</span><span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="s1">&#39;https://static.saintic.com/misc/test.jpg&#39;</span><span class="p">,</span> <span class="s1">&#39;album&#39;</span><span class="p">:</span> <span class="s1">&#39;test&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="s1">&#39;https://hbimg.huabanimg.com/6b7b7456a3cb7b1b149be2463dca29c18e8c03c2bd0c-DcxKZ5&#39;</span><span class="p">,</span> <span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="s1">&#39;huaban-logo.png&#39;</span><span class="p">,</span> <span class="s1">&#39;title&#39;</span><span class="p">:</span> <span class="s1">&#39;Huaban.com Logo&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="s1">&#39;xxx&#39;</span><span class="p">},</span> <span class="s1">&#39;skipped&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="http-example-response docutils container" id="id35">
+<p><span class="caption-text">response</span></p>
+<div class="highlight-http notranslate"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/api/load</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.0</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">127.0.0.1:9514</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+<span class="na">Authorization</span><span class="o">:</span> <span class="l">LinkToken Your-LinkToken-Value</span>
+
+<span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://static.saintic.com/misc/test.jpg&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;album&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://hbimg.huabanimg.com/6b7b7456a3cb7b1b149be2463dca29c18e8c03c2bd0c-DcxKZ5&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;filename&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;huaban-logo.png&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Huaban.com Logo&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;xxx&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="s2">&quot;skipped&quot;</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+  <li class="prev">
+    <a href="hook.html"
+       title="上一章">← 钩子</a>
+  </li>
+  <li class="next">
+    <a href="module.html"
+       title="下一章">Modules API →</a>
+  </li>
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2020, staugur.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.4.7 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a> 0.9.1.
+</div>
+            </div>
+          </div>
+      </page>
+    </div></div>
+    
+    
+  </body>
+</html>

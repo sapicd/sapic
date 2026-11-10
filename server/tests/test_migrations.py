@@ -1,0 +1,40 @@
+# -*- coding: utf-8 -*-
+from sapic import create_app
+from sapic.basis.db import db
+from sapic.migrations import MIGRATIONS, SchemaVersion, upgrade
+
+
+def test_upgrade_is_idempotent(app):
+    with app.app_context():
+        assert upgrade() == []
+        assert SchemaVersion.select().count() >= 1
+
+
+def test_tags_column_is_added_to_existing_databases(app):
+    """v003 back-fills databases created before image tags existed."""
+    with app.app_context():
+        db.execute_sql("ALTER TABLE images DROP COLUMN tags")
+        SchemaVersion.delete().where(SchemaVersion.version == 3).execute()
+
+        assert upgrade() == [3]
+        columns = {column.name for column in db.get_columns("images")}
+        assert "tags" in columns
+        #: Re-running is a no-op, so concurrent boots stay safe.
+        SchemaVersion.delete().where(SchemaVersion.version == 3).execute()
+        assert upgrade() == [3]
+
+
+def test_create_app_migrates_on_boot(tmp_path):
+    """A fresh database must be usable without running ``flask sa upgrade``."""
+    app = create_app(
+        {
+            "DATABASE_URL": "sqlite:///%s" % (tmp_path / "boot.db"),
+            "TESTING": True,
+            "SECRET_KEY": "test-secret",
+        }
+    )
+    with app.app_context():
+        assert SchemaVersion.select().count() == len(MIGRATIONS)
+        assert app.test_client().get("/api/v2/site").status_code == 200
+    if not db.is_closed():
+        db.close()

@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html  lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>utils.tool</title>
+    
+      <link rel="stylesheet" href="../../_static/pygments.css">
+      <link rel="stylesheet" href="../../_static/theme.css">
+      <link rel="stylesheet" href="../../_static/sphinx_press_theme.css">
+          <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+          <link rel="stylesheet" href="../../_static/css/theme.css " type="text/css" />
+          <link rel="stylesheet" href="../../_static/sphinxcontrib-httpexample.css" type="text/css" />
+      
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+
+      <!-- sphinx script_files -->
+        <script src="../../_static/documentation_options.js?v=c6c5d30b"></script>
+        <script src="../../_static/doctools.js?v=9bcbadda"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../_static/sphinxcontrib-httpexample.js"></script>
+        <script src="../../_static/translations.js?v=beaddf03"></script>
+
+      
+      <script src="../../_static/theme-vendors.js"></script>
+      <script src="../../_static/theme.js" defer></script>
+    
+  <link rel="index" title="索引" href="../../genindex.html" />
+  <link rel="search" title="搜索" href="../../search.html" /> 
+  </head>
+
+  <body>
+    <div id="app" class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="../../index.html" class="home-link">
+    
+      <span class="site-name">sapic</span>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+
+
+  
+    <div class="nav-item">
+      <a href="http://demo.sapicd.com"
+        class="nav-link external">
+          Demo <outboundlink/>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://github.com/sapicd/sapic"
+        class="nav-link external">
+          GitHub <outboundlink/>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://gitee.com/staugur/picbed"
+        class="nav-link external">
+          Gitee <outboundlink/>
+      </a>
+    </div>
+  
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+
+
+  
+    <div class="nav-item">
+      <a href="http://demo.sapicd.com"
+        class="nav-link external">
+          Demo <outboundlink/>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://github.com/sapicd/sapic"
+        class="nav-link external">
+          GitHub <outboundlink/>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://gitee.com/staugur/picbed"
+        class="nav-link external">
+          Gitee <outboundlink/>
+      </a>
+    </div>
+  
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">快速搜索</span>
+    <div class="searchformwrapper">
+      <form class="search" action="../../search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="搜索" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="../../index.html#sapic">sapic - 简约不小气的自建图床程序</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 "><a href="../../install.html" class="reference internal ">部署安装</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../docker.html" class="reference internal ">使用Docker部署</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../usage.html" class="reference internal ">使用说明 - 概述</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../linktoken.html" class="reference internal ">使用说明 - LinkToken及应用</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../cli.html" class="reference internal ">使用说明 - sapicli</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../admin.html" class="reference internal ">使用说明 - 站点管理</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../hook.html" class="reference internal ">钩子</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../api.html" class="reference internal ">RESTful API</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../module.html" class="reference internal ">Modules API</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../faq.html" class="reference internal ">FAQ</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="../../changelog.html" class="reference internal ">更新日志</a>
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+    
+      <li><a href="../index.html">模块代码</a> &raquo;</li>
+    
+    <li>utils.tool</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main" v-pre>
+            
+  <h1>utils.tool 源代码</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    utils.tool</span>
+<span class="sd">    ~~~~~~~~~~</span>
+
+<span class="sd">    Some tool classes and functions.</span>
+
+<span class="sd">    :copyright: (c) 2019 by staugur.</span>
+<span class="sd">    :license: BSD 3-Clause, see LICENSE for more details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hmac</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">smtplib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">semver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">uuid</span><span class="w"> </span><span class="kn">import</span> <span class="n">uuid4</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">unicodedata</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">time</span><span class="p">,</span> <span class="n">localtime</span><span class="p">,</span> <span class="n">strftime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">random</span><span class="w"> </span><span class="kn">import</span> <span class="n">randrange</span><span class="p">,</span> <span class="n">sample</span><span class="p">,</span> <span class="n">randint</span><span class="p">,</span> <span class="n">choice</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">redis</span><span class="w"> </span><span class="kn">import</span> <span class="n">from_url</span><span class="p">,</span> <span class="n">Redis</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">email.header</span><span class="w"> </span><span class="kn">import</span> <span class="n">Header</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">email.mime.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIMEText</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">email.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">parseaddr</span><span class="p">,</span> <span class="n">formataddr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">user_agents</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse</span> <span class="k">as</span> <span class="n">user_agents_parse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bleach</span><span class="w"> </span><span class="kn">import</span> <span class="n">clean</span> <span class="k">as</span> <span class="n">bleach_clean</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bleach.sanitizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ALLOWED_TAGS</span><span class="p">,</span> <span class="n">ALLOWED_ATTRIBUTES</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bleach.css_sanitizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">CSSSanitizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">version</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span> <span class="k">as</span> <span class="n">SAPIC_VERSION</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.log</span><span class="w"> </span><span class="kn">import</span> <span class="n">Logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._compat</span><span class="w"> </span><span class="kn">import</span> <span class="n">string_types</span><span class="p">,</span> <span class="n">text_type</span><span class="p">,</span> <span class="n">urlparse</span><span class="p">,</span> <span class="n">is_true</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">Logger</span><span class="p">(</span><span class="s2">&quot;sys&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">getLogger</span>
+<span class="n">err_logger</span> <span class="o">=</span> <span class="n">Logger</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">getLogger</span>
+<span class="n">comma_pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s*,\s*&quot;</span><span class="p">)</span>
+<span class="n">colon_pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s*:\s*&quot;</span><span class="p">)</span>
+<span class="n">verticaline_pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s*\|\s*&quot;</span><span class="p">)</span>
+<span class="n">username_pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^[a-zA-Z][0-9a-zA-Z\_]{3,31}$&quot;</span><span class="p">)</span>
+<span class="n">point_pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\w{1,9}\.?\w{1,9}$&quot;</span><span class="p">)</span>
+<span class="n">mail_pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">&quot;([0-9a-zA-Z\_*\.*\-*]+)@([a-zA-Z0-9\-*\_*\.*]+)\.([a-zA-Z]+$)&quot;</span>
+<span class="p">)</span>
+<span class="n">author_mail_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(.*)\s&lt;(.*)&gt;&quot;</span><span class="p">)</span>
+<span class="n">url_pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">&quot;^(?:http)s?://&quot;</span>
+    <span class="sa">r</span><span class="s2">&quot;(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+&quot;</span>
+    <span class="sa">r</span><span class="s2">&quot;(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|&quot;</span>
+    <span class="sa">r</span><span class="s2">&quot;localhost|&quot;</span>
+    <span class="sa">r</span><span class="s2">&quot;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})&quot;</span>
+    <span class="sa">r</span><span class="s2">&quot;(?::\d+)?&quot;</span>
+    <span class="sa">r</span><span class="s2">&quot;(?:/?|[/?]\S+)$&quot;</span><span class="p">,</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">data_uri_pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">&quot;^</span><span class="si">{}</span><span class="s2">$&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="sa">r</span><span class="s2">&quot;data:&quot;</span>
+            <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;(?P&lt;mimetype&gt;[\w]+\/[\w\-\+\.]+)?&quot;</span>
+            <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;(?:\;charset\=(?P&lt;charset&gt;[\w\-\+\.]+))?&quot;</span>
+            <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;(?P&lt;base64&gt;\;base64)?&quot;</span>
+            <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;,(?P&lt;data&gt;.*)&quot;</span>
+        <span class="p">)</span>
+    <span class="p">),</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">er_pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(and|or|not|\s|ip|ep|origin|method|\(|\))+$&quot;</span><span class="p">)</span>
+<span class="n">ir_pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(in|not in|\s|ip|ep|origin|method|,|:)+$&quot;</span><span class="p">)</span>
+<span class="n">ALLOWED_RULES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;ip&quot;</span><span class="p">,</span> <span class="s2">&quot;ep&quot;</span><span class="p">,</span> <span class="s2">&quot;method&quot;</span><span class="p">,</span> <span class="s2">&quot;origin&quot;</span><span class="p">)</span>
+<span class="n">ALLOWED_EXTS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;png&quot;</span><span class="p">,</span> <span class="s2">&quot;jpg&quot;</span><span class="p">,</span> <span class="s2">&quot;jpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;gif&quot;</span><span class="p">,</span> <span class="s2">&quot;bmp&quot;</span><span class="p">,</span> <span class="s2">&quot;webp&quot;</span><span class="p">)</span>
+<span class="n">ALLOWED_HTTP_METHOD</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;PUT&quot;</span><span class="p">,</span> <span class="s2">&quot;DELETE&quot;</span><span class="p">,</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">)</span>
+<span class="n">ALLOWED_VIDEO</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mp4&quot;</span><span class="p">,</span> <span class="s2">&quot;ogg&quot;</span><span class="p">,</span> <span class="s2">&quot;ogv&quot;</span><span class="p">,</span> <span class="s2">&quot;webm&quot;</span><span class="p">,</span> <span class="s2">&quot;3gp&quot;</span><span class="p">,</span> <span class="s2">&quot;mov&quot;</span><span class="p">)</span>
+<span class="c1"># \u4E00-\u9FBF 为中文UTF-8编码</span>
+<span class="n">_filename_ascii_strip_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[^A-Za-z0-9_\u4E00-\u9FBF.-]&quot;</span><span class="p">)</span>
+<span class="n">_windows_device_files</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;CON&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;AUX&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;COM1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;COM2&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;COM3&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;COM4&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;LPT1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;LPT2&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;LPT3&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;PRN&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NUL&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">secure_filename</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Pass it a filename and it will return a secure version of it.  This</span>
+<span class="sd">    filename can then safely be stored on a regular file system and passed</span>
+<span class="sd">    to :func:`os.path.join`.  The filename returned is an ASCII only string</span>
+<span class="sd">    for maximum portability.</span>
+
+<span class="sd">    On windows systems the function also makes sure that the file is not</span>
+<span class="sd">    named after one of the special device files.</span>
+
+<span class="sd">    &gt;&gt;&gt; secure_filename(&quot;My cool movie.mov&quot;)</span>
+<span class="sd">    &#39;My_cool_movie.mov&#39;</span>
+<span class="sd">    &gt;&gt;&gt; secure_filename(&quot;../../../etc/passwd&quot;)</span>
+<span class="sd">    &#39;etc_passwd&#39;</span>
+<span class="sd">    &gt;&gt;&gt; secure_filename(&#39;i contain cool \xfcml\xe4uts.txt&#39;)</span>
+<span class="sd">    &#39;i_contain_cool_umlauts.txt&#39;</span>
+
+<span class="sd">    The function might return an empty filename.  It&#39;s your responsibility</span>
+<span class="sd">    to ensure that the filename is unique and that you abort or</span>
+<span class="sd">    generate a random filename if the function returned an empty one.</span>
+
+<span class="sd">    .. versionadded:: 0.5</span>
+
+<span class="sd">    :param filename: the filename to secure</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">&quot;NFKD&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="s2">&quot;ignore&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">sep</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">altsep</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">sep</span><span class="p">:</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">sep</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span>
+        <span class="n">_filename_ascii_strip_re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;._&quot;</span><span class="p">)</span>
+
+    <span class="c1"># on nt a couple of special files are present in each folder.  We</span>
+    <span class="c1"># have to ensure that the target file is not such a filename.  In</span>
+    <span class="c1"># this case we prepend an underline</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;nt&quot;</span>
+        <span class="ow">and</span> <span class="n">filename</span>
+        <span class="ow">and</span> <span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">in</span> <span class="n">_windows_device_files</span>
+    <span class="p">):</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">return</span> <span class="n">filename</span>
+
+
+<div class="viewcode-block" id="rsp">
+<a class="viewcode-back" href="../../module.html#utils.tool.rsp">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rsp</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;使用 `picbed:` 前缀生成redis key&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;picbed:&quot;</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="md5">
+<a class="viewcode-back" href="../../module.html#utils.tool.md5">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">md5</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">text_type</span><span class="p">):</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="sha1">
+<a class="viewcode-back" href="../../module.html#utils.tool.sha1">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sha1</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">text_type</span><span class="p">):</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="sha256">
+<a class="viewcode-back" href="../../module.html#utils.tool.sha256">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sha256</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">text_type</span><span class="p">):</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="hmac_sha256">
+<a class="viewcode-back" href="../../module.html#utils.tool.hmac_sha256">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">hmac_sha256</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">text_type</span><span class="p">):</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">text_type</span><span class="p">):</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">digestmod</span><span class="o">=</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="get_current_timestamp">
+<a class="viewcode-back" href="../../module.html#utils.tool.get_current_timestamp">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_current_timestamp</span><span class="p">(</span><span class="n">is_float</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;获取当前时间戳</span>
+
+<span class="sd">    :param bool is_float: True则获取10位秒级时间戳，否则原样返回</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">time</span><span class="p">()</span> <span class="k">if</span> <span class="n">is_float</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="p">())</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">timestamp_to_timestring</span><span class="p">(</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;将时间戳(10位)转换为可读性的时间&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">timestamp</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="k">raise</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="n">localtime</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">strftime</span><span class="p">(</span><span class="n">fmt</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="create_redis_engine">
+<a class="viewcode-back" href="../../module.html#utils.tool.create_redis_engine">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_redis_engine</span><span class="p">(</span><span class="n">redis_url</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Redis</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;创建redis连接的入口&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">config</span><span class="w"> </span><span class="kn">import</span> <span class="n">REDIS</span>
+
+    <span class="n">url</span> <span class="o">=</span> <span class="n">redis_url</span> <span class="ow">or</span> <span class="n">REDIS</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">url</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">return</span> <span class="n">from_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">decode_responses</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">gen_rnd_filename</span><span class="p">(</span><span class="n">fmt</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;time1&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;time2&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%s%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)),</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">randrange</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)),</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;time3&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%s%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">%H%M%S&quot;</span><span class="p">),</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">randrange</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)),</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_today</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;%Y/%m/</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">allowed_file</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">suffix</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">suffix</span> <span class="ow">or</span> <span class="n">ALLOWED_EXTS</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;.&quot;</span> <span class="ow">in</span> <span class="n">filename</span> <span class="ow">and</span> <span class="n">filename</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">suffix</span>
+
+
+<div class="viewcode-block" id="parse_valid_comma">
+<a class="viewcode-back" href="../../module.html#utils.tool.parse_valid_comma">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_valid_comma</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">comma_pat</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="parse_valid_verticaline">
+<a class="viewcode-back" href="../../module.html#utils.tool.parse_valid_verticaline">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_valid_verticaline</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">verticaline_pat</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="parse_valid_colon">
+<a class="viewcode-back" href="../../module.html#utils.tool.parse_valid_colon">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_valid_colon</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;解析形如 a:b,x:y 字符串为 dict(a=b, x=y)&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">s</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">i</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">comma_pat</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">i</span>
+                <span class="ow">and</span> <span class="s2">&quot;:&quot;</span> <span class="ow">in</span> <span class="n">i</span>
+                <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">))</span> <span class="o">==</span> <span class="mi">2</span>
+                <span class="ow">and</span> <span class="n">i</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="ow">and</span> <span class="n">i</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">list_equal_split</span><span class="p">(</span><span class="n">alist</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">alist</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">alist</span><span class="p">),</span> <span class="n">n</span><span class="p">)]</span>
+
+
+<div class="viewcode-block" id="generate_random">
+<a class="viewcode-back" href="../../module.html#utils.tool.generate_random">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_random</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="mi">6</span><span class="p">):</span>
+    <span class="n">code_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>  <span class="c1"># 0-9数字</span>
+        <span class="n">code_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">65</span><span class="p">,</span> <span class="mi">91</span><span class="p">):</span>  <span class="c1"># A-Z</span>
+        <span class="n">code_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">97</span><span class="p">,</span> <span class="mi">123</span><span class="p">):</span>  <span class="c1"># a-z</span>
+        <span class="n">code_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+    <span class="n">myslice</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span><span class="n">code_list</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">myslice</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">format_upload_src</span><span class="p">(</span><span class="n">fmt</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;转换upload路由中返回的src格式&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fmt</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">point_pat</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">fmt</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">in</span> <span class="n">fmt</span><span class="p">:</span>
+                <span class="n">fmts</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="p">{</span><span class="n">fmts</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="p">{</span><span class="n">fmts</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="n">value</span><span class="p">}}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">{</span><span class="n">fmt</span><span class="p">:</span> <span class="n">value</span><span class="p">}</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">src</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">format_apires</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">sn</span><span class="o">=</span><span class="s2">&quot;code&quot;</span><span class="p">,</span> <span class="n">oc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mn</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;转换API响应JSON的格式</span>
+
+<span class="sd">    可以用下面三个参数修改返回的res基本格式：</span>
+
+<span class="sd">    - sn: status_name规定数据状态的字段名称，默认code</span>
+<span class="sd">    - oc: ok_code规定成功的状态码，默认0，用字符串bool则会返回布尔类型</span>
+<span class="sd">    - mn: msg_name规定状态信息的字段名称，默认msg</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;code&quot;</span> <span class="ow">in</span> <span class="n">res</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sn</span><span class="p">:</span>
+            <span class="n">sn</span> <span class="o">=</span> <span class="s2">&quot;code&quot;</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;code&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">oc</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">oc</span> <span class="o">==</span> <span class="s2">&quot;bool&quot;</span><span class="p">:</span>
+                <span class="c1">#: ok_code要求bool时，成功返回True，否则False</span>
+                <span class="n">code</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">code</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1">#: 不是bool就是int，成功返回oc，否则是code本身</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">code</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">oc</span><span class="p">)</span> <span class="k">if</span> <span class="n">code</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">code</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                    <span class="k">pass</span>
+        <span class="n">res</span><span class="p">[</span><span class="n">sn</span><span class="p">]</span> <span class="o">=</span> <span class="n">code</span>
+        <span class="k">if</span> <span class="n">mn</span> <span class="ow">and</span> <span class="n">res</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;msg&quot;</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;msg&quot;</span><span class="p">)</span>
+            <span class="n">res</span><span class="p">[</span><span class="n">mn</span><span class="p">]</span> <span class="o">=</span> <span class="n">msg</span>
+    <span class="k">return</span> <span class="n">res</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Attribution</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Attribute</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_origin</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;从url提取出符合CORS格式的origin地址&quot;&quot;&quot;</span>
+    <span class="n">parsed_uri</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{uri.scheme}</span><span class="s2">://</span><span class="si">{uri.netloc}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">uri</span><span class="o">=</span><span class="n">parsed_uri</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">check_origin</span><span class="p">(</span><span class="n">addr</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether UrlAddr is in a valid host origin, for example:</span>
+
+<span class="sd">    .. code-block::</span>
+
+<span class="sd">        http://ip:port</span>
+<span class="sd">        https://abc.com</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">addr</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">url_pat</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">origin</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="check_url">
+<a class="viewcode-back" href="../../module.html#utils.tool.check_url">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_url</span><span class="p">(</span><span class="n">addr</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether UrlAddr is in a valid format&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">addr</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">url_pat</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">addr</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="check_ip">
+<a class="viewcode-back" href="../../module.html#utils.tool.check_ip">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_ip</span><span class="p">(</span><span class="n">ip_str</span><span class="p">):</span>
+    <span class="n">sep</span> <span class="o">=</span> <span class="n">ip_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sep</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sep</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">int_x</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">int_x</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">int_x</span> <span class="o">&gt;</span> <span class="mi">255</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">gen_uuid</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">check_ir</span><span class="p">(</span><span class="n">ir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;解析ir规则，其格式是: in:opt1, not in:opt2&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ir</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">parse_valid_comma</span><span class="p">(</span><span class="n">ir</span><span class="p">):</span>
+            <span class="n">opr</span><span class="p">,</span> <span class="n">opt</span> <span class="o">=</span> <span class="n">i</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">opt</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ALLOWED_RULES</span> <span class="ow">or</span> <span class="n">opr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;in&quot;</span><span class="p">,</span> <span class="s2">&quot;not in&quot;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_data_uri</span><span class="p">(</span><span class="n">datauri</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse Data URLs: data:[&lt;media type&gt;][;base64],&lt;data&gt;&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">datauri</span><span class="p">,</span> <span class="n">text_type</span><span class="p">):</span>
+        <span class="n">datauri</span> <span class="o">=</span> <span class="n">datauri</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">data_uri_pat</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">datauri</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+        <span class="n">mimetype</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;mimetype&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span>
+        <span class="n">charset</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;charset&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span>
+        <span class="n">is_base64</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;base64&quot;</span><span class="p">))</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mimetype</span> <span class="o">=</span> <span class="n">charset</span> <span class="o">=</span> <span class="n">data</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">is_base64</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="n">Attribution</span><span class="p">(</span>
+        <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">mimetype</span><span class="o">=</span><span class="n">mimetype</span><span class="p">,</span>
+            <span class="n">charset</span><span class="o">=</span><span class="n">charset</span><span class="p">,</span>
+            <span class="n">is_base64</span><span class="o">=</span><span class="n">is_base64</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="gen_ua">
+<a class="viewcode-back" href="../../module.html#utils.tool.gen_ua">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gen_ua</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;随机生成用户代理&quot;&quot;&quot;</span>
+    <span class="n">first_num</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="mi">55</span><span class="p">,</span> <span class="mi">62</span><span class="p">)</span>
+    <span class="n">third_num</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3200</span><span class="p">)</span>
+    <span class="n">fourth_num</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">140</span><span class="p">)</span>
+    <span class="n">os_type</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;(Windows NT 6.1; WOW64)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;(Windows NT 10.0; WOW64)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;(X11; Linux x86_64)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;(Macintosh; Intel Mac OS X 10_12_6)&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">chrome_version</span> <span class="o">=</span> <span class="s2">&quot;Chrome/</span><span class="si">{}</span><span class="s2">.0.</span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">first_num</span><span class="p">,</span> <span class="n">third_num</span><span class="p">,</span> <span class="n">fourth_num</span>
+    <span class="p">)</span>
+    <span class="n">ua</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="s2">&quot;Mozilla/5.0&quot;</span><span class="p">,</span>
+            <span class="n">choice</span><span class="p">(</span><span class="n">os_type</span><span class="p">),</span>
+            <span class="s2">&quot;AppleWebKit/537.36&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;(KHTML, like Gecko)&quot;</span><span class="p">,</span>
+            <span class="n">chrome_version</span><span class="p">,</span>
+            <span class="s2">&quot;Safari/537.36&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ua</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_ua</span><span class="p">(</span><span class="n">user_agent</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;解析用户代理，获取其操作系统、设备、版本&quot;&quot;&quot;</span>
+    <span class="n">uap</span> <span class="o">=</span> <span class="n">user_agents_parse</span><span class="p">(</span><span class="n">user_agent</span><span class="p">)</span>
+    <span class="n">device</span><span class="p">,</span> <span class="n">ua_os</span><span class="p">,</span> <span class="n">family</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uap</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; / &quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">uap</span><span class="o">.</span><span class="n">is_mobile</span><span class="p">:</span>
+        <span class="n">platform</span> <span class="o">=</span> <span class="s2">&quot;mobile&quot;</span>
+    <span class="k">elif</span> <span class="n">uap</span><span class="o">.</span><span class="n">is_pc</span><span class="p">:</span>
+        <span class="n">platform</span> <span class="o">=</span> <span class="s2">&quot;pc&quot;</span>
+    <span class="k">elif</span> <span class="n">uap</span><span class="o">.</span><span class="n">is_tablet</span><span class="p">:</span>
+        <span class="n">platform</span> <span class="o">=</span> <span class="s2">&quot;tablet&quot;</span>
+    <span class="k">elif</span> <span class="n">uap</span><span class="o">.</span><span class="n">is_bot</span><span class="p">:</span>
+        <span class="n">platform</span> <span class="o">=</span> <span class="s2">&quot;bot&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">platform</span> <span class="o">=</span> <span class="s2">&quot;other&quot;</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">user_agent</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;picbed-cli&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">user_agent</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;sapicli&quot;</span><span class="p">)</span>
+    <span class="p">)</span> <span class="ow">and</span> <span class="n">user_agent</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;amd64&quot;</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">ua_os</span><span class="p">,</span> <span class="n">device</span> <span class="o">=</span> <span class="n">user_agent</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+        <span class="n">family</span> <span class="o">=</span> <span class="s2">&quot;sapicli&quot;</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">platform</span><span class="o">=</span><span class="n">platform</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">os</span><span class="o">=</span><span class="n">ua_os</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="n">family</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="slash_join">
+<a class="viewcode-back" href="../../module.html#utils.tool.slash_join">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">slash_join</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;用 / 连接参数&quot;&quot;&quot;</span>
+    <span class="n">stripped_strings</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">a</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
+            <span class="n">stripped_strings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">stripped_strings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">start</span><span class="p">:])</span>
+    <span class="k">return</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">stripped_strings</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="try_request">
+<a class="viewcode-back" href="../../module.html#utils.tool.try_request">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">try_request</span><span class="p">(</span>
+    <span class="n">url</span><span class="p">,</span>
+    <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">headers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">&quot;post&quot;</span><span class="p">,</span>
+    <span class="n">proxy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">num_retries</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">_is_retry</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param dict params: 请求查询参数</span>
+<span class="sd">    :param dict data: 提交表单数据</span>
+<span class="sd">    :param int timeout: 超时时间，单位秒</span>
+<span class="sd">    :param str method: 请求方法，get、post、put、delete</span>
+<span class="sd">    :param str proxy: 设置代理服务器</span>
+<span class="sd">    :param int num_retries: 超时重试次数</span>
+<span class="sd">    :param bool _is_retry: 判定为重试请求，这不应该由用户发出</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="n">headers</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="s2">&quot;User-Agent&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
+        <span class="n">headers</span><span class="p">[</span><span class="s2">&quot;User-Agent&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;sapic/v</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">SAPIC_VERSION</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;get&quot;</span><span class="p">:</span>
+        <span class="n">method_func</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;post&quot;</span><span class="p">:</span>
+        <span class="n">method_func</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;put&quot;</span><span class="p">:</span>
+        <span class="n">method_func</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">put</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;delete&quot;</span><span class="p">:</span>
+        <span class="n">method_func</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">delete</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">method_func</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">method_func</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+            <span class="n">proxies</span><span class="o">=</span><span class="n">proxy</span> <span class="k">if</span> <span class="n">_is_retry</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="n">proxy</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">Timeout</span><span class="p">,</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ConnectionError</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">num_retries</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">try_request</span><span class="p">(</span>
+                <span class="n">url</span><span class="p">,</span>
+                <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+                <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+                <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                <span class="n">proxy</span><span class="o">=</span><span class="n">proxy</span><span class="p">,</span>
+                <span class="n">num_retries</span><span class="o">=</span><span class="n">num_retries</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">_is_retry</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
+        <span class="k">raise</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">resp</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">is_venv</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;判断当前环境是否在virtualenv、venv下&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">&quot;real_prefix&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+        <span class="nb">hasattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">&quot;base_prefix&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">base_prefix</span> <span class="o">!=</span> <span class="n">sys</span><span class="o">.</span><span class="n">prefix</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="is_all_fail">
+<a class="viewcode-back" href="../../module.html#utils.tool.is_all_fail">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_all_fail</span><span class="p">(</span><span class="n">alist</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;从list下的dict拿出code!=0的(执行失败)数量&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">alist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;code&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">alist</span><span class="p">)))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">check_to_addr</span><span class="p">(</span><span class="n">to</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;检测收件人格式&quot;&quot;&quot;</span>
+    <span class="n">to_addrs</span> <span class="o">=</span> <span class="n">parse_valid_comma</span><span class="p">(</span><span class="n">to</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">to_addrs</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">to</span> <span class="ow">in</span> <span class="n">to_addrs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">mail_pat</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">to</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="Mailbox">
+<a class="viewcode-back" href="../../module.html#utils.tool.Mailbox">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Mailbox</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">passwd</span><span class="p">,</span> <span class="n">smtp_server</span><span class="p">,</span> <span class="n">smtp_port</span><span class="o">=</span><span class="mi">25</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;初始化邮箱客户端配置。</span>
+
+<span class="sd">        :param user: 邮箱地址</span>
+<span class="sd">        :param passwd: 邮箱密码或可登录的授权码</span>
+<span class="sd">        :param smtp_server: 邮箱的SMTP服务器地址</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_user</span> <span class="o">=</span> <span class="n">user</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_passwd</span> <span class="o">=</span> <span class="n">passwd</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="n">smtp_server</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_port</span> <span class="o">=</span> <span class="n">smtp_port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ssl</span> <span class="o">=</span> <span class="kc">False</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_port</span> <span class="o">==</span> <span class="mi">25</span> <span class="k">else</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_debug</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ssl</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;是否使用加密连接，支持setter&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ssl</span>
+
+    <span class="nd">@ssl</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ssl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smtp_ssl</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ssl</span> <span class="o">=</span> <span class="n">is_true</span><span class="p">(</span><span class="n">smtp_ssl</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">debug</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;是否开启debug模式，支持setter&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_debug</span>
+
+    <span class="nd">@debug</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">debug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">level</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_debug</span> <span class="o">=</span> <span class="n">level</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_format_addr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">addr</span> <span class="o">=</span> <span class="n">parseaddr</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">formataddr</span><span class="p">((</span><span class="n">Header</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">addr</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Mailbox.send">
+<a class="viewcode-back" href="../../module.html#utils.tool.Mailbox.send">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subject</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">to_addrs</span><span class="p">,</span> <span class="n">from_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sendmail</span>
+
+<span class="sd">        :param subject: 邮件主题</span>
+<span class="sd">        :param message: 内容，支持HTML</span>
+<span class="sd">        :param to_addrs: 收件人，支持多个</span>
+<span class="sd">        :returns: send result</span>
+<span class="sd">        :rtype: dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">subject</span> <span class="ow">and</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">to_addrs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">to_addrs</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+                <span class="n">to_addrs</span> <span class="o">=</span> <span class="p">(</span><span class="n">to_addrs</span><span class="p">,)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">MIMEText</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="s2">&quot;html&quot;</span><span class="p">,</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="n">msg</span><span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_addr</span><span class="p">(</span>
+                <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> &lt;</span><span class="si">{1}</span><span class="s2">&gt;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">from_name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;@&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">msg</span><span class="p">[</span><span class="s2">&quot;to&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">to_addrs</span><span class="p">)</span>
+            <span class="n">msg</span><span class="p">[</span><span class="s2">&quot;subject&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Header</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ssl</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                    <span class="n">server</span> <span class="o">=</span> <span class="n">smtplib</span><span class="o">.</span><span class="n">SMTP_SSL</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_port</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">server</span> <span class="o">=</span> <span class="n">smtplib</span><span class="o">.</span><span class="n">SMTP</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_port</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_debug</span><span class="p">:</span>  <span class="c1"># not False, &gt; 0</span>
+                    <span class="n">server</span><span class="o">.</span><span class="n">set_debuglevel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_debug</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_passwd</span><span class="p">:</span>
+                    <span class="n">server</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_user</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_passwd</span><span class="p">)</span>
+                <span class="n">server</span><span class="o">.</span><span class="n">sendmail</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_user</span><span class="p">,</span> <span class="n">to_addrs</span><span class="p">,</span> <span class="n">msg</span><span class="o">.</span><span class="n">as_string</span><span class="p">())</span>
+                <span class="n">server</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">smtplib</span><span class="o">.</span><span class="n">SMTPException</span><span class="p">,</span> <span class="ne">ConnectionRefusedError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s2">&quot;Bad mailbox params&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="bleach_html">
+<a class="viewcode-back" href="../../module.html#utils.tool.bleach_html">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">bleach_html</span><span class="p">(</span>
+    <span class="n">html</span><span class="p">,</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">attrs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">css</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CSSSanitizer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;清洗HTML，设置中仅允许部分标签、属性和样式。&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">config</span><span class="w"> </span><span class="kn">import</span> <span class="n">GLOBAL</span>
+
+    <span class="n">_tags</span> <span class="o">=</span> <span class="n">tags</span> <span class="ow">or</span> <span class="nb">list</span><span class="p">(</span><span class="n">ALLOWED_TAGS</span><span class="p">)</span>
+    <span class="n">_ext_tags</span> <span class="o">=</span> <span class="n">parse_valid_comma</span><span class="p">(</span><span class="n">GLOBAL</span><span class="p">[</span><span class="s2">&quot;AllowTags&quot;</span><span class="p">])</span>
+    <span class="n">_ext_styles</span> <span class="o">=</span> <span class="n">parse_valid_comma</span><span class="p">(</span><span class="n">GLOBAL</span><span class="p">[</span><span class="s2">&quot;AllowStyles&quot;</span><span class="p">])</span>
+    <span class="n">_tags</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_ext_tags</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">css</span><span class="p">,</span> <span class="n">CSSSanitizer</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_ext_styles</span><span class="p">:</span>
+        <span class="n">css</span><span class="o">.</span><span class="n">allowed_css_properties</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_ext_styles</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">bleach_clean</span><span class="p">(</span>
+        <span class="n">html</span><span class="p">,</span>
+        <span class="n">tags</span><span class="o">=</span><span class="n">_tags</span><span class="p">,</span>
+        <span class="n">attributes</span><span class="o">=</span><span class="n">attrs</span> <span class="ow">or</span> <span class="n">ALLOWED_ATTRIBUTES</span><span class="p">,</span>
+        <span class="n">css_sanitizer</span><span class="o">=</span><span class="n">css</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="is_valid_verion">
+<a class="viewcode-back" href="../../module.html#utils.tool.is_valid_verion">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_valid_verion</span><span class="p">(</span><span class="n">version</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Semantic version number - determines whether the version is qualified.</span>
+<span class="sd">    The format is MAJOR.Minor.PATCH, more with https://semver.org</span>
+
+<span class="sd">    :param str version: 版本号</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">version</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">version</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="n">version</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">semver</span><span class="o">.</span><span class="n">VersionInfo</span><span class="p">,</span> <span class="s2">&quot;isvalid&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">semver</span><span class="o">.</span><span class="n">VersionInfo</span><span class="o">.</span><span class="n">isvalid</span><span class="p">(</span><span class="n">version</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">semver</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">is_match_appversion</span><span class="p">(</span><span class="n">appversion</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;确认当前应用版本是否符合appversion要求</span>
+
+<span class="sd">    :param str appversion: 使用操作符和分组符匹配程序版本</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#: 没有要求appversion则默认认为兼容所有版本</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">appversion</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">appversion</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
+        <span class="n">appversion</span> <span class="o">=</span> <span class="n">appversion</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">vermatch</span><span class="p">(</span><span class="n">check_ver</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">is_valid_verion</span><span class="p">(</span><span class="n">check_ver</span><span class="p">):</span>
+            <span class="n">check_ver</span> <span class="o">=</span> <span class="s2">&quot;&gt;=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">check_ver</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">semver</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">SAPIC_VERSION</span><span class="p">,</span> <span class="n">check_ver</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">avs</span> <span class="o">=</span> <span class="n">comma_pat</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">appversion</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">avs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">vermatch</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">less_latest_tag</span><span class="p">(</span><span class="n">latest_tag</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;当前应用是否小于GitHub最新版本比较&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">latest_tag</span> <span class="ow">and</span> <span class="n">is_valid_verion</span><span class="p">(</span><span class="n">latest_tag</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">semver</span><span class="o">.</span><span class="n">compare</span><span class="p">(</span><span class="n">latest_tag</span><span class="p">,</span> <span class="n">SAPIC_VERSION</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_author_mail</span><span class="p">(</span><span class="n">author</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;从形如 ``author &lt;author-mail&gt;`` 中分离author与mail&quot;&quot;&quot;</span>
+    <span class="n">pat</span> <span class="o">=</span> <span class="n">author_mail_re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">author</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">pat</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">pat</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span> <span class="k">if</span> <span class="n">pat</span> <span class="k">else</span> <span class="p">(</span><span class="n">author</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_label</span><span class="p">(</span><span class="n">label</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">label</span><span class="p">:</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">parse_valid_comma</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">label</span>
+    <span class="k">return</span> <span class="p">[]</span>
+
+
+<div class="viewcode-block" id="b64size">
+<a class="viewcode-back" href="../../module.html#utils.tool.b64size">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">b64size</span><span class="p">(</span><span class="n">b64string</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;获取base64内容大小，单位bytes&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">b64string</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">-</span> <span class="n">b64string</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="raise_version">
+<a class="viewcode-back" href="../../module.html#utils.tool.raise_version">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">raise_version</span><span class="p">():</span>
+    <span class="n">vs</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">vs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The system requires python version 3.9+&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2020, staugur.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 8.2.3 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a>.
+</div>
+            </div>
+          </div>
+      </page>
+    </div>
+    
+    
+  </body>
+</html>
