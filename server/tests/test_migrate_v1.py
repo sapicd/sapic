@@ -9,8 +9,10 @@ from types import SimpleNamespace
 import pytest
 from werkzeug.security import generate_password_hash
 
+from sapic.libs.hook import get_hook_manager
+from sapic.libs.settings import set_setting
 from sapic.libs.storage import list_backends
-from sapic.models import Album, Image, ImageBackend, User
+from sapic.models import Album, Image, ImageBackend, StorageBackend, User, now
 
 TOOL = Path(__file__).resolve().parents[2] / "tools" / "migrate_v1_to_v2.py"
 SPEC = importlib.util.spec_from_file_location("migrate_v1_to_v2", TOOL)
@@ -80,6 +82,27 @@ def run(app, tmp_path, data=None, **kwargs):
         #: ``run`` 自己取主后端；这里按脚本内部的 (name, hash) 迭代形式喂数据。
         stats = migrator.run(data["users"].items(), data["images"])
         return stats, migrator
+
+
+def use_cloud_backend(monkeypatch, domain="https://cdn.example.com"):
+    """让脚本看到一个云后端：后端列表与配置都按需伪造。"""
+    config = {"domain": domain} if domain else {}
+    monkeypatch.setattr(
+        MIGRATE, "driver_backend", lambda backend: {"config": dict(config)}
+    )
+    monkeypatch.setattr(
+        MIGRATE,
+        "list_backends",
+        lambda user=None: [
+            {
+                "id": 2,
+                "name": "upyun",
+                "hook_name": "up2upyun",
+                "config": dict(config),
+                "priority": 100,
+            }
+        ],
+    )
 
 
 def test_migrates_user_album_and_image(app, tmp_path):
@@ -206,11 +229,7 @@ def test_bucket_objects_are_adopted_instead_of_external(app, tmp_path, monkeypat
     """v1 用又拍云/七牛时字节还在 bucket 里：登记副本，不能降级成外链。"""
     src = "https://cdn.example.com/sapic/2024/01/02/photo.png"
     #: 主后端是云存储：配置里有公开域名，对象已经在同一个 bucket 里。
-    monkeypatch.setattr(
-        MIGRATE,
-        "driver_backend",
-        lambda backend: {"config": {"domain": "https://cdn.example.com"}},
-    )
+    use_cloud_backend(monkeypatch)
     migrator = MIGRATE.Migrator(make_args(tmp_path))
     data = payload({"src": src, "senders": senders_json()})
     with app.app_context():
@@ -240,11 +259,7 @@ def test_bucket_objects_are_adopted_instead_of_external(app, tmp_path, monkeypat
 def test_refresh_external_backfills_metadata_of_adopted_rows(app, tmp_path, monkeypatch):
     """早年采纳过、但缺大小/尺寸的行，重跑 ``--refresh-external`` 能补齐。"""
     src = "https://cdn.example.com/sapic/2024/01/02/photo.png"
-    monkeypatch.setattr(
-        MIGRATE,
-        "driver_backend",
-        lambda backend: {"config": {"domain": "https://cdn.example.com"}},
-    )
+    use_cloud_backend(monkeypatch)
 
     first, _ = run(app, tmp_path, data=payload({"src": src}))
     assert first["images_adopted"] == 1
@@ -277,7 +292,7 @@ def test_refresh_external_repairs_previous_runs(app, tmp_path, monkeypatch):
     data = payload({"src": src})
 
     #: 第一遍：主后端没有公开域名，只能登记外链。
-    monkeypatch.setattr(MIGRATE, "driver_backend", lambda backend: {"config": {}})
+    use_cloud_backend(monkeypatch, "")
     with app.app_context():
         stats = MIGRATE.Migrator(make_args(tmp_path)).run(
             data["users"].items(), data["images"]
@@ -294,11 +309,7 @@ def test_refresh_external_repairs_previous_runs(app, tmp_path, monkeypatch):
         assert Image.get(Image.sha == SHA).source_url == src
 
     #: 第二遍补上域名：外链升级成 ok 副本，``source_url`` 清掉。
-    monkeypatch.setattr(
-        MIGRATE,
-        "driver_backend",
-        lambda backend: {"config": {"domain": "https://cdn.example.com"}},
-    )
+    use_cloud_backend(monkeypatch)
     with app.app_context():
         stats = MIGRATE.Migrator(
             make_args(tmp_path, refresh_external=True)
@@ -321,6 +332,97 @@ def test_missing_file_falls_back_to_external_link(app, tmp_path):
         image = Image.get(Image.sha == SHA)
         assert image.source_url.endswith("/photo.png")
         assert ImageBackend.select().where(ImageBackend.image == image).count() == 0
+
+
+def test_adoption_follows_the_backend_that_owns_the_bucket(app, tmp_path):
+    """本机后端排在前面时，云上对象的副本仍要挂在云后端，否则删除删不到。"""
+    src = "https://cdn.example.com/sapic/2024/01/02/photo.png"
+    with app.app_context():
+        set_setting("hooks_state", {"up2upyun": True})
+        get_hook_manager().reload()
+        cloud = StorageBackend.create(
+            name="upyun",
+            hook_name="up2upyun",
+            scope="system",
+            config={
+                "domain": "https://cdn.example.com",
+                "bucket": "demo",
+                "username": "operator",
+                "password": "secret",
+            },
+            #: 排在默认本地后端（100）之后，复现「主后端是 up2local」的部署。
+            priority=200,
+            enabled=True,
+            visibility="public",
+            created_at=now(),
+            updated_at=now(),
+        )
+        local = StorageBackend.get(StorageBackend.hook_name == "up2local")
+        assert local.priority < cloud.priority
+
+        data = payload({"src": src})
+        stats = MIGRATE.Migrator(make_args(tmp_path)).run(
+            data["users"].items(), data["images"]
+        )
+
+        assert stats["images_adopted"] == 1
+        assert stats["images_external"] == 0
+        image = Image.get(Image.sha == SHA)
+        assert image.source_url is None
+        replica = ImageBackend.get(ImageBackend.image == image)
+        assert replica.backend_id == cloud.id
+        assert replica.object_key == "/sapic/2024/01/02/photo.png"
+        assert replica.url == src
+        assert replica.state == "ok"
+        #: 上传主后端仍是本地，所以它不是主副本。
+        assert replica.is_primary is False
+
+
+def test_refresh_reattaches_a_replica_left_on_the_wrong_backend(app, tmp_path):
+    """早期版本把云上对象挂在了本机后端上：重跑 refresh 要改写归属。"""
+    src = "https://cdn.example.com/sapic/2024/01/02/photo.png"
+    with app.app_context():
+        set_setting("hooks_state", {"up2upyun": True})
+        get_hook_manager().reload()
+        cloud = StorageBackend.create(
+            name="upyun",
+            hook_name="up2upyun",
+            scope="system",
+            config={
+                "domain": "https://cdn.example.com",
+                "bucket": "demo",
+                "username": "operator",
+                "password": "secret",
+            },
+            priority=200,
+            enabled=True,
+            visibility="public",
+            created_at=now(),
+            updated_at=now(),
+        )
+        data = payload({"src": src})
+        MIGRATE.Migrator(make_args(tmp_path)).run(
+            data["users"].items(), data["images"]
+        )
+
+        image = Image.get(Image.sha == SHA)
+        replica = ImageBackend.get(ImageBackend.image == image)
+        local = StorageBackend.get(StorageBackend.hook_name == "up2local")
+        #: 模拟旧数据：副本指向本地后端，key 却是 bucket 里的路径。
+        ImageBackend.update(backend=local.id).where(
+            ImageBackend.id == replica.id
+        ).execute()
+        #: 早期采纳会把 source_url 清空，所以修复不能只依赖它。
+        Image.update(source_url=None).where(Image.id == image.id).execute()
+
+        stats = MIGRATE.Migrator(
+            make_args(tmp_path, refresh_external=True)
+        ).run(data["users"].items(), data["images"])
+
+        assert stats["images_adopted"] == 1
+        fixed = ImageBackend.get(ImageBackend.image == image)
+        assert fixed.backend_id == cloud.id
+        assert fixed.url == src
 
 
 def test_dry_run_writes_nothing(app, tmp_path):

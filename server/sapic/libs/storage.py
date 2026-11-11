@@ -810,7 +810,18 @@ def delete_object(image, replica: ImageBackend) -> bool:
         save_result=result,
         backend=runtime,
     )
-    return bool(results and results[0].get("code") == 0)
+    deleted = bool(results and results[0].get("code") == 0)
+    if not deleted:
+        #: 驱动失败时调用方只丢掉返回值，于是「删除成功」的界面配上残留对象；
+        #: 至少留一条日志，能看出是 key 不对、凭证过期还是钩子没启用。
+        detail = results[0].get("message") if results else "no storage driver"
+        logger.warning(
+            "delete %s on backend %s failed: %s",
+            replica.object_key,
+            backend.name,
+            detail,
+        )
+    return deleted
 
 
 def queue_replicas(

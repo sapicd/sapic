@@ -66,7 +66,9 @@ DAY_SECONDS = 86400
 #: 到期清理节流：每个进程最多每 5 分钟扫一次，单次最多删 200 张。
 SWEEP_INTERVAL = 300
 SWEEP_BATCH = 200
-_last_sweep = 0.0
+#: 上次清理的 monotonic 时刻；``None`` 表示本进程还没扫过（首个请求必扫）。
+#: 别改回 ``0.0`` 这类哨兵：``monotonic()`` 在刚启动的机器上可能小于节流窗口。
+_last_sweep: float | None = None
 
 IMAGE_EXTS = {
     ".jpg",
@@ -1036,7 +1038,7 @@ def sweep_expired(interval: int = SWEEP_INTERVAL, limit: int = SWEEP_BATCH) -> i
     """
     global _last_sweep
     moment = monotonic()
-    if moment - _last_sweep < interval:
+    if _last_sweep is not None and moment - _last_sweep < interval:
         return 0
     #: 先记时间戳：清理本身报错也不会让每个请求都重试一次。
     _last_sweep = moment

@@ -2,6 +2,7 @@
 import io
 from pathlib import Path
 
+from sapic.libs import images as images_lib
 from sapic.libs.images import purge_expired
 from sapic.libs.settings import set_setting
 from sapic.models import Image, ImageBackend
@@ -83,18 +84,23 @@ def test_purge_expired_removes_row_and_file(app, client):
 
 
 def test_request_sweeps_expired_images(app, client, monkeypatch):
-    """没有 cron 也要落地：请求期节流清理会把过期图片真删掉。"""
-    from sapic.libs import images as images_lib
+    """没有 cron 也要落地：请求期节流清理会把过期图片真删掉。
 
+    ``monotonic`` 固定成很小的值，模拟 CI runner 刚启动（uptime 不到一个节流窗口）
+    的情况——节流状态用 ``None`` 表示「本进程还没扫过」，不能靠时间戳哨兵判断。
+    """
     csrf = register_and_login(client)
     sha = upload(client, csrf, expire=3600).get_json()["data"]["image"]["sha"]
     expire_now(app, sha)
-    #: 清掉进程级节流，让这次请求一定触发清理。
-    monkeypatch.setattr(images_lib, "_last_sweep", 0.0)
+    #: 清掉进程级节流：``None`` 表示从未扫过，首个请求必扫。
+    monkeypatch.setattr(images_lib, "_last_sweep", None)
+    monkeypatch.setattr(images_lib, "monotonic", lambda: 5.0)
 
     assert client.get("/api/v2/health").status_code == 200
     with app.app_context():
         assert Image.get_or_none(Image.sha == sha) is None
+    #: 扫过之后要记住：同一节流窗口内的下一次调用不再扫。
+    assert images_lib.sweep_expired() == 0
 
 
 def test_purge_expired_keeps_live_images(app, client):

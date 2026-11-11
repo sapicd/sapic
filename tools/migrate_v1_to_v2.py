@@ -25,13 +25,15 @@ What is migrated:
   v1 kept them:
 
   - local upload directory -> re-uploaded through the primary storage backend;
-  - already in the bucket behind the primary backend (``up2upyun`` /
+  - already in the bucket of an enabled cloud backend (``up2upyun`` /
     ``up2qiniu``, i.e. ``src`` starts with its ``domain``) -> the object is
-    **adopted in place**: an ``ok`` replica records the existing key/url and
-    nothing is copied, so deletes still remove the real object
-    (``images_adopted``). Use ``--v1-src-prefix`` when v1 was served from a
-    different domain than the one configured now, and ``--refresh-external``
-    to repair rows an older run already tagged as external links;
+    **adopted in place**: an ``ok`` replica on that very backend records the
+    existing key/url and nothing is copied, so deletes still reach the real
+    object (``images_adopted``). The backend is picked by domain, not by upload
+    priority: a local backend may outrank the cloud one. Use
+    ``--v1-src-prefix`` when v1 was served from a different domain, and
+    ``--refresh-external`` to repair rows an older run tagged as external links
+    -- or attached to the wrong backend;
   - really gone -> registered as an external link pointing at the old ``src``
     (``images_external``) instead of being dropped.
 
@@ -132,6 +134,7 @@ from sapic.libs.hook import get_hook_manager  # noqa: E402
 from sapic.libs.images import upload_path_for  # noqa: E402
 from sapic.libs.media import image_size  # noqa: E402
 from sapic.libs.storage import (  # noqa: E402
+    LOCAL_DRIVER,
     driver_backend,
     list_backends,
     save_object,
@@ -235,6 +238,52 @@ def src_object_key(src: str, domain: str) -> str | None:
     return "/" + key if key else None
 
 
+def adopt_targets(backends: list[dict], override: str = "") -> list[tuple[dict, str]]:
+    """``(backend, public prefix)`` pairs whose bucket may already hold v1 objects.
+
+    Adoption has to record the replica on the backend that really owns the
+    object. Attributing it to ``backends[0]`` breaks as soon as a local backend
+    outranks the cloud one: the key of a v1 Upyun object would be attached to
+    ``up2local``, whose ``upimg_delete`` looks for a file that was never written
+    there, so deleting the image silently leaves the bucket object behind.
+    """
+    def domain_of(backend: dict) -> str:
+        config = driver_backend(backend).get("config") or {}
+        return str(config.get("domain") or "").strip().rstrip("/")
+
+    targets: list[tuple[dict, str]] = []
+    for backend in backends:
+        #: ``up2local`` stores on this machine; v1 bytes found there are
+        #: re-uploaded through the primary backend instead of being adopted.
+        if backend.get("hook_name") == LOCAL_DRIVER:
+            continue
+        domain = domain_of(backend)
+        if domain:
+            targets.append((backend, domain))
+
+    override = str(override or "").strip().rstrip("/")
+    if override and override not in {prefix for _, prefix in targets} and targets:
+        #: v1 may have been served from a retired CDN while the bytes still sit
+        #: in the bucket of the current cloud backend.
+        targets.append((targets[0][0], override))
+    if targets:
+        return targets
+
+    #: Only a cloud backend can own a bucket object. Falling back to whatever
+    #: backend sorts first would attach the key to ``up2local`` whenever the
+    #: cloud backend is disabled, missing or lacks a domain -- deletes then look
+    #: in the local storage directory and silently leave the object in the
+    #: bucket. Keep ``override`` for that case: the caller reports it as a
+    #: configuration problem instead of writing a wrong replica.
+    if not backends:
+        return []
+    primary = backends[0]
+    if primary.get("hook_name") == LOCAL_DRIVER:
+        return []
+    domain = domain_of(primary)
+    return [(primary, domain or override)] if (domain or override) else []
+
+
 def sender_meta(meta: dict) -> dict:
     """First successful ``upimg_save`` response v1 stored in ``image:<sha>``.
 
@@ -309,7 +358,10 @@ class Migrator:
         self.failures: list[str] = []
         self.primary = None
         #: Real ``User`` rows, used to attach images to their owner.
-        #: Prefixes an object may be adopted from (backend domain + override).
+        #: ``(backend, prefix)`` pairs an object may be adopted from; the backend
+        #: is the one that owns the bucket, not necessarily the upload primary.
+        self.adopt_targets: list[tuple[dict, str]] = []
+        #: Prefixes only, kept for the "Not adopted" report.
         self.adopt_prefixes: list[str] = []
         #: Examples of rows ``--refresh-external`` could not match.
         self.unmatched: list[str] = []
@@ -450,23 +502,22 @@ class Migrator:
         upload_path = str(meta.get("upload_path") or "").strip().lstrip("/\\")
         return Path(self.args.v1_upload_dir) / upload_path / filename
 
-    def _reuse_object(self, src: str) -> tuple[str, str] | None:
-        """``(bucket key, public url)`` when v1's object is already on our backend.
+    def _reuse_object(self, src: str) -> tuple[dict, str, str] | None:
+        """``(backend, bucket key, public url)`` when v1's object is in a bucket.
 
-        The domain comes from the primary backend's config (``driver_backend``
-        merges hook-wide defaults in); ``--v1-src-prefix`` covers the case where
-        v1 was served from a different domain or an older CDN.
+        The backend is the one whose public domain serves ``src`` -- it owns the
+        object and its driver must be the one asked to delete it later.
         """
-        if not src or not self.primary:
+        if not src or not self.adopt_targets:
             return None
-        config = driver_backend(self.primary).get("config") or {}
-        domain = str(config.get("domain") or "").strip().rstrip("/")
-        for prefix in self.adopt_prefixes:
+        for backend, prefix in self.adopt_targets:
             key = src_object_key(src, prefix)
-            if key:
-                #: 直链按当前后端的域名重建，旧 CDN 域名退役后也不会坏。
-                url = domain + key if domain else src
-                return key, url
+            if not key:
+                continue
+            config = driver_backend(backend).get("config") or {}
+            domain = str(config.get("domain") or "").strip().rstrip("/")
+            #: 直链按该后端的域名重建，旧 CDN 域名退役后也不会坏。
+            return backend, key, domain + key if domain else src
         return None
 
     def _adopt_existing(self, image: Image, meta: dict) -> None:
@@ -490,46 +541,69 @@ class Migrator:
             updates["width"], updates["height"] = dims
 
         source = str(meta.get("src") or image.source_url or "")
-        adopted = None
-        if self.primary and image.source_url:
-            adopted = self._reuse_object(source)
-            if adopted is None:
+        adopted = self._reuse_object(source) if source else None
+        #: ``(replica id, target backend id, url)`` for a replica attached to the
+        #: wrong backend by an older run.
+        repair = None
+        if adopted is None:
+            if image.source_url:
                 self.stats["images_refresh_skipped"] += 1
                 if len(self.unmatched) < 5:
                     self.unmatched.append("%s: %s" % (image.sha, source))
-            elif ImageBackend.get_or_none(
+        else:
+            backend, key, url = adopted
+            if ImageBackend.get_or_none(
                 (ImageBackend.image == image)
-                & (ImageBackend.backend == self.primary["id"])
+                & (ImageBackend.backend == backend["id"])
             ) is not None:
-                #: 副本已存在（早年跑过一次采纳），只补元数据即可。
+                #: 副本已在正确的后端上（早年跑过一次采纳），只补元数据即可。
                 adopted = None
             else:
-                updates["source_url"] = None
+                stray = ImageBackend.get_or_none(
+                    (ImageBackend.image == image) & (ImageBackend.object_key == key)
+                )
+                if stray is not None:
+                    #: 早期版本把云上对象挂在了上传主后端（如 up2local）上，删除
+                    #: 时那个驱动去本地找文件，bucket 里的对象就一直留着。
+                    repair = (stray.id, backend["id"], url)
+                elif not image.source_url:
+                    #: 本地重传过的图既没有 source_url、也没有错挂副本，不要凭空
+                    #: 补一条可能指向已被删对象的副本。
+                    adopted = None
+                else:
+                    updates["source_url"] = None
 
-        if not updates:
+        if not updates and adopted is None and repair is None:
             return
         if self.dry_run:
-            if adopted is not None:
+            if adopted is not None or repair is not None:
                 self.stats["images_adopted"] += 1
             return
 
         try:
             with db.atomic():
-                if adopted is not None:
-                    key, url = adopted
+                if repair is not None:
+                    replica_id, backend_id, url = repair
+                    ImageBackend.update(backend=backend_id, url=url).where(
+                        ImageBackend.id == replica_id
+                    ).execute()
+                    self.stats["images_adopted"] += 1
+                elif adopted is not None:
+                    target, key, url = adopted
                     ImageBackend.create(
                         image=image,
-                        backend=self.primary["id"],
+                        backend=target["id"],
                         object_key=key,
                         url=url,
                         size=updates.get("size", image.size or 0),
                         etag=sender_etag(result),
-                        is_primary=True,
+                        is_primary=target["id"] == self.primary["id"],
                         state=STATE_OK,
                         created_at=now(),
                     )
                     self.stats["images_adopted"] += 1
-                Image.update(**updates).where(Image.id == image.id).execute()
+                if updates:
+                    Image.update(**updates).where(Image.id == image.id).execute()
         except Exception as exc:  # noqa: BLE001 - one bad row must not stop the run
             self._fail("image %s: %s" % (image.sha, exc))
 
@@ -627,6 +701,9 @@ class Migrator:
         result = sender_meta(meta)
         mime = guess_type(filename)[0] or ""
         etag = None
+        #: Backend that owns the replica; the upload primary unless the object is
+        #: adopted from another backend's bucket.
+        replica_backend = None
 
         if stored is not None:
             size = stored.get("size") or len(stream)
@@ -634,16 +711,17 @@ class Migrator:
             dimensions = image_size(stream, object_ext or suffix)
             etag = stored.get("etag")
             source_url = None
+            replica_backend = self.primary
             replica_key = stored.get("path") or ""
             replica_url = stored.get("src")
         elif adopted is not None:
-            #: v1 的字节还在同一个 bucket 里（又拍云/七牛）：登记成副本即可，
-            #: 不下载、不重传，删除时也会走驱动真正删掉对象。
+            #: v1 的字节还在某个 bucket 里（又拍云/七牛）：登记成副本即可，
+            #: 不下载、不重传，删除时也会走该后端的驱动真正删掉对象。
+            replica_backend, replica_key, replica_url = adopted
             size = sender_size(result) or 0
             dimensions = sender_dims(result)
             etag = sender_etag(result)
             source_url = None
-            replica_key, replica_url = adopted
             self.stats["images_adopted"] += 1
         else:
             #: Bytes are gone from the v1 directory (or the write failed): keep
@@ -683,14 +761,15 @@ class Migrator:
                     expire_at=expire_at,
                 )
                 if source_url is None:
+                    backend = replica_backend or self.primary
                     ImageBackend.create(
                         image=image,
-                        backend=self.primary["id"],
+                        backend=backend["id"],
                         object_key=replica_key,
                         url=replica_url,
                         size=size,
                         etag=etag,
-                        is_primary=True,
+                        is_primary=backend["id"] == self.primary["id"],
                         state=STATE_OK,
                         created_at=now(),
                     )
@@ -721,19 +800,28 @@ class Migrator:
             "Primary backend: %s (%s)"
             % (self.primary.get("name"), self.primary.get("hook_name"))
         )
-        config = driver_backend(self.primary).get("config") or {}
-        domain = str(config.get("domain") or "").strip()
         override = str(getattr(self.args, "v1_src_prefix", "") or "").strip()
-        self.adopt_prefixes = [item for item in (domain, override) if item]
+        self.adopt_targets = adopt_targets(backends, override)
+        self.adopt_prefixes = [prefix for _, prefix in self.adopt_targets]
         print(
             "Adopting objects already in the bucket from: %s"
             % (", ".join(self.adopt_prefixes) or "n/a")
         )
-        if not self.adopt_prefixes:
+        for backend, _ in self.adopt_targets:
             print(
-                "  hint: fill the backend's public domain, or pass "
-                "--v1-src-prefix https://your-cdn"
+                "  -> %s (%s)" % (backend.get("name"), backend.get("hook_name"))
             )
+        if not self.adopt_targets:
+            print(
+                "  warning: no cloud backend is available to adopt from. Check "
+                "that the cloud hook is enabled, its backend row is enabled and "
+                "its public domain is filled. Objects stay external links."
+            )
+            if override:
+                print(
+                    "  warning: --v1-src-prefix %s was ignored because no cloud "
+                    "backend can own those objects." % override
+                )
 
         only = self.args.only_user
         for sha, meta, ttl in images:
@@ -876,9 +964,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--v1-src-prefix",
         default="",
         help=(
-            "public prefix v1 served images from, when it differs from the "
-            "primary backend's domain (e.g. https://old-cdn.example.com); "
-            "matching objects are adopted in place instead of re-uploaded"
+            "public prefix v1 served images from, when it differs from every "
+            "backend's domain (e.g. https://old-cdn.example.com); matching "
+            "objects are adopted in place instead of re-uploaded"
         ),
     )
     parser.add_argument(
