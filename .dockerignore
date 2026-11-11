@@ -8,7 +8,9 @@
 server/data
 web/node_modules
 web/dist
-V1
 tools
 *.md
 !server/requirements/*.txt
+node_modules/
+dist/
+.vite/

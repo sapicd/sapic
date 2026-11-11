@@ -207,10 +207,10 @@ server {
 
 镜像内已经包含 gunicorn + nginx（nginx 托管 `web/dist`，只把 `/api`、`/raw` 两条前缀反代给后端；
 油猴脚本在 `/api/v2/userscript.user.js` 下，因此不需要单独开 location），默认监听 80 端口，
-不需要再单独部署前端。容器内监听端口可用 `SAPIC_HTTP_PORT`
-改（默认 `80`）：`docker/nginx.conf` 是带端口占位符的模板，由 entrypoint 渲染到
-`/etc/nginx/conf.d/default.conf`，健康检查也会跟着走同一个端口；宿主端口与容器端口解耦，
-`docker-compose.yml` 用 `SAPIC_PORT` 映射宿主、`SAPIC_HTTP_PORT` 决定容器内监听。
+不需要再单独部署前端。容器内监听端口默认 `80`，可用 `SAPIC_HTTP_PORT`
+改：`docker/nginx.conf` 是带端口占位符的模板，由 entrypoint 渲染到
+`/etc/nginx/conf.d/default.conf`，健康检查也会跟着走同一个端口。`docker-compose.yml`
+只把宿主的 `SAPIC_PORT`（默认 `80`）映射到容器 `80`。
 
 ```bash
 docker build -t sapic:local .
@@ -222,15 +222,25 @@ docker run -d --name sapic -p 80:80 \
     sapic:local
 ```
 
-多进程/多副本请用 PostgreSQL，SQLite 只适合单实例：
+`docker compose up -d` 就是上面那个单容器 + SQLite 的形态：
 
 ```bash
-SAPIC_SECRET_KEY="$(openssl rand -hex 32)" POSTGRES_PASSWORD='强密码' docker compose up -d
+SAPIC_SECRET_KEY="$(openssl rand -hex 32)" SAPIC_BASE_URL='https://sapic.example.com' docker compose up -d
 ```
 
-`docker-compose.yml` 会一并拉起 PostgreSQL 16；`kube-sapic.yaml` 是单副本
-Deployment + Service + Ingress + PVC 的清单，使用前替换命名空间、域名、镜像 tag，并通过
-Secret 提供 `sapic_secretkey` 与 `sapic_db_url`。
+要 PostgreSQL（多进程/多副本）时在 compose 的 `environment` 里加一行，compose 里不带数据库服务：
+
+```yaml
+      sapic_db_url: "postgresql://user:pass@db-host:5432/sapic"
+```
+
+`docker-compose.yml` 用 SQLite（库文件在 `sapic-data` 卷里）并把 worker 限成 1，配置全部走环境变量
+（只列必需项，其余用默认值）；`kube-sapic.yaml` 只有 Deployment + Service 两个对象：单副本，
+SQLite 落在节点本地目录（`hostPath: /data/sapic`），配置全部写在 Pod 的 `env` 里，不需要
+Secret/ConfigMap/PVC/Ingress。命名空间由 `kubectl -n` 指定（对象里不写死），使用前替换镜像 tag、
+hostPath 路径与 env 里的密钥/域名；没有 Ingress，Service 是 NodePort，外层 HTTPS 反代指向
+`<节点IP>:<nodePort>`。多节点集群必须把 Pod 固定到同一节点，否则换节点就是空库。
+两份清单都只列必需配置，其它项按需要补环境变量，清单见下一节。
 
 要点：
 
@@ -239,7 +249,7 @@ Secret 提供 `sapic_secretkey` 与 `sapic_db_url`。
 - 健康检查统一用 `GET /api/v2/health`：数据库不通返回 503。
 - 上传上限有三层，改大小时一起改：nginx `client_max_body_size`（容器内 32m）、`sapic_maxupload`（25）、后台 `upload_image_max_size` / `upload_video_max_size`。
 - 本地磁盘存储只能单副本（`Recreate` 策略）；要多副本必须换成对象存储类钩子并给 `/app/server/data` 配 RWX 卷。
-- 外层 HTTPS 交给宿主机反代或 Ingress（`kube-sapic.yaml` 里带 `nginx.ingress.kubernetes.io/proxy-body-size`），并把 `sapic_external_base_url` 设成对外地址，否则图片直链与审核邮件里的登录链接会是内网地址。
+- 外层 HTTPS 交给宿主机反代或集群外的网关（`kube-sapic.yaml` 只开 NodePort，没有 Ingress），并把 `sapic_external_base_url` 设成对外地址，否则图片直链与审核邮件里的登录链接会是内网地址。反代/Ingress 侧的请求体上限要 ≥ 32m，改成 Ingress 时记得加 `nginx.ingress.kubernetes.io/proxy-body-size`。
 - 前面再套一层 Traefik / WAF 时不用改配置：容器内 nginx 用 `map` **透传**上游的 `X-Forwarded-Proto`，不会再把 `https` 覆盖成 `http`（OIDC 回调地址与会话 Cookie 的 `Secure` 标志都依赖这个值）。前提是外层只**追加/转发**该头而不改写它；若 WAF 必须改写，用 `sapic_external_base_url` 兜住链接生成，并单独核对 OIDC 回调。
 - WAF 常见坑：`/api/v2/health` 要放行（否则探针被拦会反复重启）、`/raw/*` 关掉响应体检测（二进制图片会拖慢甚至误杀）、`/api/v2/hooks/*` 放宽超时（后台装钩子会跑 pip 几十秒）、请求体上限不小于 32m（取值链是 WAF ≥ nginx 32m > `sapic_maxupload` 25M > 站点单文件上限）。
 - 升级：拉新镜像重启即可，启动时自动执行数据库迁移（迁移幂等，多 worker 并发有重试保护）。
@@ -327,7 +337,8 @@ systemctl restart sapic        # 启动时自动跑增量迁移
 
 ### 7.1 从 v1 迁移数据
 
-v1 的数据在 Redis 里（`picbed:*` 键），文件在 `V1/src/static/upload`。迁移工具把它们写进 v2 的关系库与存储后端：
+v1 的数据在 Redis 里（`picbed:*` 键），文件在你那台 v1 部署的 `src/static/upload` 目录下
+（v1 代码已从本仓库移除，看旧版本用 git tag）。迁移工具把它们写进 v2 的关系库与存储后端：
 
 ```bash
 # 先看计划，不写任何东西

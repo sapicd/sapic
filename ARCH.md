@@ -1,7 +1,7 @@
 # sapic v2 架构文档
 
 本文描述 sapic v2 的运行时组成、代码分层、数据模型与扩展点。部署步骤见 [DEPLOY.md](./DEPLOY.md)，
-编码约定见 [AGENTS.md](./AGENTS.md)；v1 代码只作存档（`V1/`），不参与构建。
+编码约定见 [AGENTS.md](./AGENTS.md)；v1 代码已从仓库移除。
 
 ## 1. 定位
 
@@ -265,4 +265,4 @@ server/sapic/
 - 钩子目前是「声明即信任 + 词表清洗」，没有签名校验。
 - 本地账号只保存一组 `(oidc_issuer, oidc_subject)`：同时接入多个登录 Provider 时，
   同一账号只能绑定其中一个，再绑定会覆盖旧的；多身份并存需要单独的身份表。
-- 删除账号（`libs/users.purge_user`）是硬删除，不可恢复；`README`/`Snapshot` 等文档仍残留 v1 内容。
+- 删除账号（`libs/users.purge_user`）是硬删除，不可恢复。

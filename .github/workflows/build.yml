@@ -35,6 +35,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       #: master → latest，dev → dev，v2.1.0 → 2.1.0 / 2.1 / 2。
+      #: 预发布（v2.0.0-pre 这类带 - 的 tag）只出完整版本号，不用它顶掉 2 / 2.0 这种滚动别名。
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v6
@@ -44,8 +45,8 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ !contains(github.ref_name, '-') }}
+            type=semver,pattern={{major}},enable=${{ !contains(github.ref_name, '-') }}
           labels: |
             org.opencontainers.image.title=sapic
             org.opencontainers.image.description=A self-hosted image hosting service with a pluggable storage backend

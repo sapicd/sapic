@@ -8,7 +8,7 @@ sapic 是一个自建图床：后端是 API-only 的 Flask 应用（`server/`，
 [扩展开发](extend/index.md)。
 
 ```{note}
-本目录是 v2 的文档。v1 已归档在仓库根的 `V1/`，仅作对照、不参与 v2 构建。
+本目录是 v2 的文档。v1 代码已不在仓库里，从 v1 升级见 `DEPLOY.md` 的数据迁移一节。
 ```
 
 ```{toctree}

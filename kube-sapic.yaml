@@ -1,167 +1,88 @@
-# sapic v2 Kubernetes 清单（单副本 + 外部 PostgreSQL）。
+# sapic v2 Kubernetes 清单（单副本 + 节点本地目录，SQLite）。
 #
-#   kubectl apply -f kube-sapic.yaml
+#   kubectl apply -n sapic -f kube-sapic.yaml
 #
-# 使用前必须替换：命名空间、Ingress 域名、镜像 tag，以及 Secret 里的
-# sapic_secretkey 与 sapic_db_url。多副本需要共享读写卷（RWX）与外部数据库，
-# 本地磁盘存储只能跑单副本，所以这里用 Recreate 而不是 RollingUpdate。
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: sapic
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: sapic-secret
-  namespace: sapic
-type: Opaque
-stringData:
-  #: openssl rand -hex 32
-  sapic_secretkey: "replace-with-a-random-32-byte-secret"
-  #: 外部 PostgreSQL；同一实例内请使用独立库与最小权限账号。
-  sapic_db_url: "postgresql://sapic:change-me@postgres.example.internal:5432/sapic"
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: sapic-config
-  namespace: sapic
-data:
-  sapic_env: "prod"
-  #: 对外访问地址，写进图片直链与审核邮件里的登录链接。
-  sapic_external_base_url: "https://sapic.example.com"
-  sapic_maxupload: "25"
-  #: 反代后面必须信任 X-Forwarded-*。
-  sapic_proxyfix: "true"
-  sapic_loglevel: "INFO"
-  WEB_CONCURRENCY: "4"
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: sapic-data
-  namespace: sapic
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 20Gi
-  #: 按集群实际 StorageClass 填写；留空则用默认 StorageClass。
-  # storageClassName: standard
-
----
+# 使用前改三处：镜像 tag、hostPath 路径、env 里的 sapic_secretkey 与
+# sapic_external_base_url。只有 Deployment + Service 两个对象：
+# 数据直接用节点本地目录，所以只能单副本（Recreate），且多节点集群要给 Pod
+# 固定节点（nodeName / nodeAffinity / nodeSelector），否则换节点就是空库。
+# 对外的 HTTPS 交给集群外的反代或已有网关，这里只开 NodePort。
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sapic
-  namespace: sapic
-  labels:
-    app.kubernetes.io/name: sapic
 spec:
   replicas: 1
-  #: 本地存储卷不能被两个 Pod 同时挂载，先停旧的再起新的。
+  #: 本地目录不能被两个 Pod 同时挂载。
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app.kubernetes.io/name: sapic
+      app: sapic
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: sapic
+        app: sapic
     spec:
-      securityContext:
-        #: 镜像内 nginx 需要 root 起 80 端口，容器内不再提权。
-        runAsNonRoot: false
       containers:
         - name: sapic
           image: staugur/sapic:latest
-          imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 80
-          envFrom:
-            - configMapRef:
-                name: sapic-config
-            - secretRef:
-                name: sapic-secret
+          env:
+            #: 必填，生产缺省密钥会直接退出（openssl rand -hex 32）。
+            - name: sapic_secretkey
+              value: "replace-with-a-random-32-byte-secret"
+            #: 图片直链前缀，必须是集群外可达地址。
+            - name: sapic_external_base_url
+              value: "https://sapic.example.com"
+            #: 前面有反代/网关时信任 X-Forwarded-*，否则日志与限流拿到内网 IP。
+            - name: sapic_proxyfix
+              value: "true"
+            #: SQLite 是库级写锁，多进程会互相抢锁；换 PostgreSQL 时改成多 worker。
+            - name: WEB_CONCURRENCY
+              value: "1"
+            #: 要外部 PostgreSQL 就打开这项（DSN 里含密码，注意别提交到仓库）。
+            # - name: sapic_db_url
+            #   value: "postgresql://user:pass@db-host:5432/sapic"
           volumeMounts:
+            #: 库文件、上传文件、第三方钩子包都在这里。
             - name: data
               mountPath: /app/server/data
+          #: 就绪看库（库不通别收流量）；存活只看进程，库抖动不该重启 Pod。
           readinessProbe:
             httpGet:
               path: /api/v2/health
               port: http
             initialDelaySeconds: 10
             periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
           livenessProbe:
-            httpGet:
-              path: /api/v2/health
+            tcpSocket:
               port: http
             initialDelaySeconds: 30
             periodSeconds: 30
-            timeoutSeconds: 5
-            failureThreshold: 3
           resources:
-            requests:
-              cpu: 200m
-              memory: 256Mi
-            limits:
-              cpu: "2"
-              memory: 1Gi
+            requests: { cpu: 200m, memory: 256Mi }
+            limits: { cpu: "2", memory: 1Gi }
       volumes:
         - name: data
-          persistentVolumeClaim:
-            claimName: sapic-data
+          #: 节点本地目录：数据留在当前节点上，确保 Pod 固定在同一节点。
+          hostPath:
+            path: /data/sapic
+            type: DirectoryOrCreate
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: sapic
-  namespace: sapic
-  labels:
-    app.kubernetes.io/name: sapic
 spec:
-  type: ClusterIP
+  #: 没有 Ingress，直接给节点端口；外层 HTTPS 反代指向 <节点IP>:<nodePort>。
+  type: NodePort
   selector:
-    app.kubernetes.io/name: sapic
+    app: sapic
   ports:
     - name: http
       port: 80
       targetPort: http
-
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: sapic
-  namespace: sapic
-  annotations:
-    #: 与 sapic_maxupload（25M）对齐，否则大图在入口就被 413。
-    nginx.ingress.kubernetes.io/proxy-body-size: "32m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: sapic.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: sapic
-                port:
-                  number: 80
-  tls:
-    - hosts:
-        - sapic.example.com
-      secretName: sapic-tls

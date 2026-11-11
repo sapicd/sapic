@@ -944,10 +944,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--v1-upload-dir",
-        default=str(Path(__file__).resolve().parents[1] / "V1/src/static/upload"),
+        default=None,
         help=(
-            "v1 local upload directory (up2local static folder), "
-            "default: <repo>/V1/src/static/upload"
+            "v1 local upload directory (up2local static folder), e.g. "
+            "/srv/sapic-v1/src/static/upload; required unless --skip-images "
+            "is given"
         ),
     )
     parser.add_argument(
@@ -1023,6 +1024,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
+
+    if not args.skip_images and not args.v1_upload_dir:
+        print("Missing --v1-upload-dir: point it at your v1 deployment's upload folder")
+        print("(the up2local static directory, e.g. /srv/sapic-v1/src/static/upload).")
+        print("Pass --skip-images if only users and albums are needed.")
+        return 2
 
     if redis is None:
         print("Cannot read v1 data: redis-py is not installed.")
