@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.12"]
+        python-version: ["3.10", "3.12", "3.13"]
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -67,3 +67,28 @@ jobs:
       - name: Build
         working-directory: web
         run: pnpm run build
+
+  prod-deps:
+    name: prod deps (import checks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: server/requirements/prod.txt
+
+      #: 生产镜像只装 prod.txt：这里逐个导入 gunicorn 会用到的模块，
+      #: 缺依赖要在这里失败，而不是等容器起来才报 class uri 'gevent' invalid。
+      - name: Install prod dependencies
+        run: pip install -r server/requirements/prod.txt
+
+      - name: Import the app and the gevent worker
+        working-directory: server
+        run: |
+          python -c "import sapic; print('app import ok')"
+          python -c "import gunicorn.workers.ggevent; print('gevent worker ok')"

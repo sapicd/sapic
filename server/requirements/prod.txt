@@ -2,3 +2,7 @@
 
 gunicorn==26.2.0
 gevent==26.9.0
+#: gunicorn 的 gevent worker（workers/ggevent.py）在导入时就 `from packaging.version
+#: import parse`，但 gunicorn 自己没把它声明成依赖；只在装了 dev.txt 的环境里会顺带
+#: 有它，生产镜像按 prod.txt 装就会缺，导致 `class uri 'gevent' invalid or not found`。
+packaging==26.3
