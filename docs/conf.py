@@ -55,6 +55,10 @@ html_theme = "furo"
 html_title = "sapic 文档"
 htmlhelp_basename = "sapicdoc"
 html_static_path: list[str] = []
+
+#: 侧栏 / 移动端头部与浏览器标签页复用前端的品牌资源，避免另存一份。
+html_logo = "../web/public/logo.png"
+html_favicon = "../web/public/favicon.png"
 html_theme_options = {
     "source_repository": "https://github.com/sapicd/sapic/",
     "source_branch": "master",

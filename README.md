@@ -7,6 +7,13 @@
 [![Actions Status: ci](https://github.com/sapicd/sapic/workflows/ci/badge.svg)](https://github.com/sapicd/sapic/actions?query=workflow%3A%22build+and+test%22)
 [![codecov](https://codecov.io/gh/sapicd/sapic/branch/master/graph/badge.svg)](https://codecov.io/gh/sapicd/sapic)
 ![Last Release](https://img.shields.io/github/release/sapicd/sapic.svg?style=flat-square)
+![Version](https://img.shields.io/badge/version-2.0.0--pre-orange.svg?style=flat-square)
+
+> **当前版本 `2.0.0-pre`（v2 重写版）**
+>
+> 后端已改为 API-only 的 Flask 应用（Peewee + 关系库，不再依赖 Redis），前端是独立的 Vue 3 应用。
+> v1 代码不再随仓库发布（历史版本看 git tag）。从 v1 升级先看 [DEPLOY.md](./DEPLOY.md) 第 7 节，
+> 逐项变化见 [CHANGELOG.md](./CHANGELOG.md)。
 
 ## 特性
 
