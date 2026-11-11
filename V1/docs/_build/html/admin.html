@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html  lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+      <title>使用说明 - 站点管理</title>
+    
+          <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+          <link rel="stylesheet" href="_static/theme.css " type="text/css" />
+          <link rel="stylesheet" href="_static/sphinxcontrib-httpexample.css" type="text/css" />
+      
+      <!-- sphinx script_files -->
+        <script src="_static/documentation_options.js?v=c6c5d30b"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="_static/sphinxcontrib-httpexample.js?v=31a81d62"></script>
+        <script src="_static/translations.js?v=beaddf03"></script>
+
+      
+      <!-- bundled in js (rollup iife) -->
+      <!-- <script src="_static/theme-vendors.js"></script> -->
+      <script src="_static/theme.js" defer></script>
+    
+      <link rel="shortcut icon" href="_static/favicon.png"/>
+  <link rel="index" title="索引" href="genindex.html" />
+  <link rel="search" title="搜索" href="search.html" />
+  <link rel="next" title="钩子" href="hook.html" />
+  <link rel="prev" title="使用说明 - sapicli" href="cli.html" /> 
+  </head>
+
+  <body>
+    <div id="app">
+    <div class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="index.html" class="home-link">
+    
+      <img class="logo" src="_static/logo.png" alt="logo"/>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+
+
+  
+    <div class="nav-item">
+      <a href="https://sapicd.com"
+        class="nav-link external">
+          Demo <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://github.com/sapicd/sapic"
+        class="nav-link external">
+          GitHub <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://gitee.com/staugur/picbed"
+        class="nav-link external">
+          Gitee <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+
+
+  
+    <div class="nav-item">
+      <a href="https://sapicd.com"
+        class="nav-link external">
+          Demo <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://github.com/sapicd/sapic"
+        class="nav-link external">
+          GitHub <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="https://gitee.com/staugur/picbed"
+        class="nav-link external">
+          Gitee <outboundlink></outboundlink>
+      </a>
+    </div>
+  
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">快速搜索</span>
+    <div class="searchformwrapper">
+      <form class="search" action="search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="搜索" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="index.html#sapic">sapic - 简约不小气的自建图床程序</a></span>
+      </p>
+      <ul class="current">
+        
+          <li class="toctree-l1 ">
+            
+              <a href="install.html" class="reference internal ">部署安装</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="docker.html" class="reference internal ">使用Docker部署</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="usage.html" class="reference internal ">使用说明 - 概述</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="linktoken.html" class="reference internal ">使用说明 - LinkToken及应用</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="cli.html" class="reference internal ">使用说明 - sapicli</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 current">
+            
+              <a href="#" class="reference internal current">使用说明 - 站点管理</a>
+            
+
+            
+              <ul>
+                
+                  <li class="toctree-l2"><a href="#picbed-admin-gloabl" class="reference internal">1. 全局设置</a></li>
+                
+                  <li class="toctree-l2"><a href="#picbed-admin-hook-extension" class="reference internal">2. 钩子扩展</a></li>
+                
+                  <li class="toctree-l2"><a href="#picbed-admin-usermanager" class="reference internal">3. 用户管理</a></li>
+                
+              </ul>
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="hook.html" class="reference internal ">钩子</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="api.html" class="reference internal ">RESTful API</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="module.html" class="reference internal ">Modules API</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="faq.html" class="reference internal ">FAQ</a>
+            
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="changelog.html" class="reference internal ">更新日志</a>
+            
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+    
+    <li>使用说明 - 站点管理</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+  <li class="prev">
+    <a href="cli.html"
+       title="上一章">← 使用说明 - sapicli</a>
+  </li>
+  <li class="next">
+    <a href="hook.html"
+       title="下一章">钩子 →</a>
+  </li>
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main" v-pre>
+            
+  <section id="picbed-admin">
+<span id="id1"></span><h1>使用说明 - 站点管理<a class="headerlink" href="#picbed-admin" title="Link to this heading">¶</a></h1>
+<p>此为管理员的控制台配置说明，在这里可以全局设置、钩子管理等，配置项含义基本
+上是简单明了，根据提示即可，下面仅说明部分重点或复杂配置。</p>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<ul class="simple">
+<li><p>当前内容适用于图床管理员</p></li>
+<li><p>各配置项提及的半角逗号即英文输入法下的逗号</p></li>
+</ul>
+</div>
+<section id="picbed-admin-gloabl">
+<span id="id2"></span><h2>1. 全局设置<a class="headerlink" href="#picbed-admin-gloabl" title="Link to this heading">¶</a></h2>
+<p>全局设置，包括网站本身、上传细节、钩子配置。</p>
+<section id="picbed-admin-site">
+<span id="id3"></span><h3>1.1 站点设置<a class="headerlink" href="#picbed-admin-site" title="Link to this heading">¶</a></h3>
+<ul>
+<li><p>CORS Origin</p>
+<p>设置允许跨域的源站（关于CORS请参考 <a class="reference external" href="https://developer.mozilla.org/docs/Web/HTTP/Access_control_CORS">Mozilla官方文档</a> ）</p>
+<p>源站格式：http[s]://domain.name</p>
+<p>不同端口不同协议均属于不同源，可以用半角逗号分隔多个！</p>
+<p>允许使用 <strong>*</strong> 表示允许所有源，此时不可以有其他内容！</p>
+<div class="admonition tip">
+<p class="admonition-title">小技巧</p>
+<p>LinkToken中所用的origin是此处的子集</p>
+</div>
+</li>
+<li><p>注册选项</p>
+<ul class="simple">
+<li><p>开放注册：顾名思义，允许任何人注册，否则无法注册（接口拒绝、入口隐藏）</p></li>
+<li><p>注册审核：开启后，新注册用户能登录、操作一般事务，但不能上传</p></li>
+<li><p>禁止登录：禁止普通用户登录，包括LinkToken</p></li>
+</ul>
+</li>
+<li><p>全站公告</p>
+<p>位于所有页面最顶部的信息，藏青色背景，最大高度60px，允许使用部分HTML标签</p>
+</li>
+</ul>
+</section>
+<section id="picbed-admin-upload">
+<span id="id4"></span><h3>1.2 上传设置<a class="headerlink" href="#picbed-admin-upload" title="Link to this heading">¶</a></h3>
+<ul>
+<li><p>上传字段</p>
+<p>定义通过POST表单获取图片数据的字段，默认字段是picbed， <strong>不建议</strong> 修改！</p>
+</li>
+<li><p>存储后端（默认存储在）</p>
+<p>选择保存图片的扩展钩子，本地、又拍云、GitHub等，至少有一个，否则无法保存
+图片，其扩展名就是sender，许多地方都有使用。</p>
+</li>
+<li><p>用户分组上传</p>
+<p>用户管理中可以给用户贴上标签，相当于分组了，在上传设置中配置分组上传，
+其格式是: <strong>label:sender</strong>, label是标签名、sender是存储后端的钩子名，
+允许使用逗号分隔多个规则，比如： <cite>test:up2local</cite></p>
+<p><strong>一个特殊情况，匿名用户的label总是anonymous！</strong></p>
+<p>另外，用户允许设置多个标签，如果此处设定了分组上传，那么用户标签只要发现匹配则选定对应
+上传后端，不再进行后续匹配。</p>
+</li>
+<li><p>分组上传限制</p>
+<p>参照上条，用户可以贴上label标签，按照标签限制上传图片的数量，-1禁止上传，0无限制，大于0
+表示只能上传的最大数量。</p>
+<p>用户上传时读取对应label的限制数量，由于用户可以设置多个label，所以任意label达到限制后，
+均会触发上传数量上限异常。</p>
+<p>不过存在一条已知问题：在WEB首页并发上传多图时，如果label限制大于0，会绕过限制，同时上传的
+图片都会成功。</p>
+</li>
+</ul>
+</section>
+<section id="picbed-admin-system">
+<span id="id5"></span><h3>1.3 系统设置<a class="headerlink" href="#picbed-admin-system" title="Link to this heading">¶</a></h3>
+<p>将原先位于站点设置中部分选项挪移，站点设置适用于用户可见页面，系统设置更
+适合定义程序内部。</p>
+<ul>
+<li><p>代理服务</p>
+<p>用于程序请求外部HTTP[s]时，当首次请求超时、连接错误时自动调用代理。</p>
+<p>程序内部会发生对外请求的情况，比如使用url上传图片时，程序会请求url尝试
+获取图片内容，此时如果是被-墙-的站点图片，请求会失败的，故此可以设置一个
+代理服务器，针对http、https或某个标准域名。</p>
+<p>三种格式（前两种是协议，固定的）：</p>
+<ul class="simple">
+<li><p>设置http协议使用代理 <code class="docutils literal notranslate"><span class="pre">http=http://your-proxy-server</span></code></p></li>
+<li><p>设置https协议使用代理 <code class="docutils literal notranslate"><span class="pre">https=http://your-proxy-server</span></code></p></li>
+<li><p>设置标准域名使用代理 <code class="docutils literal notranslate"><span class="pre">scheme://hostname=http://your-proxy-server</span></code></p></li>
+</ul>
+<p>示例：</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>http=http://1.1.1.1:3128</p></li>
+<li><p>https=http://user:pass&#64;1.1.1.2:3128/</p></li>
+<li><p>http=http://1.1.1.1:3128,https=http://user:pass&#64;1.1.1.2:3128/</p></li>
+<li><p>https=http://user:pass&#64;1.1.1.2:3128/, https://www.google.com=http://1.1.1.1:3128</p></li>
+<li><p><a class="reference external" href="http://a.com=your-proxy">http://a.com=your-proxy</a>, <a class="reference external" href="http://b.net=other-proxy">http://b.net=other-proxy</a>, <a class="reference external" href="http://c.org=proxy">http://c.org=proxy</a></p></li>
+</ul>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>对外请求超时、错误会尝试调用代理再次请求，但并不一定每个对外请求
+都如此，目前程序内部只对可能访问受限的域名请求时采用。</p>
+<p>要求HTTP Basic Auth认证的代理可以这么设置: <cite>http://user:password&#64;host/</cite></p>
+</div>
+</li>
+</ul>
+</section>
+<section id="picbed-admin-hook">
+<span id="id6"></span><h3>1.4 钩子设置<a class="headerlink" href="#picbed-admin-hook" title="Link to this heading">¶</a></h3>
+<p>此处有模板中钩子插入点，第三方钩子可以通过hooksetting定义表单以取值，
+由管理员在此处进行配置。</p>
+<p>此区域下有邮件服务配置相关功能，除发件人名称外，其他配置项是内置的钩子 <strong>sendmail</strong> 提供的。</p>
+<p>sendmail提供三种邮件发送方式：本地、诏预开放平台（自用）、SendCloud</p>
+<ul>
+<li><p>本地</p>
+<p>即通过本机25端口邮件服务发送，不过目前云厂商基本会禁用此功能，除此之外，本机即便能发送成功，也有可能被目标邮箱服务器丢弃或放入垃圾邮件，所以很多情况下，可以直接不使用跳过它。</p>
+</li>
+<li><p>SendCloud</p>
+<p>SendCloud由搜狐武汉研发中心孵化的项目，是致力于为开发者提供高质量的触发邮件服务的云端邮件发送平台，为开发者提供便利的API接口来调用服务。</p>
+<p>官网: <a class="reference external" href="https://sendcloud.net">https://sendcloud.net</a></p>
+<p>登录进去，有系统默认发信邮箱，也可以添加自有发信域，详情参考其官方文档。</p>
+<p>这里需要提供一个API_USER及对应的API_KEY，还一个可选的发件人（最近发件人邮箱后缀是API_USER对应的发信域）</p>
+</li>
+</ul>
+<p>ps：可以通过安装 <a class="reference external" href="https://github.com/sapicd/smtp">picbed-smtp</a>
+扩展钩子发送邮件，它通过邮箱SMTP服务发送，所以例如QQ、腾讯企业邮、网易、
+新浪、阿里云等邮箱都可作为发送者。</p>
+</section>
+</section>
+<section id="picbed-admin-hook-extension">
+<span id="id7"></span><h2>2. 钩子扩展<a class="headerlink" href="#picbed-admin-hook-extension" title="Link to this heading">¶</a></h2>
+<section id="picbed-admin-install-third">
+<span id="id8"></span><h3>2.1 安装第三方包<a class="headerlink" href="#picbed-admin-install-third" title="Link to this heading">¶</a></h3>
+<p>调用pip命令，安装pypi上的包，或者直接安装诸如git、svn上的模块。</p>
+<p>注意，如果程序在virtualenv、venv虚拟环境下启动，则会安装到其环境下，否则
+安装到用户家目录下。</p>
+<p>此功能可从 <a class="reference external" href="https://github.com/sapicd/awesome/">Awesome for sapic</a>
+获取经过审核且开源的第三方列表，像应用商店似的进行安装，不过也保留了
+原来的方式。</p>
+<img alt="_images/picbed-online-hooks.png" src="_images/picbed-online-hooks.png" />
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>会使用upgrade选项尝试升级式安装，如果不需要最新版本，注意固定版本。</p>
+</div>
+</section>
+<section id="picbed-admin-add-third">
+<span id="id9"></span><h3>2.2 添加第三方钩子<a class="headerlink" href="#picbed-admin-add-third" title="Link to this heading">¶</a></h3>
+<p>将第三方包加载到程序中，作为钩子扩展功能点。</p>
+<p>输入的是可以直接加载的模块，它很可能不是包名称，且第三方钩子文档应当给出
+明确的提示。</p>
+</section>
+</section>
+<section id="picbed-admin-usermanager">
+<span id="id10"></span><h2>3. 用户管理<a class="headerlink" href="#picbed-admin-usermanager" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>设置、取消管理员（不能对自己使用）</p></li>
+<li><p>审核新用户</p></li>
+<li><p>禁用用户：不允许登录、上传等一切操作</p></li>
+<li><p>删除用户</p></li>
+<li><p>验证过邮箱的用户邮箱字段是绿色的。</p></li>
+<li><p>标签一栏允许编辑（可置空），用以设置用户分组，允许使用半角逗号分割多个标签</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+  <li class="prev">
+    <a href="cli.html"
+       title="上一章">← 使用说明 - sapicli</a>
+  </li>
+  <li class="next">
+    <a href="hook.html"
+       title="下一章">钩子 →</a>
+  </li>
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2020, staugur.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.4.7 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a> 0.9.1.
+</div>
+            </div>
+          </div>
+      </page>
+    </div></div>
+    
+    
+  </body>
+</html>

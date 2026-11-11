@@ -27,7 +27,7 @@ pip list
 ```
 
 **附录：**
-可选：打印配置（SecretKey和Redis地址、密码可用星号代替）
+可选：打印配置（SecretKey和数据库地址、密码可用星号代替）
 
 ```bash
 cd /path/to/sapic/src

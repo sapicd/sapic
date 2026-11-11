@@ -1,0 +1,4 @@
+-r base.txt
+
+gunicorn==26.2.0
+gevent==26.9.0

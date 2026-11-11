@@ -1,20 +1,30 @@
-# Minimal makefile for Sphinx documentation
+# sapic 文档构建
 #
+#   make html        生成 HTML 到 _build/html
+#   make linkcheck   检查外链（可选）
+#   make clean       清理构建产物
+#
+# 依赖：pip install -r docs/requirements.txt（或仓库根的 make docs）
 
-# You can set these variables from the command line, and also
-# from the environment for the first two.
-SPHINXOPTS    ?=
-SPHINXBUILD   ?= sphinx-build
-SOURCEDIR     = .
-BUILDDIR      = _build
+# 优先用仓库根的虚拟环境，其次用 PATH 里的 python3
+PYTHON ?= $(shell [ -x ../.venv/bin/python ] && echo ../.venv/bin/python || echo python3)
+SPHINXBUILD ?= $(PYTHON) -m sphinx
+SOURCEDIR = .
+BUILDDIR = _build
 
-# Put it first so that "make" without argument is like "make help".
+.PHONY: help html linkcheck clean
+
 help:
-	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@echo "make html       构建 HTML 文档"
+	@echo "make linkcheck  检查文档里的外部链接"
+	@echo "make clean      清理 $(BUILDDIR)"
 
-.PHONY: help Makefile
+html:
+	$(SPHINXBUILD) -b html -W --keep-going "$(SOURCEDIR)" "$(BUILDDIR)/html"
+	@echo "构建完成：$(BUILDDIR)/html/index.html"
 
-# Catch-all target: route all unknown targets to Sphinx using the new
-# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-%: Makefile
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+linkcheck:
+	$(SPHINXBUILD) -b linkcheck "$(SOURCEDIR)" "$(BUILDDIR)/linkcheck"
+
+clean:
+	rm -rf "$(BUILDDIR)"

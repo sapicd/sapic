@@ -1,37 +1,69 @@
 name: ci
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+      - dev
+  pull_request:
+  workflow_dispatch:
 
-env:
-  sapic_redis_url: "redis://localhost"
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-
-  build:
-
+  backend:
+    name: backend (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.10", "3.12"]
-
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v7
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            server/requirements/base.txt
+            server/requirements/dev.txt
 
-    - name: Start Redis
-      uses: supercharge/redis-github-action@1.2.0
-      with:
-        redis-version: 5
+      - name: Install dependencies
+        run: pip install -r server/requirements/dev.txt
 
-    - name: Install dependencies
-      run: |
-        pip install codecov
-        pip install -r requirements/dev.txt
-  
-    - name: Test & upload report to coverage
-      run: |
-        cd src && coverage run -m unittest discover -p "test_*.py" && codecov --token ${{ secrets.CODECOV_TOKEN }}
+      #: 测试用临时 SQLite，不依赖外部数据库。
+      - name: Run tests
+        working-directory: server
+        run: python -m pytest -q
+
+  web:
+    name: web (build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.14.1
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 23
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: web
+        run: pnpm run build

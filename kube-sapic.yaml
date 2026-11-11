@@ -1,63 +1,167 @@
+# sapic v2 Kubernetes 清单（单副本 + 外部 PostgreSQL）。
+#
+#   kubectl apply -f kube-sapic.yaml
+#
+# 使用前必须替换：命名空间、Ingress 域名、镜像 tag，以及 Secret 里的
+# sapic_secretkey 与 sapic_db_url。多副本需要共享读写卷（RWX）与外部数据库，
+# 本地磁盘存储只能跑单副本，所以这里用 Recreate 而不是 RollingUpdate。
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sapic
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sapic-secret
+  namespace: sapic
+type: Opaque
+stringData:
+  #: openssl rand -hex 32
+  sapic_secretkey: "replace-with-a-random-32-byte-secret"
+  #: 外部 PostgreSQL；同一实例内请使用独立库与最小权限账号。
+  sapic_db_url: "postgresql://sapic:change-me@postgres.example.internal:5432/sapic"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sapic-config
+  namespace: sapic
+data:
+  sapic_env: "prod"
+  #: 对外访问地址，写进图片直链与审核邮件里的登录链接。
+  sapic_external_base_url: "https://sapic.example.com"
+  sapic_maxupload: "25"
+  #: 反代后面必须信任 X-Forwarded-*。
+  sapic_proxyfix: "true"
+  sapic_loglevel: "INFO"
+  WEB_CONCURRENCY: "4"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sapic-data
+  namespace: sapic
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  #: 按集群实际 StorageClass 填写；留空则用默认 StorageClass。
+  # storageClassName: standard
+
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sapic-deploy
+  name: sapic
+  namespace: sapic
   labels:
-    app: sapic
+    app.kubernetes.io/name: sapic
 spec:
   replicas: 1
+  #: 本地存储卷不能被两个 Pod 同时挂载，先停旧的再起新的。
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
-      app: sapic
+      app.kubernetes.io/name: sapic
   template:
     metadata:
       labels:
-        app: sapic
-      annotations:
-        port: "9514"
-        python: "3.10"
-        github: "sapicd/sapic"
+        app.kubernetes.io/name: sapic
     spec:
+      securityContext:
+        #: 镜像内 nginx 需要 root 起 80 端口，容器内不再提权。
+        runAsNonRoot: false
       containers:
         - name: sapic
-          image: docker.io/staugur/sapic:latest
-          env:
-            - name: sapic_redis_url     # redis服务IP地址
-              value: "redis://@redis"
-            #设置信任代理标头
-            #- name: sapic_proxyfix      
-            #  value: "true"
+          image: staugur/sapic:latest
+          imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 9514
+            - name: http
+              containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: sapic-config
+            - secretRef:
+                name: sapic-secret
+          volumeMounts:
+            - name: data
+              mountPath: /app/server/data
           readinessProbe:
             httpGet:
-              scheme: HTTP
-              port: 9514
-              path: /api/index
-            initialDelaySeconds: 3
-            timeoutSeconds: 3
+              path: /api/v2/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           livenessProbe:
             httpGet:
-              scheme: HTTP
-              port: 9514
-              path: /api/index
-            initialDelaySeconds: 10
+              path: /api/v2/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
             timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: sapic-data
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: sapic-svc
+  name: sapic
+  namespace: sapic
   labels:
-    app: sapic
+    app.kubernetes.io/name: sapic
 spec:
+  type: ClusterIP
   selector:
-    app: sapic
+    app.kubernetes.io/name: sapic
   ports:
-  - name: sapic-port
-    protocol: TCP
-    port: 9514
-    targetPort: 9514
-  #在Node上映射一个端口
-  #type: NodePort
+    - name: http
+      port: 80
+      targetPort: http
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sapic
+  namespace: sapic
+  annotations:
+    #: 与 sapic_maxupload（25M）对齐，否则大图在入口就被 413。
+    nginx.ingress.kubernetes.io/proxy-body-size: "32m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: sapic.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sapic
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - sapic.example.com
+      secretName: sapic-tls
