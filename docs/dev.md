@@ -18,7 +18,6 @@ server/                 v2 后端（包名 sapic，纯本地包，不发布 PyPI
 web/                    v2 前端（Vue 3 + Vite + Element Plus）
 docs/                   本文档（Sphinx + MyST）
 tools/                  v1 → v2 数据迁移脚本
-V1/                    v1 存档，不参与构建
 ```
 
 依赖方向单向：`views → libs/utils → models/basis`。`utils/web.py` 依赖 Flask 上下文，
@@ -72,8 +71,9 @@ cd docs && make linkcheck       # 检查外链
 ```
 
 - 新增页面后在 `docs/index.md` 的 `toctree` 里登记，否则不会被构建。
-- CI 用 `-W` 构建，warning 即失败；改动文档后本地跑一次 `make docs`。
-- 站点托管在 Read the Docs（`.readthedocs.yaml`），GitHub Actions 也会构建并发布到 Pages。
+- `make docs` 自带 `-W`（warning 即失败）；改动文档后本地跑一次再提交。
+- 线上站点由 Read the Docs 构建（`.readthedocs.yaml`，`fail_on_warning: true`），
+  仓库里不再有发布文档的 GitHub Actions。
 
 ## 代码风格
 

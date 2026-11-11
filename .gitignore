@@ -136,3 +136,7 @@ src/.qiniu_pythonsdk_hostscache.json
 .DS_Store
 .cfg
 .codebuddy/
+node_modules/
+dist/
+.vite/
+server/data/

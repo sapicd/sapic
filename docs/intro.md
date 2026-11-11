@@ -4,7 +4,7 @@
 
 sapic v2 与 v1 最大的区别是**前后端分离**与**数据落库**：
 
-| | v1（已归档） | v2（当前） |
+| | v1（历史版本） | v2（当前） |
 | --- | --- | --- |
 | 后端 | Flask + 模板渲染 | Flask，只输出 JSON（`/api/v2`） |
 | 存储 | Redis 为主存储 | Peewee + PostgreSQL / MySQL / SQLite |
@@ -40,4 +40,4 @@ sapic v2 与 v1 最大的区别是**前后端分离**与**数据落库**：
   PicGo / uPic / Typora 等按[快捷上传](usage.md) 指向 `/api/v2/upload` 即可。
 - 前端多语言（界面固定中文，后端消息固定英文、由前端映射）。
 
-完整的 v1 → v2 功能对照与缺口清单见仓库根的 `MIGRATION.md`，架构细节见 `ARCH.md`。
+架构细节见 `ARCH.md`，从 v1 迁移数据见 `DEPLOY.md` 第 7 节。

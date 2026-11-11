@@ -5,7 +5,7 @@ sapic v2 后端，API-only（前端由独立的 Vue 应用提供）。
 ## 运行要求
 
 - Python 3.10+
-- PostgreSQL（推荐）或 MySQL 8
+- 数据库三选一：**SQLite**（默认，零配置、只适合单实例）、**PostgreSQL**（推荐，多进程/多副本）、**MySQL 8**
 
 ## 依赖安装
 
@@ -31,6 +31,10 @@ make setup            # 开发 + 测试依赖 (server/requirements/dev.txt) + �
 | `sapic_storagedir` | 本地存储目录 | `data/upload` |
 | `sapic_external_base_url` | 对外访问根地址，用于拼接图片外链 | 空（相对地址） |
 | `sapic_proxyfix` | 是否信任代理标头 | 关闭 |
+
+另有 `sapic_sessionttl`（会话有效期，默认 7 天）、`sapic_loglevel`（默认 `INFO`）、
+`sapic_hookpkgstoragedir`（第三方钩子包目录，默认 `data/hooks`）、`sapic_hookmarketurl`、
+`sapic_updatecheckurl`（置空即关闭出网检测），完整说明见仓库根的 `DEPLOY.md` 第 4 节与 `docs/config.md`。
 
 ## 数据库初始化
 
@@ -76,6 +80,9 @@ gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent
 | GET | `/api/v2/auth/oidc/<name>/callback` | 统一登录回调 |
 | GET | `/api/v2/auth/identities` | 可绑定的登录方式与绑定状态 |
 | DELETE | `/api/v2/auth/identities/<name>` | 解除绑定（需当前密码） |
+| POST | `/api/v2/auth/email/verify`、`/email/confirm` | 重发验证令牌 / 提交令牌置为已验证 |
+| POST | `/api/v2/auth/avatar` | 上传头像（服务端裁剪入库）；`PUT /auth/profile` 改昵称与邮箱 |
+| DELETE | `/api/v2/auth/account` | 自助注销（需当前密码，名下有图片则 409） |
 | POST | `/api/v2/upload` | 上传（multipart，字段 `file` 或 `url`，可选 `expire` 有效期秒数与 `album_id`）；`url` 由服务端抓取，直连失败可按站点设置 `upload_fetch_proxy` 走代理 |
 | GET | `/api/v2/images` | 图片列表（游标分页，权限过滤） |
 | POST | `/api/v2/images/import` | 批量登记外链（不下载文件，`items` 为链接数组，可指定 `album_id`） |
@@ -84,11 +91,23 @@ gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent
 | GET/PATCH/DELETE | `/api/v2/images/<sha>` | 详情 / 修改（含 `expire_at` 有效期）/ 删除 |
 | GET/POST | `/api/v2/albums` | 相册列表 / 创建 |
 | PATCH/DELETE | `/api/v2/albums/<id>` | 修改 / 删除（非空拒绝） |
+| GET/POST | `/api/v2/albums/<id>/shares` | 共享成员列表 / 添加（用户名 + `permission` + 可选 `expires_in`） |
+| PATCH/DELETE | `/api/v2/albums/<id>/shares/<uid>` | 调整权限与有效期 / 移除成员 |
 | GET/POST | `/api/v2/backends` | 存储后端列表 / 新增（仅管理员） |
 | PATCH/DELETE | `/api/v2/backends/<id>` | 改优先级、启停、按后端覆盖配置 / 删除（仍有副本则 409） |
+| GET | `/api/v2/site` | 公开站点信息（名称、背景、注册 / 匿名上传 / 广场开关） |
+| GET | `/api/v2/plaza` | 图片广场（匿名；站点关闭 `plaza_enabled` 时 404） |
+| GET/PUT | `/api/v2/settings` | 站点设置读取 / 更新（仅管理员） |
+| GET | `/api/v2/settings/version` | 版本更新检测（仅管理员，24h 进程内缓存） |
+| POST | `/api/v2/settings/smtp/test` | 发送测试邮件（仅管理员） |
+| GET/PATCH/DELETE | `/api/v2/users`、`/users/<id>` | 用户列表（`page`/`page_size`）/ 审核、禁用、设管理员 / 硬删除（仅管理员） |
+| GET/POST/PATCH/DELETE | `/api/v2/hooks*` | 钩子清单、配置、启停、重载、市场与包管理（仅管理员） |
 | GET | `/raw/<sha>` | 图片读取（公开图 302 到后端直链；私有图鉴权后输出，支持 Range） |
 | GET | `/api/v2/userscript.user.js` | 油猴脚本（Tampermonkey/Violentmonkey），需登录；受个人设置 `userscript_enabled` 控制，可用 `?token=`（`upload` scope）安装 |
 | GET/PUT | `/api/v2/auth/settings` | 个人偏好：`userscript_enabled` / `bg_image` / `bg_image_mobile` / `bg_opacity` |
+
+这里只列主干；**参数、响应字段与错误码见仓库根的 `docs/api.md`**，响应统一信封
+`{code, message, data}`，失败时 `code` 取 `basis/errors.py` 的 `ErrorCode`。
 
 认证方式：Cookie 会话（写操作需要 `X-CSRF-Token`）或 `Authorization: Bearer <PAT>`。
 
@@ -127,9 +146,11 @@ gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent
 
 ## 当前实现范围
 
-- 已完成：应用工厂、Peewee 模型、迁移框架、健康检查、注册/登录/找回密码/PAT、上传与读取、相册权限、相册共享成员（增减成员与调整权限）、存储后端管理与优先级。
-- 待实现：上传票据（Upload Ticket）、副本对账/自动回填、用户自定义存储后端的 API/UI
-  （数据层见 `scope="user"` + 站点开关 `allow_user_backends`）、第三方插件安装持久化。
+- 已完成：应用工厂、Peewee 模型与迁移框架、健康检查、注册/登录/找回密码/邮箱验证/OIDC/PAT、
+  上传与读取、图片有效期与批量操作、相册权限与共享成员、存储后端管理与多副本、图片广场、
+  油猴脚本、SMTP 配置与测试邮件、后台用户管理、版本更新检测、第三方钩子包安装与市场。
+- 待实现：上传票据（Upload Ticket，模型已有但无接口/UI）、副本对账与自动回填、
+  用户自定义存储后端的 API/UI（数据层见 `scope="user"` + 站点开关 `allow_user_backends`）。
 
 存储后端：启用的存储钩子（`catalog=upload`）在启动时与每次解析后端时自动补一行 `storage_backends`，
 凭据来自「钩子配置」，可按后端覆盖。上传写入 `priority` 最小的启用后端；仍有副本的后端不能禁用/删除，
@@ -142,4 +163,6 @@ cd server
 python -m pytest -q
 ```
 
-测试默认使用临时 SQLite 数据库；CI 建议增加 PostgreSQL / MySQL 双库矩阵。
+测试默认使用临时 SQLite，不依赖外部数据库；CI（`.github/workflows/ci.yml`）跑 Python 3.10 / 3.12
+两个版本，外加一个前端构建任务。改动涉及数据库方言（索引、JSON 字段、`ALTER`）时，本地另用
+PostgreSQL / MySQL 手动验证一遍。

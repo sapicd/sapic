@@ -2,12 +2,13 @@
 
 sapic 是一个自建图床，**v2 是 API-only 的 Flask 后端 + 独立 Vue 前端**，
 **ORM 用 Peewee**（不再是 v1 的纯 Redis 存储），**存储后端与扩展点完全插件化（钩子体系）**。
-v1 代码已归档在 `V1/`，仅供对照，不参与 v2 构建；v1 的项目约定见 `V1/AGENTS.md`。
+v1 代码已从仓库移除（历史代码看 git tag）。v1 → v2 的功能对照表是本地私有文件
+`.codebuddy/MIGRATION.md`（被 git 忽略、不入库），需要查「某能力 v1 有 v2 有没有」时读它。
 当前版本见 `server/sapic/version.py` 中的 `__version__`。
 
 技术栈（后端）：Python 3.10+，Flask，Peewee，psycopg(binary)，PyMySQL，PyJWT。（v2 不用 Redis。）
 前端：`web/` 是独立的 Vue 3 + Vite + Element Plus 应用，与后端通过 `/api` 与 `/raw/` 交互。
-详细架构见 `ARCH.md`，部署与运维见 `DEPLOY.md`，贡献流程见 `CONTRIBUTING.md`。
+详细架构见 `ARCH.md`，部署与运维见 `DEPLOY.md`，开发约定与测试见 `docs/dev.md`。
 
 > Python 版本下限是 **3.10**，可自由使用 3.10 语法（`X | Y` 联合类型、match 语句、内置泛型
 > `dict[str]` 等）。新增代码统一带类型注解，与既有 `sapic/` 模块风格一致。
@@ -50,7 +51,6 @@ v1 代码已归档在 `V1/`，仅供对照，不参与 v2 构建；v1 的项目�
 │   │   └── hooks/        内置钩子，一个 .py 即一个插件（up2local 等）
 │   └── tests/            pytest 测试（test_*.py，pyproject 的 testpaths=["tests"]）
 ├── web/                  v2 前端（Vue 3 + Vite + Element Plus）
-├── V1/                   v1 旧代码与文档，仅存档
 ├── Makefile              常用命令入口
 └── README.md
 ```
@@ -321,7 +321,7 @@ ShareX 等的逐项配置见 `docs/usage.md`。**不要再为老客户端补第�
   （导航项、相册列表/编辑里的发布开关、图片详情里的广场行与单图设置），`/plaza` 路由回退首页。
 - **个人 RSS 已整体移除，不要恢复**（v1 的 `/feed`）：匿名聚合出口会把「某用户有哪些图、何时上传」
   整份暴露给任何抓取方，而它带来的只是低频的站外订阅。已删除 `views/feed.py`、`libs/feed.py`、
-  `libs.images.feed_query`、站点设置 `rss_enabled` 与用户设置 `rss_enabled`；MIGRATION #26 标 ⛔。
+  `libs.images.feed_query`、站点设置 `rss_enabled` 与用户设置 `rss_enabled`（该能力已确认不迁移）。
   需要分享就发单图直链，不要再造「公开列表类」的匿名出口。
 - 油猴脚本（`GET /api/v2/userscript.user.js`，`libs/userscript.build_userscript`）按用户生成，
   挂在 API 前缀下（反代只需 `/api/` 一条规则；v1 的 `/sapic.user.js` 根路径已移除，脚本
@@ -473,7 +473,7 @@ __state__ = "enabled"       # enabled / disabled
 
 ## 文档与变更记录
 
-- 用户/架构文档：如存在放仓库根或 `V1/docs/`（v2 文档仍在补）
+- 用户文档在 `docs/`（Sphinx + MyST），运维/架构文档是仓库根的 `DEPLOY.md` / `ARCH.md`
 - 每次新增功能、修复问题或行为变更，确保：
   1. 后端测试（`make test`，pytest，写在 `tests/`）通过
   2. 涉及数据结构的变更在 `sapic/migrations/` 注册迁移
@@ -482,8 +482,7 @@ __state__ = "enabled"       # enabled / disabled
 
 ## 持续集成 / 质量
 
-- CI 在 `.github/workflows/ci.yml`：v2 用 `server/requirements/dev.txt` 安装、跑 `pytest`；
-  v1 用 `V1/requirements/dev.txt` 跑遗留 unittest（互不影响）
+- CI 在 `.github/workflows/ci.yml`：用 `server/requirements/dev.txt` 安装并跑 `pytest`
 - 提交前保证：导入可用、应用能启动（`make dev` 或 `make config` 正常）、`make test` 全绿
 - 建议同步更新 `ARCH.md` 中的目录/扩展点清单描述
 
