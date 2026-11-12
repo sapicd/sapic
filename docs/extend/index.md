@@ -28,6 +28,8 @@ sapic 的插件叫**钩子（hook）**：一个 Python 模块或包，被核心�
 4. **配置**：`hooks_config` 存钩子级配置，字段由 `hook_manifest()` 的 `config_schema` 声明，
    后台钩子页据此渲染表单（`PUT /api/v2/hooks/config/<name>`）。
 5. **调用**：认证/存储/后处理按契约进入热路径；界面块、动作、数据集按前端请求触发。
+   处理器（`upimg_stream_processor`）还会拿到自己的 `config`（如 `pic2webp` 的 `quality`），
+   存储驱动则通过 `backend=` 取合并后的配置。
 
 钩子热重载：`POST /api/v2/hooks/reload` 立即重建快照；平时每隔
 `HOOK_RELOAD_TIME` 按「源文件 mtime + 已登记模块列表」决定是否换快照，

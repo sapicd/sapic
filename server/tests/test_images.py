@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import io
 import re
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 
 import pytest
 
@@ -670,4 +670,129 @@ def test_backend_url_never_uses_the_proxy(app, monkeypatch):
         )
 
     assert response == "response"
+    assert attempts == [""]
+
+
+class _FakeRemoteResponse:
+    """Minimal stand-in for the streamed response of a URL fetch."""
+
+    def __init__(self, mime="image/jpeg", body=b"remote-bytes", broken=False):
+        self.headers = _FakeHeaders(mime)
+        self._body = body
+        self._broken = broken
+        self.closed = False
+
+    def geturl(self):
+        return ""
+
+    def read(self, size=-1):
+        if self._broken:
+            raise ConnectionResetError("connection reset by peer")
+        body, self._body = self._body, b""
+        return body
+
+    def close(self):
+        self.closed = True
+
+
+class _FakeHeaders:
+    def __init__(self, mime):
+        self._mime = mime
+
+    def get_content_type(self):
+        return self._mime
+
+    def get(self, name, default=None):
+        return default
+
+
+def _blocking_opener_factory(
+    attempts, direct_status=None, direct_mime="image/jpeg", direct_broken=False
+):
+    """Direct attempt answers with an HTTP error or an unusable payload."""
+
+    class Opener:
+        def __init__(self, proxy):
+            self.proxy = proxy
+
+        def open(self, request, timeout=None):
+            attempts.append(self.proxy)
+            if not self.proxy:
+                if direct_status:
+                    raise HTTPError(
+                        request.full_url, direct_status, "blocked", {}, io.BytesIO(b"")
+                    )
+                return _FakeRemoteResponse(direct_mime, broken=direct_broken)
+            return _FakeRemoteResponse()
+
+    def fake_build(*handlers):
+        return Opener(handlers[1].proxies.get("https", ""))
+
+    return fake_build
+
+
+def test_http_error_on_the_direct_fetch_still_tries_the_proxy(app, monkeypatch):
+    """被挡时常见的是边缘节点直接回 403，而不是连不上；代理同样要兜底。"""
+    attempts = []
+    monkeypatch.setattr(
+        images, "build_opener", _blocking_opener_factory(attempts, direct_status=403)
+    )
+
+    with app.app_context():
+        set_setting("upload_fetch_proxy", "http://127.0.0.1:7890")
+        stream, name, mime = images.download_image("https://1.1.1.1/a.jpg", 1024)
+
+    assert attempts == ["", "http://127.0.0.1:7890"]
+    assert stream == b"remote-bytes"
+    assert (name, mime) == ("a.jpg", "image/jpeg")
+
+
+def test_interstitial_page_on_the_direct_fetch_tries_the_proxy(app, monkeypatch):
+    """200 + text/html 的拦截页也算直连没抓到，换代理再试一次。"""
+    attempts = []
+    monkeypatch.setattr(
+        images,
+        "build_opener",
+        _blocking_opener_factory(attempts, direct_mime="text/html"),
+    )
+
+    with app.app_context():
+        set_setting("upload_fetch_proxy", "http://127.0.0.1:7890")
+        stream, _, mime = images.download_image("https://1.1.1.1/a.jpg", 1024)
+
+    assert attempts == ["", "http://127.0.0.1:7890"]
+    assert stream == b"remote-bytes"
+    assert mime == "image/jpeg"
+
+
+def test_truncated_body_on_the_direct_fetch_retries_via_proxy(app, monkeypatch):
+    """拿到 200 头但 body 断流（海外图很常见）同样要换代理，否则等于白等。"""
+    attempts = []
+    monkeypatch.setattr(
+        images,
+        "build_opener",
+        _blocking_opener_factory(attempts, direct_broken=True),
+    )
+
+    with app.app_context():
+        set_setting("upload_fetch_proxy", "http://127.0.0.1:7890")
+        stream, _, mime = images.download_image("https://1.1.1.1/a.jpg", 1024)
+
+    assert attempts == ["", "http://127.0.0.1:7890"]
+    assert stream == b"remote-bytes"
+    assert mime == "image/jpeg"
+
+
+def test_fetch_error_message_keeps_the_direct_cause(app, monkeypatch):
+    """没配代理时错误里带上原因，运维才知道是 403 还是连不上。"""
+    attempts = []
+    monkeypatch.setattr(
+        images, "build_opener", _blocking_opener_factory(attempts, direct_status=403)
+    )
+
+    with app.app_context():
+        with pytest.raises(ApiError) as exc:
+            images.download_image("https://1.1.1.1/a.jpg", 1024)
+
+    assert exc.value.message == "remote fetch failed: http 403"
     assert attempts == [""]

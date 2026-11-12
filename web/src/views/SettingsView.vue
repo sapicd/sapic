@@ -387,7 +387,9 @@ onMounted(() => {
   loadIdentities()
   const flag = typeof route.query.identity === 'string' ? route.query.identity : ''
   if (flag === 'bound') ElMessage.success('统一登录已绑定')
-  if (flag === 'error') ElMessage.error('绑定失败，该身份可能已绑定到其他账号')
+  if (flag === 'conflict')
+    ElMessage.error('该身份已绑定到另一个账号，请先在那个账号解除绑定')
+  if (flag === 'error') ElMessage.error('绑定失败，请重试或联系管理员')
   //: 绑定回跳直接落在「统一登录」区块，省得用户自己找。
   if (flag) switchSection('identities')
 })

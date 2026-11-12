@@ -329,7 +329,12 @@ def clean_fields(fields):
         item = {"type": ftype, "key": _text(key, 64),
                 "label": _text(field.get("label") or key)}
         if field.get("default") is not None:
-            item["default"] = _text(field["default"], MAX_TEXT)
+            default = field["default"]
+            #: 数字控件需要真数字，字符串会让前端的 el-input-number 失配。
+            if ftype == "number" and isinstance(default, (int, float)):
+                item["default"] = int(default)
+            else:
+                item["default"] = _text(default, MAX_TEXT)
         if field.get("required"):
             item["required"] = True
         if field.get("help"):
@@ -344,6 +349,12 @@ def clean_fields(fields):
             item["multiple"] = True
         if field.get("source"):
             item["source"] = _text(field["source"], 64)
+        if ftype == "number":
+            for bound in ("min", "max", "step"):
+                try:
+                    item[bound] = int(field[bound])
+                except (KeyError, TypeError, ValueError):
+                    continue
         result.append(item)
     return result
 

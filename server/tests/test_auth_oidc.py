@@ -410,6 +410,69 @@ def test_bind_flow_links_the_signed_in_account(app, client, monkeypatch):
         assert User.get_by_id(user_id).oidc_subject == "u-4"
 
 
+def test_bind_holds_when_the_configured_issuer_ends_with_a_slash(
+    app, client, monkeypatch
+):
+    #: 后台填 `https://passport.example.com/` 很常见；写入与「已绑定」判定
+    #: 必须用同一个归一化值，否则绑定成功却一直显示未绑定。
+    user_id = local_user(app)
+    enable_hook(app, config={**CONFIG, "issuer": CONFIG["issuer"] + "/"})
+    module = hook_module(app)
+    login(client)
+
+    _, state = start_flow(
+        client, monkeypatch, module, query="?bind=1&next=/settings"
+    )
+    identity(module, monkeypatch, subject="u-6")
+
+    response = client.get(
+        "/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state
+    )
+
+    assert response.headers["Location"] == "/settings?identity=bound"
+    with app.app_context():
+        assert User.get_by_id(user_id).oidc_issuer == CONFIG["issuer"]
+    items = client.get("/api/v2/auth/identities").get_json()["data"]["items"]
+    assert next(item for item in items if item["name"] == "passport")["bound"]
+
+
+def test_bind_reports_an_identity_bound_to_another_account(app, client, monkeypatch):
+    local_user(app, username="dave", email="dave@example.com")
+    local_user(app)
+    enable_hook(app)
+    module = hook_module(app)
+    login(client)
+
+    with app.app_context():
+        other = User.get(User.username == "dave")
+        bind_oidc_identity(other, CONFIG["issuer"], "u-7")
+
+    _, state = start_flow(
+        client, monkeypatch, module, query="?bind=1&next=/settings"
+    )
+    identity(module, monkeypatch, subject="u-7")
+
+    response = client.get(
+        "/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state
+    )
+
+    #: 该身份属于别的账号时要能区分出来，页面才知道提示「先去解绑」。
+    assert response.headers["Location"] == "/settings?identity=conflict"
+
+
+def test_legacy_issuer_with_a_trailing_slash_still_finds_the_account(app):
+    with app.app_context():
+        user = create_user(username="erin", password="secret123")
+        user.oidc_issuer = CONFIG["issuer"] + "/"
+        user.oidc_subject = "u-8"
+        user.save(only=[User.oidc_issuer, User.oidc_subject])
+
+        found = resolve_oidc_user(issuer=CONFIG["issuer"], subject="u-8")
+
+        assert found.id == user.id
+        assert User.select().count() == 1
+
+
 def test_bind_requires_a_signed_in_user(app, client, monkeypatch):
     enable_hook(app)
     module = hook_module(app)

@@ -318,11 +318,16 @@ class HookManager:
             return kwargs
         return {key: value for key, value in kwargs.items() if key in parameters}
 
-    def call(self, funcname: str, include=None, **kwargs) -> list[dict]:
+    def call(
+        self, funcname: str, include=None, with_config: bool = False, **kwargs
+    ) -> list[dict]:
         """Call ``funcname`` on matching hooks and collect their results.
 
         Mirrors v1 semantics: a failing hook produces ``code=1`` instead of
         aborting the whole call, and ``sender`` records the hook name.
+        ``with_config`` hands each hook its own saved config (used by stream
+        processors, whose output depends on it); drivers get their settings
+        through ``backend=`` instead.
         """
         includes = set(include) if include else None
         results = []
@@ -335,8 +340,11 @@ class HookManager:
             func = getattr(hook.module, funcname, None)
             if not callable(func):
                 continue
+            payload = kwargs
+            if with_config:
+                payload = dict(kwargs, config=self._hook_config(name))
             try:
-                result = func(**self._accepted_kwargs(func, kwargs))
+                result = func(**self._accepted_kwargs(func, payload))
             except Exception as exc:
                 logger.exception("Hook %s.%s failed", name, funcname)
                 result = {"code": 1, "message": str(exc)}

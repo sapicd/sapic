@@ -252,8 +252,9 @@ def test_config_roundtrip(app, client):
         for item in client.get("/api/v2/hooks/config").get_json()["data"]["items"]
     }
     assert set(items["up2local"]["values"]) == {"root", "domain"}
-    #: 没有 config_schema 的钩子不进入配置页。
-    assert "pic2webp" not in items
+    #: processor 钩子也走同一套配置页：pic2webp 的质量可调。
+    assert items["pic2webp"]["values"] == {"quality": 75}
+    assert [field["key"] for field in items["pic2webp"]["fields"]] == ["quality"]
 
     response = client.put(
         "/api/v2/hooks/config/up2local",
@@ -268,6 +269,14 @@ def test_config_roundtrip(app, client):
         for item in client.get("/api/v2/hooks/config").get_json()["data"]["items"]
     }
     assert items["up2local"]["values"]["root"] == "/srv/images"
+
+    response = client.put(
+        "/api/v2/hooks/config/pic2webp",
+        json={"quality": 60},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 200
+    assert response.get_json()["data"]["values"] == {"quality": 60}
 
 
 def test_config_rejects_unknown_keys(app, client):

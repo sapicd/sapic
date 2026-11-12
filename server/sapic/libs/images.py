@@ -10,6 +10,7 @@ import socket
 from contextlib import closing
 from datetime import datetime
 from hashlib import sha1
+from http.client import HTTPException
 from mimetypes import guess_type
 from os.path import splitext
 from posixpath import basename as posix_basename
@@ -433,7 +434,21 @@ def fetch_proxy() -> str:
 
 
 class _Unreachable(Exception):
-    """Network-level failure; another transport may still get through."""
+    """An attempt another transport may still get through.
+
+    Besides transport errors (DNS, connect, TLS, timeout) this also covers an
+    HTTP error status and an unusable payload: a blocked or intercepted host
+    often answers with 403 from an edge node, or with a 200 that carries an HTML
+    interstitial instead of the image. The configured proxy is the escape hatch
+    for exactly those cases, so they must reach the fallback instead of failing
+    the upload. Policy errors (private address, bad scheme, redirect loop) stay
+    ``ApiError``: no transport is allowed to fetch them.
+    """
+
+    def __init__(self, reason: str, detail: str = ""):
+        super().__init__(detail or reason)
+        #: Short machine-readable cause, surfaced in the API error message.
+        self.reason = reason
 
 
 def _open_once(
@@ -476,16 +491,42 @@ def _open_once(
             )
         except HTTPError as exc:
             location = exc.headers.get("Location")
+            code = exc.code
             exc.close()
-            if exc.code in (301, 302, 303, 307, 308) and location:
+            if code in (301, 302, 303, 307, 308) and location:
                 target = urljoin(target, location)
                 continue
-            raise ApiError(
-                "remote fetch failed: %s" % exc.code, ErrorCode.PARAM_ERROR
-            ) from exc
+            #: 4xx/5xx 也可能是「这一跳被挡了」（反爬、地区限制），换代理再试。
+            raise _Unreachable("http %s" % code) from exc
         except (URLError, OSError, ValueError) as exc:
-            raise _Unreachable(str(exc)) from exc
+            raise _Unreachable("network error", str(exc)) from exc
     raise ApiError("too many redirects", ErrorCode.PARAM_ERROR)
+
+
+def _with_proxy_fallback(attempt, allow_private: bool = False):
+    """Run ``attempt(proxy)`` directly first, then once through the proxy.
+
+    The proxy is a fallback, not a default route: a reachable source never pays
+    for the detour. ``_Unreachable`` means "this transport produced nothing
+    usable"; anything else (bad scheme, private address, oversize payload) is a
+    final answer and is never retried. Internal backend URLs
+    (``allow_private``) stay on the direct path only.
+    """
+    proxy = "" if allow_private else fetch_proxy()
+    try:
+        return attempt("")
+    except _Unreachable as exc:
+        if not proxy:
+            raise ApiError(
+                "remote fetch failed: %s" % exc.reason, ErrorCode.PARAM_ERROR
+            ) from exc
+        logger.info("direct url fetch failed (%s), retrying via proxy", exc.reason)
+    try:
+        return attempt(proxy)
+    except _Unreachable as exc:
+        raise ApiError(
+            "remote fetch failed: %s" % exc.reason, ErrorCode.PARAM_ERROR
+        ) from exc
 
 
 def open_remote(
@@ -501,35 +542,34 @@ def open_remote(
     itself (a storage backend read URL): a self-hosted MinIO on ``10.x`` has to
     work there. Never pass it for user supplied URLs — that is the SSRF guard.
 
-    A user supplied URL is fetched directly first. Only when that attempt fails
-    (timeout, connection error, unresolvable host) does the configured proxy get
-    a second chance, so reachable sources never pay for the detour. Internal
-    backend URLs never take that path at all.
+    A user supplied URL is fetched directly first; the configured proxy only
+    gets a second chance when that attempt produced nothing usable (network
+    error or HTTP error status), so reachable sources never pay for the detour.
+    Internal backend URLs never take that path at all.
     """
-    proxy = "" if allow_private else fetch_proxy()
 
-    try:
-        return _open_once(url, timeout, headers, allow_private, "")
-    except _Unreachable as exc:
-        if not proxy:
-            raise ApiError("remote fetch failed", ErrorCode.PARAM_ERROR) from exc
-        logger.info("direct url fetch failed (%s), retrying via proxy", exc)
-    try:
-        return _open_once(url, timeout, headers, allow_private, proxy)
-    except _Unreachable as exc:
-        raise ApiError("remote fetch failed", ErrorCode.PARAM_ERROR) from exc
+    def attempt(proxy_url: str):
+        return _open_once(url, timeout, headers, allow_private, proxy_url)
+
+    return _with_proxy_fallback(attempt, allow_private)
 
 
-def download_image(
-    url: str, max_bytes: int, timeout: int = REMOTE_TIMEOUT
+def _read_media(
+    url: str, max_bytes: int, timeout: int, proxy: str
 ) -> tuple[bytes, str, str]:
-    """Fetch a remote payload as ``(stream, filename, mime)``."""
-    response = open_remote(url, timeout)
+    """Download and validate one payload over one transport.
+
+    A body that breaks off mid-transfer is reported as ``_Unreachable`` too: the
+    direct path often gets a valid ``200`` header and then has the connection
+    reset, and that is exactly the case where the proxy has to take over.
+    """
+    response = _open_once(url, timeout, None, False, proxy)
     parsed = urlparse(response.geturl() or url)
     mime = (response.headers.get_content_type() or "").lower()
     if not mime.startswith(("image/", "video/")):
         response.close()
-        raise ApiError("remote resource is not an image", ErrorCode.PARAM_ERROR)
+        #: 被墙/反爬时常见 200 + text/html 的拦截页，这种响应「拿得到但用不了」。
+        raise _Unreachable("unexpected content type %s" % (mime or "unknown"))
 
     length = response.headers.get("Content-Length")
     if length and length.isdigit() and int(length) > max_bytes:
@@ -550,14 +590,25 @@ def download_image(
                         "file exceeds the size limit", ErrorCode.PARAM_ERROR, 413
                     )
                 chunks.append(chunk)
-        except OSError as exc:
-            raise ApiError("remote fetch failed", ErrorCode.PARAM_ERROR) from exc
+        except (OSError, HTTPException) as exc:
+            raise _Unreachable("network error", str(exc)) from exc
 
     name = unquote(parsed.path.rsplit("/", 1)[-1]) or "remote"
     suffix = splitext(name)[-1].lower()
     if suffix not in IMAGE_EXTS and suffix not in VIDEO_EXTS:
         name = "%s%s" % (splitext(name)[0] or "remote", MIME_EXTS.get(mime, ""))
     return b"".join(chunks), name, mime
+
+
+def download_image(
+    url: str, max_bytes: int, timeout: int = REMOTE_TIMEOUT
+) -> tuple[bytes, str, str]:
+    """Fetch a remote payload as ``(stream, filename, mime)``."""
+
+    def attempt(proxy_url: str):
+        return _read_media(url, max_bytes, timeout, proxy_url)
+
+    return _with_proxy_fallback(attempt)
 
 
 def process_stream(
@@ -574,8 +625,12 @@ def process_stream(
         return stream, filename, mime
 
     processed = stream
+    #: 处理器按钩子各自的配置运行（如 pic2webp 的 quality）。
     for result in get_hook_manager().call(
-        "upimg_stream_processor", stream=processed, suffix=suffix
+        "upimg_stream_processor",
+        stream=processed,
+        suffix=suffix,
+        with_config=True,
     ):
         data = result.get("data")
         if result.get("code") != 0 or not isinstance(data, dict):

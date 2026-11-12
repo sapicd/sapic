@@ -225,7 +225,10 @@ def _finish_bind(name: str, issuer: str, subject: str, bind_uid: int, saved: dic
         bind_oidc_identity(user, issuer, subject)
     except ApiError as exc:
         logger.warning("oidc bind rejected for %s: %s", name, exc.message)
-        response = redirect(_with_flag(target, "identity", "error"))
+        #: 身份已被别的账号占用时给独立标记，页面才能提示「先去那边解绑」，
+        #: 否则只能看到笼统的「绑定失败」。
+        flag = "conflict" if exc.code == ErrorCode.CONFLICT else "error"
+        response = redirect(_with_flag(target, "identity", flag))
     else:
         logger.info("oidc identity %s bound to user %s", name, user.username)
         response = redirect(_with_flag(target, "identity", "bound"))
@@ -298,7 +301,9 @@ def oidc_callback(name: str):
         logger.exception("oidc token exchange failed for %s", name)
         return redirect("/login?oidc=error")
 
-    issuer = identity["issuer"] or ext.provider_issuer(hook.module, config)
+    #: 命名空间以 provider_issuer 为准：它是账号页判定「已绑定」时比对的同一
+    #: 个值，用 claims 里的 iss 会让写入与比对不一致（比如末尾斜杠不同）。
+    issuer = ext.provider_issuer(hook.module, config) or identity["issuer"]
     subject = identity["subject"]
     bind_uid = saved.get("bind_uid")
     if bind_uid:
@@ -346,7 +351,7 @@ def read_identities():
                 "bound": bool(
                     user.oidc_subject
                     and namespace
-                    and (user.oidc_issuer or "") == namespace
+                    and ext.normalize_issuer(user.oidc_issuer) == namespace
                 ),
                 "bind_url": url_for(
                     "auth.oidc_start", name=name, bind=1, next="/settings"

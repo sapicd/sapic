@@ -190,7 +190,7 @@ onMounted(loadSettings)
             <el-form-item label="多副本上传">
               <el-switch v-model="form.storage_replica" />
               <span class="form-suffix">
-                主后端同步写入，其余启用的后端在后台异步补副本（失败不影响上传）
+                priority 数值最小的后端同步写入，其余启用的后端在后台异步补副本（失败不影响上传）
               </span>
             </el-form-item>
             <el-form-item label="下载代理">

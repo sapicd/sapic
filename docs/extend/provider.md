@@ -21,14 +21,14 @@ def identity_issuer(config) -> str        # 可选
 | --- | --- |
 | `oidc_authorize_url` | 返回把浏览器送去 Provider 的完整地址。参数 `config` 是后台保存的钩子配置，`state` 必须原样带上（核心用 Cookie 校验回跳）。失败抛 `ValueError`（英文消息），核心返回 400。 |
 | `oidc_exchange` | 用 `code` 换用户信息并返回下面的字典。抛异常时核心跳 `/login?oidc=error`。 |
-| `identity_issuer` | 返回身份命名空间，写进本地账号的 `oidc_issuer`。缺省用 `config["issuer"]`（适合 OIDC 的 issuer 地址）；非 OIDC 的 Provider（如 GitHub）用它声明一个固定值，否则「已绑定」判定会拿不到值。 |
+| `identity_issuer` | 返回身份命名空间，写进本地账号的 `oidc_issuer`。缺省用 `config["issuer"]`（适合 OIDC 的 issuer 地址）；非 OIDC 的 Provider（如 GitHub）用它声明一个固定值，否则「已绑定」判定会拿不到值。返回值与 `config["issuer"]` 都会去掉末尾 `/` 后使用（写入与「已绑定」判定走同一个归一化）。 |
 
 `oidc_exchange` 的返回值：
 
 | 键 | 必需 | 说明 |
 | --- | --- | --- |
 | `subject` | ✅ | Provider 内稳定不变的唯一 ID（OIDC 的 `sub`、GitHub 的 `id`）。也接受 `sub` 别名，会被归一化成 `subject`。 |
-| `issuer` | | 不返回则用 `identity_issuer()` / `config["issuer"]`。 |
+| `issuer` | | 通常不用返回：核心优先用 `identity_issuer()` / `config["issuer"]` 作为命名空间，保证与「已绑定」判定同源，仅当两者都没有时才采用此值。 |
 | `username` | | 建号时用作本地账号名；缺省用 `subject`。会被清洗成 `[0-9a-zA-Z_]`。 |
 | `nickname` | | 显示名，上游改名不影响本地账号。 |
 | `email` | | 用于「双方邮箱都验证过就自动关联老账号」。 |
@@ -49,7 +49,8 @@ GET /api/v2/auth/oidc/<name>/callback?code=...&state=...
 - `<name>` 是**钩子名**（模块名）。包名写成 `sapic_oauth_github`，地址就是
   `/api/v2/auth/oidc/sapic_oauth_github`。
 - `bind=1` 表示把身份绑到当前登录账号（要求已登录），完成后回 `next` 并带
-  `?identity=bound`（失败 `identity=error`）。
+  `?identity=bound`；失败分两种：`identity=conflict`（该身份已被另一个账号绑定，
+  需先去那边解绑）与 `identity=error`（其他原因）。
 - 登录失败的回跳标记：`denied`（用户在 Provider 拒绝）、`error`（换 token 失败）、
   `invalid`（身份无效）、`unlinked`（该身份没绑定本地账号）、`inactive`（账号待审核/被禁用）。
 - 解绑：`DELETE /api/v2/auth/identities/<name>`，请求体带当前密码。

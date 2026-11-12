@@ -199,6 +199,17 @@ def normalize_identity(claims) -> dict:
     }
 
 
+def normalize_issuer(value) -> str:
+    """Canonical form of an issuer, used both when writing and comparing it.
+
+    Providers disagree on the trailing slash (``https://id.example.com`` versus
+    ``https://id.example.com/``), so the value stored at bind time must be
+    trimmed the same way as the one the account page compares against; mixing
+    the two makes an established binding look unbound.
+    """
+    return str(value or "").strip().rstrip("/")[:255]
+
+
 def provider_issuer(module, config=None) -> str:
     """Stable namespace of the identities issued by this provider.
 
@@ -216,5 +227,5 @@ def provider_issuer(module, config=None) -> str:
             logger.exception("identity_issuer() of %s failed", module)
             value = ""
         if value:
-            return value[:255]
-    return str(config.get("issuer") or "").strip()[:255]
+            return normalize_issuer(value)
+    return normalize_issuer(config.get("issuer"))

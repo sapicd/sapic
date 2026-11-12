@@ -98,6 +98,33 @@ def test_field_schema_is_cleaned():
     assert [field["key"] for field in fields] == ["root"]
 
 
+def test_number_field_keeps_bounds_and_numeric_default():
+    fields = ui.clean_fields(
+        [
+            {
+                "key": "quality",
+                "type": "number",
+                "label": "质量",
+                "default": 75,
+                "min": 1,
+                "max": 100,
+                "step": 5,
+            }
+        ]
+    )
+    assert fields == [
+        {
+            "type": "number",
+            "key": "quality",
+            "label": "质量",
+            "default": 75,
+            "min": 1,
+            "max": 100,
+            "step": 5,
+        }
+    ]
+
+
 def test_slot_mode_is_restricted():
     assert ui.clean_slots(
         [{"name": "profile"}, {"name": "profile", "mode": "esm"}, {"name": "nope"}]

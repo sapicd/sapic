@@ -262,3 +262,28 @@ def test_pic2webp_converts_a_png(app):
     assert result["code"] == 0
     assert result["suffix"] == ".webp"
     assert result["data"]["stream"][:4] == b"RIFF"
+
+
+def test_pic2webp_keeps_transparency(app):
+    module = module_of(app, "pic2webp")
+    if module.Image is None:
+        pytest.skip("Pillow is not installed")
+
+    source = BytesIO()
+    module.Image.new("RGBA", (2, 2), (255, 0, 0, 0)).save(source, "PNG")
+    result = module.upimg_stream_processor(source.getvalue(), ".png")
+
+    assert result["code"] == 0
+    with module.Image.open(BytesIO(result["data"]["stream"])) as converted:
+        assert converted.mode == "RGBA"
+        assert converted.getpixel((0, 0))[3] == 0
+
+
+def test_pic2webp_quality_is_configurable(app):
+    module = module_of(app, "pic2webp")
+
+    assert module._quality({"quality": 40}) == 40
+    assert module._quality({"quality": 500}) == module.MAX_QUALITY
+    assert module._quality({"quality": 0}) == module.DEFAULT_QUALITY
+    assert module._quality({"quality": None}) == module.DEFAULT_QUALITY
+    assert module._quality({}) == module.DEFAULT_QUALITY

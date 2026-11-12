@@ -33,6 +33,7 @@ from ..models.user import (
     STATUS_REJECTED,
 )
 from .albums import default_album
+from .ext import normalize_issuer
 from .images import create_image, delete_image, image_src
 from .mail import send_mail
 from .settings import get_setting
@@ -139,20 +140,31 @@ def change_password(user: User, new_password: str) -> User:
     return user
 
 
+def _identity_owner(issuer: str, subject: str) -> User | None:
+    """Account already holding this identity, if any.
+
+    Matched on the normalised issuer: rows written before the value was
+    canonicalised may keep a trailing slash, and a literal comparison would
+    report an established binding as missing (then create a duplicate account).
+    """
+    for row in User.select().where(User.oidc_subject == subject):
+        if normalize_issuer(row.oidc_issuer) == issuer:
+            return row
+    return None
+
+
 def bind_oidc_identity(user: User, issuer: str, subject: str) -> User:
     """Attach an OIDC identity to an existing account.
 
     An identity may only serve one account, so re-binding it to someone else is
     rejected instead of silently stealing the login.
     """
-    issuer = (issuer or "").strip()[:255]
+    issuer = normalize_issuer(issuer)
     subject = (subject or "").strip()[:255]
     if not issuer or not subject:
         raise ApiError("invalid oidc identity", ErrorCode.PARAM_ERROR)
 
-    bound = User.get_or_none(
-        (User.oidc_issuer == issuer) & (User.oidc_subject == subject)
-    )
+    bound = _identity_owner(issuer, subject)
     if bound is not None and bound.id != user.id:
         raise ApiError("identity is already bound", ErrorCode.CONFLICT, 409)
 
@@ -206,14 +218,12 @@ def resolve_oidc_user(
     link the identity to an existing verified account; anything else becomes a
     brand new local account (the main sign-up path for provider users).
     """
-    issuer = (issuer or "").strip()[:255]
+    issuer = normalize_issuer(issuer)
     subject = (subject or "").strip()[:255]
     if not issuer or not subject:
         raise ApiError("invalid oidc identity", ErrorCode.PARAM_ERROR)
 
-    user = User.get_or_none(
-        (User.oidc_issuer == issuer) & (User.oidc_subject == subject)
-    )
+    user = _identity_owner(issuer, subject)
     if user is not None:
         if user.status != STATUS_NORMAL:
             raise ApiError("account is not active", ErrorCode.FORBIDDEN, 403)

@@ -146,10 +146,11 @@ def test_identity_issuer_overrides_the_config_field(tmp_path):
 
     assert ext.provider_issuer(module, {"issuer": "https://config"}) == "demo"
 
-    #: 未实现 identity_issuer 时回落到配置里的 issuer 字段。
+    #: 未实现 identity_issuer 时回落到配置里的 issuer 字段，末尾 `/` 会被去掉：
+    #: 写入 `oidc_issuer` 与「已绑定」判定必须用同一个值。
     manager = load(tmp_path, "half", INCOMPLETE_PROVIDER)
     module = manager.get("half").module
     assert ext.provider_issuer(module, {"issuer": "https://config/"}) == (
-        "https://config/"
+        "https://config"
     )
     assert ext.provider_issuer(module, {}) == ""

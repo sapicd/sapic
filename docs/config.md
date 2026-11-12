@@ -43,10 +43,13 @@
 
 几个容易踩的点：
 
-- `upload_fetch_proxy` 是**兜底**代理：直连成功就不碰它，只有超时 / 连接错误 / 本地解析不了时才
-  用它重试一次。填一个 `http://` 或 `https://` 代理地址，需要认证写
+- `upload_fetch_proxy` 是**兜底**代理：直连拿到可用图片就不碰它，只有这一次直连「没拿到可用响应」
+  才用它重试一次——包括超时 / 连接错误 / 本地解析不了，以及被反爬或地区限制时边缘节点直接回的
+  4xx/5xx、还有 200 但内容是 HTML 的拦截页。填一个 `http://` 或 `https://` 代理地址，需要认证写
   `http://user:password@host:port`；socks 不支持（`urllib` 只认 http/https）。
   目前只有 URL 上传的服务端抓取会用到它，存储后端的内部地址永远直连。
+  两次都失败时错误消息带原因（如 `remote fetch failed: http 403` / `... : network error`），
+  服务端日志里还有一行 `direct url fetch failed (...), retrying via proxy` 说明确实兜底了。
 
 - `upload_count_limit` 是**单次批次**的前端队列限制，后端每次请求只处理一个文件，
   想限制「每天能传多少」要另立语义。
