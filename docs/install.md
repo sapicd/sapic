@@ -59,7 +59,8 @@ kubectl apply -f kube-sapic.yaml   # 集群清单
   还可由运维命令触发：`flask sa purge-expired`。
 - 从 v1 迁移数据用 `tools/migrate_v1_to_v2.py`：读 v1 Redis，写入 `users` / `albums` /
   `images` / `image_backends`，保留原 sha（`/raw/<sha>` 老链接继续有效），幂等并支持
-  `--dry-run`。本地文件通过存储驱动重传；v1 存在云存储（又拍云 / 七牛）时，`src` 已在主后端
+  `--dry-run`。本地文件通过存储驱动重传（v1 只用云存储、没有本地目录时省略
+  `--v1-upload-dir`）；v1 存在云存储（又拍云 / 七牛）时，`src` 已在主后端
   公开域名下的对象**原地采纳**（不下载、不重传，`--v1-src-prefix` 处理旧域名），大小 / 类型 /
   尺寸从 v1 的 `senders` 记录里回填，只有字节真的丢了才登记外链。用法见 `DEPLOY.md` 第 7 节。
 - 该工具的依赖：数据库驱动复用 `server/requirements/base.txt`（PostgreSQL 走 `psycopg` v3、

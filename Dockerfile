@@ -34,6 +34,8 @@ COPY server/requirements/ /app/server/requirements/
 RUN pip install --no-cache-dir -r /app/server/requirements/prod.txt
 
 COPY server/ /app/server/
+#: 运维脚本（v1 数据迁移等）随镜像发布，容器里可直接跑 /app/tools/*.py。
+COPY tools/ /app/tools/
 COPY --from=web /app/web/dist /app/web/dist
 
 #: nginx 配置是模板（含端口占位符），由 entrypoint 按 SAPIC_HTTP_PORT 渲染到

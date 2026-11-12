@@ -352,6 +352,22 @@ v1 的数据在 Redis 里（`picbed:*` 键），文件在你那台 v1 部署的 
     --v1-upload-dir /srv/sapic-v1/src/static/upload
 ```
 
+v1 只用云存储（又拍云 / 七牛）时**没有本地目录，直接省略 `--v1-upload-dir`**：图片从 bucket
+采纳、字节确实丢了的登记成外链，**不会**被跳过——`--skip-images` 是「只迁用户与相册」，
+两者不是一回事。
+
+用镜像部署时可以不开宿主机环境，直接在容器里跑（`tools/` 已打进镜像，工作目录就是 `/app`；
+`redis-py` 不在运行时依赖里，临时装一次即可）：
+
+```bash
+docker compose run --rm --entrypoint sh sapic -c \
+  'pip install -q redis && python /app/tools/migrate_v1_to_v2.py --dry-run \
+     --redis-url redis://v1-redis:6379/0 --v1-upload-dir /v1-upload'
+```
+
+`--v1-upload-dir` 指向 v1 的目录，需要 `-v /srv/sapic-v1/src/static/upload:/v1-upload:ro`
+把它挂进来；库与 `STORAGE_DIR` 走 compose 里的环境变量与数据卷。
+
 - **幂等**：用户按 `username`、相册按 `(owner, name)`、图片按 `sha` 去重，中断后直接重跑，只补缺的部分。
 - **sha 不变**：迁移保留 v1 的 `sha`，已发布的 `/raw/<sha>` 与直链继续有效。
 - **文件走存储驱动**：原文件重新写进当前主后端（默认 `up2local` 的 `STORAGE_DIR`），不是简单搬目录；
@@ -368,7 +384,8 @@ v1 的数据在 Redis 里（`picbed:*` 键），文件在你那台 v1 部署的 
   用 `--refresh-external` 重跑即可补齐（不需要重新上传）。
 - **可见性**：v1 没有可见性概念、图片都是免登录直链，所以迁移出的相册与图片默认 `public`；
   需要收紧用 `--visibility private`（会同时改相册与图片，老直链随即失效）。
-- 其余参数：`--only-user alice`、`--limit 100`、`--skip-images`、`--v2-db-url`、`--v2-storage-dir`。
+- 其余参数：`--only-user alice`、`--limit 100`、`--v2-db-url`、`--v2-storage-dir`；
+  `--skip-images`（只迁用户与相册）、`--skip-users`（只迁图片）。
 - **依赖**：数据库驱动复用应用依赖——PostgreSQL 走 `psycopg`（v3）、MySQL 走 `PyMySQL`，都在
   `server/requirements/base.txt` 里；工具没有单独的 requirements 文件，直接用仓库 `.venv` 运行。
 - **redis-py 要单独装**：v2 应用不再依赖 Redis，只有这个工具要读 v1 的 `picbed:*` 键，

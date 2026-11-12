@@ -24,7 +24,9 @@ What is migrated:
   link users already published. How the bytes are dealt with depends on where
   v1 kept them:
 
-  - local upload directory -> re-uploaded through the primary storage backend;
+  - local upload directory -> re-uploaded through the primary storage backend
+    (``--v1-upload-dir``; omit it when v1 only ever used a cloud driver, then
+    every image goes through the bucket / external-link paths below);
   - already in the bucket of an enabled cloud backend (``up2upyun`` /
     ``up2qiniu``, i.e. ``src`` starts with its ``domain``) -> the object is
     **adopted in place**: an ``ok`` replica on that very backend records the
@@ -497,8 +499,15 @@ class Migrator:
         fragment = sha.rsplit(".", 1)[-1][:12]
         return "%s-%s%s" % (stem, fragment, ext.lower()), ext.lower()
 
-    def _source_file(self, meta: dict, filename: str) -> Path:
-        """v1 stored the bytes at ``static/<UPLOAD_FOLDER>/<upload_path>/<name>``."""
+    def _source_file(self, meta: dict, filename: str) -> Path | None:
+        """v1 stored the bytes at ``static/<UPLOAD_FOLDER>/<upload_path>/<name>``.
+
+        ``None`` when no ``--v1-upload-dir`` was given: a v1 deployment that only
+        used a cloud driver never wrote one, and its images are adopted from the
+        bucket (or kept as external links) instead of being re-uploaded.
+        """
+        if not self.args.v1_upload_dir:
+            return None
         upload_path = str(meta.get("upload_path") or "").strip().lstrip("/\\")
         return Path(self.args.v1_upload_dir) / upload_path / filename
 
@@ -656,6 +665,7 @@ class Migrator:
 
         filename = str(meta.get("filename") or "").strip() or "%s.png" % sha[-8:]
         source = self._source_file(meta, filename)
+        local = source is not None and source.is_file()
         src = str(meta.get("src") or "").strip()
         created_at = _int(meta.get("ctime"), now())
         #: v1 TTL is the seconds left; -1/-2 mean "no expiry"/"gone".
@@ -664,7 +674,7 @@ class Migrator:
 
         if self.dry_run:
             self.stats["images_created"] += 1
-            if not source.is_file():
+            if not local:
                 if self._reuse_object(src):
                     self.stats["images_adopted"] += 1
                 else:
@@ -676,7 +686,7 @@ class Migrator:
             return
 
         stored = None
-        if source.is_file():
+        if local:
             stream = source.read_bytes()
             suffix = splitext(filename)[-1].lower()
             object_name, object_ext = self._object_name(filename, sha)
@@ -947,8 +957,9 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "v1 local upload directory (up2local static folder), e.g. "
-            "/srv/sapic-v1/src/static/upload; required unless --skip-images "
-            "is given"
+            "/srv/sapic-v1/src/static/upload; omit it when v1 only used a cloud "
+            "driver -- its images are then adopted from the bucket, or kept as "
+            "external links when the bytes are unreachable"
         ),
     )
     parser.add_argument(
@@ -1026,10 +1037,11 @@ def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
 
     if not args.skip_images and not args.v1_upload_dir:
-        print("Missing --v1-upload-dir: point it at your v1 deployment's upload folder")
-        print("(the up2local static directory, e.g. /srv/sapic-v1/src/static/upload).")
-        print("Pass --skip-images if only users and albums are needed.")
-        return 2
+        #: 不是错误：只用云驱动的 v1 部署本来就没有本地目录，图片走采纳/外链。
+        print(
+            "No --v1-upload-dir: local v1 files are not read; cloud objects are "
+            "adopted in place and everything else becomes an external link."
+        )
 
     if redis is None:
         print("Cannot read v1 data: redis-py is not installed.")

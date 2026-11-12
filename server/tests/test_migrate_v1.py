@@ -334,6 +334,35 @@ def test_missing_file_falls_back_to_external_link(app, tmp_path):
         assert ImageBackend.select().where(ImageBackend.image == image).count() == 0
 
 
+def test_images_migrate_without_a_local_upload_dir(app, tmp_path, monkeypatch):
+    """v1 只用云驱动时没有本地目录：图片照常迁移，不能被逼着 `--skip-images`。"""
+    src = "https://cdn.example.com/sapic/2024/01/02/photo.png"
+    use_cloud_backend(monkeypatch)
+    migrator = MIGRATE.Migrator(make_args(tmp_path, v1_upload_dir=None))
+    data = payload({"src": src, "senders": senders_json()})
+    with app.app_context():
+        stats = migrator.run(data["users"].items(), data["images"])
+
+        assert not migrator.failures
+        assert stats["images_adopted"] == 1
+        assert stats["images_external"] == 0
+        image = Image.get(Image.sha == SHA)
+        assert image.source_url is None
+        assert image.size == 20480
+
+
+def test_no_local_dir_still_keeps_unreachable_images_as_external(app, tmp_path):
+    """没有本地目录、云上也认不回来（默认本机后端）：降级成外链而不是报错。"""
+    migrator = MIGRATE.Migrator(make_args(tmp_path, v1_upload_dir=None))
+    data = payload()
+    with app.app_context():
+        stats = migrator.run(data["users"].items(), data["images"])
+
+        assert not migrator.failures
+        assert stats["images_external"] == 1
+        assert Image.get(Image.sha == SHA).source_url.endswith("/photo.png")
+
+
 def test_adoption_follows_the_backend_that_owns_the_bucket(app, tmp_path):
     """本机后端排在前面时，云上对象的副本仍要挂在云后端，否则删除删不到。"""
     src = "https://cdn.example.com/sapic/2024/01/02/photo.png"

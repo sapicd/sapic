@@ -8,7 +8,6 @@
 server/data
 web/node_modules
 web/dist
-tools
 *.md
 !server/requirements/*.txt
 node_modules/
