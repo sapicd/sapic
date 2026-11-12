@@ -286,20 +286,27 @@ def oidc_callback(name: str):
 
     config = hook_config(name)
     try:
-        identity = ext.normalize_identity(
-            hook.module.oidc_exchange(
-                config=config,
-                code=code,
-                redirect_uri=_oidc_redirect_uri(name),
-            )
+        claims = hook.module.oidc_exchange(
+            config=config,
+            code=code,
+            redirect_uri=_oidc_redirect_uri(name),
         )
+    except ValueError as exc:
+        #: 与 Provider 的对话失败（discovery / token / userinfo）和「claims 缺
+        #: subject」是两类问题：分开处理，页面才不会把「令牌交换失败」说成
+        #: 「Provider 没返回 subject」，日志里也能看到上游返回的状态与原因。
+        logger.warning("oidc provider %s rejected the exchange: %s", name, exc)
+        return redirect("/login?oidc=provider")
+    except Exception:
+        logger.exception("oidc token exchange failed for %s", name)
+        return redirect("/login?oidc=error")
+
+    try:
+        identity = ext.normalize_identity(claims)
     except ValueError as exc:
         #: 第三方 Provider 返回的 claims 缺 subject 时不能落库，按无效身份处理。
         logger.warning("oidc provider %s returned an invalid identity: %s", name, exc)
         return redirect("/login?oidc=invalid")
-    except Exception:
-        logger.exception("oidc token exchange failed for %s", name)
-        return redirect("/login?oidc=error")
 
     #: 命名空间以 provider_issuer 为准：它是账号页判定「已绑定」时比对的同一
     #: 个值，用 claims 里的 iss 会让写入与比对不一致（比如末尾斜杠不同）。

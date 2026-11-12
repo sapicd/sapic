@@ -132,6 +132,11 @@ def _settings(config: dict) -> tuple[str, str, str, str]:
     return issuer, client_id, client_secret, scopes
 
 
+def _excerpt(payload) -> str:
+    """Single-line body preview so logs name the failing step and the reason."""
+    return " ".join(str(payload or "").split())[:200]
+
+
 def _discovery(issuer: str) -> dict:
     """Fetch and cache ``/.well-known/openid-configuration``."""
     cached = _DISCOVERY
@@ -144,7 +149,10 @@ def _discovery(issuer: str) -> dict:
         "%s/.well-known/openid-configuration" % issuer, timeout=TIMEOUT
     )
     if response.status_code != 200:
-        raise ValueError("discovery document is unavailable")
+        raise ValueError(
+            "discovery document is unavailable (HTTP %s): %s"
+            % (response.status_code, _excerpt(response.text))
+        )
     doc = response.json() or {}
     if not doc.get("authorization_endpoint") or not doc.get("token_endpoint"):
         raise ValueError("discovery document is incomplete")
@@ -174,7 +182,12 @@ def _id_token_claims(token: str) -> dict:
 def _identity(claims: dict, issuer: str) -> dict:
     subject = str(claims.get("sub") or "").strip()
     if not subject:
-        raise ValueError("subject is missing from the provider claims")
+        #: 把拿到的 claim 名带进消息：缺 sub 通常意味着 provider 侧的 scope
+        #: 交集把 openid 丢了，只看「subject is missing」排查不了。
+        raise ValueError(
+            "subject is missing from the provider claims (got: %s)"
+            % (", ".join(sorted(claims)) or "empty response")
+        )
     #: Passport 的 sub 就是用户 uid（22 位小写），昵称会随用户改名而变化，
     #: 所以本地账号名一律取 uid，昵称只作显示名。
     #: Passport 只把验证过的手机号/邮箱入库，缺字段按已验证处理。
@@ -227,7 +240,10 @@ def oidc_exchange(config=None, code="", redirect_uri="") -> dict:
         timeout=TIMEOUT,
     )
     if response.status_code != 200:
-        raise ValueError("token exchange failed")
+        raise ValueError(
+            "token exchange failed (HTTP %s): %s"
+            % (response.status_code, _excerpt(response.text))
+        )
     tokens = response.json() or {}
 
     claims = {}
@@ -240,7 +256,10 @@ def oidc_exchange(config=None, code="", redirect_uri="") -> dict:
             timeout=TIMEOUT,
         )
         if info.status_code != 200:
-            raise ValueError("userinfo request failed")
+            raise ValueError(
+                "userinfo request failed (HTTP %s): %s"
+                % (info.status_code, _excerpt(info.text))
+            )
         claims = info.json() or {}
     if not claims.get("sub"):
         claims = _id_token_claims(tokens.get("id_token"))

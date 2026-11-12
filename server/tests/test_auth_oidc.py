@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 """Passport (OIDC) login: the start/callback flow and the hook contract."""
 
+from json import dumps
 from urllib.parse import parse_qs, urlparse
+
+import pytest
 
 from sapic.libs.settings import set_setting
 from sapic.libs.users import bind_oidc_identity, create_user, resolve_oidc_user
@@ -23,9 +26,10 @@ DISCOVERY = {
 
 
 class FakeResponse:
-    def __init__(self, status_code=200, payload=None):
+    def __init__(self, status_code=200, payload=None, text=""):
         self.status_code = status_code
         self._payload = payload or {}
+        self.text = text or dumps(self._payload)
 
     def json(self):
         return self._payload
@@ -76,6 +80,15 @@ def identity(module, monkeypatch, **claims):
     monkeypatch.setattr(
         module, "oidc_exchange", lambda config, code, redirect_uri: dict(payload)
     )
+
+
+def raise_with(exc):
+    """Patched ``oidc_exchange`` that fails the way a broken provider would."""
+
+    def _exchange(config, code, redirect_uri):
+        raise exc
+
+    return _exchange
 
 
 def start_flow(client, monkeypatch, module, query="?next=/albums"):
@@ -483,6 +496,66 @@ def test_bind_requires_a_signed_in_user(app, client, monkeypatch):
     )
 
     assert client.get("/api/v2/auth/oidc/passport?bind=1").status_code == 401
+
+
+def test_failed_token_exchange_names_the_upstream_response(app, monkeypatch):
+    module = hook_module(app)
+    monkeypatch.setattr(module, "_DISCOVERY", {"key": "", "doc": {}, "expires": 0.0})
+    requests = FakeRequests()
+    requests.post = lambda url, **kwargs: FakeResponse(
+        400, {"error": "invalid_grant"}, text='{"error": "invalid_grant"}'
+    )
+    monkeypatch.setattr(module, "requests", requests)
+
+    #: 上游的错误码要进消息，否则日志里只有一句「token exchange failed」。
+    with pytest.raises(ValueError) as exc:
+        module.oidc_exchange(
+            config=CONFIG, code="code-1", redirect_uri="https://app.example/cb"
+        )
+    assert "HTTP 400" in str(exc.value)
+    assert "invalid_grant" in str(exc.value)
+
+
+def test_claims_without_a_subject_report_the_received_keys(app, monkeypatch):
+    module = hook_module(app)
+    with pytest.raises(ValueError) as exc:
+        module._identity({"nickname": "NoSub"}, CONFIG["issuer"])
+    assert "nickname" in str(exc.value)
+
+
+def test_provider_rejection_is_not_reported_as_an_invalid_identity(
+    app, client, monkeypatch
+):
+    enable_hook(app)
+    module = hook_module(app)
+    _, state = start_flow(client, monkeypatch, module)
+    monkeypatch.setattr(
+        module,
+        "oidc_exchange",
+        raise_with(ValueError("token exchange failed (HTTP 400)")),
+    )
+
+    response = client.get(
+        "/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state
+    )
+
+    #: 令牌交换失败不能落到 invalid（那会让登录页误报「没返回 subject」）。
+    assert response.headers["Location"] == "/login?oidc=provider"
+
+
+def test_claims_without_a_subject_still_land_on_invalid(app, client, monkeypatch):
+    enable_hook(app)
+    module = hook_module(app)
+    _, state = start_flow(client, monkeypatch, module)
+    monkeypatch.setattr(
+        module, "oidc_exchange", lambda config, code, redirect_uri: {"nickname": "x"}
+    )
+
+    response = client.get(
+        "/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state
+    )
+
+    assert response.headers["Location"] == "/login?oidc=invalid"
 
 
 def test_identities_list_and_password_checked_unbind(app, client):

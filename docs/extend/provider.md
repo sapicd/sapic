@@ -20,7 +20,7 @@ def identity_issuer(config) -> str        # 可选
 | 函数 | 说明 |
 | --- | --- |
 | `oidc_authorize_url` | 返回把浏览器送去 Provider 的完整地址。参数 `config` 是后台保存的钩子配置，`state` 必须原样带上（核心用 Cookie 校验回跳）。失败抛 `ValueError`（英文消息），核心返回 400。 |
-| `oidc_exchange` | 用 `code` 换用户信息并返回下面的字典。抛异常时核心跳 `/login?oidc=error`。 |
+| `oidc_exchange` | 用 `code` 换用户信息并返回下面的字典。抛 `ValueError`（英文消息，核心会写进日志）表示与 Provider 对话失败，核心跳 `/login?oidc=provider`；其他异常跳 `/login?oidc=error`。消息里带上上游的 HTTP 状态与响应片段，排查时日志才有用。 |
 | `identity_issuer` | 返回身份命名空间，写进本地账号的 `oidc_issuer`。缺省用 `config["issuer"]`（适合 OIDC 的 issuer 地址）；非 OIDC 的 Provider（如 GitHub）用它声明一个固定值，否则「已绑定」判定会拿不到值。返回值与 `config["issuer"]` 都会去掉末尾 `/` 后使用（写入与「已绑定」判定走同一个归一化）。 |
 
 `oidc_exchange` 的返回值：
@@ -51,8 +51,9 @@ GET /api/v2/auth/oidc/<name>/callback?code=...&state=...
 - `bind=1` 表示把身份绑到当前登录账号（要求已登录），完成后回 `next` 并带
   `?identity=bound`；失败分两种：`identity=conflict`（该身份已被另一个账号绑定，
   需先去那边解绑）与 `identity=error`（其他原因）。
-- 登录失败的回跳标记：`denied`（用户在 Provider 拒绝）、`error`（换 token 失败）、
-  `invalid`（身份无效）、`unlinked`（该身份没绑定本地账号）、`inactive`（账号待审核/被禁用）。
+- 登录失败的回跳标记：`denied`（用户在 Provider 拒绝）、`provider`（与 Provider 对话失败，
+  如令牌交换被拒、userinfo 报错）、`error`（钩子抛了非 `ValueError` 异常）、
+  `invalid`（claims 缺 `subject`）、`unlinked`（该身份没绑定本地账号）、`inactive`（账号待审核/被禁用）。
 - 解绑：`DELETE /api/v2/auth/identities/<name>`，请求体带当前密码。
   要求密码是为了防止只有第三方登录的账号把自己锁在门外。
 - 登录页按钮由钩子自己在 `login.after_form` 插槽里声明，所以每个 Provider 的文案/图标

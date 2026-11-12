@@ -34,6 +34,11 @@ const OIDC_ERRORS = {
     title: 'Passport 身份信息无效',
     description: 'Provider 未返回必要的 subject，请联系管理员检查 OIDC 配置。',
   },
+  provider: {
+    title: 'Passport 服务返回异常',
+    description:
+      '统一登录服务拒绝了本次请求（授权码可能已失效或已使用），请重新点击登录；若持续失败，请联系管理员查看后端日志。',
+  },
   error: {
     title: 'Passport 登录失败',
     description: '请重试；若持续失败，请联系管理员查看后端日志。',
