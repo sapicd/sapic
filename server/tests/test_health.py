@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from sapic.version import __version__
+
 
 def test_health_ok(client):
     response = client.get("/api/v2/health")
@@ -8,6 +10,8 @@ def test_health_ok(client):
     body = response.get_json()
     assert body["code"] == "OK"
     assert body["data"]["database"] is True
+    #: 探针之外还兼职报版本，排障时不用进后台看。
+    assert body["data"]["version"] == __version__
     assert "redis" not in body["data"]
     assert response.headers.get("X-Request-Id")
 
