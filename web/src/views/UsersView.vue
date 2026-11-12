@@ -230,10 +230,10 @@ onMounted(() => loadUsers(1))
       </template>
 
       <el-table v-loading="loading" :data="users" size="small">
-        <el-table-column label="用户" min-width="160">
+        <el-table-column label="用户" min-width="150">
           <template #default="{ row }">
             <div class="user-cell">
-              <span class="user-cell__name">{{ row.username }}</span>
+              <span class="user-cell__name" :title="row.username">{{ row.username }}</span>
               <span v-if="row.nickname && row.nickname !== row.username" class="user-cell__nick">
                 {{ row.nickname }}
               </span>
@@ -241,10 +241,10 @@ onMounted(() => loadUsers(1))
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="email" label="邮箱" min-width="180">
+        <el-table-column prop="email" label="邮箱" min-width="170">
           <template #default="{ row }">{{ row.email || '-' }}</template>
         </el-table-column>
-        <el-table-column label="状态" width="150">
+        <el-table-column label="状态" width="96">
           <template #default="{ row }">
             <div class="user-status">
               <el-tag size="small" :type="metaOf(row.status).type">
@@ -260,7 +260,7 @@ onMounted(() => loadUsers(1))
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="角色" width="90">
+        <el-table-column label="角色" width="88">
           <template #default="{ row }">
             <el-tag v-if="row.is_admin" size="small" type="danger" effect="plain">
               管理员
@@ -268,10 +268,10 @@ onMounted(() => loadUsers(1))
             <span v-else class="user-cell__nick">普通用户</span>
           </template>
         </el-table-column>
-        <el-table-column label="注册时间" width="180">
+        <el-table-column label="注册时间" width="162">
           <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="240" align="right">
+        <el-table-column label="操作" width="200" align="right">
           <template #default="{ row }">
             <template v-if="!isSelf(row)">
               <template v-if="row.status === -1">

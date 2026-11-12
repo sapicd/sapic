@@ -422,6 +422,11 @@ a {
 }
 
 .user-cell__name {
+  /*: 用户名可能很长（Passport 的 uid 22 位），列宽固定后靠省略号收尾。 */
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-weight: 500;
 }
 
