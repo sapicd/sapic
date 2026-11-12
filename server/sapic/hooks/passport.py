@@ -42,39 +42,51 @@ FIELDS = (
     ("issuer", "input", "Issuer 地址", "Passport 服务地址，如 https://passport.example.com"),
     ("client_id", "input", "Client ID", "Passport 后台创建 OIDC 应用后获得"),
     ("client_secret", "password", "Client Secret", "OIDC 应用密钥"),
-    ("scopes", "input", "Scope", "留空使用 openid profile email"),
+    ("scopes", "input", "Scope", DEFAULT_SCOPES),
     ("button_text", "input", "按钮文案", "登录页按钮文案，默认「通过 Passport 登录」"),
 )
+#: 输入框下方要补充说明的字段：``key -> help``（占位文案放不下这些取舍）。
+FIELD_HELP = {
+    "scopes": (
+        "留空即用上面的默认 scope；多请求的 scope 只影响 provider 返回哪些 claim，"
+        "sapic 只消费身份字段（sub / 邮箱 / 昵称），role 等自定义声明不会改变本站权限。"
+    ),
+}
 REQUIRED = ("issuer", "client_id", "client_secret")
 
 #: Discovery cache: one entry is enough, the provider rarely changes.
 _DISCOVERY = {"key": "", "doc": {}, "expires": 0.0}
 
 
+def _field_node(key: str, kind: str, label: str, hint: str) -> dict:
+    """One ``config_schema`` entry: a switch carries its hint as help text."""
+    if kind == "switch":
+        return {
+            "type": kind,
+            "key": key,
+            "label": label,
+            "default": True,
+            "help": hint,
+            "active_text": "开启",
+            "inactive_text": "关闭",
+        }
+    node = {
+        "type": kind,
+        "key": key,
+        "label": label,
+        "placeholder": hint,
+        "required": key in REQUIRED,
+    }
+    if FIELD_HELP.get(key):
+        node["help"] = FIELD_HELP[key]
+    return node
+
+
 def hook_manifest():
     return {
         "title": "Passport 统一登录",
         "catalog": "auth",
-        "config_schema": [
-            {
-                "type": kind,
-                "key": key,
-                "label": label,
-                "placeholder": hint,
-                "required": key in REQUIRED,
-            }
-            if kind != "switch"
-            else {
-                "type": kind,
-                "key": key,
-                "label": label,
-                "default": True,
-                "help": hint,
-                "active_text": "开启",
-                "inactive_text": "关闭",
-            }
-            for key, kind, label, hint in FIELDS
-        ],
+        "config_schema": [_field_node(*field) for field in FIELDS],
         "actions": [
             {
                 "name": "ping",

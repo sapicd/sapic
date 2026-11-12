@@ -108,6 +108,10 @@ def test_hook_is_disabled_and_declares_the_login_slot(app):
     assert manifest["slots"] == [
         {"name": "login.after_form", "mode": "declarative"}
     ]
+    #: scope 的取舍写在输入框下方的 help 里，不能塞进占位文案（会被截断）。
+    scopes = {field["key"]: field for field in manifest["config_schema"]}["scopes"]
+    assert scopes["placeholder"] == "openid profile email"
+    assert "role" in scopes["help"]
 
 
 def test_login_slot_only_renders_when_configured(app):
