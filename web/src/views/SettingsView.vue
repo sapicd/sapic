@@ -25,6 +25,9 @@ const SCOPES = [
   { label: '管理后台', value: 'admin', admin: true },
 ]
 
+//: Swagger 文档挂在后端 `/api/v2` 下：dev 由 vite 代理，生产同源，直接用绝对路径即可。
+const API_DOCS_URL = '/api/v2/docs'
+
 const route = useRoute()
 const router = useRouter()
 const session = useSessionStore()
@@ -170,7 +173,14 @@ const tokensLoading = ref(false)
 const tokenDialog = ref(false)
 const tokenSaving = ref(false)
 const createdToken = ref(null)
-const tokenForm = reactive({ name: '', expires_in: 0, scopes: [...DEFAULT_SCOPES] })
+//: 可选「默认相册」：只有自己的相册和被授予可写的共享相册能作为上传目标。
+const tokenAlbums = ref([])
+const tokenForm = reactive({
+  name: '',
+  expires_in: 0,
+  scopes: [...DEFAULT_SCOPES],
+  album_id: null,
+})
 
 //: 改了地址就作废上一轮验证，避免把旧令牌贴到新邮箱上。
 watch(
@@ -282,14 +292,28 @@ async function loadTokens() {
   }
 }
 
+async function loadTokenAlbums() {
+  try {
+    const data = await api.get('/albums')
+    tokenAlbums.value = (data?.items || []).filter(
+      (album) => album.role === 'owner' || album.permission === 'write',
+    )
+  } catch (error) {
+    //: 相册列表只是「默认相册」下拉的候选，取不到就不提供该选项。
+    tokenAlbums.value = []
+  }
+}
+
 function openTokenDialog() {
   Object.assign(tokenForm, {
     name: '',
     expires_in: 0,
     scopes: [...DEFAULT_SCOPES],
+    album_id: null,
   })
   createdToken.value = null
   tokenDialog.value = true
+  if (!tokenAlbums.value.length) loadTokenAlbums()
 }
 
 async function createToken() {
@@ -306,6 +330,7 @@ async function createToken() {
         name: tokenForm.name,
         expires_in: expiresIn || undefined,
         scopes: tokenForm.scopes,
+        album_id: tokenForm.album_id || undefined,
       },
     })
     createdToken.value = data?.token || null
@@ -629,6 +654,9 @@ onMounted(() => {
           访问令牌（Personal Access Token）用于 PicGo、uPic、CLI 等客户端代替密码调用上传
           API：请求头携带 <code>Authorization: Bearer &lt;令牌&gt;</code>，令牌只在创建时显示一次，
           可随时撤销。
+          <el-link type="primary" :href="API_DOCS_URL" target="_blank" rel="noopener noreferrer">
+            查看 API 文档（可试请求）
+          </el-link>
         </p>
         <el-table v-loading="tokensLoading" :data="tokens" size="small">
           <el-table-column prop="name" label="名称" min-width="120" />
@@ -644,6 +672,12 @@ onMounted(() => {
               >
                 {{ scope }}
               </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="默认相册" min-width="130">
+            <template #default="{ row }">
+              <span v-if="row.album_name">{{ row.album_name }}</span>
+              <el-text v-else type="info" size="small">跟随默认相册</el-text>
             </template>
           </el-table-column>
           <el-table-column label="创建时间" width="180">
@@ -779,6 +813,24 @@ onMounted(() => {
               {{ option.label }}
             </el-checkbox>
           </el-checkbox-group>
+        </el-form-item>
+        <el-form-item label="默认相册">
+          <el-select
+            v-model="tokenForm.album_id"
+            clearable
+            placeholder="跟随默认相册"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="album in tokenAlbums"
+              :key="album.id"
+              :label="album.name"
+              :value="album.id"
+            />
+          </el-select>
+          <span class="node-field__help">
+            用该令牌上传且未指定 album_id 时落到这里；相册被删除后回落到默认相册。
+          </span>
         </el-form-item>
       </el-form>
 

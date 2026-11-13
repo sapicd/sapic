@@ -251,6 +251,22 @@ a {
   padding: 0 24px;
 }
 
+/*: 公告排版：只保留段落、加粗与链接，其它标记按纯文本显示。 */
+.rich-text p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.rich-text p + p {
+  margin-top: 6px;
+}
+
+.rich-text a {
+  color: var(--el-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .app-main {
   flex: 1 1 auto;
   width: 100%;
@@ -272,17 +288,6 @@ a {
 
 .app-footer__copy a {
   color: inherit;
-}
-
-.app-footer__about {
-  cursor: pointer;
-  margin: 0 6px;
-}
-
-.app-about {
-  margin: 0;
-  white-space: pre-line;
-  line-height: 1.8;
 }
 
 /* ============================================================
@@ -378,10 +383,36 @@ a {
   gap: 12px;
 }
 
+/*: 字段说明：与取值一眼区分——浅色底块 + 信息图标，折行时仍是一整块「说明区」。 */
 .form-suffix {
+  display: inline-block;
+  max-width: 100%;
   margin-left: 10px;
-  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: rgba(16, 24, 40, 0.05);
   color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 18px;
+  vertical-align: middle;
+  white-space: normal;
+}
+
+.form-suffix::before {
+  content: 'i';
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: rgba(14, 159, 142, 0.16);
+  color: var(--el-color-primary);
+  font-size: 10px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 13px;
+  text-align: center;
+  vertical-align: 1px;
 }
 
 .hint {
@@ -431,8 +462,28 @@ a {
 }
 
 .user-cell__nick {
+  /*: 昵称不压缩：宁可让用户名先出省略号，也不要昵称被挤成竖排单字。 */
+  flex: none;
+  max-width: 160px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-size: 12px;
   color: var(--app-text-muted);
+}
+
+/*: 用户名旁的图片数量徽标：浅底色胶囊，不参与用户名省略号的宽度计算。 */
+.user-cell__count {
+  flex: none;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--el-fill-color);
+  color: var(--app-text-muted);
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .album-tag {

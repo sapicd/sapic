@@ -12,8 +12,8 @@ services:
     ports:
       - "${SAPIC_PORT:-80}:80"
     environment:
-      #: 必填：生产缺省密钥会直接退出。
-      sapic_secretkey: "${SAPIC_SECRET_KEY:?请先设置 SAPIC_SECRET_KEY}"
+      #: 可选：不设就用内置默认密钥（够长，单机自用足够）；公网多用户建议换成自己的。
+      sapic_secretkey: "${SAPIC_SECRET_KEY:-}"
       #: 不设 sapic_db_url：默认就是数据卷里的 SQLite（/app/server/data/sapic.db）。
       #: 要换 PostgreSQL 加一行 sapic_db_url: "postgresql://user:pass@host:5432/sapic"。
       #: 图片直链前缀，建议设成对外地址。

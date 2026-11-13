@@ -79,7 +79,7 @@ async function submit() {
       <div class="auth__brand">
         <img :src="site.logoUrl" :alt="site.name" />
       </div>
-      <p class="auth__subtitle">登录后可上传与管理图片</p>
+      <p v-if="site.loginNotice" class="auth__subtitle">{{ site.loginNotice }}</p>
       <el-alert
         v-if="oidcError"
         class="auth__alert"

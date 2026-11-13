@@ -172,8 +172,8 @@ def _check_config_value(cfg: dict) -> None:
 
     Checks ``LOG_LEVEL`` against :data:`sapic.basis.vars.LOG_LEVEL_TYPE`, the
     positive-integer options (``MAX_UPLOAD`` / ``SESSION_TTL``), the secret key
-    (length, and that production does not fall back to the built-in default)
-    and the absolute ``STORAGE_DIR``.
+    length (the built-in default is accepted on purpose) and the absolute
+    ``STORAGE_DIR``.
     """
     assert isinstance(cfg, dict), "Config must be a dict"
 
@@ -187,14 +187,13 @@ def _check_config_value(cfg: dict) -> None:
         isinstance(cfg["SESSION_TTL"], int) and cfg["SESSION_TTL"] >= 60
     ), "SESSION_TTL must be at least 60 seconds"
 
-    secret_key = cfg["SECRET_KEY"]
+    #: 不再强制生产替换：默认值本身足够长，单机自用开箱即用（少一步必填配置）。
+    #: 它是公开串——公网多用户站点仍建议用 sapic_secretkey 换成自己的，
+    #: 否则读过源码的人可以伪造会话 Cookie；空值一律按默认处理。
+    secret_key = cfg["SECRET_KEY"] or DEFAULT_SECRET_KEY
     assert isinstance(secret_key, str), "SECRET_KEY must be a string"
     assert len(secret_key) >= 14, "SECRET_KEY must be at least 14 bytes"
-    #: 内置默认值人人可见，用它签名等于没有签名，生产必须显式配置。
-    assert is_dev() or secret_key != DEFAULT_SECRET_KEY, (
-        "SECRET_KEY must be configured in production "
-        "(sapic_secretkey, or sapic_secretkey in server/.cfg)"
-    )
+    cfg["SECRET_KEY"] = secret_key
 
     assert isabs(cfg["STORAGE_DIR"]), "STORAGE_DIR must be an absolute path"
 

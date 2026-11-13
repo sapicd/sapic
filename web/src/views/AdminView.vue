@@ -96,6 +96,13 @@ onMounted(loadSettings)
             <el-form-item label="站点描述">
               <el-input v-model="form.site_description" type="textarea" :rows="2" />
             </el-form-item>
+            <el-form-item label="登录页提示">
+              <el-input
+                v-model="form.login_notice"
+                placeholder="显示在登录卡片标题下方，留空则不显示"
+                maxlength="64"
+              />
+            </el-form-item>
             <el-form-item label="Logo 地址">
               <el-input v-model="form.site_logo" placeholder="留空使用内置 logo" />
             </el-form-item>
@@ -121,16 +128,27 @@ onMounted(loadSettings)
               <el-input v-model="form.site_footer" placeholder="SaintIC. All rights reserved." />
             </el-form-item>
             <el-form-item label="全站公告">
-              <el-input v-model="form.site_announcement" type="textarea" :rows="3" />
-            </el-form-item>
-            <el-form-item label="关于本站">
-              <el-input v-model="form.site_about" type="textarea" :rows="3" />
+              <el-input
+                v-model="form.site_announcement"
+                type="textarea"
+                :rows="3"
+                placeholder="支持 **加粗**、[文字](https://链接)，空行分段"
+              />
+              <span class="form-suffix">
+                只解析加粗与链接，其余内容按纯文本显示（不执行任何 HTML 标签）
+              </span>
             </el-form-item>
           </el-form>
         </el-tab-pane>
 
         <el-tab-pane label="上传" name="upload">
-          <el-form label-width="120px">
+          <el-form label-width="140px">
+            <el-form-item label="允许上传">
+              <el-switch v-model="form.upload_enabled" />
+              <span class="form-suffix">
+                关闭后只冻结新增上传（含匿名/令牌/油猴/网址抓取），已有图片照常访问与管理
+              </span>
+            </el-form-item>
             <el-form-item label="匿名上传">
               <el-switch v-model="form.allow_anonymous_upload" />
             </el-form-item>
@@ -166,7 +184,7 @@ onMounted(loadSettings)
                 MB / 个；不要把进程级 sapic_maxupload 设得比它小
               </span>
             </el-form-item>
-            <el-form-item label="数量限制">
+            <el-form-item label="首页上传数量限制">
               <el-input-number v-model="form.upload_count_limit" :min="1" :max="100" />
               <span class="form-suffix">个 / 次</span>
             </el-form-item>
@@ -212,12 +230,8 @@ onMounted(loadSettings)
               <el-switch v-model="form.plaza_enabled" />
               <span class="form-suffix">仅展示作者主动发布的公开图片</span>
             </el-form-item>
-            <el-form-item label="用户自定义存储">
-              <el-switch v-model="form.allow_user_backends" />
-              <span class="form-suffix">
-                预留能力：打开后用户自己的存储后端（scope=user）参与其上传，需配套的用户端管理界面
-              </span>
-            </el-form-item>
+            <!--: 「用户自定义存储」(allow_user_backends) 暂不暴露：用户端的管理界面还没做，
+                 开关打开后普通用户看不到任何入口，等界面就绪再放回来。 -->
             <el-form-item label="开放注册">
               <el-switch v-model="form.allow_register" />
             </el-form-item>

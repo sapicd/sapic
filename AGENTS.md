@@ -88,8 +88,9 @@ make clean            # 清理缓存与构建产物
 
 变量可覆盖：`make dev PORT=8080`、`make serve WORKERS=8`。`make` 无参数即打印帮助。
 
-`make dev` 自带 `sapic_env=dev`；生产模式（`make serve` 等）必须配置 `sapic_secretkey`
-（`server/.cfg` 或环境变量），否则 `load_config()` 直接报错——内置默认密钥是公开字符串。
+`make dev` 自带 `sapic_env=dev`（DEBUG + 详细日志）。`SECRET_KEY` 有内置默认值，**不强制**
+生产配置（空值按默认处理）；它是公开串，公网多用户部署建议用 `sapic_secretkey` 换掉，
+这点只写在文档里提醒，代码里不要再加「生产必须显式配置」的断言。
 
 ## Python 编码规范
 
@@ -199,6 +200,29 @@ def manifest(self, name: str) -> dict | None:
 - 批量操作优先 `atomic()` 事务；查询用 Peewee 表达式，杜绝字符串拼接
 - 测试用临时 SQLite（`sapic_db_url=sqlite:///...`），不要依赖具体数据库方言
 
+## API 文档（OpenAPI）★
+
+`GET /api/v2/docs`（Swagger UI 页面）与 `GET /api/v2/openapi.json`（OpenAPI 3.0 文档源）
+由 `views/docs.py` + `libs/openapi.py` 提供，描述全部 JSON API 的参数与请求体；页面可直接试请求，
+JSON 可导入 Apifox / Postman。文档**从 `app.url_map` 生成**，元数据只在
+`libs/openapi.py` 的 `OPERATIONS` 里维护：
+
+- 新增/改动端点时在上面补一条（`summary` / `tag` / `auth` / `params` / `body` / `data` /
+  `errors`）。漏写不会报错，端点仍会列出但打上 `x-undocumented` 并归到「待补文档」，所以
+  **别指望漏写会被测试拦住**，只有 `OPERATIONS` 里写错键才会（`tests/test_docs.py`）。
+  目前展开的是核心公开 API（站点/认证/上传/图片/相册/广场）。
+- **整块不出文档**：`HIDDEN_BLUEPRINTS` 里的蓝图（管理员接口 `settings` / `users` /
+  `backends` 与钩子 `hooks`）这一版连路由都不列，等它们稳定后再从集合里移除并补 `OPERATIONS`。
+- **文档只描述 JSON API**：没有 JSON 契约的端点一律放 `HIDDEN_ENDPOINTS`——根路径 `index`、
+  油猴脚本 `userscript.script`（JS）、Swagger 页面自身 `docs.swagger_ui`（HTML）、`/i/<sha>`
+  的 302 跳转 `public.legacy_image` 与 `/raw/<sha>` 的图片字节流 `public.image`。它们在 Swagger
+  UI 里既无 schema 也试不了请求，只会在页面上刷出一大段乱码，所以不要为了「文档完整」把它们加回来；
+  `/raw/<sha>` 的行为写在 `docs/api.md`。
+- UI 页面不在 Flask 里鉴权（本身不含数据），Swagger UI 资源走锁定版本的 CDN
+  （`views/docs.py` 的 `SWAGGER_UI_BASE`），**不把约 1.5MB 静态资源打进仓库**，也**不引入
+  flasgger/apispec 之类的依赖**。内网加载不到 CDN 时页面自动降级为「去拿 JSON」的提示，
+  所以不要给这段降级逻辑加别的分支。
+
 ## v1 兼容与数据迁移 ★
 
 **v1 的 `POST /api/upload` 兼容端点已移除**（原 `views/legacy.py` 已删除）：客户端统一走
@@ -209,6 +233,9 @@ ShareX 等的逐项配置见 `docs/usage.md`。**不要再为老客户端补第�
   CSRF 头，客户端带不了，所以客户端一律配令牌；全局 CSRF 中间件没有任何端点例外。
 - **上传策略**（后缀白名单、图片/视频大小、匿名开关）统一在 `libs/images.py`
   的 `check_upload_limits` / `anonymous_upload_allowed`，上传视图直接复用，不要各写一套。
+- **站点冻结上传**：设置 `upload_enabled`（默认开）关闭后 `POST /upload` 一律 403，判断在
+  `views/uploads.py` 的最前面（`libs/images.uploads_enabled()`）。它只管**新增**，已有图片的访问、
+  编辑、删除与后台补副本/过期清理都不受影响——不要把这层判断挪进 `create_image` / `save_object`。
 - **迁移脚本** `tools/migrate_v1_to_v2.py`：读 v1 Redis（`picbed:accounts` / `account:<u>` /
   `index:global` / `image:<sha>` + TTL），写 `users`/`albums`/`images`/`image_backends`。必须保持
   幂等（用户按 username、相册按 `(owner,name)`、图片按 sha 去重）、支持 `--dry-run`、保留 v1 sha
@@ -222,6 +249,10 @@ ShareX 等的逐项配置见 `docs/usage.md`。**不要再为老客户端补第�
 - `upload_count_limit` 是**单次批次**限制，只由前端上传控件强制；后端每次请求只有一个文件，不做（也无从做）该校验。要服务端配额应另立「每日/每小时次数」这类语义
 - 后台通过 `GET/PUT /api/v2/settings` 管理（仅管理员），可写键白名单与类型校验在 `views/settings.py`
 - 前台展示字段由公开接口 `GET /api/v2/site` 输出，前端在 `stores/site.js` 消费
+- 全站公告 `site_announcement` 走**微型纯文本语法**（`**加粗**` / `[文字](https://链接)` / 空行分段），
+  由 `web/src/utils/richText.js` 解析、`components/RichText.vue` 用 render 函数构造节点渲染。**不要
+  为它引入 `v-html` 或 HTML 白名单**：公告会出现在所有访客页面上，存储型 XSS 的代价远大于排版收益；
+  没有「关于本站」这个设置项（`site_about` 已移除），别再加回来
 - 上传类设置（后缀白名单 / 大小 / 数量 / 视频）在 `views/uploads.py` 生效，注册类设置在 `views/auth.py` 生效；
   新增配置项必须同时接入「后台表单 + 实际生效点」，不要留下只存不用的配置
 - 单文件大小上限**按媒体类型分开**：`upload_image_max_size`（默认 10M）与 `upload_video_max_size`（默认 20M），
@@ -276,6 +307,9 @@ ShareX 等的逐项配置见 `docs/usage.md`。**不要再为老客户端补第�
   `login_required` 按请求方法自动校验，`admin_required` 额外要求 `admin`，上传接口支持匿名所以在
   视图里显式 `require_scope(SCOPE_UPLOAD)`。新增接口只要走这两个装饰器就自动受限，**不要自己写
   鉴权分支**；Cookie 会话不受 scope 约束（等价账号本身）
+- 令牌还能固定上传相册：`api_tokens.album_id`（创建令牌时传 `album_id`，需对该相册有写权限）。
+  `POST /upload` 没带 `album_id` 且用 PAT 鉴权时落到它，显式 `album_id` 优先；相册被删或失去
+  写权限就回落到用户的默认相册（`libs.albums.token_album`，解析失败**不能**让上传报错）
 
 ## 相册与可见性 ★
 

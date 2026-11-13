@@ -34,8 +34,8 @@ def promote_admin(app, username="alice"):
         user.save(only=[User.is_admin])
 
 
-def test_production_requires_configured_secret_key(monkeypatch):
-    """内置 SECRET_KEY 是公开字符串，生产环境必须显式配置。"""
+def test_production_accepts_builtin_secret_key(monkeypatch):
+    """生产不再强制配置 SECRET_KEY；过短的仍然拒绝（见 tests/test_conf.py）。"""
     monkeypatch.delenv("sapic_env", raising=False)
     monkeypatch.delenv("FLASK_ENV", raising=False)
     config = {
@@ -45,12 +45,11 @@ def test_production_requires_configured_secret_key(monkeypatch):
         "SECRET_KEY": DEFAULT_SECRET_KEY,
         "STORAGE_DIR": "/tmp",
     }
+    _check_config_value(config)
+
+    config["SECRET_KEY"] = "abc"
     with pytest.raises(AssertionError):
         _check_config_value(config)
-
-    #: 开发环境允许回落到内置值。
-    monkeypatch.setenv("sapic_env", "dev")
-    _check_config_value(config)
 
 
 def test_settings_requires_admin(client):
@@ -88,6 +87,33 @@ def test_admin_reads_and_writes_settings(app, client):
     site = client.get("/api/v2/site").get_json()["data"]
     assert site["name"] == "我的图床"
     assert site["allow_video"] is False
+
+
+def test_login_notice_is_editable_and_public(app, client):
+    """登录页提示由后台维护：改了走公开站点接口，清空就整句不显示。"""
+    csrf = register_and_login(client)
+    promote_admin(app)
+
+    payload = client.get("/api/v2/settings").get_json()["data"]
+    assert payload["items"]["login_notice"] == "登录后可上传与管理图片"
+    assert "login_notice" in payload["editable"]
+
+    updated = client.put(
+        "/api/v2/settings",
+        json={"login_notice": "欢迎回到私有图床"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert updated.status_code == 200, updated.get_json()
+
+    site = client.get("/api/v2/site").get_json()["data"]
+    assert site["login_notice"] == "欢迎回到私有图床"
+
+    client.put(
+        "/api/v2/settings",
+        json={"login_notice": ""},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert client.get("/api/v2/site").get_json()["data"]["login_notice"] == ""
 
 
 def test_settings_reject_invalid_value(app, client):

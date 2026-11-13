@@ -448,9 +448,12 @@ def purge_user(user: User) -> None:
             AlbumShare.delete().where(AlbumShare.album.in_(album_ids)).execute()
         UploadTicket.delete().where(UploadTicket.owner == user).execute()
         if album_ids:
-            #: 别人的票据指向被删相册时只解除引用，票据本身留给其所有者。
+            #: 别人的票据/令牌指向被删相册时只解除引用，记录本身留给其所有者。
             UploadTicket.update(album=None).where(
                 UploadTicket.album.in_(album_ids)
+            ).execute()
+            ApiToken.update(album=None).where(
+                ApiToken.album.in_(album_ids)
             ).execute()
             Album.delete().where(Album.id.in_(album_ids)).execute()
 

@@ -27,6 +27,7 @@ from ..libs.auth import (
     logout_user,
     require_scope,
 )
+from ..libs.albums import can_write
 from ..libs.hook import get_hook_manager
 from ..libs.mail import send_mail, smtp_ready
 from ..libs.settings import get_setting
@@ -46,7 +47,7 @@ from ..libs.users import (
     update_avatar,
     update_profile,
 )
-from ..models import ApiToken, User
+from ..models import Album, ApiToken, User
 from ..models.base import now
 from ..models.user import STATUS_DISABLED, STATUS_NORMAL, STATUS_PENDING
 from ..utils.web import (
@@ -561,6 +562,33 @@ def update_password():
     return ok({"updated": True, "csrf": csrf})
 
 
+def _serialize_token(row: ApiToken) -> dict:
+    """Token row for the settings page, with its upload album resolved.
+
+    The album is looked up instead of dereferenced: it may have been deleted
+    after the token was issued, and a dangling reference must not break the
+    list (nor the upload, see ``libs.albums.token_album``).
+    """
+    album = (
+        Album.get_or_none(Album.id == row.album_id)
+        if row.album_id is not None
+        else None
+    )
+    return {
+        "id": row.id,
+        "name": row.name,
+        "prefix": row.prefix,
+        "scopes": list(row.scopes or []),
+        #: NULL / 空名字表示该令牌跟随用户的默认相册。
+        "album_id": album.id if album is not None else None,
+        "album_name": album.name if album is not None else "",
+        "expires_at": row.expires_at,
+        "last_used_at": row.last_used_at,
+        "created_at": row.created_at,
+        "revoked": row.revoked_at is not None,
+    }
+
+
 @bp.get("/auth/tokens")
 @login_required
 def list_tokens():
@@ -569,23 +597,22 @@ def list_tokens():
         .where(ApiToken.owner == g.user)
         .order_by(ApiToken.created_at.desc())
     )
-    return ok(
-        {
-            "items": [
-                {
-                    "id": row.id,
-                    "name": row.name,
-                    "prefix": row.prefix,
-                    "scopes": list(row.scopes or []),
-                    "expires_at": row.expires_at,
-                    "last_used_at": row.last_used_at,
-                    "created_at": row.created_at,
-                    "revoked": row.revoked_at is not None,
-                }
-                for row in rows
-            ]
-        }
-    )
+    return ok({"items": [_serialize_token(row) for row in rows]})
+
+
+def _token_album(value) -> Album | None:
+    """Album a token uploads into; the owner must be able to write to it."""
+    if value in (None, ""):
+        return None
+    try:
+        album_id = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ApiError("invalid album_id", ErrorCode.PARAM_ERROR) from exc
+    album = Album.get_or_none(Album.id == album_id)
+    #: 不区分「不存在」与「没有写权限」，避免拿来探测别人的相册。
+    if album is None or not can_write(g.user, album):
+        raise ApiError("album not found", ErrorCode.NOT_FOUND, 404)
+    return album
 
 
 def _token_scopes(value) -> list[str]:
@@ -631,6 +658,7 @@ def create_token():
         token_hash=hash_token(token),
         prefix=token[:10],
         scopes=scopes,
+        album=_token_album(data.get("album_id")),
         expires_at=expires_at,
         created_at=now(),
     )

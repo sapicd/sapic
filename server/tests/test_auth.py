@@ -161,6 +161,103 @@ def test_token_scope_validation(client):
     ).status_code == 400
 
 
+def _create_album(client, name, headers):
+    return client.post(
+        "/api/v2/albums", json={"name": name}, headers=headers
+    ).get_json()["data"]["album"]
+
+
+def _issue_token(client, headers, **payload):
+    response = client.post("/api/v2/auth/tokens", json=payload, headers=headers)
+    assert response.status_code == 201, response.get_json()
+    return {"Authorization": "Bearer %s" % response.get_json()["data"]["token"]}
+
+
+def _upload(client, headers, name="p.png", content=b"token-album"):
+    return client.post(
+        "/api/v2/upload",
+        data={"file": (io.BytesIO(content), name)},
+        content_type="multipart/form-data",
+        headers=headers,
+    )
+
+
+def test_token_pins_the_upload_album(app, client):
+    """令牌可以固定上传相册：PicGo 这类不带参数的客户端直接落到那里。"""
+    register(client)
+    headers = {"X-CSRF-Token": login(client)}
+    album = _create_album(client, "picgo", headers)
+
+    bearer = _issue_token(client, headers, name="picgo", album_id=album["id"])
+    listed = client.get("/api/v2/auth/tokens").get_json()["data"]["items"]
+    assert listed[0]["album_id"] == album["id"]
+    assert listed[0]["album_name"] == "picgo"
+
+    uploaded = _upload(client, bearer).get_json()["data"]["image"]
+    assert uploaded["album_id"] == album["id"]
+
+    #: 显式 album_id 优先于令牌的默认相册。
+    other = _create_album(client, "explicit", headers)
+    explicit = client.post(
+        "/api/v2/upload",
+        data={
+            "file": (io.BytesIO(b"explicit"), "e.png"),
+            "album_id": str(other["id"]),
+        },
+        content_type="multipart/form-data",
+        headers=bearer,
+    ).get_json()["data"]["image"]
+    assert explicit["album_id"] == other["id"]
+
+
+def test_token_default_album_falls_back_when_it_is_gone(app, client):
+    """相册被删后令牌回落到用户默认相册，而不是让上传失败。"""
+    register(client)
+    headers = {"X-CSRF-Token": login(client)}
+    album = _create_album(client, "temporary", headers)
+    bearer = _issue_token(client, headers, name="tmp", album_id=album["id"])
+
+    assert client.delete(
+        "/api/v2/albums/%d" % album["id"], headers=headers
+    ).status_code == 200
+    #: 引用被解除，列表里回到「跟随默认相册」。
+    assert client.get("/api/v2/auth/tokens").get_json()["data"]["items"][0][
+        "album_id"
+    ] is None
+
+    uploaded = _upload(client, bearer, "fallback.png", b"fallback").get_json()[
+        "data"
+    ]["image"]
+    with app.app_context():
+        expected = default_album(User.get(User.username == USER["username"]))
+    assert uploaded["album_id"] == expected.id
+
+
+def test_token_album_requires_write_access(app, client):
+    """别人的相册不能当默认相册，且不区分「不存在」与「没权限」。"""
+    register(client)
+    headers = {"X-CSRF-Token": login(client)}
+
+    bobby = app.test_client()
+    register(bobby, username="bobby", email="bobby@example.com")
+    bobby_headers = {"X-CSRF-Token": login(bobby, username="bobby")}
+    foreign = bobby.post(
+        "/api/v2/albums",
+        json={"name": "bobby-private", "visibility": "private"},
+        headers=bobby_headers,
+    ).get_json()["data"]["album"]
+
+    denied = client.post(
+        "/api/v2/auth/tokens",
+        json={"name": "x", "album_id": foreign["id"]},
+        headers=headers,
+    )
+    assert denied.status_code == 404
+    assert client.post(
+        "/api/v2/auth/tokens", json={"name": "x", "album_id": "abc"}, headers=headers
+    ).status_code == 400
+
+
 def test_admin_scope_requires_admin_credential(app, client):
     """签发 admin 令牌要凭据本身带 admin：write 令牌不能给自己提权。"""
     register(client)

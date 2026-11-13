@@ -74,6 +74,9 @@ watch(
 
 const pendingTotal = computed(() => fileList.value.length + urlList.value.length)
 
+//: 站点冻结上传时只封入口，历史图片的浏览、编辑与删除都不受影响。
+const uploadFrozen = computed(() => !site.uploadEnabled)
+
 //: 只有自己的相册和被授予「可编辑」的共享相册能作为上传目标。
 const uploadableAlbums = computed(() =>
   albums.value.filter(
@@ -120,6 +123,14 @@ function pasteName(raw) {
 function onPaste(event) {
   const data = event.clipboardData
   if (!data) return
+  if (uploadFrozen.value) {
+    //: 冻结期间连「攒进待上传列表」也拦掉，避免用户排一堆任务后集体失败。
+    if (!isEditableTarget(event.target)) {
+      event.preventDefault()
+      ElMessage.warning('站点已暂停上传')
+    }
+    return
+  }
   let raws = []
   for (const item of data.items) {
     if (item.kind !== 'file') continue
@@ -289,6 +300,10 @@ async function uploadRemote(item) {
 }
 
 async function startUpload() {
+  if (uploadFrozen.value) {
+    ElMessage.warning('站点已暂停上传')
+    return
+  }
   const pendingFiles = fileList.value.filter((item) => item.status !== 'success')
   const pendingUrls = urlList.value.filter((item) => item.status !== 'success')
   if (!pendingFiles.length && !pendingUrls.length) {
@@ -352,6 +367,16 @@ onBeforeUnmount(() => {
     </p>
 
     <el-alert
+      v-if="uploadFrozen"
+      class="upload-hero__tip"
+      type="warning"
+      show-icon
+      :closable="false"
+      title="站点已暂停上传"
+      description="管理员暂时关闭了上传入口；已有图片的访问、编辑与删除不受影响。"
+    />
+
+    <el-alert
       v-if="!session.authenticated"
       class="upload-hero__tip"
       type="info"
@@ -404,7 +429,7 @@ onBeforeUnmount(() => {
       drag
       multiple
       :auto-upload="false"
-      :disabled="uploading"
+      :disabled="uploading || uploadFrozen"
       :accept="site.uploadAccept"
       :limit="site.uploadCountLimit"
       :on-exceed="onExceed"
@@ -483,7 +508,7 @@ onBeforeUnmount(() => {
       <el-button
         type="primary"
         :loading="uploading"
-        :disabled="!pendingTotal"
+        :disabled="!pendingTotal || uploadFrozen"
         @click="startUpload"
       >
         开始上传{{ pendingTotal ? `（${pendingTotal}）` : '' }}

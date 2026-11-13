@@ -31,9 +31,9 @@ spec:
             - name: http
               containerPort: 80
           env:
-            #: 必填，生产缺省密钥会直接退出（openssl rand -hex 32）。
-            - name: sapic_secretkey
-              value: "replace-with-a-random-32-byte-secret"
+            #: 可选：不设就用内置默认密钥；公网多用户建议换成自己的（openssl rand -hex 32）。
+            # - name: sapic_secretkey
+            #   value: "replace-with-a-random-32-byte-secret"
             #: 图片直链前缀，必须是集群外可达地址。
             - name: sapic_external_base_url
               value: "https://sapic.example.com"

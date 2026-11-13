@@ -46,7 +46,7 @@ help:
 	@echo ""
 	@echo "容器"
 	@echo "  docker         构建镜像 sapic:local（多阶段，含前端构建）"
-	@echo "  compose-up     启动 compose 编排 (需 S=会话密钥)"
+	@echo "  compose-up     启动 compose 编排 (S 可选：会话密钥)"
 	@echo ""
 	@echo "清理"
 	@echo "  clean          清理缓存与构建产物"
@@ -104,11 +104,12 @@ docs:
 docker:
 	docker build -t sapic:local .
 
+# S 可选：不传就用内置默认密钥（公网多用户建议传一个随机串）
 compose-up:
-	@test -n "$(S)" || (echo "用法: make compose-up S='随机密钥'（可用 openssl rand -hex 32 生成）"; exit 1)
 	SAPIC_SECRET_KEY="$(S)" docker compose up -d
 
+#: web/node_modules/.vite 是 Vite 的依赖预构建缓存，依赖增减后不清会让 dev 直接报 ENOENT。
 clean:
-	rm -rf .pytest_cache web/dist docs/_build
+	rm -rf .pytest_cache web/dist docs/_build web/node_modules/.vite
 	find $(SERVER_DIR)/sapic $(SERVER_DIR)/tests -name '__pycache__' -type d -prune -exec rm -rf {} + 2>/dev/null || true
 	find $(SERVER_DIR)/sapic $(SERVER_DIR)/tests -name '*.py[co]' -delete 2>/dev/null || true

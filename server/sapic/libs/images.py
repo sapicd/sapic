@@ -713,6 +713,17 @@ def resolve_expire_at(raw) -> int | None:
     return timestamp
 
 
+def uploads_enabled() -> bool:
+    """Site-wide kill switch for *new* uploads.
+
+    Only the upload view consults this: reading, editing, deleting existing
+    images and the background replicas / purge jobs must keep working while the
+    site is frozen, so do not move this check into ``create_image`` or
+    ``save_object``.
+    """
+    return bool(get_setting("upload_enabled", True))
+
+
 def anonymous_upload_allowed() -> bool:
     """Anonymous uploads are on when either the deploy flag or the site setting is."""
     if current_app.config.get("ALLOW_ANONYMOUS_UPLOAD", False):
@@ -1039,6 +1050,23 @@ def album_image_count(album: Album) -> int:
         .scalar()
         or 0
     )
+
+
+def user_image_counts(user_ids: list[int]) -> dict[int, int]:
+    """Live image count per owner, for a batch of user ids in one query.
+
+    Owners without any live image are absent from the mapping, so callers
+    should default missing keys to zero.
+    """
+    ids = [int(uid) for uid in user_ids]
+    if not ids:
+        return {}
+    rows = (
+        Image.select(Image.owner.alias("owner_id"), fn.COUNT(Image.id).alias("total"))
+        .where(Image.owner.in_(ids) & live_condition())
+        .group_by(Image.owner)
+    )
+    return {row.owner_id: row.total for row in rows}
 
 
 def delete_image(image: Image) -> None:

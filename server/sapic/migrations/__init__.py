@@ -266,6 +266,22 @@ def _v011_storage_visibility() -> None:
     StorageBackend.update(visibility=VISIBILITY_PUBLIC).execute()
 
 
+def _v012_api_token_album() -> None:
+    """Let a PAT remember the album its uploads should land in.
+
+    The column stays nullable: tokens issued before this feature (and tokens
+    without a preference) keep using the owner's default album.
+    """
+    columns = {column.name for column in db.get_columns("api_tokens")}
+    if "album_id" in columns:
+        return
+    migrate(
+        SchemaMigrator.from_database(db).add_column(
+            "api_tokens", "album_id", IntegerField(null=True)
+        )
+    )
+
+
 MIGRATIONS = [
     (1, "initial", _v001_initial),
     (2, "album_ownership", _v002_album_ownership),
@@ -278,6 +294,7 @@ MIGRATIONS = [
     (9, "image_dimensions", _v009_image_dimensions),
     (10, "user_status_reason", _v010_user_status_reason),
     (11, "storage_visibility", _v011_storage_visibility),
+    (12, "api_token_album", _v012_api_token_album),
 ]
 
 

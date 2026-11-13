@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import HookSlot from '@/components/hook/HookSlot.vue'
+import RichText from '@/components/RichText.vue'
 import { useSessionStore } from '@/stores/session'
 import { useSiteStore } from '@/stores/site'
 
@@ -17,7 +18,6 @@ const mobile = ref(false)
 //: 窄屏导航抽屉：桌面端导航常驻，移动端收进这个抽屉。
 const navOpen = ref(false)
 const announcementVisible = ref(true)
-const aboutVisible = ref(false)
 
 let viewport = null
 
@@ -181,9 +181,12 @@ async function onCommand(command) {
         type="info"
         show-icon
         :closable="true"
-        :title="site.announcement"
         @close="announcementVisible = false"
-      />
+      >
+        <template #title>
+          <RichText :text="site.announcement" />
+        </template>
+      </el-alert>
     </div>
 
     <main class="app-main">
@@ -196,7 +199,6 @@ async function onCommand(command) {
         <a v-if="site.icp" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">
           {{ site.icp }}
         </a>
-        <a v-if="site.about" class="app-footer__about" @click="aboutVisible = true">About</a>
         Copyright &copy; {{ year }} {{ site.footer }} Powered by
         <a
           href="https://github.com/sapicd/sapic"
@@ -207,10 +209,6 @@ async function onCommand(command) {
         >
       </p>
     </footer>
-
-    <el-dialog v-model="aboutVisible" title="关于本站" width="420px">
-      <p class="app-about">{{ site.about }}</p>
-    </el-dialog>
 
     <el-drawer v-model="navOpen" title="导航" direction="rtl" size="252px">
       <div v-if="session.authenticated" class="app-nav-drawer__user">

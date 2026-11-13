@@ -17,6 +17,7 @@ def register_blueprints(app) -> None:
     from .albums import bp as albums_bp
     from .auth import bp as auth_bp
     from .backends import bp as backends_bp
+    from .docs import bp as docs_bp
     from .health import bp as health_bp
     from .hooks import bp as hooks_bp
     from .images import bp as images_bp
@@ -29,6 +30,7 @@ def register_blueprints(app) -> None:
     from .users import bp as users_bp
 
     for blueprint in (
+        docs_bp,
         health_bp,
         site_bp,
         auth_bp,

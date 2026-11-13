@@ -21,7 +21,9 @@ CFG_FILE = join(BASE_DIR, ".cfg")
 #: Runtime data directory (default SQLite file and uploads); created on start.
 DATA_DIR = join(BASE_DIR, "data")
 
-#: Fallback ``SECRET_KEY``; replace it in any real deployment.
+#: Fallback ``SECRET_KEY``: long enough to start without configuring anything.
+#: It is public (it lives in this repository), so a public multi-user deployment
+#: should still override it via ``sapic_secretkey``; empty values fall back here.
 DEFAULT_SECRET_KEY = "BD1E2CF7DF9CD6971D641C115EE72871BEDA2806"
 
 #: String values treated as ``True`` by :func:`sapic.basis.common.as_bool`.

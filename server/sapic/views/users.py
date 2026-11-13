@@ -14,6 +14,7 @@ from flask import Blueprint, g, request
 
 from ..basis.errors import ApiError, ErrorCode
 from ..libs.auth import admin_required
+from ..libs.images import user_image_counts
 from ..libs.users import notify_review, purge_user, serialize_user
 from ..models import User
 from ..models.base import now
@@ -33,6 +34,15 @@ STATUSES = (STATUS_REJECTED, STATUS_PENDING, STATUS_DISABLED, STATUS_NORMAL)
 
 def _serializer(user: User) -> dict:
     return serialize_user(user, include_private=True)
+
+
+def _attach_image_counts(items: list[dict]) -> None:
+    """Add ``image_count`` to a page of users, batched per page (no N+1)."""
+    if not items:
+        return
+    counts = user_image_counts([item["id"] for item in items])
+    for item in items:
+        item["image_count"] = counts.get(item["id"], 0)
 
 
 def _limit() -> int:
@@ -84,6 +94,7 @@ def list_users():
             limit=_limit(),
             cursor=request.args.get("cursor"),
         )
+    _attach_image_counts(data["items"])
     #: 待审核数量给后台角标用，省掉前端一次额外请求。
     data["counts"] = {
         "total": User.select().count(),

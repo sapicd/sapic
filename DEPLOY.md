@@ -26,19 +26,37 @@ nginx ─┬─ /         → web/dist（Vue 3 SPA，静态文件 + SPA 回退�
 
 ```bash
 git clone <repo> && cd sapic
-make setup          # 后端 dev.txt（仓库根 .venv）+ 前端 pnpm install
-make dev            # 后端 0.0.0.0:9514，sapic_env=dev，改代码自动重启
-make web-dev        # 另开一个终端：前端 127.0.0.1:5173，/api 与 /raw/ 代理到 9514
-make test           # 后端 pytest
+
+# 依赖：后端 dev.txt 装进仓库根的 .venv，前端是独立的 pnpm 工程
+python3 -m venv .venv && ./.venv/bin/python -m pip install -r server/requirements/dev.txt
+(cd web && pnpm install)
+
+# 后端 0.0.0.0:9514（sapic_env=dev，改代码自动重启）与前端 127.0.0.1:5173
+(cd server && FLASK_APP=sapic sapic_env=dev ../.venv/bin/python -m flask run --host 0.0.0.0 --port 9514 --reload)
+(cd web && pnpm run dev)
+
+# 后端测试
+(cd server && ../.venv/bin/python -m pytest -q)
 ```
 
 常用辅助命令：
 
 ```bash
-make config                       # 打印当前生效配置（含默认值合并结果）
-make create-admin U=admin P='密码'  # 创建管理员
-make upgrade                      # 手动兜底执行迁移（启动时其实已自动执行）
+# 打印当前生效配置（含默认值合并结果）
+(cd server && ../.venv/bin/python -c "import json; from sapic.basis.conf import load_config; print(json.dumps(load_config(), indent=2, ensure_ascii=False))")
+
+# 创建管理员
+(cd server && FLASK_APP=sapic ../.venv/bin/python -m flask sa create-admin -u admin -p '密码')
+
+# 手动兜底执行迁移（启动时其实已自动执行）
+(cd server && FLASK_APP=sapic ../.venv/bin/python -m flask sa upgrade)
 ```
+
+> 本地没有 `server/.cfg` 也能直接跑：默认配置（SQLite + 内置密钥）就是可用的开发环境。
+
+> 仓库根的 `Makefile` 只是给本地开发少敲字用的（`make setup` / `make dev` / `make serve` 等
+> 与上面的命令一一对应）。**生产、容器、CI 里不要依赖 `make`**——很多镜像不带它；本文其余
+> 章节一律写真实命令。
 
 ## 3. 生产部署
 
@@ -64,7 +82,6 @@ cd web && pnpm install && pnpm run build       # 产物在 web/dist，交给 ngi
 在 `server/.cfg`（不入库）里逐行写 `key=value`，键名与环境变量一致，**值所见即所得**（不要加引号）：
 
 ```ini
-sapic_secretkey=换成足够长的随机串
 sapic_db_url=postgresql://sapic:password@127.0.0.1:5432/sapic
 sapic_storagedir=/data/sapic/upload
 sapic_proxyfix=1
@@ -72,29 +89,31 @@ sapic_loglevel=INFO
 sapic_session_ttl=604800
 ```
 
-> 生产模式下 `SECRET_KEY` 若仍是内置默认值，`load_config()` 会直接报错退出——这是刻意设计的保险。
+> `sapic_secretkey` 是**可选**的：不写就用内置默认密钥（长度足够，单机自用不必配置）。
+> 但它是公开串，公网多用户站点建议加一行 `sapic_secretkey=<openssl rand -hex 32>`，
+> 否则读过源码的人能伪造会话 Cookie。空值按默认处理。
 
 ### 3.4 初始化数据库与管理员
 
 ```bash
-cd server
-../.venv/bin/python -m flask sa upgrade                      # 建表/迁移（幂等）
-../.venv/bin/python -m flask sa create-admin -u admin -p '密码'  # 可加 -e 邮箱
+cd /srv/sapic/server
+
+# 建表 / 迁移（幂等）
+FLASK_APP=sapic ../.venv/bin/python -m flask sa upgrade
+
+# 创建管理员（可加 -e 邮箱）
+FLASK_APP=sapic ../.venv/bin/python -m flask sa create-admin -u admin -p '密码'
 ```
 
-生产环境需要 `FLASK_APP=sapic`（Makefile 会自动导出）；手工执行时请自行设置：
-
-```bash
-cd /srv/sapic/server && FLASK_APP=sapic ../.venv/bin/python -m flask sa upgrade
-```
+`flask` 命令需要 `FLASK_APP=sapic`：Makefile 会自动导出，手工执行（含容器里）时请显式带上。
 
 ### 3.5 启动后端
 
 前台试跑（确认能起来再交给 systemd）：
 
 ```bash
-cd /srv/sapic && make serve HOST=127.0.0.1 WORKERS=4
-# 等价于：cd server && ../.venv/bin/python -m gunicorn "sapic:create_app()" -b 127.0.0.1:9514 -w 4 -k gevent
+cd /srv/sapic/server
+../.venv/bin/python -m gunicorn "sapic:create_app()" -b 127.0.0.1:9514 -w 4 -k gevent
 ```
 
 systemd 单元示例 `/etc/systemd/system/sapic.service`：
@@ -215,17 +234,19 @@ server {
 ```bash
 docker build -t sapic:local .
 docker run -d --name sapic -p 80:80 \
-    -e sapic_secretkey="$(openssl rand -hex 32)" \
     -e sapic_db_url="sqlite:////app/server/data/sapic.db" \
     -e sapic_external_base_url="https://sapic.example.com" \
     -v sapic-data:/app/server/data \
     sapic:local
 ```
 
+（公网多用户建议再加一行 `-e sapic_secretkey="$(openssl rand -hex 32)"`，见 3.3 的说明。）
+
 `docker compose up -d` 就是上面那个单容器 + SQLite 的形态：
 
 ```bash
-SAPIC_SECRET_KEY="$(openssl rand -hex 32)" SAPIC_BASE_URL='https://sapic.example.com' docker compose up -d
+SAPIC_BASE_URL='https://sapic.example.com' docker compose up -d
+# 想换掉默认密钥：前面加 SAPIC_SECRET_KEY="$(openssl rand -hex 32)"
 ```
 
 要 PostgreSQL（多进程/多副本）时在 compose 的 `environment` 里加一行，compose 里不带数据库服务：
@@ -258,9 +279,9 @@ hostPath 路径与 env 里的密钥/域名；没有 Ingress，Service 是 NodePo
 
 | 配置项 | 环境变量 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `ENV` | `sapic_env` | `production` | 设为 `dev` 才允许内置默认密钥、开 DEBUG |
+| `ENV` | `sapic_env` | `production` | 设为 `dev` 才开 DEBUG 与调试日志 |
 | `DEBUG` | `sapic_debug` | `false` | 开发用，生产必须关 |
-| `SECRET_KEY` | `sapic_secretkey` | 内置占位值 | Cookie 签名密钥，≥14 字节，生产必须替换 |
+| `SECRET_KEY` | `sapic_secretkey` | 内置随机串 | Cookie 签名密钥，≥14 字节；可选，空值用默认（公开串，公网多用户建议替换） |
 | `DATABASE_URL` | `sapic_db_url` | `sqlite:///server/data/sapic.db` | 支持 `postgresql://` / `mysql://` / `sqlite:///` |
 | `MAX_UPLOAD` | `sapic_maxupload` | `25` | 整个请求的上限（MB），同时映射 `MAX_CONTENT_LENGTH`；要 ≥ 站点设置里的最大值并留出 multipart 余量 |
 | `STORAGE_DIR` | `sapic_storagedir` | `server/data/upload` | 本地存储根目录，必须是绝对路径 |
@@ -417,7 +438,6 @@ v1 的 LinkToken）都需要按 [快捷上传](docs/usage.md) 改一遍——逐
 
 | 现象 | 原因与处理 |
 | --- | --- |
-| 启动报 `SECRET_KEY must be configured in production` | 没配 `sapic_secretkey`，或 `sapic_env` 被设成了 `dev` |
 | 启动报 `STORAGE_DIR must be an absolute path` | 用相对路径了，改成绝对路径 |
 | 登录成功但刷新就掉线 | 反代没配 `X-Forwarded-Proto` + `sapic_proxyfix=1`，Cookie 的 `Secure` 与站点协议不一致 |
 | 上传 413 | nginx `client_max_body_size`、`sapic_maxupload`、后台 `upload_image_max_size` / `upload_video_max_size` 取最小值 |

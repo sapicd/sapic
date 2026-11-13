@@ -96,6 +96,32 @@ def test_admin_user_list_supports_page_mode(app, client, admin):
     assert pending["items"] == []
 
 
+def test_admin_user_list_reports_image_count(app, client, admin):
+    """用户名旁的数量徽标直接来自列表接口：没传过图的账号是 0。"""
+    bobby_client = app.test_client()
+    register(bobby_client, "bobby")
+    csrf = bobby_client.post(
+        "/api/v2/auth/login",
+        json={"username": "bobby", "password": "secret123"},
+    ).get_json()["data"]["csrf"]
+    for index in range(2):
+        bobby_client.post(
+            "/api/v2/upload",
+            data={
+                "file": (
+                    io.BytesIO(b"fake-image-bytes-%d" % index),
+                    "photo%d.png" % index,
+                )
+            },
+            content_type="multipart/form-data",
+            headers={"X-CSRF-Token": csrf},
+        )
+
+    items = client.get("/api/v2/users").get_json()["data"]["items"]
+    counts = {item["username"]: item["image_count"] for item in items}
+    assert counts == {"alice": 0, "bobby": 2}
+
+
 def test_admin_reviews_and_disables_user(app, client, admin):
     register(app.test_client(), "bobby")
     bobby = user_id(app, "bobby")

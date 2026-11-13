@@ -8,7 +8,7 @@ uploads in the system album and logged-in uploads in the owner's default album.
 
 from __future__ import annotations
 
-from ..models import Album, AlbumShare
+from ..models import Album, AlbumShare, ApiToken
 from ..models.album import VISIBILITY_PUBLIC
 from ..models.base import now
 from ..models.share import PERMISSION_WRITE
@@ -64,6 +64,21 @@ def default_album(user) -> Album:
 def resolve_album(owner) -> Album:
     """The album an upload without an explicit target belongs to."""
     return system_album() if owner is None else default_album(owner)
+
+
+def token_album(user, token: ApiToken | None) -> Album | None:
+    """Album pinned to a PAT, while it still exists and stays writable.
+
+    A token may outlive the album it points at (the album can be deleted or the
+    shared grant revoked), so callers get ``None`` and fall back to the usual
+    default album instead of failing the upload.
+    """
+    if user is None or token is None or token.album_id is None:
+        return None
+    album = Album.get_or_none(Album.id == token.album_id)
+    if album is None or not can_write(user, album):
+        return None
+    return album
 
 
 def share_for(user, album: Album) -> AlbumShare | None:

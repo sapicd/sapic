@@ -14,8 +14,11 @@ export const useSiteStore = defineStore('site', {
     icp: '',
     footer: 'SaintIC. All rights reserved.',
     announcement: '',
-    about: '',
+    //: 登录页副标题，留空则不显示。
+    loginNotice: '登录后可上传与管理图片',
     uploadNotice: '',
+    //: 站点是否接受新增上传（只冻结写入，已发布图片照常可访问）。
+    uploadEnabled: true,
     //: 单文件上限（MB）按媒体类型分开。
     uploadImageMaxSize: 10,
     uploadVideoMaxSize: 20,
@@ -76,8 +79,9 @@ export const useSiteStore = defineStore('site', {
         this.icp = data?.icp || ''
         this.footer = data?.footer || ''
         this.announcement = data?.announcement || ''
-        this.about = data?.about || ''
+        this.loginNotice = data?.login_notice || ''
         this.uploadNotice = data?.upload_notice || ''
+        this.uploadEnabled = data?.upload_enabled !== false
         this.uploadImageMaxSize = Number(data?.upload_image_max_size ?? 10)
         this.uploadVideoMaxSize = Number(data?.upload_video_max_size ?? 20)
         this.uploadCountLimit = Number(data?.upload_count_limit ?? 10)

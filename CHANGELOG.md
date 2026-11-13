@@ -4,7 +4,9 @@
 
 首个 v2 预发布。相对 v1 是一次重写：后端拆成 API-only 的 Flask 应用（`server/`，Peewee + 关系库），
 前端独立为 Vue 3 SPA（`web/`），存储后端与登录方式全部插件化。安装与升级步骤见 `DEPLOY.md`，
-接口细节见 `docs/api.md`。
+接口细节见实例自带的在线文档（`/api/v2/docs`，Swagger UI 可直接试请求；文档源
+`/api/v2/openapi.json` 可导入 Apifox / Postman），
+跨接口的约定与鉴权流程见 `docs/api.md`。
 
 ### 新增
 
@@ -37,6 +39,7 @@
 - 多阶段 Dockerfile（内置 nginx 托管静态文件）、`docker-compose.yml`（单容器 + SQLite）、
   `kube-sapic.yaml`（单副本 Deployment + Service）。
 - `GET /api/v2/health` 健康检查（数据库不通返回 503）、后台版本更新检测。
+- 在线 API 文档：`GET /api/v2/docs` 是 Swagger UI（可填 PAT 直接试请求），文档源 `GET /api/v2/openapi.json`。
 - 个人设置（油猴开关、背景图与透明度）、按用户配置的防盗链。
 
 ### 变更
@@ -63,4 +66,5 @@
   已发布的 `/raw/<sha>` 与直链继续有效），用法见 `DEPLOY.md` 7.1。
 - 客户端（PicGo / uPic / ShareX / uTools / Typora / 右键菜单 / 油猴）需改一次配置，逐项见
   [docs/usage.md](./docs/usage.md)。
-- 生产必须配置 `sapic_secretkey`，否则启动即失败；多进程 / 多副本请用 PostgreSQL 或 MySQL。
+- `sapic_secretkey` 可选：内置默认值足够长，开箱即用；公网多用户建议换成自己的随机串。
+  多进程 / 多副本请用 PostgreSQL 或 MySQL。

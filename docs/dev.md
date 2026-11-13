@@ -48,6 +48,15 @@ make docs           # 构建本文档到 docs/_build/html
 
 变量可覆盖：`make dev PORT=8080`、`make serve WORKERS=8`。
 
+```{note}
+上面这些是 `Makefile` 的封装，只图本地少敲字：它们假定仓库根的 `.venv` 存在、机器上有 `make`。
+CI、容器与生产环境通常没有 `make`，请直接用真实命令——安装与启动见[安装与部署](install.md)，
+生产部署的完整命令见仓库根 `DEPLOY.md` 第 3 节。
+
+`make dev` 自己会带 `sapic_env=dev`（DEBUG + 详细日志）；`config` / `upgrade` / `create-admin`
+不带，用的是默认配置——没有 `server/.cfg` 也能直接跑，需要开发默认值时自己加 `sapic_env=dev`。
+```
+
 ## 测试
 
 - 后端用 pytest，测试在 `server/tests/`，`cd server && python -m pytest -q`。

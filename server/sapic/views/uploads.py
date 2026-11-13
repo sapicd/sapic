@@ -6,8 +6,13 @@ from __future__ import annotations
 from flask import Blueprint, request
 
 from ..basis.errors import ApiError, ErrorCode
-from ..libs.albums import can_write
-from ..libs.auth import SCOPE_UPLOAD, current_user, require_scope
+from ..libs.albums import can_write, token_album
+from ..libs.auth import (
+    SCOPE_UPLOAD,
+    current_token_row,
+    current_user,
+    require_scope,
+)
 from ..libs.images import (
     anonymous_upload_allowed,
     check_upload_limits,
@@ -16,6 +21,7 @@ from ..libs.images import (
     fetch_limit_mb,
     resolve_expire_seconds,
     serialize_image,
+    uploads_enabled,
 )
 from ..models import Album
 from ..models.user import STATUS_DISABLED, STATUS_PENDING, STATUS_REJECTED
@@ -28,6 +34,10 @@ BLOCKED_STATUS = (STATUS_REJECTED, STATUS_PENDING, STATUS_DISABLED)
 
 @bp.post("/upload")
 def upload():
+    #: 站点冻结期间一律拒绝新增，凭据是否合法、是否匿名都不影响这个判断。
+    if not uploads_enabled():
+        raise ApiError("upload is disabled", ErrorCode.FORBIDDEN, 403)
+
     #: 上传接口允许匿名，没有 login_required 兜底，令牌的 scope 在这里单独校验。
     require_scope(SCOPE_UPLOAD)
     user = current_user()
@@ -74,6 +84,10 @@ def upload():
         #: 相册所有者和被授予 write 的共享成员都可以往里上传。
         if album is None or not can_write(user, album):
             raise ApiError("album not found", ErrorCode.NOT_FOUND, 404)
+    else:
+        #: 显式 album_id 优先；没传时用令牌绑定的相册（PicGo 这类客户端不会带参数），
+        #: 令牌没有绑定或相册已失效时，create_image 仍会兜底到默认相册。
+        album = token_album(user, current_token_row())
 
     #: ``expire`` 是秒数（与 v1 一致），空值按站点默认有效期，0 表示永久。
     expire = resolve_expire_seconds(request.form.get("expire"))

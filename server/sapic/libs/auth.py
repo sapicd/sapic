@@ -95,6 +95,11 @@ def current_token() -> str:
     return getattr(g, "auth_token", "") or ""
 
 
+def current_token_row() -> ApiToken | None:
+    """The ``api_tokens`` row behind this request, when a PAT authenticated it."""
+    return getattr(g, "token_row", None)
+
+
 def _query_token() -> str:
     """``?token=`` is accepted only where a client cannot send headers."""
     if request.method not in SAFE_METHODS:
@@ -104,8 +109,12 @@ def _query_token() -> str:
     return (request.args.get("token") or "").strip()
 
 
-def resolve_pat(token: str) -> tuple[User, list[str]] | None:
-    """Resolve a personal access token to its owner and scope list."""
+def resolve_pat(token: str) -> tuple[User, list[str], ApiToken] | None:
+    """Resolve a personal access token to its owner, scope list and row.
+
+    The row is returned so callers can read token-level preferences (e.g. the
+    default album) without hashing the token a second time.
+    """
     row = ApiToken.get_or_none(ApiToken.token_hash == hash_token(token))
     if row is None or row.revoked_at is not None:
         return None
@@ -124,13 +133,14 @@ def resolve_pat(token: str) -> tuple[User, list[str]] | None:
             ).execute()
         except Exception:
             pass
-    return user, row.scope_list
+    return user, row.scope_list, row
 
 
 def _load_current_user() -> None:
     g.user = None
     g.auth_type = None
     g.token_scopes = []
+    g.token_row = None
     g.auth_token = ""
     g.csrf = ""
     g.login_state = None
@@ -141,7 +151,7 @@ def _load_current_user() -> None:
         token = auth[7:].strip()
         resolved = resolve_pat(token)
         if resolved is not None:
-            g.user, g.token_scopes = resolved
+            g.user, g.token_scopes, g.token_row = resolved
             g.auth_type = "token"
             g.auth_token = token
             return
@@ -154,7 +164,7 @@ def _load_current_user() -> None:
         if resolved is not None and any(
             scope in allowed for scope in resolved[1]
         ):
-            g.user, g.token_scopes = resolved
+            g.user, g.token_scopes, g.token_row = resolved
             g.auth_type = "token"
             g.auth_token = token
             return

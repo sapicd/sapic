@@ -291,6 +291,43 @@ def test_image_visibility_rejects_shared(app, client):
     assert response.get_json()["data"]["image"]["visibility"] == "private"
 
 
+def test_upload_kill_switch_only_blocks_new_uploads(app, client):
+    """站点冻结上传只挡新增：直链访问、编辑与删除都照常可用。"""
+    csrf = register_and_login(client)
+    sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
+
+    with app.app_context():
+        set_setting("upload_enabled", False)
+
+    blocked = upload(client, csrf, "second.png")
+    assert blocked.status_code == 403
+    assert blocked.get_json()["code"] == "FORBIDDEN"
+
+    #: 历史图片不受影响：外链可读，标题可改，也能删除。
+    assert client.get("/raw/%s" % sha).status_code == 200
+    assert (
+        client.patch(
+            "/api/v2/images/%s" % sha,
+            json={"title": "still editable"},
+            headers={"X-CSRF-Token": csrf},
+        ).status_code
+        == 200
+    )
+    assert (
+        client.delete(
+            "/api/v2/images/%s" % sha, headers={"X-CSRF-Token": csrf}
+        ).status_code
+        == 200
+    )
+
+    #: 公开站点接口把开关带给前端，前端据此禁掉上传入口。
+    assert client.get("/api/v2/site").get_json()["data"]["upload_enabled"] is False
+
+    with app.app_context():
+        set_setting("upload_enabled", True)
+    assert upload(client, csrf, "third.png").status_code == 201
+
+
 def test_delete_image(app, client):
     csrf = register_and_login(client)
     sha = upload(client, csrf).get_json()["data"]["image"]["sha"]

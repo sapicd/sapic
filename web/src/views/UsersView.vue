@@ -230,10 +230,13 @@ onMounted(() => loadUsers(1))
       </template>
 
       <el-table v-loading="loading" :data="users" size="small">
-        <el-table-column label="用户" min-width="150">
+        <el-table-column label="用户" min-width="230">
           <template #default="{ row }">
             <div class="user-cell">
               <span class="user-cell__name" :title="row.username">{{ row.username }}</span>
+              <span class="user-cell__count" :title="`共 ${row.image_count || 0} 张图片`">
+                {{ row.image_count || 0 }}
+              </span>
               <span v-if="row.nickname && row.nickname !== row.username" class="user-cell__nick">
                 {{ row.nickname }}
               </span>

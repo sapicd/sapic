@@ -1,10 +1,17 @@
 # API 参考
 
+```{note}
+**接口详情以在线文档为准**：`GET /api/v2/docs` 是 Swagger UI（可交互、可试请求），
+文档源是 `GET /api/v2/openapi.json`（OpenAPI 3.0，可直接导入 Apifox / Postman /
+Insomnia）。本文只保留跨接口的约定、鉴权流程与业务规则——**路径、参数、请求体、响应
+字段一律以在线文档为准**，不要在这里重复维护。
+```
+
 ## 约定
 
 - 业务接口前缀 `/api/v2`，请求与响应都是 JSON（上传除外，走 `multipart/form-data`）。
-- 根路径上只有一个不属于 `/api/v2` 的端点：`GET /raw/<sha>`（图片输出，已发布的直链由它兜底）。
-  油猴脚本在 `/api/v2/userscript.user.js`。
+- 根路径上还有两个不属于 `/api/v2` 的端点：`GET /raw/<sha>`（图片输出，已发布直链的兜底）
+  与 `GET /i/<sha>`（旧版直链，跳转到 `/raw/`）。油猴脚本在 `/api/v2/userscript.user.js`。
 - **成功**：
 
 ```json
@@ -33,18 +40,29 @@
 
 ## 鉴权
 
-两种方式，任选其一：
+两种方式，任选其一；全局 CSRF 中间件没有任何端点例外。
 
 1. **会话 Cookie**（浏览器）：先 `GET /api/v2/auth/csrf` 拿 CSRF 令牌，
    写操作（POST/PUT/PATCH/DELETE）带 `X-CSRF-Token` 请求头。登录成功后
-   `POST /auth/login` 的响应里也会返回最新令牌。
+   `POST /auth/login` 的响应里也会返回最新令牌；改密码会吊销其它会话并换发新令牌。
 2. **个人访问令牌（PAT）**：`Authorization: Bearer sp_xxxxxxxx`。令牌有四档 scope：
    `read`（安全方法）、`upload`（上传）、`write`（其它改动）、`admin`（管理接口），
    缺省 `read` / `upload` / `write`；`admin` 只有管理员能申请。
 
-客户端（PicGo / uPic / Typora 等）一律用 PAT，配置方式见[快捷上传](usage.md)。
+客户端（PicGo / uPic / Typora 等）带不了 CSRF 头，一律用 PAT，配置方式见[快捷上传](usage.md)。
 
-只有 `status=1`（正常）的账号能登录、持有会话或使用 PAT；待审核、已拒绝、禁用一律无效。
+**权限边界**：
+
+- 只有 `status=1`（正常）的账号能登录、持有会话或使用 PAT；待审核、已拒绝、禁用一律无效。
+- PAT 创建时可选 `album_id`（上传默认相册）：上传不带 `album_id` 时落到它，相册被删或
+  失去写权限后回落到用户默认相册；请求里显式传的 `album_id` 永远优先。
+- 上传接口允许匿名（站点 `allow_anonymous_upload` 打开时），所以它不用登录装饰器，
+  而是在视图内单独校验 `upload` scope。
+- 站点在后台关闭 `upload_enabled` 后，`POST /upload` 对所有凭据返回 403——只冻结新增，
+  已有图片的访问、编辑与删除不受影响。
+
+在 Swagger UI 里点 **Authorize** 填 PAT 即可试请求；用浏览器会话试写接口时页面会自动补
+`X-CSRF-Token`。
 
 ## 分页
 
@@ -74,80 +92,40 @@ GET /api/v2/images?page=2&page_size=15
 两种模式排序一致（`created_at` 倒序、`id` 兜底），不带 `page` 时行为保持不变。
 后台接口（如 `GET /users`）只提供页码模式，默认每页 15，前端用页码器直接跳页。
 
-列表默认只含自己的图片与共享给自己的相册。**管理员也不例外**：要看全站图片必须显式传
-`scope=all`（前端「图片」页有对应按钮），非管理员传该参数返回 403，非法值返回 400。
-`scope=all` 只放大到**公开图片**：别人的私有相册、共享相册里的图不会出现在这个视图。
+## 资源概览
 
-## 主要端点
+只说明「有哪些资源、归谁所有」，字段与参数看在线文档。下表的 API 端点省略了 `/api/v2`
+前缀（例如 `/site` 即 `GET /api/v2/site`），只有「直链」一行是根路径：
 
-### 账号与认证
-
-| 方法 | 路径 | 说明 |
+| 资源 | 端点 | 语义 |
 | --- | --- | --- |
-| GET | `/auth/csrf` | 取 CSRF 令牌 |
-| GET | `/auth/session` | 当前会话（含用户与是否管理员） |
-| POST | `/auth/register` / `/auth/login` / `/auth/logout` | 注册 / 登录 / 登出 |
-| POST | `/auth/password/forgot` / `/auth/password/reset` | 找回密码（需已验证邮箱） |
-| PUT | `/auth/password` | 修改密码（吊销既有会话） |
-| POST | `/auth/email/verify` / `/auth/email/confirm` | 发验证邮件 / 提交令牌 |
-| PUT | `/auth/profile` / `POST /auth/avatar` | 资料、头像（服务端裁剪写入） |
-| DELETE | `/auth/account` | 自助注销（需密码，名下有图片则 409） |
-| GET | `/auth/identities` | 可用的登录 Provider 与绑定状态 |
-| DELETE | `/auth/identities/<name>` | 解绑（需密码） |
-| GET/PUT | `/auth/settings` | 个人偏好（油猴开关、个人背景等） |
-| GET/POST/DELETE | `/auth/tokens`、`/auth/tokens/<id>` | PAT 管理 |
-| GET | `/auth/oidc/<name>`、`/auth/oidc/<name>/callback` | 第三方登录（见 [登录 Provider](extend/provider.md)） |
-
-### 图片
-
-| 方法 | 路径 | 说明 |
-| --- | --- | --- |
-| POST | `/upload` | 上传：`file` 或 `url`，可选 `album_id` / `title` / `expire`（秒）；`url` 由服务端抓取，直连失败可按站点设置 `upload_fetch_proxy` 走代理 |
-| GET | `/images` | 个人图库：`album_id` / `keyword` / `tag` 筛选，游标或 `page` / `page_size` 分页；管理员可传 `scope=all` 看全站公开图，按系统相册（`is_system`）筛选时自动放大到全站口径 |
-| GET | `/images/<sha>` | 详情（含副本信息、`can_edit`、分享模板 `tpl`） |
-| PATCH | `/images/<sha>` | 改 `title` / `album_id` / `visibility` / `tags` / `plaza` / `expire_at` |
-| DELETE | `/images/<sha>` | 删除（属主或管理员，逐副本删文件） |
-| POST | `/images/import` | 外链登记（不下载、不写副本） |
-| POST | `/images/batch/delete`、`PATCH /images/batch` | 批量删除 / 批量改属性（≤100 张） |
-| GET | `/plaza` | 图片广场（匿名可读，`plaza_enabled` 关闭时 404） |
-
-上传成功返回 `201` 与 `{"image": {…}}`，图片对象主要字段：
-
-`sha`、`filename`、`title`、`size`、`mime`、`is_video`、`width`、`height`、
-`visibility`、`plaza` / `plaza_effective`、`tags`、`album_id`、`album`、
-`created_at`、`expire_at`、`external`、`src`、`tpl`（URL / HTML / Markdown / rST 模板）。
-
-`src` 已按可见性处理：公开图给直链（没有配 `domain` 的存储回落到 `/raw/<sha>`），
-私有图固定 `/raw/<sha>`。
-
-### 相册
-
-| 方法 | 路径 | 说明 |
-| --- | --- | --- |
-| GET/POST | `/albums` | 列表（管理员额外拿到 `role=system` 的系统相册）/ 新建 |
-| PATCH/DELETE | `/albums/<id>` | 改名、描述、封面、可见性 / 删除（默认相册 409） |
-| GET/POST | `/albums/<id>/shares` | 共享成员列表 / 添加（可带 `expires_in`） |
-| PATCH/DELETE | `/albums/<id>/shares/<user_id>` | 调整权限与有效期 / 移除 |
-
-### 存储后端
-
-| 方法 | 路径 | 权限 | 说明 |
-| --- | --- | --- | --- |
-| GET/POST | `/me/backends`、`PATCH/DELETE /me/backends/<id>` | 登录 | 用户自己的存储（`allow_user_backends` 开启时生效） |
-| GET/POST | `/backends`、`PATCH/DELETE /backends/<id>` | admin | 系统后端：优先级、启停、`visibility`（`public`/`private`）、每后端配置 |
-
-`visibility=private` 表示桶是私有读：该后端的直链不对外使用，所有访问经 `/raw/<sha>` 由驱动签发临时读地址后转发；
-驱动没有 `upimg_url` 时保存会 400。列表项同时返回 `visibility` 与 `private_readable`。
-
-### 站点、钩子与运维
-
-| 方法 | 路径 | 权限 | 说明 |
-| --- | --- | --- | --- |
-| GET | `/site` | 匿名 | 前台展示字段（站点名、公告、上传限制等） |
-| GET/PUT | `/settings` | admin | 站点设置 |
-| GET | `/settings/version` | admin | 版本检测（`?refresh=1` 跳过缓存） |
-| POST | `/settings/smtp/test` | admin | 发测试邮件 |
-| GET/PATCH/DELETE | `/users`、`/users/<id>` | admin | 用户列表（`page` / `page_size`，默认 15）/ 审核与禁用 / 删除 |
-| GET | `/health` | 匿名 | 存活探针 |
+| 站点 | `/site`、`/health` | 匿名：前台展示配置、存活探针 |
+| 认证 | `/auth/*` | 会话、注册登录、邮箱验证、OIDC 绑定、个人偏好、PAT |
+| 上传 | `/upload` | `file` 或 `url` 二选一，成功 201 返回 `{image}` |
+| 图片 | `/images*`、`/plaza` | 个人图库的查询与维护；广场是匿名曝光渠道 |
+| 相册 | `/albums*` | 相册与共享授权（成员、权限、有效期） |
+| 存储 | `/backends`（admin）、`/me/backends` | 系统后端；用户自己的后端（`allow_user_backends` 开启时生效） |
+| 运维 | `/settings*`、`/users`（admin） | 站点设置、版本检测、用户审核与禁用 |
+| 直链 | `/raw/<sha>`、`/i/<sha>` | 已发布图片的公开地址（根路径，不在 `/api/v2` 下） |
+| 文档 | `/docs`（Swagger 页面）、`/openapi.json`（OpenAPI 源） | 即 `GET /api/v2/docs` 与 `GET /api/v2/openapi.json`，见文首「在线文档」 |
 
 钩子相关接口见[钩子基础契约](extend/contract.md)的「相关接口」一节。
+
+## 可见性与地址
+
+可见性的维度是**相册**，单张图片可以覆盖：
+
+- 每张图片都必须属于一个相册；`images.visibility` 为 `null` 表示跟随相册，为
+  `public` / `private` 时覆盖相册。图片不能被摘出相册（`PATCH` 传空 `album_id` 直接 400），
+  否则「无相册 + 无覆盖」会被当成公开而泄漏。
+- 登录用户上传落到**默认相册**（可见性取站点设置 `default_album_visibility`），匿名上传落到
+  **系统相册**（管理员能在相册列表里看到 `role=system` 那条，用于筛选匿名图片）。
+- 图库列表只含自己的图片 + 共享给自己的相册。**管理员也是个人图库**，要看全站必须显式传
+  `scope=all`；该视图只放大到公开图片，别人的私有相册不会出现。非管理员传该参数 403。
+- `src` 已按可见性处理：公开图给存储直链（后端没配 `domain` 时回落到 `/raw/<sha>`），
+  私有图固定 `/raw/<sha>`。存储后端 `visibility=private`（私有读桶）时直链不对外使用，
+  所有访问都经 `/raw/<sha>` 由驱动签发临时读地址后转发。
+- 广场（`/plaza`）默认关闭，`plaza_enabled` 关掉时直接 404。只有可见性为 `public` 且经
+  相册开关 + 单图三态显式发布的图片才进列表。
+- 图片有效期用 `expire`（秒）在**上传时**确定，省略取站点默认、0 表示永久，上限由站点设置
+  控制；之后通过 `PATCH` 的 `expire_at`（绝对时间戳）调整。

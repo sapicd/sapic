@@ -26,7 +26,7 @@ _SMTP_FIELDS = {"host", "port", "user", "password", "from", "tls"}
 _STR_KEYS = {
     "external_base_url",
     "forbidden_username",
-    "site_about",
+    "login_notice",
     "site_announcement",
     "site_background",
     "site_background_mobile",
@@ -64,6 +64,7 @@ _BOOL_KEYS = {
     "plaza_enabled",
     "storage_replica",
     "register_review",
+    "upload_enabled",
 }
 
 _FLOAT_KEYS = {"site_background_opacity": (0.0, 1.0)}

@@ -18,12 +18,16 @@ DEFAULTS = {
     "site_icp": "",
     "site_footer": "SaintIC. All rights reserved.",
     "site_announcement": "",
-    "site_about": "",
+    #: 登录页卡片标题下方的一行说明；留空即不显示（不是回落到内置文案，
+    #: 管理员要能把这句话彻底关掉）。
+    "login_notice": "登录后可上传与管理图片",
     #: 是否开放图片广场（只有主动发布的公开图片会出现在里面）。
     #: 默认关闭：个人自建图床用不到「被陌生人发现」这套逻辑，公开 UGC 还会带来
     #: 内容审核与投诉成本；面向社区/作品集的部署（含专业版）再在后台开启。
     "plaza_enabled": False,
     #: 上传
+    #: 站点级只读开关：关掉只冻结「新增上传」，已有图片照常访问、编辑与删除。
+    "upload_enabled": True,
     "allow_anonymous_upload": False,
     "upload_notice": "",
     "upload_allowed_ext": "jpg,jpeg,png,gif,webp,bmp,ico,svg,mp4,webm,mov",

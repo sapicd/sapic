@@ -10,7 +10,7 @@ from ..basis.errors import ApiError, ErrorCode
 from ..libs.auth import login_required
 from ..libs.images import album_image_count
 from ..libs.users import normalize_username
-from ..models import Album, AlbumShare, Image, User
+from ..models import Album, AlbumShare, ApiToken, Image, User
 from ..models.base import now
 from ..models.image import live_condition
 from ..models.share import PERMISSION_READ, PERMISSION_WRITE
@@ -207,6 +207,9 @@ def delete_album(album_id: int):
             409,
         )
     AlbumShare.delete().where(AlbumShare.album == album).execute()
+    #: 令牌的「默认相册」只是偏好，相册没了就让它回落到用户的默认相册，
+    #: 不要留下指向空号的 album_id。
+    ApiToken.update(album=None).where(ApiToken.album == album).execute()
     album.delete_instance()
     return ok({"deleted": True})
 

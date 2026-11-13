@@ -27,8 +27,10 @@ def site():
             "icp": get_setting("site_icp", ""),
             "footer": get_setting("site_footer", ""),
             "announcement": get_setting("site_announcement", ""),
-            "about": get_setting("site_about", ""),
+            "login_notice": get_setting("login_notice", ""),
             "upload_notice": get_setting("upload_notice", ""),
+            #: 关闭后前端把上传区标成「已暂停」，只挡新增，历史图片不受影响。
+            "upload_enabled": bool(get_setting("upload_enabled", True)),
             #: 按媒体类型分开的单文件上限（MB）。
             "upload_image_max_size": get_setting("upload_image_max_size", 10),
             "upload_video_max_size": get_setting("upload_video_max_size", 20),

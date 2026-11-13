@@ -1,3 +1,4 @@
+import { existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
 
 import vue from '@vitejs/plugin-vue'
@@ -5,6 +6,21 @@ import AutoImport from 'unplugin-auto-import/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import Components from 'unplugin-vue-components/vite'
 import { defineConfig } from 'vite'
+
+const ELEMENT_COMPONENTS_DIR = fileURLToPath(
+  new URL('./node_modules/element-plus/es/components', import.meta.url),
+)
+
+//: Element Plus 的组件样式是按需引入的（`<组件>/style/css`），Vite 只有在首次访问用到某个
+//: 组件的页面时才会发现它们，每发现一批就重新预构建并整页 reload（开发期「点开新页面就刷新」）。
+//: 这里把现有组件样式全部列进预构建，把多次刷新收敛到启动阶段；生产构建的产物不受影响。
+//: 组件清单从磁盘读，Element Plus 升级新增组件时不用改配置。
+function elementStyleDeps() {
+  if (!existsSync(ELEMENT_COMPONENTS_DIR)) return []
+  return readdirSync(ELEMENT_COMPONENTS_DIR)
+    .filter((name) => existsSync(`${ELEMENT_COMPONENTS_DIR}/${name}/style/css.mjs`))
+    .map((name) => `element-plus/es/components/${name}/style/css`)
+}
 
 //: 开发期把 API 与图片请求代理到 Flask，保持同源，Cookie 会话才能生效。
 export default defineConfig({
@@ -18,6 +34,19 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+  },
+  optimizeDeps: {
+    include: [
+      //: 自动导入的组件都从包入口具名引入（构建时再 tree-shake），所以入口也要预构建，
+      //: 否则第一个用到组件的页面同样会触发一次重新优化。
+      'element-plus/es',
+      'element-plus/es/locale/lang/zh-cn',
+      ...elementStyleDeps(),
+      '@element-plus/icons-vue',
+      'pinia',
+      'vue',
+      'vue-router',
+    ],
   },
   server: {
     port: 5173,

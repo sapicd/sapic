@@ -30,25 +30,37 @@
 ```bash
 git clone https://github.com/sapicd/sapic && cd sapic
 
-python3 -m venv .venv                        # 依赖装在仓库根的 .venv，make 会自动识别
-make setup                                   # 后端依赖 + 前端 pnpm install
-make create-admin U=admin P='你的密码'        # 创建管理员
-make dev                                     # 后端 http://127.0.0.1:9514
-make web-dev                                 # 另开终端：前端 http://127.0.0.1:5173
+# 依赖：后端装在仓库根的 .venv，前端是独立的 pnpm 工程
+python3 -m venv .venv && ./.venv/bin/python -m pip install -r server/requirements/dev.txt
+(cd web && pnpm install)
+
+# 创建管理员（本地没有 server/.cfg 时靠 sapic_env=dev 用内置默认配置）
+(cd server && FLASK_APP=sapic sapic_env=dev ../.venv/bin/python -m flask sa create-admin -u admin -p '你的密码')
+
+# 后端 http://127.0.0.1:9514，改代码自动重载
+(cd server && FLASK_APP=sapic sapic_env=dev ../.venv/bin/python -m flask run --host 0.0.0.0 --port 9514 --reload)
+
+# 另开一个终端：前端 http://127.0.0.1:5173（/api 与 /raw/ 代理到 9514）
+(cd web && pnpm run dev)
 ```
+
+> 仓库根的 `Makefile` 只是本地开发的便利封装（`make setup` / `make dev` / `make web-dev`
+> 与上面的命令等价）。本文与各部署文档一律写真实命令，容器或没有 `make` 的机器可以直接照做。
 
 Docker 一行起（单容器 + SQLite）：
 
 ```bash
-SAPIC_SECRET_KEY=$(openssl rand -hex 32) docker compose up -d
+docker compose up -d
 ```
 
-生产模式必须显式配置 `sapic_secretkey`（内置默认密钥是公开字符串，会被直接拦下）。
+内置默认密钥足够长，不配 `sapic_secretkey` 也能直接跑起来。**公网多用户**部署仍建议换成自己的
+（这个默认值是公开的，知道源码的人可以伪造会话 Cookie）：`SAPIC_SECRET_KEY=$(openssl rand -hex 32) docker compose up -d`。
 完整的安装、反代、容器与集群部署、从 v1 迁移数据见 **[DEPLOY.md](./DEPLOY.md)**。
 
 ## 文档
 
-线上文档：<https://sapic.rtfd.vip>　本地构建：`make docs`（产物在 `docs/_build/html`）。
+线上文档：<https://sapic.rtfd.vip>　本地构建：`pip install -r docs/requirements.txt` 后
+`cd docs && python -m sphinx -b html . _build/html`（产物在 `docs/_build/html`）。
 
 | 内容 | 位置 |
 | --- | --- |

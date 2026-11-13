@@ -13,8 +13,11 @@ sapic v2 后端，API-only（前端由独立的 Vue 应用提供）。
 在**仓库根**执行：
 
 ```bash
-make setup            # 开发 + 测试依赖 (server/requirements/dev.txt) + 前端依赖
-# 仅后端（在 server/ 下）：python -m pip install -r requirements/dev.txt
+# 仅后端（在 server/ 下执行）
+python -m pip install -r requirements/dev.txt
+
+# 开发 + 测试依赖 + 前端依赖（在仓库根执行；Makefile 的 `make setup` 等价于这一行）
+python -m pip install -r server/requirements/dev.txt && (cd web && pnpm install)
 ```
 
 ## 配置
@@ -26,7 +29,7 @@ make setup            # 开发 + 测试依赖 (server/requirements/dev.txt) + �
 | --- | --- | --- |
 | `sapic_env` | 运行环境，`dev`/`development` 为开发模式 | `production` |
 | `sapic_db_url` | 数据库 DSN，如 `postgresql://user:pass@host:5432/sapic`、`mysql://...`、`sqlite:///tmp/sapic.db` | `sqlite:///<server>/data/sapic.db` |
-| `sapic_secretkey` | Web 应用密钥，**生产必须显式配置**（缺省时启动失败；`sapic_env=dev` 才允许回落内置值） | 内置串 |
+| `sapic_secretkey` | Web 应用密钥（≥14 字节）；**可选**，空值用内置默认值（公开串，公网多用户建议替换） | 内置随机串 |
 | `sapic_maxupload` | 整个上传请求的上限（MB，映射 `MAX_CONTENT_LENGTH`），要大于站点里图片/视频的单文件上限 | `25` |
 | `sapic_storagedir` | 本地存储目录 | `data/upload` |
 | `sapic_external_base_url` | 对外访问根地址，用于拼接图片外链 | 空（相对地址） |
@@ -106,8 +109,9 @@ gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent
 | GET | `/api/v2/userscript.user.js` | 油猴脚本（Tampermonkey/Violentmonkey），需登录；受个人设置 `userscript_enabled` 控制，可用 `?token=`（`upload` scope）安装 |
 | GET/PUT | `/api/v2/auth/settings` | 个人偏好：`userscript_enabled` / `bg_image` / `bg_image_mobile` / `bg_opacity` |
 
-这里只列主干；**参数、响应字段与错误码见仓库根的 `docs/api.md`**，响应统一信封
-`{code, message, data}`，失败时 `code` 取 `basis/errors.py` 的 `ErrorCode`。
+这里只列主干；**参数、响应字段与错误码见实例自带的在线文档**（`GET /api/v2/docs`，
+文档源 `GET /api/v2/openapi.json`），跨接口的约定、鉴权与业务规则见仓库根的 `docs/api.md`。
+响应统一信封 `{code, message, data}`，失败时 `code` 取 `basis/errors.py` 的 `ErrorCode`。
 
 认证方式：Cookie 会话（写操作需要 `X-CSRF-Token`）或 `Authorization: Bearer <PAT>`。
 

@@ -60,6 +60,12 @@ class ApiToken(BaseModel):
     #: First characters of the token, shown in the UI for identification.
     prefix = CharField(max_length=16, default="")
     scopes = JSONTextField(null=True)
+    #: Album this token uploads into when the request omits ``album_id``.
+    #: NULL means "follow the owner's default album"; a deleted album also
+    #: falls back there, so the column is only a preference, never a hard link.
+    album = ForeignKeyField(
+        Album, backref="api_tokens", column_name="album_id", null=True
+    )
     expires_at = IntegerField(null=True)
     last_used_at = IntegerField(null=True)
     revoked_at = IntegerField(null=True)
