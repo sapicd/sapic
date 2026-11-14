@@ -1393,6 +1393,18 @@ a {
   cursor: help;
 }
 
+/*: 副本行的「复制单副本链接」，与状态、大小同一行，字号比正文小一档。 */
+.replica-copy {
+  margin-left: 10px;
+  font-size: 12px;
+}
+
+/*: 没有直链的副本（私有桶 / 未配域名）只给一句说明，不当按钮。 */
+.replica-copy--empty {
+  cursor: help;
+  color: var(--app-text-muted);
+}
+
 /*: 副本行的失败原因，等宽字体方便对着云端控制台核对。 */
 .replica-meta {
   margin-top: 4px;

@@ -85,10 +85,43 @@ def test_upload_fans_out_to_all_backends(app, client, admin, tmp_path):
     assert by_name["up2local"]["key"].startswith("alice/")
     assert by_name["mirror"]["url"].startswith("https://cdn.mirror/")
 
+    #: `link` 是这条副本能直接匿名打开的地址：配了 domain 的后端才有，
+    #: 本地后端没有直链时留空，前端就不给「复制单副本链接」按钮。
+    assert by_name["mirror"]["link"] == by_name["mirror"]["url"]
+    assert by_name["up2local"]["link"] is None
+
     #: 内部路径与失败原因只给作者/管理员，访客只看到状态。
     anon = app.test_client().get("/api/v2/images/%s" % sha)
     assert anon.status_code == 200, anon.get_json()
-    assert all("key" not in item for item in anon.get_json()["data"]["image"]["replicas"])
+    for item in anon.get_json()["data"]["image"]["replicas"]:
+        assert "key" not in item
+        assert "link" not in item
+
+
+def test_replica_link_falls_back_to_domain_and_skips_private(app, client, admin, tmp_path):
+    with app.app_context():
+        set_setting("storage_replica", True)
+    add_backend(client, admin, "mirror", tmp_path / "mirror", 10, "https://cdn.mirror")
+    sha = upload(client, admin).get_json()["data"]["image"]["sha"]
+    flush_replicas()
+
+    #: 域名是后补的：老副本没记下 driver 返回的 url，仍能按 domain/key 推出直链。
+    with app.app_context():
+        backend = StorageBackend.get(StorageBackend.name == "mirror")
+        row = ImageBackend.get(ImageBackend.backend == backend)
+        key = row.object_key
+        row.url = None
+        row.save(only=[ImageBackend.url])
+        detail = client.get("/api/v2/images/%s" % sha).get_json()["data"]["image"]
+        by_name = {item["backend"]: item for item in detail["replicas"]}
+        assert by_name["mirror"]["link"] == "https://cdn.mirror/%s" % key
+
+        #: 私有桶匿名读是 403，即便有 url 也不给复制链接（统一走 /raw）。
+        backend.visibility = "private"
+        backend.save(only=[StorageBackend.visibility])
+    detail = client.get("/api/v2/images/%s" % sha).get_json()["data"]["image"]
+    by_name = {item["backend"]: item for item in detail["replicas"]}
+    assert by_name["mirror"]["link"] is None
 
 
 def test_replica_can_be_turned_off(app, client, admin, tmp_path):

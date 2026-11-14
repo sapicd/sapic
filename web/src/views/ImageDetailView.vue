@@ -348,6 +348,28 @@ onMounted(load)
             <span v-if="replica.size" class="detail-info__muted">
               {{ formatSize(replica.size) }}
             </span>
+            <!--: 只有匿名可读的副本才有直链；私有桶 / 未配加速域名统一走 /raw。 -->
+            <el-tooltip
+              v-if="replica.link"
+              :content="replica.link"
+              placement="top"
+            >
+              <el-link
+                class="replica-copy"
+                type="primary"
+                :underline="false"
+                @click="copyText(replica.link)"
+              >
+                复制单副本链接
+              </el-link>
+            </el-tooltip>
+            <el-tooltip
+              v-else
+              content="私有后端或未配置加速域名，访问统一由 /raw/<sha> 输出"
+              placement="top"
+            >
+              <span class="replica-copy replica-copy--empty">无直链</span>
+            </el-tooltip>
             <div v-if="replica.error" class="replica-meta replica-meta--error">
               {{ replica.error }}
             </div>

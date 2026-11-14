@@ -20,6 +20,7 @@ from ..libs.images import (
     tag_condition,
     visible_query,
 )
+from ..libs.storage import replica_link
 from ..models import Album, Image
 from ..models.base import now
 from ..models.image import live_condition
@@ -279,6 +280,10 @@ def read_image(sha: str):
             #: 需要知道 key，而对访客暴露内部路径没有意义。
             item["key"] = replica.object_key
             item["url"] = replica.url
+            #: 这条副本能直接匿名打开的地址，前端据此给「复制单副本链接」按钮。
+            #: 私有桶虽然有 driver 返回的 url，但匿名访问是 403，统一走 ``/raw/<sha>``，
+            #: 所以这里留空而不是把不可用的地址交给用户。
+            item["link"] = replica_link(replica)
             item["error"] = replica.last_error
         replicas.append(item)
     data["replicas"] = replicas

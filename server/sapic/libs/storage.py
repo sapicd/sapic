@@ -131,6 +131,34 @@ def public_src(replica: ImageBackend) -> str | None:
     return replica.url or None
 
 
+def replica_link(replica: ImageBackend) -> str | None:
+    """Copy-ready address of a single replica, ``None`` when it has no direct link.
+
+    Prefers the URL the driver reported at upload time. Rows written before the
+    backend got a ``domain`` have no URL at all, so fall back to
+    ``domain/<object_key>`` — every shipped driver builds ``src`` exactly that
+    way, which is what makes the guess safe.
+
+    The fallback deliberately lives here rather than in :func:`public_src`: that
+    one decides published ``src`` values, and silently swapping existing images
+    from ``/raw/<sha>`` to a guessed CDN address could break links that work
+    today. A private bucket has no anonymous address, so it gets ``None`` and the
+    UI keeps serving it through ``/raw/<sha>``.
+    """
+    direct = public_src(replica)
+    if direct:
+        return direct
+    backend = replica.backend
+    if (backend.visibility or VISIBILITY_PRIVATE) != VISIBILITY_PUBLIC:
+        return None
+    config = driver_backend(_as_dict(backend)).get("config") or {}
+    domain = str(config.get("domain") or "").strip().rstrip("/")
+    key = str(replica.object_key or "").lstrip("/")
+    if not domain or not key:
+        return None
+    return "%s/%s" % (domain, key)
+
+
 def thumb_suffix(backend) -> str:
     """Image-processing suffix the backend declares (``?imageView2/2/w/400``).
 
