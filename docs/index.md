@@ -14,7 +14,7 @@ sapic 是一个自建图床：后端是 API-only 的 Flask 应用（`server/`，
 [扩展开发](extend/index.md)。
 
 ```{note}
-当前版本 **2.0.0-pre**（v2 重写版）。相对 v1 的变化：后端改为 API-only + Peewee、前端独立为
+当前版本 **2.0.0-pre.1**（v2 重写版）。相对 v1 的变化：后端改为 API-only + Peewee、前端独立为
 Vue 3 应用、运行时不再依赖 Redis；v1 代码不再随仓库发布（历史版本看 git tag）。
 升级步骤见仓库根的 `DEPLOY.md` 第 7 节，逐项变化见 `CHANGELOG.md`。
 ```

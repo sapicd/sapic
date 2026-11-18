@@ -260,11 +260,19 @@ ShareX 等的逐项配置见 `docs/usage.md`。**不要再为老客户端补第�
   进程级 `MAX_UPLOAD`（`sapic_maxupload`，默认 25M）映射 `MAX_CONTENT_LENGTH`，是整个请求的硬门槛，
   必须大于站点里最大的单文件上限（multipart 有开销），三者取最小值才是实际上限
 - 对外请求代理是 `upload_fetch_proxy`（单个 `http(s)://[user:pass@]host:port`，空 = 只用直连），
-  只在 `libs/images.open_remote` 生效：用户 URL **先直连、抓不到才用代理兜底**（DNS 解析失败也算
-  「抓不到」，见 `_host_visibility` 的 `None`）；`allow_private=True`（存储后端读取 URL）永远直连。
-  格式校验统一走 `utils/common.parse_proxy_url`（写入时 400，运行期记日志并按直连处理）。
-  走代理时本地 DNS 不可信（外网域名常解析失败/被污染），SSRF 校验降级为「只拦私有 IP 字面量」，
-  这条取舍写在 `_is_public_literal` 的注释里，别把它改成完整 DNS 校验，否则代理就等于没用。
+  只在 `libs/images.open_remote` / `download_image` 生效：用户 URL **先直连、抓不到才用代理兜底**
+  （DNS 解析失败也算「抓不到」，见 `_checked_addresses` 的 `None`）。**只有管理员能用代理**
+  （`views/uploads.py` 传 `allow_proxy=user.is_admin`，`_with_proxy_fallback` 默认 `False`）：
+  走代理时地址由代理解析与连接，本站的地址校验看不到，不能对普通用户与匿名上传开放。
+  `allow_private=True`（存储后端读取 URL）永远直连。格式校验统一走 `utils/common.parse_proxy_url`
+  （写入时 400，运行期记日志并按直连处理）。
+- 用户 URL 抓取的三条硬规则（`_open_once`，`tests/test_images.py` 有对应用例）：
+  **只收域名**（IP 字面量直接 400，`_is_ip_literal`）、**不跟随重定向**（3xx 即 400，不给第二次请求）、
+  **解析与连接同源**（见下条）。存储后端的读取 URL（`allow_private`）不受前两条限制，仅保留逐跳校验。
+- **SSRF 校验与连接必须是同一次解析**：直连路径由 `_checked_addresses` 解析一次、逐条校验，
+  再把地址交给 `_PinnedHTTP(S)Connection` 拨号（Host 与 SNI 仍是 URL 里的域名），
+  **禁止在校验后让 urllib/requests 再解析一次**——那就是 DNS rebinding 的 TOCTOU 缺口
+  （名字第一次答公网、第二次答内网）。重定向每一跳都重新走这套流程。
 - `password_login`（默认开）关闭后 `views/auth.py` 的登录与注册接口直接 403，登录页只渲染统一登录入口
 - 统一登录（OIDC）：`passport` 钩子提供 provider 能力，`views/auth.py` 负责发起/回调与绑定，
   `libs/users.py` 的 `resolve_oidc_user` 处理「已绑定 → 登录 / 双方邮箱均已验证 → 自动关联 / 否则按

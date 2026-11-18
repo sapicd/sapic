@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 import io
+import ipaddress
 import re
+import socket
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import HTTPError, URLError
 
 import pytest
 
-from sapic.basis.errors import ApiError
+from sapic.basis.errors import ApiError, ErrorCode
 from sapic.libs import images
 from sapic.libs.settings import set_setting
 from sapic.models import Image, ImageBackend, User
@@ -391,7 +395,7 @@ def test_upload_from_url(app, client, monkeypatch):
     csrf = register_and_login(client)
     monkeypatch.setattr(
         "sapic.views.uploads.download_image",
-        lambda url, max_bytes: (b"remote-bytes", "remote.png", "image/png"),
+        lambda url, max_bytes, **kwargs: (b"remote-bytes", "remote.png", "image/png"),
     )
 
     response = client.post(
@@ -420,14 +424,15 @@ def test_upload_from_url_rejects_unsupported_url(client):
     assert response.status_code == 400
     assert response.get_json()["code"] == "PARAM_ERROR"
 
-    #: 内网/环回地址在建立连接前就被拒绝，避免 SSRF。
+    #: 地址字面量（内网、环回、公网 IP 都算）在建立连接前就被拒绝，避免 SSRF 与端口探测。
     response = client.post(
         "/api/v2/upload",
         data={"url": "http://127.0.0.1/photo.png"},
         content_type="multipart/form-data",
         headers=headers,
     )
-    assert response.status_code == 403
+    assert response.status_code == 400
+    assert response.get_json()["code"] == "PARAM_ERROR"
 
 
 def test_anonymous_upload_disabled_by_default(client):
@@ -634,16 +639,33 @@ def _opener_factory(attempts, direct_fails=True):
     return fake_build
 
 
+def _fake_dns(monkeypatch, address="93.184.216.34"):
+    """Answer name lookups with one public address; literals stay real."""
+    real = _real_getaddrinfo
+
+    def resolve(host, port=None, *args, **kwargs):
+        try:
+            ipaddress.ip_address(str(host).strip("[]"))
+        except ValueError:
+            return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (address, port or 0))]
+        return real(host, port, *args, **kwargs)
+
+    monkeypatch.setattr(images.socket, "getaddrinfo", resolve)
+
+
 def test_url_fetch_uses_the_proxy_only_as_a_fallback(app, monkeypatch):
     """代理是兜底：直连失败才改走代理，不是默认通道。"""
     attempts = []
     monkeypatch.setattr(images, "build_opener", _opener_factory(attempts))
+    _fake_dns(monkeypatch)
 
     with app.app_context():
         set_setting("upload_fetch_proxy", "http://127.0.0.1:7890")
-        #: 用 IP 字面量，两条路径都不依赖真实 DNS。
-        assert images.open_remote("https://1.1.1.1/photo.png") == "response"
+        response = images.open_remote(
+            "https://pbs.example.com/a.png", allow_proxy=True
+        )
 
+    assert response == "response"
     assert attempts == ["", "http://127.0.0.1:7890"]
 
 
@@ -653,12 +675,55 @@ def test_url_fetch_skips_the_proxy_when_direct_works(app, monkeypatch):
     monkeypatch.setattr(
         images, "build_opener", _opener_factory(attempts, direct_fails=False)
     )
+    _fake_dns(monkeypatch)
 
     with app.app_context():
         set_setting("upload_fetch_proxy", "http://127.0.0.1:7890")
-        assert images.open_remote("https://1.1.1.1/photo.png") == "response"
+        response = images.open_remote(
+            "https://pbs.example.com/a.png", allow_proxy=True
+        )
+
+    assert response == "response"
+    assert attempts == [""]
+
+
+def test_url_fetch_never_uses_the_proxy_without_permission(app, monkeypatch):
+    """普通用户与匿名上传（``allow_proxy`` 默认关）配了代理也只直连。"""
+    attempts = []
+    monkeypatch.setattr(images, "build_opener", _opener_factory(attempts))
+    _fake_dns(monkeypatch)
+
+    with app.app_context():
+        set_setting("upload_fetch_proxy", "http://127.0.0.1:7890")
+        with pytest.raises(ApiError):
+            images.download_image("https://pbs.example.com/a.png", 1024)
 
     assert attempts == [""]
+
+
+def test_upload_url_lets_only_admins_use_the_proxy(app, client, monkeypatch):
+    """上传接口按当前用户身份决定是否允许代理：默认普通人／匿名都不给。"""
+    seen = []
+
+    def fake_download(url, max_bytes, timeout=0, allow_proxy=False):
+        seen.append(allow_proxy)
+        raise ApiError("remote fetch failed: network error", ErrorCode.PARAM_ERROR)
+
+    monkeypatch.setattr("sapic.views.uploads.download_image", fake_download)
+    csrf = register_and_login(client)
+    payload = {"url": "https://pbs.example.com/a.png"}
+    headers = {"X-CSRF-Token": csrf}
+
+    client.post(
+        "/api/v2/upload", data=payload, content_type="multipart/form-data", headers=headers
+    )
+    with app.app_context():
+        User.update(is_admin=True).where(User.username == "alice").execute()
+    client.post(
+        "/api/v2/upload", data=payload, content_type="multipart/form-data", headers=headers
+    )
+
+    assert seen == [False, True]
 
 
 def test_unresolvable_host_falls_back_to_the_proxy(app, monkeypatch):
@@ -673,23 +738,29 @@ def test_unresolvable_host_falls_back_to_the_proxy(app, monkeypatch):
 
     with app.app_context():
         set_setting("upload_fetch_proxy", "http://127.0.0.1:7890")
-        assert images.open_remote("https://pbs.example.com/a.png") == "response"
+        response = images.open_remote(
+            "https://pbs.example.com/a.png", allow_proxy=True
+        )
 
+    assert response == "response"
     #: 解析失败时连直连请求都没发出去，第一次尝试就是代理。
     assert attempts == ["http://127.0.0.1:7890"]
 
 
-def test_proxied_fetch_still_rejects_private_literals(monkeypatch):
-    """走代理时内网字面量仍在本地拦住，不交给代理去连。"""
+def test_user_url_rejects_address_literals(monkeypatch):
+    """用户 URL 只收域名：IPv4 / IPv6 字面量（公网也一样）在解析前就拒绝。"""
     attempts = []
     monkeypatch.setattr(images, "build_opener", _opener_factory(attempts))
 
-    with pytest.raises(ApiError) as exc:
-        images._open_once(
-            "http://10.0.0.1/a.png", 10, None, False, "http://127.0.0.1:7890"
-        )
+    for url in (
+        "http://10.0.0.1/a.png",
+        "http://93.184.216.34/a.png",
+        "https://[2001:db8::1]/a.png",
+    ):
+        with pytest.raises(ApiError) as exc:
+            images._open_once(url, 10, None, False, "")
+        assert exc.value.status_code == 400
 
-    assert exc.value.status_code == 403
     assert attempts == []
 
 
@@ -708,6 +779,190 @@ def test_backend_url_never_uses_the_proxy(app, monkeypatch):
 
     assert response == "response"
     assert attempts == [""]
+
+
+class _MarkerServer:
+    """Local HTTP server: a tiny image, or a redirect when the path says so."""
+
+    def __init__(self):
+        self.paths: list = []
+        self.headers: list = []
+        handler = self._handler()
+        self.httpd = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        self.port = self.httpd.server_address[1]
+        self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
+        self.thread.start()
+
+    def _handler(self):
+        seen = self.headers
+        paths = self.paths
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                paths.append(self.path)
+                seen.append(dict(self.headers))
+                if self.path.startswith("/redirect"):
+                    self.send_response(302)
+                    self.send_header("Location", "/secret.png")
+                    self.send_header("Content-Length", "0")
+                    self.end_headers()
+                    return
+                body = b"internal-marker"
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *args):
+                pass
+
+        return Handler
+
+    def close(self):
+        self.httpd.shutdown()
+        self.httpd.server_close()
+
+
+@pytest.fixture
+def marker_server():
+    server = _MarkerServer()
+    try:
+        yield server
+    finally:
+        server.close()
+
+
+#: 打补丁前的真实实现，供假解析器与假拨号复用。
+_real_getaddrinfo = socket.getaddrinfo
+_real_create_connection = socket.create_connection
+
+
+def _rebinding_resolver(public="93.184.216.34", private="10.200.21.30"):
+    """DNS answers a public IP first and an internal one every time after."""
+    calls = []
+
+    def resolve(host, port=None, *args, **kwargs):
+        if str(host).strip("[]").replace(".", "").isdigit() or ":" in str(host):
+            return _real_getaddrinfo(host, port, *args, **kwargs)
+        calls.append(host)
+        address = public if len(calls) == 1 else private
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (address, port or 0))]
+
+    resolve.calls = calls
+    return resolve
+
+
+def test_dns_rebinding_cannot_reach_an_internal_host(app, monkeypatch, marker_server):
+    """名字只解析一次，连接直接绑到校验过的 IP（DNS rebinding 无法二次应答）。"""
+    resolve = _rebinding_resolver()
+    dialled = []
+
+    def fake_create_connection(pair, timeout=None, source_address=None):
+        dialled.append(pair)
+        return _real_create_connection(("127.0.0.1", marker_server.port), timeout, source_address)
+
+    monkeypatch.setattr(images.socket, "getaddrinfo", resolve)
+    monkeypatch.setattr(images.socket, "create_connection", fake_create_connection)
+
+    with app.app_context():
+        stream, name, mime = images.download_image(
+            "http://rebind.test/secret.png", max_bytes=1024, timeout=5
+        )
+
+    assert stream == b"internal-marker"
+    assert name == "secret.png"
+    assert mime == "image/png"
+    #: 唯一一次解析拿到的是公网地址，实际拨号的也是它；第二次应答（内网）从未发生。
+    assert resolve.calls == ["rebind.test"]
+    assert dialled == [("93.184.216.34", 80)]
+    #: 绑定 IP 之后 Host 头仍是用户给的名字。
+    assert marker_server.headers[0]["Host"] == "rebind.test"
+
+
+def test_user_url_does_not_follow_redirects(app, monkeypatch, marker_server):
+    """用户 URL 的 3xx 直接报错：不会对着 Location 再发一次请求。"""
+    _fake_dns(monkeypatch)
+
+    def fake_create_connection(pair, timeout=None, source_address=None):
+        return _real_create_connection(("127.0.0.1", marker_server.port), timeout, source_address)
+
+    monkeypatch.setattr(images.socket, "create_connection", fake_create_connection)
+
+    with app.app_context():
+        with pytest.raises(ApiError) as exc:
+            images.download_image("http://rebind.test/redirect.png", 1024)
+
+    assert exc.value.status_code == 400
+    assert "redirect" in str(exc.value)
+    #: 只有第一个请求落地，重定向目标一次都没被访问。
+    assert marker_server.paths == ["/redirect.png"]
+
+
+def test_backend_read_url_may_still_redirect(app, monkeypatch, marker_server):
+    """存储后端的读取地址由服务端自己产生，保留逐跳重定向（否则自建网关会坏）。"""
+    def fake_create_connection(pair, timeout=None, source_address=None):
+        return _real_create_connection(("127.0.0.1", marker_server.port), timeout, source_address)
+
+    monkeypatch.setattr(images.socket, "create_connection", fake_create_connection)
+
+    with app.app_context():
+        response = images.open_remote(
+            "http://rebind.test/redirect.png", allow_private=True
+        )
+        assert response.headers.get_content_type() == "image/png"
+        assert response.read() == b"internal-marker"
+        response.close()
+
+    assert marker_server.paths == ["/redirect.png", "/secret.png"]
+
+
+def test_private_answer_next_to_a_public_one_is_still_refused(monkeypatch):
+    """解析结果里的每一条都要过校验，公网私网混答同样拒绝。"""
+
+    def resolve(host, port=None, *args, **kwargs):
+        return [
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 80)),
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("10.200.21.30", 80)),
+        ]
+
+    monkeypatch.setattr(images.socket, "getaddrinfo", resolve)
+
+    with pytest.raises(ApiError) as exc:
+        images._open_once("http://mixed.test/a.png", 5, None, False, "")
+
+    assert exc.value.status_code == 403
+
+
+def test_pinned_https_keeps_the_name_for_sni(monkeypatch):
+    """绑 IP 只换拨号目标：TLS 的 SNI 与证书校验仍用 URL 里的名字。"""
+
+    class FakeSocket:
+        def setsockopt(self, *args):
+            pass
+
+    class FakeContext:
+        def __init__(self):
+            self.names = []
+
+        def wrap_socket(self, sock, server_hostname=None):
+            self.names.append(server_hostname)
+            return sock
+
+    dialled = []
+
+    def fake_create_connection(pair, timeout=None, source_address=None):
+        dialled.append(pair)
+        return FakeSocket()
+
+    monkeypatch.setattr(images.socket, "create_connection", fake_create_connection)
+
+    connection = images._PinnedHTTPSConnection("pbs.example.com", ["93.184.216.34"])
+    connection._context = FakeContext()
+    connection.connect()
+
+    assert dialled == [("93.184.216.34", 443)]
+    assert connection._context.names == ["pbs.example.com"]
 
 
 class _FakeRemoteResponse:
@@ -774,10 +1029,13 @@ def test_http_error_on_the_direct_fetch_still_tries_the_proxy(app, monkeypatch):
     monkeypatch.setattr(
         images, "build_opener", _blocking_opener_factory(attempts, direct_status=403)
     )
+    _fake_dns(monkeypatch)
 
     with app.app_context():
         set_setting("upload_fetch_proxy", "http://127.0.0.1:7890")
-        stream, name, mime = images.download_image("https://1.1.1.1/a.jpg", 1024)
+        stream, name, mime = images.download_image(
+            "https://pbs.example.com/a.jpg", 1024, allow_proxy=True
+        )
 
     assert attempts == ["", "http://127.0.0.1:7890"]
     assert stream == b"remote-bytes"
@@ -792,10 +1050,13 @@ def test_interstitial_page_on_the_direct_fetch_tries_the_proxy(app, monkeypatch)
         "build_opener",
         _blocking_opener_factory(attempts, direct_mime="text/html"),
     )
+    _fake_dns(monkeypatch)
 
     with app.app_context():
         set_setting("upload_fetch_proxy", "http://127.0.0.1:7890")
-        stream, _, mime = images.download_image("https://1.1.1.1/a.jpg", 1024)
+        stream, _, mime = images.download_image(
+            "https://pbs.example.com/a.jpg", 1024, allow_proxy=True
+        )
 
     assert attempts == ["", "http://127.0.0.1:7890"]
     assert stream == b"remote-bytes"
@@ -810,10 +1071,13 @@ def test_truncated_body_on_the_direct_fetch_retries_via_proxy(app, monkeypatch):
         "build_opener",
         _blocking_opener_factory(attempts, direct_broken=True),
     )
+    _fake_dns(monkeypatch)
 
     with app.app_context():
         set_setting("upload_fetch_proxy", "http://127.0.0.1:7890")
-        stream, _, mime = images.download_image("https://1.1.1.1/a.jpg", 1024)
+        stream, _, mime = images.download_image(
+            "https://pbs.example.com/a.jpg", 1024, allow_proxy=True
+        )
 
     assert attempts == ["", "http://127.0.0.1:7890"]
     assert stream == b"remote-bytes"
@@ -826,10 +1090,11 @@ def test_fetch_error_message_keeps_the_direct_cause(app, monkeypatch):
     monkeypatch.setattr(
         images, "build_opener", _blocking_opener_factory(attempts, direct_status=403)
     )
+    _fake_dns(monkeypatch)
 
     with app.app_context():
         with pytest.raises(ApiError) as exc:
-            images.download_image("https://1.1.1.1/a.jpg", 1024)
+            images.download_image("https://pbs.example.com/a.jpg", 1024)
 
     assert exc.value.message == "remote fetch failed: http 403"
     assert attempts == [""]

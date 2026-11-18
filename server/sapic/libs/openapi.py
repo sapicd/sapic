@@ -571,11 +571,15 @@ OPERATIONS: dict[str, dict] = {
         "description": (
             "`file` 与 `url` 二选一；`album_id` 省略时用 PAT 的默认相册，"
             "再兜底到用户的默认相册（匿名上传进系统相册）。"
+            "`url` 只接受域名地址（不接受 IP 字面量），且不跟随重定向。"
         ),
         "form": _form_body(
             {
                 "file": _FILE,
-                "url": {"type": "string", "description": "图片地址，由服务端抓取"},
+                "url": {
+                    "type": "string",
+                    "description": "图片地址，由服务端抓取（仅域名、不跟随重定向）",
+                },
                 "album_id": {"type": "integer", "description": "目标相册（需写权限）"},
                 "title": _STRING,
                 "expire": {"type": "integer", "description": "有效期秒数，0 表示永久"},

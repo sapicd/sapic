@@ -63,8 +63,12 @@ def upload():
     else:
         #: URL 上传由服务端抓取：下载前还不知道类型，先按两类里较大的上限截断，
         #: 拿到真实文件名后再走 check_upload_limits 按类型判定。
+        #: 站点配置的抓取代理只给管理员用：走代理时地址由代理解析，本站的
+        #: 地址校验看不到，不能开放给普通用户与匿名上传。
         stream, filename, mime = download_image(
-            remote_url, fetch_limit_mb() * 1024 * 1024
+            remote_url,
+            fetch_limit_mb() * 1024 * 1024,
+            allow_proxy=bool(user and user.is_admin),
         )
 
     if not stream:

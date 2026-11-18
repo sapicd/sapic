@@ -10,7 +10,7 @@ import socket
 from contextlib import closing
 from datetime import datetime
 from hashlib import sha1
-from http.client import HTTPException
+from http.client import HTTPConnection, HTTPException, HTTPSConnection
 from mimetypes import guess_type
 from os.path import splitext
 from posixpath import basename as posix_basename
@@ -18,7 +18,9 @@ from time import monotonic
 from urllib.error import HTTPError, URLError
 from urllib.parse import unquote, urljoin, urlparse
 from urllib.request import (
+    HTTPHandler,
     HTTPRedirectHandler,
+    HTTPSHandler,
     ProxyHandler,
     Request,
     build_opener,
@@ -382,40 +384,138 @@ def _is_private_address(
     )
 
 
-def _host_visibility(hostname: str) -> bool | None:
-    """``True`` public, ``False`` loopback/private/link-local, ``None`` unknown.
+def _checked_addresses(hostname: str) -> list[str] | None:
+    """Resolve once and return the addresses a connection may dial.
 
-    Only meaningful for direct fetches, where the local resolver is the one that
-    will connect. ``None`` means "cannot resolve here", which is exactly the
-    case a proxy is configured for, so the caller may retry through it.
+    Every answer the resolver gives is checked, and the returned addresses are
+    the ones the caller **must** connect to. Checking the name and then letting
+    the transport resolve it again is a time-of-check/time-of-use gap: a domain
+    that answers a public IP first and an internal one second (DNS rebinding)
+    would pass the check and still reach the internal host. So there is no
+    second lookup anywhere below this function.
+
+    ``None`` means "cannot resolve here", which is exactly the case a proxy is
+    configured for, so the caller may retry through it.
     """
     try:
-        infos = socket.getaddrinfo(hostname, None)
+        infos = socket.getaddrinfo(hostname, None, type=socket.SOCK_STREAM)
     except OSError:
         return None
+    addresses: list[str] = []
     for info in infos:
+        raw = info[4][0]
+        if raw not in addresses:
+            addresses.append(raw)
+    for raw in addresses:
         try:
-            address = ipaddress.ip_address(info[4][0])
+            address = ipaddress.ip_address(raw)
         except ValueError:
-            return False
+            raise ApiError("url host is not allowed", ErrorCode.FORBIDDEN, 403)
         if _is_private_address(address):
-            return False
-    return bool(infos)
+            raise ApiError("url host is not allowed", ErrorCode.FORBIDDEN, 403)
+    return addresses or None
 
 
-def _is_public_literal(hostname: str) -> bool:
-    """No-DNS check for proxied fetches.
+def _pinned_dial(addresses: list[str]):
+    """``http.client`` connect hook that only dials pre-checked addresses.
 
-    The proxy resolves and connects, so the local resolver is irrelevant (and
-    often poisoned for the very sites a proxy is configured for). Only plain IP
-    literals can still be judged here: private ones stay blocked, names are
-    handed to the proxy as-is.
+    ``http.client`` passes the ``(host, port)`` it is about to dial; only the
+    host is replaced, so the ``Host`` header and the TLS SNI (and therefore the
+    certificate check) keep the name the URL asked for. One address failing to
+    connect falls through to the next, all of which passed the check.
+    """
+
+    def dial(pair, timeout=None, source_address=None):
+        error: OSError | None = None
+        for address in addresses:
+            try:
+                return socket.create_connection(
+                    (address, pair[1]), timeout, source_address
+                )
+            except OSError as exc:
+                error = exc
+        raise error or OSError("no address to connect")
+
+    return dial
+
+
+class _PinnedHTTPConnection(HTTPConnection):
+    """Plain HTTP connection dialing a checked address instead of the name."""
+
+    def __init__(self, host, addresses: list[str], **kwargs):
+        super().__init__(host, **kwargs)
+        self._create_connection = _pinned_dial(addresses)
+
+
+class _PinnedHTTPSConnection(HTTPSConnection):
+    """Same pinning over TLS: SNI and certificate checks still use the name."""
+
+    def __init__(self, host, addresses: list[str], **kwargs):
+        super().__init__(host, **kwargs)
+        self._create_connection = _pinned_dial(addresses)
+
+
+class _PinnedHTTPHandler(HTTPHandler):
+    """``HTTPHandler`` whose connections are pinned to checked addresses."""
+
+    def __init__(self, addresses: list[str]):
+        super().__init__()
+        self._addresses = addresses
+
+    def http_open(self, req):
+        return self.do_open(self._connection, req)
+
+    def _connection(self, host, **kwargs):
+        return _PinnedHTTPConnection(host, self._addresses, **kwargs)
+
+
+class _PinnedHTTPSHandler(HTTPSHandler):
+    """``HTTPSHandler`` with the same pinning."""
+
+    def __init__(self, addresses: list[str]):
+        super().__init__()
+        self._addresses = addresses
+
+    def https_open(self, req):
+        return self.do_open(
+            self._connection,
+            req,
+            context=self._context,
+            check_hostname=self._check_hostname,
+        )
+
+    def _connection(self, host, **kwargs):
+        return _PinnedHTTPSConnection(host, self._addresses, **kwargs)
+
+
+def _opener(proxy: str, addresses: list[str] | None = None):
+    """Build the opener for one hop.
+
+    ``addresses`` pins a direct connection to the addresses ``_checked_addresses``
+    already approved. The ``ProxyHandler`` is always installed, with an empty
+    mapping when no proxy is configured: that keeps a stray ``http_proxy``
+    environment variable from silently routing (and re-resolving) the request
+    past the check.
+    """
+    proxies = {"http": proxy, "https": proxy} if proxy else {}
+    handlers: list = [_NoRedirect(), ProxyHandler(proxies)]
+    if addresses:
+        handlers.extend([_PinnedHTTPHandler(addresses), _PinnedHTTPSHandler(addresses)])
+    return build_opener(*handlers)
+
+
+def _is_ip_literal(hostname: str) -> bool:
+    """Whether the URL names a host by address instead of by name.
+
+    User supplied URLs must use a domain name: an address literal skips DNS
+    entirely (so there is nothing to check and nothing to pin) and turns the
+    feature into a port scanner for any address the server can route to.
     """
     try:
-        address = ipaddress.ip_address(hostname.strip("[]"))
+        ipaddress.ip_address(hostname.strip("[]"))
     except ValueError:
-        return True
-    return not _is_private_address(address)
+        return False
+    return True
 
 
 def fetch_proxy() -> str:
@@ -458,35 +558,43 @@ def _open_once(
     allow_private: bool,
     proxy: str,
 ):
-    """Run the redirect chain over one transport (``proxy`` empty = direct)."""
-    proxies = {"http": proxy, "https": proxy} if proxy else {}
-    opener = build_opener(_NoRedirect(), ProxyHandler(proxies))
+    """Get one URL over one transport (``proxy`` empty = direct).
+
+    A user supplied URL is fetched in one shot: no redirects, no address
+    literals. A redirect is a second request to an address the caller never
+    named, and following it (directly or through the proxy) would sidestep the
+    address check, so a 3xx is reported as a parameter error instead. Internal
+    backend read URLs (``allow_private``, produced by sapic itself) still follow
+    redirects hop by hop, since they are not attacker controlled.
+    """
+    hops = REMOTE_MAX_REDIRECTS if allow_private else 0
     target = url
-    for _ in range(REMOTE_MAX_REDIRECTS + 1):
+    for hop in range(hops + 1):
         parsed = urlparse(target)
         if parsed.scheme not in ("http", "https") or not parsed.hostname:
             raise ApiError("only http(s) url is supported", ErrorCode.PARAM_ERROR)
+        addresses: list[str] = []
         if not allow_private:
-            if proxy:
-                #: 走代理时由代理解析与连接，本地 DNS 结论不可信（外网域名常解析
-                #: 失败或被污染），只对 IP 字面量做内网拦截。
-                if not _is_public_literal(parsed.hostname):
-                    raise ApiError("url host is not allowed", ErrorCode.FORBIDDEN, 403)
-            else:
-                visibility = _host_visibility(parsed.hostname)
-                if visibility is None:
+            if _is_ip_literal(parsed.hostname):
+                raise ApiError(
+                    "url host must be a domain name", ErrorCode.PARAM_ERROR
+                )
+            if not proxy:
+                #: 解析一次就把地址定死（见 ``_checked_addresses``）；走代理时
+                #: 由代理解析与连接，本地 DNS 结论不可信。
+                resolved = _checked_addresses(parsed.hostname)
+                if resolved is None:
                     #: 本地解析不了（外网域名常见）就交给代理兜底；没配代理时
                     #: 这一跳会对上层表现为「抓取失败」。
                     raise _Unreachable("cannot resolve %s" % parsed.hostname)
-                if not visibility:
-                    raise ApiError("url host is not allowed", ErrorCode.FORBIDDEN, 403)
+                addresses = resolved
         request_headers = {
             "User-Agent": REMOTE_USER_AGENT,
             "Accept": "image/*,video/*",
         }
         request_headers.update(headers or {})
         try:
-            return opener.open(
+            return _opener(proxy, addresses).open(
                 Request(target, headers=request_headers), timeout=timeout
             )
         except HTTPError as exc:
@@ -494,6 +602,10 @@ def _open_once(
             code = exc.code
             exc.close()
             if code in (301, 302, 303, 307, 308) and location:
+                if hop >= hops:
+                    raise ApiError(
+                        "url redirects are not followed", ErrorCode.PARAM_ERROR
+                    ) from exc
                 target = urljoin(target, location)
                 continue
             #: 4xx/5xx 也可能是「这一跳被挡了」（反爬、地区限制），换代理再试。
@@ -503,16 +615,22 @@ def _open_once(
     raise ApiError("too many redirects", ErrorCode.PARAM_ERROR)
 
 
-def _with_proxy_fallback(attempt, allow_private: bool = False):
+def _with_proxy_fallback(
+    attempt, allow_private: bool = False, allow_proxy: bool = False
+):
     """Run ``attempt(proxy)`` directly first, then once through the proxy.
 
     The proxy is a fallback, not a default route: a reachable source never pays
     for the detour. ``_Unreachable`` means "this transport produced nothing
-    usable"; anything else (bad scheme, private address, oversize payload) is a
+    usable"; anything else (bad scheme, bad address, oversize payload) is a
     final answer and is never retried. Internal backend URLs
     (``allow_private``) stay on the direct path only.
+
+    ``allow_proxy`` defaults to ``False`` so a caller that forgets it cannot
+    hand a user supplied URL to the outbound proxy, which resolves and connects
+    on its own and therefore sees none of the address checks below.
     """
-    proxy = "" if allow_private else fetch_proxy()
+    proxy = "" if allow_private or not allow_proxy else fetch_proxy()
     try:
         return attempt("")
     except _Unreachable as exc:
@@ -534,24 +652,25 @@ def open_remote(
     timeout: int = REMOTE_TIMEOUT,
     headers: dict | None = None,
     allow_private: bool = False,
+    allow_proxy: bool = False,
 ):
     """Open an http(s) URL for streaming.
 
-    Redirects are validated hop by hop, so the caller must close the returned
-    response when done. ``allow_private`` is for addresses the server produced
-    itself (a storage backend read URL): a self-hosted MinIO on ``10.x`` has to
-    work there. Never pass it for user supplied URLs — that is the SSRF guard.
+    ``allow_private`` is for addresses the server produced itself (a storage
+    backend read URL): a self-hosted MinIO on ``10.x`` has to work there. Never
+    pass it for user supplied URLs — that is the SSRF guard.
 
-    A user supplied URL is fetched directly first; the configured proxy only
-    gets a second chance when that attempt produced nothing usable (network
-    error or HTTP error status), so reachable sources never pay for the detour.
-    Internal backend URLs never take that path at all.
+    A user supplied URL is fetched directly; ``allow_proxy`` opts into the
+    configured proxy as a fallback when the direct attempt produced nothing
+    usable (network error or HTTP error status). Only administrators get that,
+    because a proxied fetch is resolved and connected by the proxy and so is
+    outside every check this module makes.
     """
 
     def attempt(proxy_url: str):
         return _open_once(url, timeout, headers, allow_private, proxy_url)
 
-    return _with_proxy_fallback(attempt, allow_private)
+    return _with_proxy_fallback(attempt, allow_private, allow_proxy)
 
 
 def _read_media(
@@ -601,14 +720,19 @@ def _read_media(
 
 
 def download_image(
-    url: str, max_bytes: int, timeout: int = REMOTE_TIMEOUT
+    url: str, max_bytes: int, timeout: int = REMOTE_TIMEOUT, allow_proxy: bool = False
 ) -> tuple[bytes, str, str]:
-    """Fetch a remote payload as ``(stream, filename, mime)``."""
+    """Fetch a remote payload as ``(stream, filename, mime)``.
+
+    This is the user-facing path: name only (no address literals), no redirects,
+    and the outbound proxy only when ``allow_proxy`` says the caller is allowed
+    to use it (administrators).
+    """
 
     def attempt(proxy_url: str):
         return _read_media(url, max_bytes, timeout, proxy_url)
 
-    return _with_proxy_fallback(attempt)
+    return _with_proxy_fallback(attempt, allow_proxy=allow_proxy)
 
 
 def process_stream(
