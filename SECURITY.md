@@ -18,18 +18,18 @@ Please reproduce issues against the latest release of the line you run before re
 
 Preferred, in this order:
 
-1. **GitHub private vulnerability reporting**, once it is enabled for this repository. Open the repository
-   page, choose the **Security** tab (labelled *Security and quality*), then **Report a vulnerability**.
-   The report, the fix and the advisory then stay in one private workspace.
-   If that button is not visible, the feature is not enabled here yet — use option 2 instead, do not open a
-   public issue.
+1. **GitHub private vulnerability reporting** (enabled for this repository). Open the repository page,
+   choose the **Security** tab (labelled *Security and quality*), then **Report a vulnerability** next to
+   *Security advisories*. The report, the fix and the advisory then stay in one private workspace.
+   If that button is not visible, use option 2 instead of opening a public issue.
 2. Email **me@tcw.im** with the subject prefix `[sapic security]`. Encrypt with the same address's
    key if you have one; otherwise send the report and we will move it to a private channel.
 
-Note for maintainers: the on/off switch lives in **Settings → Code security → Private vulnerability
-reporting**, not on the Security overview page. The **Advisories → New draft security advisory** page is the
-publishing side (it produces the GHSA and credits); it does not accept incoming reports on its own, and it
-being available does not mean private reporting is on.
+Note for maintainers: the on/off switch lives in **Settings → Security and quality → Advanced Security →
+Private vulnerability reporting** (the button there reads *Disable* when it is on). The **Security →
+Advisories → New draft security advisory** page is the publishing side only: it produces the GHSA and the
+credits, it does not accept incoming reports, and being able to create a draft says nothing about whether
+private reporting is enabled.
 
 Please include:
 
