@@ -18,15 +18,16 @@
 
 按优先级选择：
 
-1. **GitHub 私密漏洞上报**（前提是仓库已启用该功能）：进入仓库页面顶部的 **Security**（标签为
-   *Security and quality*），点击 **Report a vulnerability**。报告、修复与公告会留在同一个私密空间里。
-   如果看不到这个按钮，说明本仓库还没启用，请改用第 2 种方式，**不要**改开公开 issue。
+1. **GitHub 私密漏洞上报**（本仓库已启用）：进入仓库页面顶部的 **Security**（标签为
+   *Security and quality*），在 *Security advisories* 标题旁点击 **Report a vulnerability**。
+   报告、修复与公告会留在同一个私密空间里。
+   如果看不到这个按钮，请改用第 2 种方式，**不要**改开公开 issue。
 2. 邮件 **me@tcw.im**，标题加前缀 `[sapic security]`。有公钥就加密，没有就先发正文，
    我们会转到私密渠道继续。
 
-维护者注意：开关在 **Settings → Code security → Private vulnerability reporting**，不在 Security 概览页；
-**Advisories → New draft security advisory** 是发布侧（生成 GHSA 与致谢），它本身不收报告，
-它可用并不代表私密上报已开启。
+维护者注意：开关在 **Settings → Security and quality → Advanced Security → Private vulnerability
+reporting**（开启时该行按钮显示 *Disable*）。**Security → Advisories → New draft security advisory**
+只是发布侧：它生成 GHSA 与致谢，本身不收报告，能建草稿也不代表私密上报已开启。
 
 请尽量写明：
 
