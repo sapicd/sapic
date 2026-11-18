@@ -12,6 +12,7 @@ Released in 2026-11-18
 - 安全：URL 上传抓取只接受域名、不跟随重定向，并只连接校验过的 IP（修 DNS rebinding 绕过内网拦截）。
 - 安全：站点下载代理改为仅管理员可用。
 - 新增：SECURITY.md / SECURITY-cn.md，漏洞走私密渠道上报。
+- 感谢 Gantrel LLC (Jason Sager) 私下上报上述问题。
 
 v1.16.8
 

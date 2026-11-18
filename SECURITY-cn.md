@@ -95,3 +95,11 @@ curl -sS -X POST https://your.site/api/upload \
 
 v2 版本线（`master`）采用同一套规则，具体校验位置见该分支的
 `server/sapic/libs/images.py` 与 `server/tests/test_images.py`。
+
+## 致谢
+
+感谢私下上报问题、帮助 sapic 变得更安全的人。经对方同意，致谢会出现在这里与
+[更新日志](./docs/changelog.rst) 中：
+
+- **Gantrel LLC (Jason Sager)** —— 上报 v1 URL 上传抓取缺少内网地址校验、v2 的校验可被 DNS rebinding
+  绕过（2026-11），并审阅了修复方案。

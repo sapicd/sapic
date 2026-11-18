@@ -101,3 +101,11 @@ curl -sS -X POST https://your.site/api/upload \
 
 The v2 line (`master`) uses the same rules; its checks are described in `server/sapic/libs/images.py` and
 `server/tests/test_images.py` of that branch.
+
+## Acknowledgements
+
+Thanks to the people who reported issues privately and helped make sapic safer. With their permission they
+are credited here and in the [changelog](./docs/changelog.rst):
+
+- **Gantrel LLC (Jason Sager)** — reported the missing internal-address check in the v1 URL upload fetch and
+  the DNS-rebinding bypass of the v2 check (2026-11), and reviewed the proposed fixes.
