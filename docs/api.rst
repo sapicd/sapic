@@ -429,9 +429,15 @@ RESTful API
         额外允许从url本身查询参数filename获取图片文件名。
 
       程序通过 :class:`utils.web.ImgUrlFileStorage` 处理，使用get方式请求
-      url，只有返回状态码是2xx或3xx且Content-Type是image类型时才有效。
+      url，只有返回状态码是2xx且Content-Type是image类型时才有效。
 
       简而言之，是真正的图片链接才行。当然，还是有被伪造的可能。
+
+      .. versionchanged:: 1.16.10
+
+        抓取规则收紧，见 :mod:`utils.netguard`：只接受域名（IP 字面量一律拒绝）、
+        不跟随重定向（3xx 视为失败）、域名只解析一次且连接绑定到校验过的 IP
+        （防 DNS rebinding 绕过内网地址拦截）。站点配置的下载代理只有管理员可用。
 
     - base64方式上传允许 `Data URI <https://developer.mozilla.org/docs/Web/HTTP/data_URIs>`_ 形式的！
 

@@ -164,6 +164,19 @@ def get_current_timestamp(is_float=False):
 - 保持第三方客户端兼容：`/api/upload` 的 `format` / `status_name` / `ok_code` / `msg_name`
   参数行为不可变更（PicGo / uPic 依赖）
 
+### URL 上传抓取（SSRF）★
+
+`picbed` 为 `http(s)://` 时走服务端抓取，安全规则集中在 `utils/netguard.py`，不要绕开它直接用
+`requests` 抓用户给的地址：
+
+- **只接受域名**：IP 字面量（含 IPv6、公网 IP）一律拒绝（`UrlNotAllowed`），字面量没有可校验的东西
+- **解析一次并绑定 IP**：`checked_addresses()` 的解析结果直接交给 `_PinnedHTTP(S)Connection` 拨号，
+  域名只用于 `Host` 与 TLS SNI；**禁止在校验后让 requests/urllib3 再解析一次**，那是 DNS rebinding
+  的 TOCTOU 缺口
+- **不跟随重定向**：3xx 视为失败（`RemoteError(fatal=True)`），代理通道同样 `allow_redirects=False`
+- **代理仅管理员**：只有 `g.is_admin` 才允许用 `g.cfg.proxies` 兜底，普通用户与匿名一律直连
+- 修改这套规则时同步 `src/tests/test_netguard.py` 与 `SECURITY.md` 里的验证步骤
+
 ### Redis 数据操作
 
 两类存储边界要分清：

@@ -70,6 +70,7 @@ from .tool import (
     what_image,
 )
 from ._compat import text_type, urlsplit, parse_qs
+from . import netguard
 from config import GLOBAL
 from threading import Thread
 from functools import reduce
@@ -606,19 +607,46 @@ class ImgUrlFileStorage(object):
     def __download(self):
         if self._imgurl and url_pat.match(self._imgurl):
             try:
-                resp = try_proxy_request(
-                    self._imgurl,
-                    method="get",
-                    headers=self.Headers,
-                    timeout=30,
-                )
+                resp = self.__fetch()
                 resp.raise_for_status()
             except (RequestException, Exception) as e:
                 logger.debug(e, exc_info=True)
             else:
-                mime = resp.headers["Content-Type"].split("/")[0]
+                mime = (resp.headers.get("Content-Type") or "").split("/")[0]
                 if mime in ("image", "video"):
                     return resp
+
+    def __fetch(self):
+        """获取远程图片
+
+        用户提交的地址只按 ``utils.netguard`` 的规则抓取：只接受域名、
+        解析一次后绑定 IP 连接、不跟随重定向。直连拿不到时，只有管理员
+        才允许用站点配置的代理兜底（走代理时地址由代理解析，本站的校验看不到）。
+        """
+        try:
+            return netguard.safe_get(
+                self._imgurl,
+                headers=self.Headers,
+                timeout=netguard.REMOTE_TIMEOUT,
+                max_bytes=GLOBAL["MaxUpload"] * 1024 * 1024,
+            )
+        except netguard.UrlNotAllowed:
+            #: 地址被策略拒绝（字面量、内网），换任何通道都不允许。
+            raise
+        except netguard.RemoteError as e:
+            if e.fatal or not (getattr(g, "is_admin", False) and g.cfg.proxies):
+                raise
+            logger.info("direct url fetch failed (%s), retrying via proxy", e)
+        resp = try_proxy_request(
+            self._imgurl,
+            method="get",
+            headers=self.Headers,
+            timeout=netguard.REMOTE_TIMEOUT,
+            allow_redirects=False,
+        )
+        if resp.status_code in netguard.REDIRECT_CODES:
+            raise netguard.RemoteError("url redirects are not followed", fatal=True)
+        return resp
 
     @property
     def filename(self):
@@ -636,9 +664,11 @@ class ImgUrlFileStorage(object):
                 return ufn
             ext = what_image(self._imgobj.content)
             if not ext:
-                mType, sType = self._imgobj.headers["Content-Type"].split("/")
+                mType, _, sType = (self._imgobj.headers.get("Content-Type") or "").partition(
+                    "/"
+                )
                 if mType in ("image", "video"):
-                    ext = sType
+                    ext = sType.split(";")[0].strip()
             self._filename = "{}.{}".format(get_current_timestamp(), ext)
         return self._filename
 

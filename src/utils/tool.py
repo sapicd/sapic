@@ -481,6 +481,7 @@ def try_request(
     method="post",
     proxy=None,
     num_retries=1,
+    allow_redirects=True,
     _is_retry=False,
 ) -> requests.Response:
     """
@@ -490,6 +491,7 @@ def try_request(
     :param str method: 请求方法，get、post、put、delete
     :param str proxy: 设置代理服务器
     :param int num_retries: 超时重试次数
+    :param bool allow_redirects: 是否跟随重定向（用户提交的地址必须关掉）
     :param bool _is_retry: 判定为重试请求，这不应该由用户发出
     """
     headers = headers or {}
@@ -514,6 +516,7 @@ def try_request(
             data=data,
             timeout=timeout,
             proxies=proxy if _is_retry is True and proxy else None,
+            allow_redirects=allow_redirects,
         )
     except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
         if num_retries > 0:
@@ -526,6 +529,7 @@ def try_request(
                 method=method,
                 proxy=proxy,
                 num_retries=num_retries - 1,
+                allow_redirects=allow_redirects,
                 _is_retry=True,
             )
         else:

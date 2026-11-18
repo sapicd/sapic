@@ -152,6 +152,14 @@ https://sapicd.com
 
 ![控制台管理员功能](./Snapshot/hook.png)
 
+## 安全
+
+漏洞请私下上报，不要开公开 issue：渠道、支持版本与响应时限见 [SECURITY-cn.md](./SECURITY-cn.md)
+（英文版 [SECURITY.md](./SECURITY.md)）。
+
+`1.16.9` 及更早版本的 URL 上传抓取没有内网地址校验，且 v2 之前的抓取会跟随重定向并接受 IP 字面量，
+请升级到 `1.16.10`（见 [更新日志](./docs/changelog.rst)）。
+
 ## Contributing
 
 感谢您的贡献！
