@@ -100,3 +100,11 @@ curl -sS -X POST https://your.site/api/v2/upload \
 
 v1 版本线的验证步骤相同，只是端点换成 `POST /api/upload`（字段 `picbed=http://…`），
 修复内容见 `1.x` 安全分支及其 `CHANGELOG.md`。
+
+## 致谢
+
+感谢私下上报问题、帮助 sapic 变得更安全的人。经对方同意，致谢会出现在这里与
+[更新日志](./CHANGELOG.md) 中：
+
+- **Gantrel LLC (Jason Sager)** —— 上报 v1 URL 上传抓取缺少内网地址校验、v2 的校验可被 DNS rebinding
+  绕过（2026-11），并审阅了修复方案。

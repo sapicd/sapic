@@ -106,3 +106,11 @@ curl -sS -X POST https://your.site/api/v2/upload \
 
 For the v1 line the same steps apply to `POST /api/upload` (`picbed=http://…`); the fix is described in the
 `1.x` security branch and in `CHANGELOG.md` of that branch.
+
+## Acknowledgements
+
+Thanks to the people who reported issues privately and helped make sapic safer. With their permission they
+are credited here and in the [changelog](./CHANGELOG.md):
+
+- **Gantrel LLC (Jason Sager)** — reported the missing internal-address check in the v1 URL upload fetch and
+  the DNS-rebinding bypass of the v2 check (2026-11), and reviewed the proposed fixes.
