@@ -4,10 +4,10 @@
 环境，官方发布 Windows / macOS / Linux 三端压缩包，解压即用，功能覆盖上传、相册、有效期、
 输出风格与剪贴板复制。
 
-```{note}
-CLI 目前仍按 v1 接口设计：`-u` 指向站点地址后会自动补 `/api/upload`，`-t` 传的是 v1 的 LinkToken。
-**支持 v2 的版本发布后，只需把 `-u` 指向站点根地址、`-t` 换成 PAT**，命令行参数与输出风格保持不变。
-在那之前，v2 站点请先用[快捷上传](usage.md)里的 curl / PicGo 方案。
+```{warning}
+`sapicli` 是**独立项目**，当前发布版仍按 v1 接口设计：`-u` 会自动补 `/api/upload`，`-t` 传的是
+v1 的 LinkToken，因此在 v2 站点上**用不了**。支持 v2 的版本发布后，只需把 `-u` 指向站点根地址、
+`-t` 换成 PAT，参数与输出风格不变。在那之前请用[快捷上传](usage.md)里的 curl / PicGo 方案。
 ```
 
 ## 功能
@@ -83,7 +83,7 @@ optional arguments:
 自定义输出的模块示例：
 
 ```python
-# output.py —— 用 `sapicli ... -s output` 调用
+# output.py -- invoked with `sapicli ... -s output`
 from sys import argv
 from json import loads
 
@@ -103,13 +103,13 @@ macOS 用 `pbcopy`，Linux 需要先装 `xclip`（仅桌面环境）。
 ## 示例
 
 ```bash
-# 上传两张图片，设置相册与描述
-sapicli -u https://your.site -t <Token> -a 相册名 -d "截图" a.png b.png
+# upload two images with an album and a description
+sapicli -u https://your.site -t <Token> -a album-name -d "screenshot" a.png b.png
 
-# 上传后把 Markdown 链接复制到剪贴板
+# copy Markdown links to the clipboard after uploading
 sapicli -u https://your.site -t <Token> -c md screenshot.png
 
-# 临时图片：2 小时后过期
+# temporary images: expire in 2 hours
 sapicli -u https://your.site -t <Token> -e 7200 temp.png
 ```
 
@@ -125,25 +125,7 @@ sapicli -u https://your.site -t <Token> -s typora "$@"
 点「验证图片上传选项」确认可用。不想依赖 CLI 时，也可以用[快捷上传](usage.md)里的
 `curl` 脚本，效果一致。
 
-## Windows 右键菜单
+## 右键菜单
 
-用 [OpenWithPlusPlus](https://github.com/stax76/OpenWithPlusPlus)：安装后 **add** 一条菜单项：
-
-| 项 | 值 |
-| --- | --- |
-| Name | `Upload to sapic` |
-| File Type | `%image%` |
-| Path | `sapicli.exe` 的绝对路径 |
-| Arguments | `-u https://your.site -t <Token> -c md "$@"` |
-| 其他 | 勾选 **Run hidden** |
-
-## macOS 右键菜单
-
-用系统自带的「自动操作」（Automator）新建 **快速操作**：「工作流程收到当前」选**图像文件**、
-位于**访达**，拖入 **运行 Shell 脚本**，传递输入选**作为自变量**，脚本内容：
-
-```bash
-sapicli -u https://your.site -t <Token> -c md "$@"
-```
-
-保存在「快速操作」里之后，访达中右键图片即可上传，Markdown 链接会进剪贴板。
+Windows 与 macOS 的右键上传菜单（含 sapicli 与免安装的 `.cmd` 脚本两种方式）统一整理在
+[快捷上传](usage.md)的「Windows 右键菜单」「macOS 右键菜单」两节，这里不再重复。

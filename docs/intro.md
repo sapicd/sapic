@@ -40,4 +40,5 @@ sapic v2 与 v1 最大的区别是**前后端分离**与**数据落库**：
   PicGo / uPic / Typora 等按[快捷上传](usage.md) 指向 `/api/v2/upload` 即可。
 - 前端多语言（界面固定中文，后端消息固定英文、由前端映射）。
 
-架构细节见 `ARCH.md`，从 v1 迁移数据见 `DEPLOY.md` 第 7 节。
+想先跑起来看效果见[快速开始](quickstart.md)；架构细节见 `ARCH.md`，从 v1 迁移数据见
+[从 v1 迁移数据](migrate-v1.md)。

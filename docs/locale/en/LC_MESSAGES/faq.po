@@ -1,0 +1,374 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, staugur
+# This file is distributed under the same license as the sapic package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-18 20:06+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../faq.md:1
+msgid "常见问题"
+msgstr "Troubleshooting"
+
+#: ../../faq.md:3
+msgid "按症状归类的排查表。先做这三件事，多数问题能自己定位："
+msgstr ""
+"Symptom-first troubleshooting tables. Do these three things first — most "
+"problems identify themselves:"
+
+#: ../../faq.md:5
+msgid "`GET /api/v2/health`：返回 503 就是数据库不通（DSN 写错、库没起、账号无权限）。"
+msgstr ""
+"`GET /api/v2/health`: a 503 means the database is unreachable (bad DSN, "
+"database not running, no permission for the account)."
+
+#: ../../faq.md:6
+msgid "看响应头 / 响应体里的 `request_id`，在服务端日志里搜同一个值，能拿到完整堆栈。"
+msgstr ""
+"Take the `request_id` from the response headers or body and search the "
+"server logs for it; that gives you the full stack trace."
+
+#: ../../faq.md:7
+msgid "后台 `/admin/setting` 里的开关与上限，往往就是「为什么不行」的答案。"
+msgstr ""
+"The switches and limits under `/admin/setting` in the admin are often the "
+"answer to why something is refused."
+
+#: ../../faq.md:9
+msgid "部署与启动"
+msgstr "Deployment and startup"
+
+#: ../../faq.md
+msgid "现象"
+msgstr "Symptom"
+
+#: ../../faq.md
+msgid "原因与处理"
+msgstr "Cause and fix"
+
+#: ../../faq.md
+msgid "启动报 `STORAGE_DIR must be an absolute path`"
+msgstr "Startup fails with `STORAGE_DIR must be an absolute path`"
+
+#: ../../faq.md
+msgid "配置里写了相对路径，改成绝对路径（容器内是 `/app/server/data/upload`）"
+msgstr ""
+"The config holds a relative path; use an absolute one (inside the container"
+" that is `/app/server/data/upload`)"
+
+#: ../../faq.md
+msgid "`/api/v2/health` 返回 503"
+msgstr "`/api/v2/health` returns 503"
+
+#: ../../faq.md
+msgid "数据库连不上：核对 `sapic_db_url`、库是否启动、账号权限与库名"
+msgstr ""
+"The database is unreachable: check `sapic_db_url`, whether the database is "
+"running, and the account permissions and database name"
+
+#: ../../faq.md
+msgid "前端刷新页面 404"
+msgstr "Refreshing a page returns 404"
+
+#: ../../faq.md
+msgid "nginx 缺 SPA 回退：`try_files $uri $uri/ /index.html`"
+msgstr "nginx is missing the SPA fallback: `try_files $uri $uri/ /index.html`"
+
+#: ../../faq.md
+msgid "图片直链、邮件里的链接是内网地址"
+msgstr "Image direct links and links in emails point at an internal address"
+
+#: ../../faq.md
+msgid "没设 `sapic_external_base_url`，反代/网关后面必须设成对外地址"
+msgstr ""
+"`sapic_external_base_url` is not set; behind a reverse proxy or gateway it "
+"must be the public address"
+
+#: ../../faq.md
+msgid "静态资源 404 / 拿到旧页面"
+msgstr "Static assets 404, or you get the old page"
+
+#: ../../faq.md
+msgid "`index.html` 被长缓存了；应 `Cache-Control: no-store`，只有 `/assets/` 可以长缓存"
+msgstr ""
+"`index.html` is cached for too long: it must be `Cache-Control: no-store`, "
+"only `/assets/` may be cached long"
+
+#: ../../faq.md
+msgid "容器重建后数据没了"
+msgstr "Data is gone after recreating the container"
+
+#: ../../faq.md
+msgid "没挂 `/app/server/data`；库文件、上传文件与钩子包都在这里"
+msgstr ""
+"`/app/server/data` is not mounted; the database, uploads and hook packages "
+"all live there"
+
+#: ../../faq.md:20
+msgid "登录与会话"
+msgstr "Login and sessions"
+
+#: ../../faq.md
+msgid "登录成功但刷新就掉线"
+msgstr "Login succeeds but the session is lost on refresh"
+
+#: ../../faq.md
+msgid "反代没传 `X-Forwarded-Proto` 或没开 `sapic_proxyfix=1`，Cookie 的 `Secure` 与站点协议不一致"
+msgstr ""
+"The reverse proxy does not pass `X-Forwarded-Proto`, or `sapic_proxyfix=1` "
+"is off: the cookie `Secure` flag no longer matches the site scheme"
+
+#: ../../faq.md
+msgid "OIDC 回调 400 `invalid oidc state`"
+msgstr "OIDC callback returns 400 `invalid oidc state`"
+
+#: ../../faq.md
+msgid "回调域名/协议与发起时不一致：检查 `sapic_proxyfix`、外层 TLS 透传与 Passport 侧登记的回调地址"
+msgstr ""
+"The callback domain or scheme differs from the one used to start the flow: "
+"check `sapic_proxyfix`, TLS passthrough on the outer layer and the callback"
+" URL registered on the Passport side"
+
+#: ../../faq.md
+msgid "登录提示账号未激活"
+msgstr "Login says the account is not active"
+
+#: ../../faq.md
+msgid "只有 `status=1` 的账号能登录：待审核 / 已拒绝 / 已禁用都不行，管理员在 `/admin/users` 处理"
+msgstr ""
+"Only accounts with `status=1` can sign in: pending, rejected and disabled "
+"accounts cannot. An administrator handles them under `/admin/users`"
+
+#: ../../faq.md
+msgid "关闭密码登录后进不去了"
+msgstr "Locked out after turning off password login"
+
+#: ../../faq.md
+msgid "`password_login` 关掉前要先把管理员账号绑定 OIDC；已锁死则直接改库里的站点设置"
+msgstr ""
+"Bind the administrator account to OIDC before disabling `password_login`; "
+"if you are already locked out, edit the site settings in the database "
+"directly"
+
+#: ../../faq.md
+msgid "`invalid csrf token`"
+msgstr "`invalid csrf token`"
+
+#: ../../faq.md
+msgid "拿浏览器会话当令牌用了；客户端一律用 PAT"
+msgstr "A browser session was used as a token; clients always use a PAT"
+
+#: ../../faq.md:30
+msgid "上传"
+msgstr "Upload"
+
+#: ../../faq.md
+msgid "413 / `file exceeds N MB`"
+msgstr "413 / `file exceeds N MB`"
+
+#: ../../faq.md
+msgid ""
+"三层取最小值：nginx `client_max_body_size`、`sapic_maxupload`、站点 "
+"`upload_image_max_size` / `upload_video_max_size`，改大时一起改"
+msgstr ""
+"Three layers take the minimum: nginx `client_max_body_size`, "
+"`sapic_maxupload` and the site `upload_image_max_size` / "
+"`upload_video_max_size` — raise them together"
+
+#: ../../faq.md
+msgid "`file type is not allowed`"
+msgstr "`file type is not allowed`"
+
+#: ../../faq.md
+msgid "后台「上传后缀白名单」`upload_allowed_ext` 没放开该后缀；视频还要开 `allow_video`"
+msgstr ""
+"The upload extension allowlist `upload_allowed_ext` does not include that "
+"extension; video also needs `allow_video`"
+
+#: ../../faq.md
+#, python-brace-format
+msgid "`{\"code\":\"FORBIDDEN\",\"message\":\"anonymous upload is disabled\"}`"
+msgstr "`{\"code\":\"FORBIDDEN\",\"message\":\"anonymous upload is disabled\"}`"
+
+#: ../../faq.md
+msgid "请求没带令牌，或站点关闭了匿名上传"
+msgstr "The request has no token, or the site has anonymous uploads disabled"
+
+#: ../../faq.md
+#, python-brace-format
+msgid "`{\"code\":\"UNAUTHORIZED\",\"message\":\"invalid token\"}`"
+msgstr "`{\"code\":\"UNAUTHORIZED\",\"message\":\"invalid token\"}`"
+
+#: ../../faq.md
+msgid "令牌填错、已撤销或已过期，重新建一枚"
+msgstr "The token is wrong, revoked or expired; create a new one"
+
+#: ../../faq.md
+msgid "`token scope does not allow upload`"
+msgstr "`token scope does not allow upload`"
+
+#: ../../faq.md
+msgid "令牌没勾「上传图片」"
+msgstr "The token does not have the upload scope"
+
+#: ../../faq.md
+msgid "客户端报「找不到图片地址」"
+msgstr "The client says it cannot find the image URL"
+
+#: ../../faq.md
+msgid "JSON 路径填错：v2 信封是 `data.image.src`，不是 `src`"
+msgstr "The JSON path is wrong: the v2 envelope has `data.image.src`, not `src`"
+
+#: ../../faq.md
+msgid "URL 上传报 `remote fetch failed`"
+msgstr "URL upload reports `remote fetch failed`"
+
+#: ../../faq.md
+msgid "服务端抓取只接受域名（IP 字面量直接拒）、不跟随重定向；内网地址会被拦，管理员才可用站点代理兜底"
+msgstr ""
+"Server-side fetching accepts domains only (IP literals are rejected) and "
+"does not follow redirects; private addresses are blocked, and only "
+"administrators can fall back to the site proxy"
+
+#: ../../faq.md
+msgid "上传成功但状态码不是 200"
+msgstr "The upload succeeded but the response status is not 200"
+
+#: ../../faq.md
+msgid "上传成功返回 **201**；有的客户端把 201 当失败，按 `code: \"OK\"` 判断"
+msgstr ""
+"A successful upload returns **201**; some clients treat 201 as a failure — "
+"check `code: \"OK\"` instead"
+
+#: ../../faq.md:43
+msgid "图片访问"
+msgstr "Image access"
+
+#: ../../faq.md
+msgid "访问 `/raw/xxx` 返回 404"
+msgstr "`/raw/xxx` returns 404"
+
+#: ../../faq.md
+msgid "图片已删除/已过期，或副本已不在对应后端（查 `image_backends.state`）"
+msgstr ""
+"The image was deleted or expired, or the replica is no longer on that "
+"backend (check `image_backends.state`)"
+
+#: ../../faq.md
+msgid "上传成功但链接打不开"
+msgstr "The upload succeeded but the link does not open"
+
+#: ../../faq.md
+msgid "图片在私有相册或私有读的后端：需登录后经 `/raw/<sha>` 访问，直链不对外"
+msgstr ""
+"The image is in a private album or on a private-read backend: it needs a "
+"login and is served through `/raw/<sha>`, never as a direct link"
+
+#: ../../faq.md
+msgid "自己站点能看、别人引用时 403"
+msgstr "It works on your own site but third-party embeds get 403"
+
+#: ../../faq.md
+msgid "该图开了 Referer 校验；把引用方域名加进「允许引用的域名」，或关掉该开关"
+msgstr ""
+"Referrer checking is enabled for that image; add the embedding domain to "
+"the allowed referrers, or turn the switch off"
+
+#: ../../faq.md
+msgid "管理员在图库里看不到别人的公开图"
+msgstr "Administrators cannot see other users public images in the library"
+
+#: ../../faq.md
+msgid "个人图库只含自己的与共享的；看全站要显式切「全站」视图（`scope=all`，只有公开图）"
+msgstr ""
+"The personal library only contains your own and shared images; switch to "
+"the site-wide view explicitly (`scope=all`, public images only)"
+
+#: ../../faq.md:52
+msgid "后台与扩展"
+msgstr "Admin and extensions"
+
+#: ../../faq.md
+msgid "后台看不到钩子"
+msgstr "A hook does not show up in the admin"
+
+#: ../../faq.md
+msgid ""
+"模块没被登记或 import 失败：`HOOK_PKG_STORAGE_DIR` 只加入 "
+"`sys.path`、**不扫描目录**，要在钩子页登记模块名；导入异常看日志里的 traceback"
+msgstr ""
+"The module is not registered, or the import failed: `HOOK_PKG_STORAGE_DIR` "
+"is only added to `sys.path` and is **never scanned**, so register the "
+"module name on the hooks page; look for the traceback in the logs"
+
+#: ../../faq.md
+msgid "后台安装扩展报 `HOOK_PKG_STORAGE_DIR is not configured`"
+msgstr "Installing an extension reports `HOOK_PKG_STORAGE_DIR is not configured`"
+
+#: ../../faq.md
+msgid "该项被置空，填回目录（默认 `server/data/hooks`）并确保运行用户可写"
+msgstr ""
+"The option is empty; point it back at a directory (default "
+"`server/data/hooks`) and make sure the runtime user can write there"
+
+#: ../../faq.md
+msgid "改了钩子代码没生效"
+msgstr "Hook code changes have no effect"
+
+#: ../../faq.md
+msgid "调一次重载（`POST /api/v2/hooks/reload` 或钩子页的「重载」），不用重启进程"
+msgstr ""
+"Trigger a reload (`POST /api/v2/hooks/reload` or the reload button on the "
+"hooks page); no process restart needed"
+
+#: ../../faq.md
+msgid "钩子市场列表加载失败"
+msgstr "The hook market listing fails to load"
+
+#: ../../faq.md
+msgid "出网被拦或 GitHub 不可达；用 `sapic_hookmarketurl` 指向镜像，或在市场页「手动安装」直接填包名"
+msgstr ""
+"Outbound traffic is blocked or GitHub is unreachable; point "
+"`sapic_hookmarketurl` at a mirror, or use manual install and type the "
+"package name"
+
+#: ../../faq.md
+msgid "后台看不到「可更新」"
+msgstr "No update badge in the admin"
+
+#: ../../faq.md
+msgid "`sapic_updatecheckurl` 被置空（纯内网部署），或上游接口不可达"
+msgstr ""
+"`sapic_updatecheckurl` is empty (internal-only deployment), or the upstream"
+" feed is unreachable"
+
+#: ../../faq.md
+msgid "管理员接口一律 404"
+msgstr "Every admin endpoint returns 404"
+
+#: ../../faq.md
+msgid "用的是普通账号；后台路由对非管理员渲染 404，不提示无权限"
+msgstr ""
+"You are signed in as a normal account; admin routes render 404 for non-"
+"administrators instead of saying forbidden"
+
+#: ../../faq.md:63
+msgid "写钩子时遇到的具体问题（插槽不出现、按钮没反应、配置存不上）见 [钩子基础契约](extend/contract.md)；本页只管「服务本身不对劲」。"
+msgstr ""
+"Hook-specific problems (a slot does not render, a button does nothing, "
+"config will not save) are in [Hook basics](extend/contract.md); this page "
+"is about the service itself misbehaving."
+

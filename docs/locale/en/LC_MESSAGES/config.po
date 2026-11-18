@@ -1,0 +1,446 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, staugur
+# This file is distributed under the same license as the sapic package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-18 20:06+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../config.md:1
+msgid "配置"
+msgstr "Configuration"
+
+#: ../../config.md:3
+msgid "配置分两层：**进程级配置**决定服务怎么跑，**站点设置**决定业务行为。"
+msgstr ""
+"Configuration has two layers: **process-level config** decides how the "
+"service runs, **site settings** decide business behaviour."
+
+#: ../../config.md:5
+msgid "进程级配置"
+msgstr "Process-level configuration"
+
+#: ../../config.md:7
+msgid ""
+"来源优先级：类默认值 → `server/.cfg`（`k=v` 每行一条）→ 环境变量，最后统一校验 "
+"（`sapic/basis/conf.py`）。环境变量统一前缀 `sapic_`。"
+msgstr ""
+"Precedence: class defaults → `server/.cfg` (one `k=v` per line) → "
+"environment variables, then validated as a whole (`sapic/basis/conf.py`). "
+"Every environment variable uses the `sapic_` prefix."
+
+#: ../../config.md
+msgid "配置项"
+msgstr "Option"
+
+#: ../../config.md
+msgid "环境变量"
+msgstr "Environment variable"
+
+#: ../../config.md
+msgid "默认值"
+msgstr "Default"
+
+#: ../../config.md
+msgid "说明"
+msgstr "Description"
+
+#: ../../config.md
+msgid "`ENV`"
+msgstr "`ENV`"
+
+#: ../../config.md
+msgid "`sapic_env`"
+msgstr "`sapic_env`"
+
+#: ../../config.md
+msgid "`production`"
+msgstr "`production`"
+
+#: ../../config.md
+msgid "`dev` 启用开发默认值（DEBUG、内置密钥）"
+msgstr "`dev` enables the development defaults (DEBUG, built-in secret)"
+
+#: ../../config.md
+msgid "`SECRET_KEY`"
+msgstr "`SECRET_KEY`"
+
+#: ../../config.md
+msgid "`sapic_secretkey`"
+msgstr "`sapic_secretkey`"
+
+#: ../../config.md
+msgid "内置随机串"
+msgstr "Built-in random string"
+
+#: ../../config.md
+msgid "Cookie 签名密钥，≥ 14 字节；可选，空值用默认（公开串，公网多用户建议替换）"
+msgstr ""
+"Cookie signing key, at least 14 bytes; optional, an empty value uses the "
+"default (a public string — replace it on a public multi-user site)"
+
+#: ../../config.md
+msgid "`DATABASE_URL`"
+msgstr "`DATABASE_URL`"
+
+#: ../../config.md
+msgid "`sapic_db_url`"
+msgstr "`sapic_db_url`"
+
+#: ../../config.md
+msgid "`sqlite:///<server>/data/sapic.db`"
+msgstr "`sqlite:///<server>/data/sapic.db`"
+
+#: ../../config.md
+msgid "`postgresql://` / `mysql://` / `sqlite:///`"
+msgstr "`postgresql://` / `mysql://` / `sqlite:///`"
+
+#: ../../config.md
+msgid "`MAX_UPLOAD`"
+msgstr "`MAX_UPLOAD`"
+
+#: ../../config.md
+msgid "`sapic_maxupload`"
+msgstr "`sapic_maxupload`"
+
+#: ../../config.md
+msgid "`25`"
+msgstr "`25`"
+
+#: ../../config.md
+msgid "整个请求的硬上限（MB）→ `MAX_CONTENT_LENGTH`"
+msgstr "Hard limit for the whole request (MB) → `MAX_CONTENT_LENGTH`"
+
+#: ../../config.md
+msgid "`STORAGE_DIR`"
+msgstr "`STORAGE_DIR`"
+
+#: ../../config.md
+msgid "`sapic_storagedir`"
+msgstr "`sapic_storagedir`"
+
+#: ../../config.md
+msgid "`<server>/data/upload`"
+msgstr "`<server>/data/upload`"
+
+#: ../../config.md
+msgid "本地存储根目录，相对路径按 `server/` 归一"
+msgstr "Local storage root; relative paths are resolved against `server/`"
+
+#: ../../config.md
+msgid "`SESSION_TTL`"
+msgstr "`SESSION_TTL`"
+
+#: ../../config.md
+msgid "`sapic_session_ttl`"
+msgstr "`sapic_session_ttl`"
+
+#: ../../config.md
+msgid "`604800`"
+msgstr "`604800`"
+
+#: ../../config.md
+msgid "会话有效期（秒），最小 60"
+msgstr "Session lifetime in seconds, minimum 60"
+
+#: ../../config.md
+msgid "`PROXY_FIX`"
+msgstr "`PROXY_FIX`"
+
+#: ../../config.md
+msgid "`sapic_proxyfix`"
+msgstr "`sapic_proxyfix`"
+
+#: ../../config.md
+msgid "`false`"
+msgstr "`false`"
+
+#: ../../config.md
+msgid "信任 `X-Forwarded-*`"
+msgstr "Trust `X-Forwarded-*`"
+
+#: ../../config.md
+msgid "`LOG_LEVEL`"
+msgstr "`LOG_LEVEL`"
+
+#: ../../config.md
+msgid "`sapic_loglevel`"
+msgstr "`sapic_loglevel`"
+
+#: ../../config.md
+msgid "`INFO`"
+msgstr "`INFO`"
+
+#: ../../config.md
+msgid "`DEBUG` / `INFO` / `WARNING` / `ERROR`"
+msgstr "`DEBUG` / `INFO` / `WARNING` / `ERROR`"
+
+#: ../../config.md
+msgid "`HOOK_PKG_STORAGE_DIR`"
+msgstr "`HOOK_PKG_STORAGE_DIR`"
+
+#: ../../config.md
+msgid "`sapic_hookpkgstoragedir`"
+msgstr "`sapic_hookpkgstoragedir`"
+
+#: ../../config.md
+msgid "`data/hooks`"
+msgstr "`data/hooks`"
+
+#: ../../config.md
+msgid "第三方钩子包目录（`pip install --target` 目标），置空关闭后台安装"
+msgstr ""
+"Third-party hook package directory (the `pip install --target` target); "
+"empty disables installing from the admin"
+
+#: ../../config.md
+msgid "`HOOK_MARKET_URL`"
+msgstr "`HOOK_MARKET_URL`"
+
+#: ../../config.md
+msgid "`sapic_hookmarketurl`"
+msgstr "`sapic_hookmarketurl`"
+
+#: ../../config.md
+msgid "官方 list.json"
+msgstr "Official `list.json`"
+
+#: ../../config.md
+msgid "钩子市场数据源，可换镜像"
+msgstr "Hook market feed; point it at a mirror if needed"
+
+#: ../../config.md
+msgid "`UPDATE_CHECK_URL`"
+msgstr "`UPDATE_CHECK_URL`"
+
+#: ../../config.md
+msgid "`sapic_updatecheckurl`"
+msgstr "`sapic_updatecheckurl`"
+
+#: ../../config.md
+msgid "官方发布接口"
+msgstr "Official release feed"
+
+#: ../../config.md
+msgid "版本检测数据源，置空即关闭（内网部署）"
+msgstr "Update-check feed; empty disables it (internal-only deployments)"
+
+#: ../../config.md
+msgid "`EXTERNAL_BASE_URL`"
+msgstr "`EXTERNAL_BASE_URL`"
+
+#: ../../config.md
+msgid "`sapic_external_base_url`"
+msgstr "`sapic_external_base_url`"
+
+#: ../../config.md
+msgid "空"
+msgstr "Empty"
+
+#: ../../config.md
+msgid "给图片直链加前缀，空表示相对地址"
+msgstr "Prefix for image direct links; empty means relative URLs"
+
+#: ../../config.md:25
+msgid "排查环境变量是否写对时，直接打印最终生效的配置："
+msgstr ""
+"To check whether your environment variables are right, print the effective "
+"config:"
+
+#: ../../config.md:31
+msgid ""
+"本地没有 `server/.cfg` 也能直接跑（默认 SQLite + 内置密钥）；想切换到开发默认值 （DEBUG、DEBUG 日志）时在命令前加"
+" `sapic_env=dev`。"
+msgstr ""
+"Everything runs without a `server/.cfg` (SQLite + built-in secret by "
+"default); to switch to the development defaults (DEBUG and DEBUG logs) "
+"prefix the command with `sapic_env=dev`."
+
+#: ../../config.md:34
+msgid "站点设置"
+msgstr "Site settings"
+
+#: ../../config.md:36
+msgid ""
+"存在 `settings` 表，默认值与校验集中在 `sapic/libs/settings.py` 的 `DEFAULTS`， "
+"后台「站点设置」页（`PUT /api/v2/settings`，仅管理员）维护，可写键与类型校验在 "
+"`sapic/views/settings.py`。前台通过 `GET /api/v2/site` 读取展示字段。"
+msgstr ""
+"These live in the `settings` table; defaults and validation are centralised"
+" in `DEFAULTS` in `sapic/libs/settings.py`, maintained on the admin site-"
+"settings page (`PUT /api/v2/settings`, administrators only), with the "
+"writable keys and type checks in `sapic/views/settings.py`. The front end "
+"reads the display fields through `GET /api/v2/site`."
+
+#: ../../config.md
+msgid "分组"
+msgstr "Group"
+
+#: ../../config.md
+msgid "键"
+msgstr "Keys"
+
+#: ../../config.md
+msgid "站点展示"
+msgstr "Site display"
+
+#: ../../config.md
+msgid "`site_name`、`site_keywords`、`site_description`、`site_logo`、`site_background`、`site_background_mobile`、`site_background_opacity`、`site_icp`、`site_footer`、`site_announcement`、`login_notice`"
+msgstr "`site_name`、`site_keywords`、`site_description`、`site_logo`、`site_background`、`site_background_mobile`、`site_background_opacity`、`site_icp`、`site_footer`、`site_announcement`、`login_notice`"
+
+#: ../../config.md
+msgid "上传"
+msgstr "Upload"
+
+#: ../../config.md
+msgid ""
+"`allow_anonymous_upload`、`upload_notice`、`upload_allowed_ext`、`upload_image_max_size`、`upload_video_max_size`、`upload_count_limit`、`allow_video`、`upload_fetch_proxy`（URL"
+" 抓取代理，见下）"
+msgstr ""
+"`allow_anonymous_upload`, `upload_notice`, `upload_allowed_ext`, "
+"`upload_image_max_size`, `upload_video_max_size`, `upload_count_limit`, "
+"`allow_video`, `upload_fetch_proxy` (URL fetch proxy, see below)"
+
+#: ../../config.md
+msgid "有效期"
+msgstr "Expiry"
+
+#: ../../config.md
+msgid "`image_expire_default_days`、`image_expire_max_days`（0 表示不启用规则）"
+msgstr "`image_expire_default_days`, `image_expire_max_days` (0 disables the rule)"
+
+#: ../../config.md
+msgid "存储"
+msgstr "Storage"
+
+#: ../../config.md
+msgid "`storage_replica`（多副本）、`allow_user_backends`、`user_backend_limit`"
+msgstr ""
+"`storage_replica` (multiple replicas), `allow_user_backends`, "
+"`user_backend_limit`"
+
+#: ../../config.md
+msgid "注册与账号"
+msgstr "Registration and accounts"
+
+#: ../../config.md
+msgid "`allow_register`、`register_review`、`password_login`、`forbidden_username`、`default_album_visibility`"
+msgstr ""
+"`allow_register`, `register_review`, `password_login`, "
+"`forbidden_username`, `default_album_visibility`"
+
+#: ../../config.md
+msgid "广场"
+msgstr "Plaza"
+
+#: ../../config.md
+msgid "`plaza_enabled`（默认关）"
+msgstr "`plaza_enabled` (off by default)"
+
+#: ../../config.md
+msgid "邮件"
+msgstr "Email"
+
+#: ../../config.md
+#, python-brace-format
+msgid ""
+"`smtp`（`{host, port, user, password, from, tls}`，`tls` 表示 STARTTLS；端口 "
+"465/994 自动走隐式 SSL，不要勾 `tls`）"
+msgstr ""
+"`smtp` (`{host, port, user, password, from, tls}`; `tls` means STARTTLS. "
+"Ports 465/994 use implicit SSL — do not tick `tls`)"
+
+#: ../../config.md
+msgid "钩子"
+msgstr "Hooks"
+
+#: ../../config.md
+msgid "`hooks_state`、`hooks_config`、`hooks_imported`（由钩子接口写入，不走键白名单）"
+msgstr ""
+"`hooks_state`, `hooks_config`, `hooks_imported` (written by the hooks API, "
+"outside the key allowlist)"
+
+#: ../../config.md:51
+msgid "几个容易踩的点："
+msgstr "A few gotchas:"
+
+#: ../../config.md:53
+msgid ""
+"`upload_fetch_proxy` 是**兜底**代理：直连拿到可用图片就不碰它，只有这一次直连「没拿到可用响应」 才用它重试一次——包括超时 "
+"/ 连接错误 / 本地解析不了，以及被反爬或地区限制时边缘节点直接回的 4xx/5xx、还有 200 但内容是 HTML 的拦截页。填一个 "
+"`http://` 或 `https://` 代理地址，需要认证写 `http://user:password@host:port`；socks "
+"不支持（`urllib` 只认 http/https）。 目前只有 URL 上传的服务端抓取会用到它，存储后端的内部地址永远直连。 "
+"两次都失败时错误消息带原因（如 `remote fetch failed: http 403` / `... : network error`）， "
+"服务端日志里还有一行 `direct url fetch failed (...), retrying via proxy` 说明确实兜底了。"
+msgstr ""
+"`upload_fetch_proxy` is a **fallback** proxy: a direct connection that "
+"returns a usable image is never routed through it, and only a direct "
+"attempt with no usable response is retried through it once — timeouts, "
+"connection errors and local resolution failures, plus 4xx/5xx returned by "
+"edge nodes because of anti-scraping or regional limits, and 200 responses "
+"whose body is an HTML block page. Point it at an `http://` or `https://` "
+"proxy; with authentication use `http://user:password@host:port`. Socks is "
+"not supported (`urllib` only knows http/https). Today only server-side "
+"fetching for URL uploads uses it; internal addresses of storage backends "
+"always connect directly. When both attempts fail the message carries the "
+"reason (e.g. `remote fetch failed: http 403` / `... : network error`), and "
+"the server log has a `direct url fetch failed (...), retrying via proxy` "
+"line confirming the fallback."
+
+#: ../../config.md:61
+msgid "`upload_count_limit` 是**单次批次**的前端队列限制，后端每次请求只处理一个文件， 想限制「每天能传多少」要另立语义。"
+msgstr ""
+"`upload_count_limit` is a **per-batch** limit on the front-end queue; the "
+"backend handles one file per request, so limiting e.g. uploads per day "
+"needs a different concept."
+
+#: ../../config.md:63
+msgid "`image_expire_max_days` 一旦大于 0，就不允许再创建永久图片，未指定时按上限处理。"
+msgstr ""
+"Once `image_expire_max_days` is greater than 0, permanent images can no "
+"longer be created; an unspecified expiry is clamped to the limit."
+
+#: ../../config.md:64
+msgid "`allow_video` 关掉后视频后缀直接拒收；后缀白名单仍是第一道门。"
+msgstr ""
+"With `allow_video` off, video extensions are rejected outright; the "
+"extension allowlist remains the first gate."
+
+#: ../../config.md:65
+msgid "`password_login` 关掉后本地登录与注册接口直接 403，只剩统一登录入口。"
+msgstr ""
+"With `password_login` off, the local login and registration endpoints "
+"return 403 and only single sign-on remains."
+
+#: ../../config.md:66
+msgid ""
+"`site_announcement`（全站公告）只解析三种排版：`**加粗**`、`[文字](https://链接)`、 "
+"空行分段（单换行也换行）。链接只认 `http(s)://` 与 `mailto:`，其余写法按原文显示； 它是纯文本语法，**不执行任何 HTML "
+"标签**（前端用节点构造渲染，没有 `v-html`）。"
+msgstr ""
+"`site_announcement` (the global announcement) understands only three "
+"things: `**bold**`, `[text](https://link)` and blank-line paragraphs "
+"(single newlines also break lines). Links only accept `http(s)://` and "
+"`mailto:`; anything else is shown verbatim. It is plain-text syntax and "
+"**never executes HTML tags** (the front end builds nodes, there is no "
+"`v-html`)."
+
+#: ../../config.md:69
+msgid "新增配置项必须同时接进「后台表单 + 实际生效点」，不要留下只存不用的开关。"
+msgstr ""
+"A new config option must be wired into both the admin form and the code "
+"path that uses it — no switches that only store a value."
+

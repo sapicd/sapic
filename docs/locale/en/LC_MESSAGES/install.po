@@ -1,0 +1,201 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, staugur
+# This file is distributed under the same license as the sapic package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-18 20:06+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../install.md:1
+msgid "安装与部署"
+msgstr "Installation"
+
+#: ../../install.md:3
+msgid ""
+"本文只讲「怎么把 sapic 跑起来」：环境要求、源码运行、生产入口与升级方式。 "
+"只想尽快跑起来看效果，走[快速开始](quickstart.md)更短。 生产部署的完整命令（gunicorn + systemd + "
+"nginx、容器与编排、数据库、备份回滚）见 [部署与运维](deploy.md)，配置项的含义见[配置](config.md)。"
+msgstr ""
+"This page only covers getting sapic running: requirements, running from "
+"source, the production entry point and upgrades. If you just want it up "
+"quickly, [Quick start](quickstart.md) is shorter. The full production "
+"commands (gunicorn + systemd + nginx, containers and orchestration, "
+"database, backup and rollback) are in [Deployment and "
+"operations](deploy.md); what each option means is in "
+"[Configuration](config.md)."
+
+#: ../../install.md:8
+msgid "环境要求"
+msgstr "Requirements"
+
+#: ../../install.md
+msgid "组件"
+msgstr "Component"
+
+#: ../../install.md
+msgid "要求"
+msgstr "Requirement"
+
+#: ../../install.md
+msgid "说明"
+msgstr "Notes"
+
+#: ../../install.md
+msgid "Python"
+msgstr "Python"
+
+#: ../../install.md
+msgid "3.10+"
+msgstr "3.10+"
+
+#: ../../install.md
+msgid "后端 `server/`，包名 `sapic`（纯本地包，不做 `pip install`）"
+msgstr ""
+"Backend lives in `server/` (package `sapic`, a local package — never `pip "
+"install` it)"
+
+#: ../../install.md
+msgid "Node.js"
+msgstr "Node.js"
+
+#: ../../install.md
+msgid "23+、pnpm 8"
+msgstr "23+, pnpm 8"
+
+#: ../../install.md
+msgid "只在构建 / 开发前端时需要"
+msgstr "Only needed to build or develop the front end"
+
+#: ../../install.md
+msgid "数据库"
+msgstr "Database"
+
+#: ../../install.md
+msgid "PostgreSQL / MySQL / SQLite"
+msgstr "PostgreSQL / MySQL / SQLite"
+
+#: ../../install.md
+msgid "由 `sapic_db_url` 指定，默认 SQLite（`server/data/sapic.db`）"
+msgstr "Set by `sapic_db_url`; defaults to SQLite (`server/data/sapic.db`)"
+
+#: ../../install.md:16
+msgid ""
+"依赖由 `server/requirements/` 管理：`base.txt`（运行时，含内置钩子用到的 requests / Pillow / "
+"七牛 / 又拍云 SDK）、`dev.txt`（base + 测试）、`prod.txt`（base + gunicorn + gevent）。 "
+"第三方钩子是独立的 pip 包，自带自己的依赖。"
+msgstr ""
+"Dependencies are managed under `server/requirements/`: `base.txt` (runtime,"
+" including the requests / Pillow / Qiniu / Upyun SDKs used by the built-in "
+"hooks), `dev.txt` (base + tests) and `prod.txt` (base + gunicorn + gevent)."
+" Third-party hooks are separate pip packages with their own dependencies."
+
+#: ../../install.md:20
+msgid "源码运行"
+msgstr "Run from source"
+
+#: ../../install.md:37
+msgid "前端开发服务器单独启动，`/api` 与 `/raw/` 会代理到 9514："
+msgstr ""
+"Start the front-end dev server separately; it proxies `/api` and `/raw/` to"
+" 9514:"
+
+#: ../../install.md:44
+msgid ""
+"以上都是真实命令，容器或没有 `make` 的机器可以直接照做。仓库根的 `Makefile` 只是本地开发的 便利封装（`make setup` /"
+" `make dev` / `make serve` 等与它们一一对应），**部署脚本里不要依赖它**。"
+msgstr ""
+"All of the above are real commands — containers and machines without `make`"
+" can copy them verbatim. The repository-root `Makefile` is only a local-"
+"development wrapper (`make setup` / `make dev` / `make serve` map to them "
+"one by one); **do not depend on it in deployment scripts**."
+
+#: ../../install.md:48
+msgid "生产运行"
+msgstr "Running in production"
+
+#: ../../install.md:50
+msgid "装上生产依赖后用 gunicorn 起后端（worker 数按 CPU 核数调）："
+msgstr ""
+"Install the production dependencies and start the backend with gunicorn "
+"(tune the worker count to your CPU cores):"
+
+#: ../../install.md:57
+msgid ""
+"systemd 单元、nginx 站点（含 `sapic_proxyfix` 与 TLS 透传）、容器与集群编排、数据库选择见 "
+"[部署与运维](deploy.md)。"
+msgstr ""
+"See [Deployment and operations](deploy.md) for the systemd unit, the nginx "
+"site (including `sapic_proxyfix` and TLS passthrough), containers and "
+"orchestration, and database choices."
+
+#: ../../install.md:61
+msgid ""
+"`sapic_secretkey` **不是必填项**：内置默认密钥长度足够，单机自用不必配置。 "
+"但它在开源代码里是公开串，**公网多用户**站点建议换掉（`server/.cfg` 或环境变量， 至少 14 字节，`openssl rand "
+"-hex 32` 即可），否则读过源码的人能伪造会话 Cookie。"
+msgstr ""
+"`sapic_secretkey` is **not required**: the built-in default is long enough "
+"and a single-user install can skip it. But it is a public string in the "
+"open-source code, so a **public multi-user** site should replace it "
+"(`server/.cfg` or an environment variable, at least 14 bytes — `openssl "
+"rand -hex 32` is enough), otherwise anyone who has read the source can "
+"forge session cookies."
+
+#: ../../install.md:66
+msgid "升级"
+msgstr "Upgrading"
+
+#: ../../install.md:68
+msgid ""
+"启动时会自动执行 `sapic/migrations` 里的幂等迁移（`auto_upgrade()`）； 手动兜底命令是 `cd server &&"
+" FLASK_APP=sapic ../.venv/bin/python -m flask sa upgrade`。"
+msgstr ""
+"Idempotent migrations in `sapic/migrations` run automatically at startup "
+"(`auto_upgrade()`); the manual fallback is `cd server && FLASK_APP=sapic "
+"../.venv/bin/python -m flask sa upgrade`."
+
+#: ../../install.md:70
+msgid ""
+"图片有效期清理除了定时兜底（`before_request` 每进程 5 分钟节流）， 还可由运维命令触发：`flask sa purge-"
+"expired`。"
+msgstr ""
+"Expired images are also cleaned up on a timer (throttled to one batch per "
+"process every 5 minutes), and the maintenance command can trigger it: "
+"`flask sa purge-expired`."
+
+#: ../../install.md:72
+msgid ""
+"拉代码、装依赖、重建前端与重启服务的完整流程，以及备份与回滚见[部署与运维](deploy.md)； 从 v1 迁移数据见[从 v1 "
+"迁移数据](migrate-v1.md)。"
+msgstr ""
+"The full pull / install / rebuild / restart flow, plus backups and "
+"rollback, is in [Deployment and operations](deploy.md); migrating data from"
+" v1 is in [Migrating data from v1](migrate-v1.md)."
+
+#: ../../install.md:75
+msgid "客户端接入"
+msgstr "Client setup"
+
+#: ../../install.md:77
+msgid ""
+"PicGo、uTools、Typora、Windows / macOS 右键菜单与油猴脚本的配置方式和配套脚本， 统一整理在 "
+"[快捷上传](usage.md)：所有客户端都用访问令牌（PAT）鉴权， 令牌在「设置 → 访问令牌」创建，只勾「上传图片」即可。"
+msgstr ""
+"Configuration and helper scripts for PicGo, uTools, Typora, the Windows / "
+"macOS context menus and the userscript are collected in [Quick "
+"upload](usage.md): every client authenticates with an access token (PAT), "
+"created under Settings → Access tokens with only the upload scope enabled."
+

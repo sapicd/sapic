@@ -43,7 +43,7 @@ make web-dev        # 前端 127.0.0.1:5173，/api 与 /raw/ 代理到 9514
 ```
 
 这些目标只是真实命令的封装（假定仓库根有 `.venv`、机器上有 `make`）。安装、容器与反代部署见
-[DEPLOY.md](./DEPLOY.md)。
+[docs/deploy.md](./docs/deploy.md)。
 
 **编码**
 

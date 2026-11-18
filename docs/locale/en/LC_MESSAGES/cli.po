@@ -1,0 +1,277 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, staugur
+# This file is distributed under the same license as the sapic package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-18 20:06+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../cli.md:1
+msgid "命令行工具 sapicli"
+msgstr "sapicli command line tool"
+
+#: ../../cli.md:3
+msgid ""
+"`sapicli` 是独立的 Go 程序（仓库 [sapicd/cli](https://github.com/sapicd/cli)），不依赖 "
+"Python 环境，官方发布 Windows / macOS / Linux 三端压缩包，解压即用，功能覆盖上传、相册、有效期、 "
+"输出风格与剪贴板复制。"
+msgstr ""
+"`sapicli` is a standalone Go program "
+"([sapicd/cli](https://github.com/sapicd/cli)) that needs no Python "
+"environment. Official builds are published as archives for Windows / macOS "
+"/ Linux and run as soon as you unpack them, covering uploads, albums, "
+"expiry, output styles and clipboard copying."
+
+#: ../../cli.md:8
+msgid ""
+"`sapicli` 是**独立项目**，当前发布版仍按 v1 接口设计：`-u` 会自动补 `/api/upload`，`-t` 传的是 v1 的 "
+"LinkToken，因此在 v2 站点上**用不了**。支持 v2 的版本发布后，只需把 `-u` 指向站点根地址、 `-t` 换成 "
+"PAT，参数与输出风格不变。在那之前请用[快捷上传](usage.md)里的 curl / PicGo 方案。"
+msgstr ""
+"`sapicli` is a **separate project** and the current release still targets "
+"the v1 API: `-u` appends `/api/upload` automatically and `-t` takes a v1 "
+"LinkToken, so it **does not work** against a v2 site. Once a v2-capable "
+"release ships you only point `-u` at the site root and pass a PAT to `-t`; "
+"arguments and output stay the same. Until then use the curl / PicGo recipes"
+" in [Quick upload](usage.md)."
+
+#: ../../cli.md:13
+msgid "功能"
+msgstr "Features"
+
+#: ../../cli.md:15
+msgid "批量上传任意数量图片，支持匿名上传与临时图片（有效期）"
+msgstr ""
+"Upload any number of images in one go, including anonymous uploads and "
+"temporary images (expiry)"
+
+#: ../../cli.md:16
+msgid "设置相册、标题/描述"
+msgstr "Set the album, title and description"
+
+#: ../../cli.md:17
+msgid "多种输出风格：`default`、`typora`、`line`、`empty` 与自定义模块"
+msgstr ""
+"Several output styles: `default`, `typora`, `line`, `empty` and custom "
+"modules"
+
+#: ../../cli.md:18
+msgid "上传结果跨平台复制到剪贴板，支持 URL / Markdown / rST 三种格式"
+msgstr "Copy results to the clipboard on any platform as URL / Markdown / rST"
+
+#: ../../cli.md:20
+msgid "安装"
+msgstr "Install"
+
+#: ../../cli.md:22
+msgid ""
+"到 [cli release](https://github.com/sapicd/cli/releases) 下载对应压缩包：Windows 选 "
+"`xxx-windows-amd64.zip`，macOS 选 `xxx-darwin-amd64.tar.gz`。压缩包里只有一个可执行文件， 放进"
+" `PATH` 里的目录，或直接用绝对路径调用。"
+msgstr ""
+"Download the archive for your platform from the [cli "
+"releases](https://github.com/sapicd/cli/releases): `xxx-windows-amd64.zip` "
+"for Windows, `xxx-darwin-amd64.tar.gz` for macOS. The archive holds a "
+"single executable — put it in a directory on `PATH`, or call it by absolute"
+" path."
+
+#: ../../cli.md:26
+msgid "macOS 也可以用 Homebrew 安装："
+msgstr "On macOS you can also install it with Homebrew:"
+
+#: ../../cli.md:33
+msgid "命令选项"
+msgstr "Options"
+
+#: ../../cli.md:7
+msgid "选项"
+msgstr "Option"
+
+#: ../../cli.md:7
+msgid "说明"
+msgstr "Description"
+
+#: ../../cli.md:7
+msgid "`-u`"
+msgstr "`-u`"
+
+#: ../../cli.md:7
+msgid "站点地址，可省略 `http://`，末尾的接口路径也会自动补齐；也可用环境变量 `sapicli_apiurl`"
+msgstr ""
+"Site address; `http://` may be omitted and the API path is appended "
+"automatically. Also available as the `sapicli_apiurl` environment variable"
+
+#: ../../cli.md:7
+msgid "`-t`"
+msgstr "`-t`"
+
+#: ../../cli.md:7
+msgid "访问令牌，需要上传权限；也可用环境变量 `sapicli_apitoken`"
+msgstr ""
+"Access token with upload permission. Also available as the "
+"`sapicli_apitoken` environment variable"
+
+#: ../../cli.md:7
+msgid "`-a`"
+msgstr "`-a`"
+
+#: ../../cli.md:7
+msgid "相册名，可覆盖令牌默认相册"
+msgstr "Album name; overrides the album fixed on the token"
+
+#: ../../cli.md:7
+msgid "`-d`"
+msgstr "`-d`"
+
+#: ../../cli.md:7
+msgid "图片标题（描述）"
+msgstr "Image title (description)"
+
+#: ../../cli.md:7
+msgid "`-e`"
+msgstr "`-e`"
+
+#: ../../cli.md:7
+msgid "有效期（秒），用于临时图片"
+msgstr "Expiry in seconds, for temporary images"
+
+#: ../../cli.md:7
+msgid "`-s`"
+msgstr "`-s`"
+
+#: ../../cli.md:7
+msgid "输出风格，见下"
+msgstr "Output style, see below"
+
+#: ../../cli.md:7
+msgid "`-c`"
+msgstr "`-c`"
+
+#: ../../cli.md:7
+msgid "上传后按 `url` / `md` / `rst` 复制到剪贴板"
+msgstr "Copy the result to the clipboard as `url` / `md` / `rst`"
+
+#: ../../cli.md:73
+msgid "**输出风格**："
+msgstr "**Output styles**:"
+
+#: ../../cli.md:7
+msgid "风格"
+msgstr "Style"
+
+#: ../../cli.md:7
+msgid "行为"
+msgstr "Behaviour"
+
+#: ../../cli.md:7
+msgid "`default`"
+msgstr "`default`"
+
+#: ../../cli.md:7
+msgid "打印完整的 JSON 上传结果（含失败项）"
+msgstr "Print the full JSON upload result (failures included)"
+
+#: ../../cli.md:7
+msgid "`typora`"
+msgstr "`typora`"
+
+#: ../../cli.md:7
+msgid "专给 Typora 的格式，只输出成功上传的图片地址"
+msgstr "Format for Typora: only the URLs of successful uploads"
+
+#: ../../cli.md:7
+msgid "`line`"
+msgstr "`line`"
+
+#: ../../cli.md:7
+msgid "与 `typora` 类似，但不打印提示文字，每行一个地址"
+msgstr "Like `typora` but without any hint text: one URL per line"
+
+#: ../../cli.md:7
+msgid "`empty`"
+msgstr "`empty`"
+
+#: ../../cli.md:7
+msgid "不输出内容"
+msgstr "Print nothing"
+
+#: ../../cli.md:7
+msgid "`<模块名>`"
+msgstr "`<module name>`"
+
+#: ../../cli.md:7
+msgid "自定义输出：sapicli 用 `python -m <模块名>` 调用它，result 以 JSON 从位置参数传入"
+msgstr ""
+"Custom output: sapicli calls it with `python -m <module>` and passes the "
+"result as JSON in a positional argument"
+
+#: ../../cli.md:83
+msgid "自定义输出的模块示例："
+msgstr "Example custom output module:"
+
+#: ../../cli.md:95
+msgid ""
+"**剪贴板复制**：`-c url` 复制裸地址，`-c md` 复制 `![1.png](http://cdn.com/1.png)`， `-c "
+"rst` 复制 reST 的 `.. image::` 形式；多个文件的结果用换行连接。Windows 用 `clip`， macOS 用 "
+"`pbcopy`，Linux 需要先装 `xclip`（仅桌面环境）。"
+msgstr ""
+"**Clipboard**: `-c url` copies the bare URL, `-c md` copies "
+"`![1.png](http://cdn.com/1.png)` and `-c rst` copies the reST `.. image::` "
+"form; results for several files are joined with newlines. Windows uses "
+"`clip`, macOS uses `pbcopy`, and Linux needs `xclip` installed (desktop "
+"only)."
+
+#: ../../cli.md:100
+msgid "上传的文件要放在**所有选项之后**，否则选项会被当成文件名。"
+msgstr ""
+"Files must come **after all options**, otherwise an option is taken as a "
+"filename."
+
+#: ../../cli.md:103
+msgid "示例"
+msgstr "Examples"
+
+#: ../../cli.md:116
+msgid "作为 Typora 上传服务"
+msgstr "Use as the Typora upload service"
+
+#: ../../cli.md:118
+msgid "Typora → **偏好设置 → 图像**：插入图片时选「上传图片」，上传服务选 **Custom Command**， 命令填："
+msgstr ""
+"Typora → **Preferences → Image**: choose to upload images on insert, pick "
+"**Custom Command** as the upload service and enter:"
+
+#: ../../cli.md:125
+msgid "点「验证图片上传选项」确认可用。不想依赖 CLI 时，也可以用[快捷上传](usage.md)里的 `curl` 脚本，效果一致。"
+msgstr ""
+"Click the upload-verification button to confirm. If you prefer not to "
+"depend on the CLI, the `curl` script in [Quick upload](usage.md) does the "
+"same job."
+
+#: ../../cli.md:128
+msgid "右键菜单"
+msgstr "Context menu"
+
+#: ../../cli.md:130
+msgid ""
+"Windows 与 macOS 的右键上传菜单（含 sapicli 与免安装的 `.cmd` 脚本两种方式）统一整理在 "
+"[快捷上传](usage.md)的「Windows 右键菜单」「macOS 右键菜单」两节，这里不再重复。"
+msgstr ""
+"The Windows and macOS right-click upload menus (both the sapicli route and "
+"the dependency-free `.cmd` script) live in the Windows context menu and "
+"macOS context menu sections of [Quick upload](usage.md) and are not "
+"repeated here."
+

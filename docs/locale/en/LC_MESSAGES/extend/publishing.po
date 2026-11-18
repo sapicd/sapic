@@ -1,0 +1,374 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, staugur
+# This file is distributed under the same license as the sapic package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-18 20:06+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../extend/publishing.md:1
+msgid "打包、发布与安装"
+msgstr "Packaging, publishing and installing"
+
+#: ../../extend/publishing.md:3
+msgid "包的形态"
+msgstr "Package layout"
+
+#: ../../extend/publishing.md:5
+msgid ""
+"一个扩展就是一个可导入的模块或包，**入口不需要 entry_points**：sapic 按模块名加载， "
+"模块里的元数据与函数就是全部契约（见[钩子基础契约](contract.md)）。"
+msgstr ""
+"An extension is just an importable module or package — **no entry_points "
+"needed**: sapic loads it by module name, and the metadata and functions "
+"inside are the whole contract (see [Hook basics](contract.md))."
+
+#: ../../extend/publishing.md:15
+msgid "要点："
+msgstr "Key points:"
+
+#: ../../extend/publishing.md:17
+msgid ""
+"**模块名就是钩子名**，也是 Provider 的 URL 片段（`/auth/oidc/<name>`）、 `hooks_state` / "
+"`hooks_config` 的键、后端行的 `hook_name`。改名等于换一个插件。"
+msgstr ""
+"**The module name is the hook name**, and also the provider URL segment "
+"(`/auth/oidc/<name>`), the key in `hooks_state` / `hooks_config` and the "
+"`hook_name` of a backend row. Renaming it is the same as shipping a "
+"different plugin."
+
+#: ../../extend/publishing.md:19
+msgid "`__version__` 与 `__author__` 必填，否则模块会被跳过（日志里有 warning）。"
+msgstr ""
+"`__version__` and `__author__` are required, otherwise the module is "
+"skipped (with a warning in the log)."
+
+#: ../../extend/publishing.md:20
+msgid "只能声明自己实现的目录：`auth` / `upload` / `processor`，其余视为纯界面钩子。"
+msgstr ""
+"Declare only catalogs you actually implement: `auth` / `upload` / "
+"`processor`; anything else is treated as a UI-only hook."
+
+#: ../../extend/publishing.md:21
+msgid ""
+"依赖要在代码里做 `try/except ImportError` 降级，并在 `hook_manifest()` 的 `help` 或 action"
+" 返回值里给出「请安装 X」的提示。`base.txt` 只装官方内置钩子用到的 SDK， 第三方钩子的依赖由你自己的包声明，不要指望 sapic "
+"替你装。"
+msgstr ""
+"Dependencies must degrade with `try/except ImportError` in your code, and "
+"the `help` field of `hook_manifest()` or an action return value should tell"
+" the administrator to install X. `base.txt` only ships the SDKs used by the"
+" official built-in hooks; a third-party hook declares its own dependencies "
+"— do not expect sapic to install them for you."
+
+#: ../../extend/publishing.md:24
+msgid "一个包只暴露一个钩子；要同时提供驱动与界面块，用同一个模块的 `hook_manifest()` 声明。"
+msgstr ""
+"One package exposes one hook; to provide a driver and interface blocks "
+"together, declare both in the same module `hook_manifest()`."
+
+#: ../../extend/publishing.md:26
+msgid "安装"
+msgstr "Installing"
+
+#: ../../extend/publishing.md:28
+msgid "后台安装（推荐）"
+msgstr "Install from the admin (recommended)"
+
+#: ../../extend/publishing.md:34
+msgid ""
+"等价于 `pip install --target $HOOK_PKG_STORAGE_DIR <package>`，超时 180 秒。 "
+"`module` 可以省略：包目录名与模块名一致时扫描即命中，否则需要再调 `POST /api/v2/hooks/import` "
+"登记模块名。安装失败会返回 `ok: false` 与 pip 日志。"
+msgstr ""
+"Equivalent to `pip install --target $HOOK_PKG_STORAGE_DIR <package>` with a"
+" 180-second timeout. `module` may be omitted: when the package directory "
+"name matches the module name the scan picks it up, otherwise register the "
+"module with `POST /api/v2/hooks/import`. A failed install returns `ok: "
+"false` plus the pip log."
+
+#: ../../extend/publishing.md:38
+msgid ""
+"`HOOK_PKG_STORAGE_DIR`（默认 `data/hooks`，`sapic_hookpkgstoragedir` 可改）： 只加入 "
+"`sys.path`、不参与目录扫描——`pip install --target` 会把依赖一起丢进去， 扫描它们等于执行无关代码。"
+msgstr ""
+"`HOOK_PKG_STORAGE_DIR` (default `data/hooks`, changeable via "
+"`sapic_hookpkgstoragedir`) is only added to `sys.path` and never scanned — "
+"`pip install --target` puts dependencies in there too, and scanning them "
+"would mean executing unrelated code."
+
+#: ../../extend/publishing.md:42
+msgid "手动安装"
+msgstr "Manual install"
+
+#: ../../extend/publishing.md:49
+msgid "然后登记模块名（后台「钩子 → 导入」或接口）："
+msgstr "Then register the module name (admin → Hooks → Import, or the API):"
+
+#: ../../extend/publishing.md:55
+msgid "管理已安装包："
+msgstr "Managing installed packages:"
+
+#: ../../extend/publishing.md
+msgid "方法"
+msgstr "Method"
+
+#: ../../extend/publishing.md
+msgid "路径"
+msgstr "Path"
+
+#: ../../extend/publishing.md
+msgid "说明"
+msgstr "Description"
+
+#: ../../extend/publishing.md
+msgid "GET"
+msgstr "GET"
+
+#: ../../extend/publishing.md
+msgid "`/api/v2/hooks/packages`"
+msgstr "`/api/v2/hooks/packages`"
+
+#: ../../extend/publishing.md
+msgid "包目录里 `*.dist-info` 对应的包与版本"
+msgstr "Packages and versions found from `*.dist-info` in the package directory"
+
+#: ../../extend/publishing.md
+msgid "DELETE"
+msgstr "DELETE"
+
+#: ../../extend/publishing.md
+msgid "`/api/v2/hooks/import/<module>`"
+msgstr "`/api/v2/hooks/import/<module>`"
+
+#: ../../extend/publishing.md
+msgid "停止加载（`?purge=1` 连包文件一起删）"
+msgstr "Stop loading it (`?purge=1` also deletes the package files)"
+
+#: ../../extend/publishing.md
+msgid "POST"
+msgstr "POST"
+
+#: ../../extend/publishing.md
+msgid "`/api/v2/hooks/install`"
+msgstr "`/api/v2/hooks/install`"
+
+#: ../../extend/publishing.md
+msgid "安装/升级（`upgrade: true`）并可选自动登记"
+msgstr "Install / upgrade (`upgrade: true`) with optional auto-registration"
+
+#: ../../extend/publishing.md:63
+msgid "市场清单"
+msgstr "The market listing"
+
+#: ../../extend/publishing.md:65
+msgid ""
+"`GET /api/v2/hooks/market` 读 `sapic_hookmarketurl` 指向的 JSON 数组（默认官方 "
+"`list.json`，6 小时缓存），字段如下："
+msgstr ""
+"`GET /api/v2/hooks/market` reads the JSON array behind "
+"`sapic_hookmarketurl` (the official `list.json` by default, cached for 6 "
+"hours) with these fields:"
+
+#: ../../extend/publishing.md
+msgid "字段"
+msgstr "Field"
+
+#: ../../extend/publishing.md
+msgid "`name`"
+msgstr "`name`"
+
+#: ../../extend/publishing.md
+msgid "展示名"
+msgstr "Display name"
+
+#: ../../extend/publishing.md
+msgid "`module`"
+msgstr "`module`"
+
+#: ../../extend/publishing.md
+msgid "模块名，用于合并本地「已加载/已安装」状态"
+msgstr "Module name, used to merge the local loaded/installed state"
+
+#: ../../extend/publishing.md
+msgid "`desc` / `author`"
+msgstr "`desc` / `author`"
+
+#: ../../extend/publishing.md
+msgid "说明与作者"
+msgstr "Description and author"
+
+#: ../../extend/publishing.md
+msgid "`github`"
+msgstr "`github`"
+
+#: ../../extend/publishing.md
+msgid "仓库，可只写 `owner/repo`"
+msgstr "Repository; `owner/repo` is enough"
+
+#: ../../extend/publishing.md
+msgid "`pypi`"
+msgstr "`pypi`"
+
+#: ../../extend/publishing.md
+msgid "包名，支持 `$name` 占位"
+msgstr "Package name; the `$name` placeholder is supported"
+
+#: ../../extend/publishing.md
+msgid "`home`"
+msgstr "`home`"
+
+#: ../../extend/publishing.md
+msgid "主页，缺省用 github"
+msgstr "Home page; defaults to the GitHub URL"
+
+#: ../../extend/publishing.md
+msgid "`status`"
+msgstr "`status`"
+
+#: ../../extend/publishing.md
+msgid "自定义标记（如 `beta`）"
+msgstr "Free-form marker such as `beta`"
+
+#: ../../extend/publishing.md
+msgid "`appversion`"
+msgstr "`appversion`"
+
+#: ../../extend/publishing.md
+msgid "面向的 sapic 主版本，V2 钩子写 `\"2.x\"`；缺省视为 V1"
+msgstr "Target sapic major version; a V2 hook declares `\"2.x\"`, absent means V1"
+
+#: ../../extend/publishing.md:79
+msgid ""
+"V1 与 V2 的钩子契约互不兼容（V1 靠 `slot_*` 函数，V2 靠 `hook_manifest()` 声明式 UI），所以源里必须用 "
+"`appversion` 标出代际：**只有主版本号 ≥ 2 的条目才会进市场**， "
+"没写这个字段的老条目一律不展示。例外是本地已经装好并加载的钩子——它照旧显示， 否则管理员在市场页看不到、也没法卸载它。"
+msgstr ""
+"V1 and V2 hook contracts are incompatible (V1 relies on `slot_*` functions,"
+" V2 on the declarative `hook_manifest()` UI), so the source must mark the "
+"generation with `appversion`: **only entries with major version ≥ 2 reach "
+"the market**, and old entries without the field are never shown. The "
+"exception is a hook already installed and loaded locally — it stays "
+"visible, otherwise an administrator could neither see nor uninstall it from"
+" the market page."
+
+#: ../../extend/publishing.md:84
+msgid "市场只是数据源：装什么、启用什么仍以 `hooks_imported` / `hooks_state` 为准。"
+msgstr ""
+"The market is only a data source: what gets installed and enabled is still "
+"decided by `hooks_imported` / `hooks_state`."
+
+#: ../../extend/publishing.md:86
+msgid "列表由服务端分页，长列表不会一次性推给浏览器："
+msgstr ""
+"The server paginates the list, so a long listing is never pushed to the "
+"browser in one go:"
+
+#: ../../extend/publishing.md:106
+msgid ""
+"`page` 从 1 开始，越界会收敛到最后一页；`page_size` 默认 10、上限 100； 非数字参数返回 "
+"`PARAM_ERROR`。`installed` / `loaded` / `enabled` 只对当前页的条目合并。"
+msgstr ""
+"`page` starts at 1 and out-of-range values clamp to the last page; "
+"`page_size` defaults to 10 with a maximum of 100; non-numeric parameters "
+"return `PARAM_ERROR`. `installed` / `loaded` / `enabled` are merged for the"
+" current page only."
+
+#: ../../extend/publishing.md:109
+msgid "调试与排查"
+msgstr "Debugging"
+
+#: ../../extend/publishing.md:120
+msgid "常见现象："
+msgstr "Common symptoms:"
+
+#: ../../extend/publishing.md
+msgid "现象"
+msgstr "Symptom"
+
+#: ../../extend/publishing.md
+msgid "原因"
+msgstr "Cause"
+
+#: ../../extend/publishing.md
+msgid "钩子列表里没有它"
+msgstr "It is missing from the hook list"
+
+#: ../../extend/publishing.md
+msgid "缺 `__version__` / `__author__`，或模块名没登记、不在 `sys.path`"
+msgstr ""
+"Missing `__version__` / `__author__`, or the module name is not registered "
+"or not on `sys.path`"
+
+#: ../../extend/publishing.md
+msgid "出现了但 `kind` 是 `ui`"
+msgstr "It shows up but `kind` is `ui`"
+
+#: ../../extend/publishing.md
+msgid "没声明 `__catalog__`，核心不会把它当驱动/Provider"
+msgstr ""
+"`__catalog__` is not declared, so the core does not treat it as a driver or"
+" provider"
+
+#: ../../extend/publishing.md
+msgid "`warnings` 提示缺函数"
+msgstr "`warnings` reports a missing function"
+
+#: ../../extend/publishing.md
+msgid "声明了 `upload` 却缺 `upimg_save`，或 `auth` 缺两个契约函数"
+msgstr ""
+"It declares `upload` without `upimg_save`, or `auth` without both contract "
+"functions"
+
+#: ../../extend/publishing.md
+msgid "后端列表里没有它"
+msgstr "It is missing from the backend list"
+
+#: ../../extend/publishing.md
+msgid "钩子未启用，或缺 `upimg_save`；启用后需要一次 `GET /backends` 触发 `sync_backends`"
+msgstr ""
+"The hook is not enabled, or `upimg_save` is missing; after enabling, one "
+"`GET /backends` triggers `sync_backends`"
+
+#: ../../extend/publishing.md
+msgid "选「私有」保存报 400"
+msgstr "Saving a private backend returns 400"
+
+#: ../../extend/publishing.md
+msgid "驱动没实现 `upimg_url`（`driver cannot read private objects`），先补读契约或改用公开直链"
+msgstr ""
+"The driver does not implement `upimg_url` (`driver cannot read private "
+"objects`); add the read contract or use public direct links"
+
+#: ../../extend/publishing.md
+msgid "登录页没有按钮"
+msgstr "No button on the login page"
+
+#: ../../extend/publishing.md
+msgid "Provider 的 `slot_login_after_form` 在配置不全时返回空，填完 client_id 再看"
+msgstr ""
+"The provider `slot_login_after_form` returns an empty list while config is "
+"incomplete; fill in `client_id` and check again"
+
+#: ../../extend/publishing.md:131
+msgid ""
+"日志用 `logging.getLogger(__name__)`，不要 `print()`；钩子抛异常不会拖垮整个请求， 但会记录堆栈并按 "
+"`code=1` 处理，排查时先看服务端日志。"
+msgstr ""
+"Log with `logging.getLogger(__name__)` instead of `print()`; an exception "
+"in a hook does not take down the request, but the traceback is logged and "
+"handled as `code=1`, so check the server log first when debugging."
+

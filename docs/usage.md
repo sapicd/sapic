@@ -14,54 +14,21 @@
 这也是为什么所有客户端都要求配置 PAT。
 ```
 
-## 接口
+## 上传接口速查
 
-上传只有一个端点：`POST /api/v2/upload`，请求体是 `multipart/form-data`：
-
-| 字段 | 说明 |
-| --- | --- |
-| `file` | 文件域，与 `url` 二选一 |
-| `url` | 图片地址，由服务端抓取后入库：**必须是域名**（不接受 `http://1.2.3.4/…` 这类 IP 地址），**不跟随重定向**（源站返回 3xx 即报错）。站点若配了下载代理，只有管理员的抓取才会在直连失败后走代理 |
-| `album_id` | 可选，相册 ID（需登录，且对该相册有写权限）；不带时用 PAT 的默认相册，再兜底到默认相册 |
-| `title` | 可选，标题 |
-| `expire` | 可选，有效期（秒）；留空用站点默认值，`0` 表示永久 |
-
-鉴权用请求头 `Authorization: Bearer <PAT>`，成功返回 **HTTP 201**。
-
-所有 `/api/v2` 接口共用同一层包装（下称「信封」）：`{code, message, data}` ——
-成功时 `code` 恒为 `"OK"`；失败时它是错误枚举（`UNAUTHORIZED` / `FORBIDDEN` / `PARAM_ERROR` …）
-且 `data` 为 `null`。上传的图片对象在 `data.image` 里，地址取 `data.image.src`：
+所有客户端都打同一个端点：`POST /api/v2/upload`（`multipart/form-data`，字段 `file` 或 `url`，
+可带 `album_id` / `title` / `expire`），鉴权用请求头 `Authorization: Bearer <PAT>`，
+成功返回 **HTTP 201**，图片地址取 `data.image.src`。
 
 ```bash
 curl -X POST "https://your.site/api/v2/upload" \
   -H "Authorization: Bearer sp_xxxxxxxx" \
   -F "file=@/path/to/image.png" \
-  -F "title=海边"
+  -F "title=Seaside"
 ```
 
-```json
-{
-  "code": "OK",
-  "message": "",
-  "data": {
-    "image": {
-      "sha": "....",
-      "filename": "image.png",
-      "src": "https://your.site/raw/...."
-    }
-  }
-}
-```
-
-失败同样是 v2 信封，只是 `code` 变成错误枚举并带对应状态码：
-
-| 状态码 | `code` | 常见原因 |
-| --- | --- | --- |
-| 400 | `PARAM_ERROR` | 既没有 `file` 也没有 `url`，或 `album_id` 不是数字 |
-| 401 | `UNAUTHORIZED` | 令牌无效、被撤销或已过期 |
-| 403 | `FORBIDDEN` | 令牌缺 `upload` 权限、站点关闭匿名上传、账号未通过审核 |
-| 404 | `NOT_FOUND` | `album_id` 不存在或不属于你 |
-| 413 | `PARAM_ERROR` | 文件超过上限 |
+字段含义、响应结构、错误码与 URL 抓取的限制见[API 参考](api.md)的上传一节；
+下面是各客户端的逐项配置。
 
 ## PicGo
 
@@ -109,8 +76,8 @@ picgo install web-uploader
 `customHeader` 与 `customBody` 的值是**字符串化的 JSON**，注意转义。之后：
 
 ```bash
-picgo upload ./image.png     # 输出图片地址
-picgo upload                 # 不带参数则上传剪贴板里的图片
+picgo upload ./image.png     # prints the image URL
+picgo upload                 # no argument: upload the image from the clipboard
 ```
 
 ```{tip}
@@ -188,7 +155,7 @@ Typora 的上传服务有三种接法，任选其一：
 
 ```sh
 #!/bin/sh
-# 上传一个文件并输出图片地址；Typora 会读取 stdout 的第一行作为图片链接。
+# upload one file and print the image URL; Typora reads the first stdout line as the link.
 SAPIC="https://your.site"
 TOKEN="sp_xxxxxxxx"
 
@@ -248,7 +215,7 @@ curl -sS -X POST "%SAPIC%/api/v2/upload" ^
 for /f "delims=" %%i in ('powershell -NoProfile -Command ^
   "(Get-Content -Raw '%TEMP%\sapic-upload.json' | ConvertFrom-Json).data.image.src"') do set "URL=%%i"
 
-rem 复制到剪贴板，右键点完直接可粘贴
+rem copies to the clipboard, ready to paste right after the context menu
 echo %URL% | clip
 ```
 

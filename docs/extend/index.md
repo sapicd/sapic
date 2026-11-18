@@ -35,6 +35,60 @@ sapic 的插件叫**钩子（hook）**：一个 Python 模块或包，被核心�
 `HOOK_RELOAD_TIME` 按「源文件 mtime + 已登记模块列表」决定是否换快照，
 多 worker 部署下任意进程改了启停/安装列表，其它进程也会跟上。
 
+## 写一个最小钩子
+
+先跑通再对照契约。下面是一个只有界面块的钩子（不声明 `__catalog__`，一个文件即可）：
+
+```python
+__version__ = "0.1.0"
+__author__ = "you"
+__description__ = "demo hook"
+
+def hook_manifest():
+    return {
+        "title": "Demo hook",
+        "slots": [{"name": "admin.site_setting"}],
+        "actions": [{"name": "ping", "label": "Try it", "scope": "admin"}],
+    }
+
+def slot_admin_site_setting(context, values):
+    return {"type": "alert", "level": "info", "text": "Hello from the demo hook"}
+
+def action_ping(payload, context, values):
+    return {"code": 0, "message": "", "toast": {"level": "success", "text": "pong"}}
+```
+
+本地联调：不用打包、不用重启进程。
+
+```bash
+# 1. drop it into the hook package dir (on sys.path, but never scanned)
+cp my_hook.py server/data/hooks/
+
+# 2. register the module name (same as "install manually -> module name"; admin + CSRF)
+curl -X POST http://127.0.0.1:9514/api/v2/hooks/import \
+  -H 'Content-Type: application/json' -H 'X-CSRF-Token: <csrf>' \
+  -d '{"module": "my_hook"}'
+
+# 3. reload after editing; no gunicorn restart needed
+curl -X POST http://127.0.0.1:9514/api/v2/hooks/reload -H 'X-CSRF-Token: <csrf>'
+```
+
+- 钩子跑在应用进程里：日志用 `logging.getLogger(__name__)`，与后端同一个输出；`print()` 不走日志。
+- 写成包（`sapic_storage_s3/`）时用 `pip install -e .` 装进当前解释器，再登记模块名同样能加载。
+- 插槽会渲染在哪个页面由白名单决定（见[钩子基础契约](contract.md)），`admin.*` 开头的只对管理员渲染。
+- 本地环境搭建、跑测试与代码风格见[开发与贡献](../dev.md)。
+
+### 照抄哪个内置实现
+
+写自己的之前，先读 `server/sapic/hooks/` 里最短的对应实现：
+
+| 想写什么 | 参考实现 | 看点 |
+| --- | --- | --- |
+| 存储驱动 | `up2local.py`（最简，只写本地文件）→ 再看 `up2github.py`（HTTP API + 配置项 + 加速域名） | `upimg_save` / `upimg_delete` / `upimg_url` |
+| 登录 Provider | `passport.py`（OIDC） | `oidc_authorize_url` / `oidc_exchange`，登录按钮插槽 |
+| 上传后处理 | `pic2webp.py` | `upimg_stream_processor` 与 processor 配置 |
+| 纯界面钩子 | 无内置，看本节 20 行样例 | 节点词表与动作返回值 |
+
 ## 安装第三方包
 
 两种方式都能把包交给 sapic（打包细节见 [发布与安装](publishing.md)）：

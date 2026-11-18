@@ -69,7 +69,7 @@ Insomnia）。本文只保留跨接口的约定、鉴权流程与业务规则—
 列表接口默认为游标分页：
 
 ```text
-GET /api/v2/images?limit=20&cursor=<上一页返回的 next_cursor>
+GET /api/v2/images?limit=20&cursor=<next_cursor from the previous page>
 ```
 
 ```json
@@ -91,6 +91,53 @@ GET /api/v2/images?page=2&page_size=15
 
 两种模式排序一致（`created_at` 倒序、`id` 兜底），不带 `page` 时行为保持不变。
 后台接口（如 `GET /users`）只提供页码模式，默认每页 15，前端用页码器直接跳页。
+
+## 上传
+
+`POST /api/v2/upload`，请求体是 `multipart/form-data`，成功返回 **201**：
+
+| 字段 | 说明 |
+| --- | --- |
+| `file` | 文件域，与 `url` 二选一 |
+| `url` | 图片地址，由服务端抓取后入库：**必须是域名**（不接受 `http://1.2.3.4/…` 这类 IP 字面量），**不跟随重定向**（源站返回 3xx 即报错）。站点若配了 `upload_fetch_proxy`，只有管理员的抓取才会在直连失败后走代理 |
+| `album_id` | 可选，相册 ID（需登录且对该相册有写权限）；不带时用 PAT 的默认相册，再兜底到用户默认相册 |
+| `title` | 可选，标题 |
+| `expire` | 可选，有效期（秒）；留空用站点默认值，`0` 表示永久 |
+
+```bash
+curl -X POST "https://your.site/api/v2/upload" \
+  -H "Authorization: Bearer sp_xxxxxxxx" \
+  -F "file=@/path/to/image.png" \
+  -F "title=Seaside"
+```
+
+图片对象在 `data.image` 里，地址取 `data.image.src`：
+
+```json
+{
+  "code": "OK",
+  "message": "",
+  "data": {
+    "image": {
+      "sha": "....",
+      "filename": "image.png",
+      "src": "https://your.site/raw/...."
+    }
+  }
+}
+```
+
+上传的常见失败（判定逻辑在 `libs/images.py` 的 `check_upload_limits`）：
+
+| 状态码 | `code` | 原因 |
+| --- | --- | --- |
+| 400 | `PARAM_ERROR` | 既没有 `file` 也没有 `url`、`album_id` 不是数字、后缀不在白名单、URL 抓取被拒 |
+| 401 | `UNAUTHORIZED` | 令牌无效、被撤销或已过期 |
+| 403 | `FORBIDDEN` | 令牌缺 `upload` 权限、站点关闭匿名上传、站点冻结上传、账号未通过审核 |
+| 404 | `NOT_FOUND` | `album_id` 不存在或不属于你 |
+| 413 | `PARAM_ERROR` | 超过单文件上限。注意这里用的是 `PARAM_ERROR`，头像等其它接口才用 `PAYLOAD_TOO_LARGE` |
+
+各客户端的逐项配置见[快捷上传](usage.md)。
 
 ## 资源概览
 

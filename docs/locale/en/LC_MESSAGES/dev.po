@@ -1,0 +1,262 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, staugur
+# This file is distributed under the same license as the sapic package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-18 20:22+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../dev.md:1
+msgid "开发与贡献"
+msgstr "Development and contributing"
+
+#: ../../dev.md:3
+msgid "目录结构"
+msgstr "Directory layout"
+
+#: ../../dev.md:23
+msgid ""
+"依赖方向单向：`views → libs/utils → models/basis`。`utils/web.py` 依赖 Flask 上下文， "
+"不能被非 Web 模块导入；钩子只被 `libs/hook.py` 按需导入，禁止反向依赖业务层。"
+msgstr ""
+"Dependencies point one way: `views → libs/utils → models/basis`. "
+"`utils/web.py` needs a Flask context and must never be imported by non-Web "
+"modules; hooks are imported on demand by `libs/hook.py` only and must not "
+"depend back on the business layer."
+
+#: ../../dev.md:26
+msgid "写扩展（存储驱动 / 登录 Provider / 界面钩子）的契约、最小样例与本地联调见[扩展开发](extend/index.md)。"
+msgstr ""
+"The contract, a minimal example and local debugging for extensions (storage"
+" drivers / login providers / UI hooks) are in [Extension "
+"development](extend/index.md)."
+
+#: ../../dev.md
+msgid "内容"
+msgstr "What"
+
+#: ../../dev.md
+msgid "位置"
+msgstr "Where"
+
+#: ../../dev.md
+msgid "配置、异常、常量"
+msgstr "Configuration, errors, constants"
+
+#: ../../dev.md
+msgid "`basis/`"
+msgstr "`basis/`"
+
+#: ../../dev.md
+msgid "DB 连接"
+msgstr "DB connection"
+
+#: ../../dev.md
+msgid "`basis/db.py`"
+msgstr "`basis/db.py`"
+
+#: ../../dev.md
+msgid "通用基类与功能封装"
+msgstr "Shared base classes and wrappers"
+
+#: ../../dev.md
+msgid "`libs/`"
+msgstr "`libs/`"
+
+#: ../../dev.md
+msgid "纯工具（无 Web 上下文）"
+msgstr "Plain helpers (no Web context)"
+
+#: ../../dev.md
+msgid "`utils/common.py`"
+msgstr "`utils/common.py`"
+
+#: ../../dev.md
+msgid "依赖 `request` / `g` 的函数"
+msgstr "Functions that need `request` / `g`"
+
+#: ../../dev.md
+msgid "`utils/web.py`"
+msgstr "`utils/web.py`"
+
+#: ../../dev.md
+msgid "路由与薄封装"
+msgstr "Routes and thin wrappers"
+
+#: ../../dev.md
+msgid "`views/`"
+msgstr "`views/`"
+
+#: ../../dev.md
+msgid "扩展契约判断"
+msgstr "Extension contract checks"
+
+#: ../../dev.md
+msgid "`libs/ext.py`"
+msgstr "`libs/ext.py`"
+
+#: ../../dev.md:38
+msgid "常用命令"
+msgstr "Common commands"
+
+#: ../../dev.md:51
+msgid "变量可覆盖：`make dev PORT=8080`、`make serve WORKERS=8`。"
+msgstr "Variables can be overridden: `make dev PORT=8080`, `make serve WORKERS=8`."
+
+#: ../../dev.md:54
+msgid ""
+"上面这些是 `Makefile` 的封装，只图本地少敲字：它们假定仓库根的 `.venv` 存在、机器上有 `make`。 "
+"CI、容器与生产环境通常没有 `make`，请直接用真实命令——安装与启动见[安装与部署](install.md)， "
+"生产部署的完整命令见[部署与运维](deploy.md)。"
+msgstr ""
+"The targets above wrap the `Makefile` to save typing locally: they assume a"
+" repo-root `.venv` and `make` on the machine. CI, containers and production"
+" usually have no `make`, so use the real commands — installation and "
+"startup are in [Installation](install.md) and the full production commands "
+"are in [Deployment and operations](deploy.md)."
+
+#: ../../dev.md:58
+msgid ""
+"`make dev` 自己会带 `sapic_env=dev`（DEBUG + 详细日志）；`config` / `upgrade` / "
+"`create-admin` 不带，用的是默认配置——没有 `server/.cfg` 也能直接跑，需要开发默认值时自己加 "
+"`sapic_env=dev`。"
+msgstr ""
+"`make dev` sets `sapic_env=dev` itself (DEBUG + verbose logs); `config` / "
+"`upgrade` / `create-admin` do not, so they run on the defaults — everything"
+" works without a `server/.cfg`, and you add `sapic_env=dev` yourself when "
+"you want the development defaults."
+
+#: ../../dev.md:62
+msgid "测试"
+msgstr "Tests"
+
+#: ../../dev.md:64
+msgid "后端用 pytest，测试在 `server/tests/`，`cd server && python -m pytest -q`。"
+msgstr ""
+"The backend uses pytest with tests in `server/tests/`: `cd server && python"
+" -m pytest -q`."
+
+#: ../../dev.md:65
+msgid "测试用临时 SQLite，不依赖外部数据库；CI 跑 Python 3.10 与 3.12。"
+msgstr ""
+"Tests use a temporary SQLite database and need no external service; CI runs"
+" Python 3.10 and 3.12."
+
+#: ../../dev.md:66
+msgid "新增扩展契约、解析、权限判定时应补对应单测："
+msgstr ""
+"Add unit tests when you touch extension contracts, parsing or permission "
+"decisions:"
+
+#: ../../dev.md:74
+msgid "文档"
+msgstr "Documentation"
+
+#: ../../dev.md:76
+msgid "本文档用 Sphinx + MyST（Markdown）编写，配置在 `docs/conf.py`："
+msgstr ""
+"These docs are written in Sphinx + MyST (Markdown) and configured in "
+"`docs/conf.py`:"
+
+#: ../../dev.md:86
+msgid "新增页面后在 `docs/index.md` 的 `toctree` 里登记，否则不会被构建。"
+msgstr ""
+"Register new pages in the `toctree` of `docs/index.md`, otherwise they are "
+"not built."
+
+#: ../../dev.md:87
+msgid "`make docs` 自带 `-W`（warning 即失败）；改动文档后本地跑一次再提交。"
+msgstr ""
+"`make docs` runs with `-W` (a warning fails the build); run it locally "
+"before committing doc changes."
+
+#: ../../dev.md:88
+msgid ""
+"线上站点由 Read the Docs 构建（`.readthedocs.yaml`，`fail_on_warning: true`）， "
+"仓库里不再有发布文档的 GitHub Actions。"
+msgstr ""
+"The public site is built by Read the Docs (`.readthedocs.yaml`, "
+"`fail_on_warning: true`); there is no GitHub Actions workflow publishing "
+"docs any more."
+
+#: ../../dev.md:90
+msgid ""
+"**文档是双语的**：中文是源语言，英文译文在 `docs/locale/en/LC_MESSAGES/*.po`（每页一个）。 改完中文跑 `cd "
+"docs && make update-po`，把新增/变动的条目补上 `msgstr` 即可； "
+"没译的条目构建英文站时自动回落中文，所以可以分批翻。代码块不参与抽取， 示例里的注释直接用英文写。新增页面要同时生成对应的 `.po`。"
+msgstr ""
+"**The docs are bilingual**: Chinese is the source language and the English "
+"translation lives in `docs/locale/en/LC_MESSAGES/*.po` (one file per page)."
+" After editing Chinese, run `cd docs && make update-po` and fill in the "
+"`msgstr` of new or changed entries; anything left untranslated falls back "
+"to Chinese in the English build, so translations can land in batches. Code "
+"blocks are not extracted, so write their comments in English directly. A "
+"new page needs its own `.po`."
+
+#: ../../dev.md:94
+msgid ""
+"英文站要在 RTD 后台新建一个翻译项目（语言 `en`）并关联到主项目，语言切换器由 RTD 提供， "
+"代码侧不需要额外配置；`docs/locale/en` 里的 `.po` 是唯一的译文来源。"
+msgstr ""
+"On Read the Docs, the English site is a separate translation project "
+"(language `en`) linked to the main project; RTD provides the language "
+"switcher and nothing is needed in the code. The `.po` files under "
+"`docs/locale/en` are the only source of translations."
+
+#: ../../dev.md:97
+msgid "代码风格"
+msgstr "Code style"
+
+#: ../../dev.md:99
+msgid "PEP 8，4 空格缩进，文件头 `# -*- coding: utf-8 -*-` + 模块 docstring（英文职责描述）。"
+msgstr ""
+"PEP 8, 4-space indentation, a `# -*- coding: utf-8 -*-` file header plus a "
+"module docstring (English, describing the responsibility)."
+
+#: ../../dev.md:100
+msgid "导入顺序：标准库 → 第三方 → 项目内，组间空行，全部放文件头部。"
+msgstr ""
+"Import order: standard library → third party → project, a blank line "
+"between groups, everything at the top of the file."
+
+#: ../../dev.md:101
+msgid "Python 3.10+ 语法，新增函数带类型注解（`str | None`、`dict[str, Any]`）。"
+msgstr ""
+"Python 3.10+ syntax; new functions carry type annotations (`str | None`, "
+"`dict[str, Any]`)."
+
+#: ../../dev.md:102
+msgid "业务失败用 `ApiError(message, code)`（英文消息），不要裸返回 dict；不要裸 `except:`。"
+msgstr ""
+"Business failures use `ApiError(message, code)` (English message) instead "
+"of returning a bare dict; no bare `except:`."
+
+#: ../../dev.md:103
+msgid "日志用 `logging.getLogger(__name__)`，禁止 `print()`。"
+msgstr "Log with `logging.getLogger(__name__)`; `print()` is forbidden."
+
+#: ../../dev.md:104
+msgid "数据库结构变更走 `migrations/` 的幂等迁移，不要直接 `create_tables()` 改线上结构。"
+msgstr ""
+"Schema changes go through idempotent migrations in `migrations/`; never "
+"call `create_tables()` against a live schema."
+
+#: ../../dev.md:105
+msgid "新增配置项必须同时接进「后台表单 + 实际生效点」。"
+msgstr ""
+"A new config option must be wired into both the admin form and the code "
+"path that uses it."
+

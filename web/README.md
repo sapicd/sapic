@@ -2,7 +2,7 @@
 
 sapic 的前端：Vue 3 + Vite + Element Plus 单页应用。与后端 `server/` **同源**交互——
 数据走 `/api/v2/*`（统一信封 `{code, message, data}`），图片走 `/raw/<sha>`；
-生产环境由 nginx 托管构建产物并把这两个前缀反代给 Flask（容器镜像已内置，见 `DEPLOY.md`）。
+生产环境由 nginx 托管构建产物并把这两个前缀反代给 Flask（容器镜像已内置，见 `docs/deploy.md`）。
 
 ## 环境要求
 
@@ -74,4 +74,4 @@ pnpm run preview  # 预览构建产物
 ## 构建与部署
 
 `pnpm run build` 产出 `dist/`，交给静态服务器托管并反代 `/api`、`/raw/` 到后端；
-容器镜像在构建阶段已完成这一步，**不需要单独部署前端**（见 `DEPLOY.md` 第 3.7 节）。
+容器镜像在构建阶段已完成这一步，**不需要单独部署前端**（见 `docs/deploy.md` 的「容器与编排」）。

@@ -10,11 +10,11 @@
 ## 契约
 
 ```python
-__catalog__ = "auth"          # 必需：否则不会被识别为 Provider
+__catalog__ = "auth"          # required: otherwise it is not detected as a provider
 
 def oidc_authorize_url(config, redirect_uri, state) -> str
 def oidc_exchange(config, code, redirect_uri) -> dict
-def identity_issuer(config) -> str        # 可选
+def identity_issuer(config) -> str        # optional
 ```
 
 | 函数 | 说明 |
@@ -41,9 +41,9 @@ def identity_issuer(config) -> str        # 可选
 
 ```text
 GET /api/v2/auth/oidc/<name>[?bind=1&next=/settings]
-   → 302 到 Provider 授权页，同时种下签名 state Cookie（10 分钟）
+   -> 302 to the provider authorisation page, planting a signed state cookie (10 minutes)
 GET /api/v2/auth/oidc/<name>/callback?code=...&state=...
-   → 校验 state → oidc_exchange → 绑定或登录 → 302 回 next
+   -> verify state -> oidc_exchange -> bind or sign in -> 302 back to next
 ```
 
 - `<name>` 是**钩子名**（模块名）。包名写成 `sapic_oauth_github`，地址就是
@@ -75,14 +75,14 @@ from urllib.parse import urlencode
 
 try:
     import requests
-except ImportError:  # 可选依赖，缺失时给用户可读提示
+except ImportError:  # optional dependency: show a readable hint when missing
     requests = None
 
 __version__ = "0.1.0"
 __author__ = "you"
-__description__ = "使用 GitHub 登录"
+__description__ = "Sign in with GitHub"
 __catalog__ = "auth"
-__state__ = "disabled"        # 装好后到后台启用并填 client_id/client_secret
+        # enable in the admin after installing and fill in client_id/client_secret
 
 AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 TOKEN_URL = "https://github.com/login/oauth/access_token"
@@ -92,7 +92,7 @@ TIMEOUT = 15
 
 def hook_manifest():
     return {
-        "title": "GitHub 登录",
+        "title": "Sign in with GitHub",
         "catalog": "auth",
         "config_schema": [
             {"type": "input", "key": "client_id", "label": "Client ID", "required": True},
@@ -164,8 +164,8 @@ def oidc_exchange(config=None, code="", redirect_uri=""):
         "username": user.get("login") or "",
         "nickname": user.get("name") or "",
         "email": user.get("email") or "",
-        #: GitHub 的个人资料邮箱不一定验证过，不要在这里传 True，
-        #: 否则可能凭一个他人邮箱自动关联到别人的本地账号。
+        #: GitHub profile emails are not necessarily verified: do not pass True here,
+        #: or a stranger email could auto-link onto somebody else local account.
         "email_verified": False,
     }
 
@@ -173,12 +173,12 @@ def oidc_exchange(config=None, code="", redirect_uri=""):
 def slot_login_after_form(context=None, **kwargs):
     config = (context or {}).get("config") or {}
     if not config.get("client_id"):
-        return []          # 没配置就不显示按钮，避免点进 404
+        return []          # hide the button until configured, so it never leads to a 404
     return [
-        {"type": "divider", "label": "或"},
+        {"type": "divider", "label": "or"},
         {
             "type": "link",
-            "text": "使用 GitHub 登录",
+            "text": "Sign in with GitHub",
             "href": "/api/v2/auth/oidc/sapic_oauth_github",
             "icon": "brand:github",
         },

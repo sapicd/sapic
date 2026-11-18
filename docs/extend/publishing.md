@@ -9,7 +9,7 @@
 sapic_storage_s3/
 ├── pyproject.toml
 └── sapic_storage_s3/
-    └── __init__.py     # __version__ / __author__ / __catalog__ + 契约函数
+    └── __init__.py     # __version__ / __author__ / __catalog__ + contract functions
 ```
 
 要点：
@@ -43,7 +43,7 @@ POST /api/v2/hooks/install      {"package": "sapic-storage-s3==0.1.0", "module":
 
 ```bash
 pip install --target ./data/hooks sapic-storage-s3
-# 或直接装进解释器 site-packages
+# or install into the interpreter site-packages
 ```
 
 然后登记模块名（后台「钩子 → 导入」或接口）：
@@ -109,12 +109,12 @@ GET /api/v2/hooks/market?page=2&page_size=10
 ## 调试与排查
 
 ```text
-GET  /api/v2/hooks                     # 清单：kind / warnings / family / version
-GET  /api/v2/hooks/manifests           # 含未启用的全部清单（admin）
-POST /api/v2/hooks/reload              # 改完代码/装完包后立即重载
-GET  /api/v2/hooks/slots/<slot>        # 直接看插槽渲染出来的节点
+GET  /api/v2/hooks                     # manifests: kind / warnings / family / version
+GET  /api/v2/hooks/manifests           # every manifest including disabled ones (admin)
+POST /api/v2/hooks/reload              # reload immediately after editing code / installing a package
+GET  /api/v2/hooks/slots/<slot>        # see the nodes a slot actually renders
 POST /api/v2/hooks/<name>/actions/<action>
-GET  /api/v2/hooks/config              # 配置字段与已保存的值
+GET  /api/v2/hooks/config              # config fields and stored values
 ```
 
 常见现象：

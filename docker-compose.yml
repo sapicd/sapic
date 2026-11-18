@@ -2,7 +2,7 @@
 #
 #   SAPIC_SECRET_KEY=$(openssl rand -hex 32) docker compose up -d
 #
-# SQLite 只适合单实例；要多进程/多副本请换 PostgreSQL（见 DEPLOY.md 第 3.7 节）。
+# SQLite 只适合单实例；要多进程/多副本请换 PostgreSQL（见 docs/deploy.md）。
 # 这里只列必需项，其余走镜像/代码默认值，需要时用同名环境变量覆盖。
 services:
   sapic:

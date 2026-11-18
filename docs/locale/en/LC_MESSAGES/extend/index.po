@@ -1,0 +1,403 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, staugur
+# This file is distributed under the same license as the sapic package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-18 20:06+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../extend/index.md:1
+msgid "扩展开发总览"
+msgstr "Extension development overview"
+
+#: ../../extend/index.md:3
+msgid ""
+"sapic 的插件叫**钩子（hook）**：一个 Python 模块或包，被核心按需加载， "
+"用它自己声明的清单描述界面与能力。核心不认识任何插件名，只认契约。"
+msgstr ""
+"Plugins in sapic are called **hooks**: a Python module or package that the "
+"core loads on demand, describing its interface and capabilities in a "
+"manifest it declares itself. The core knows no plugin names, only the "
+"contract."
+
+#: ../../extend/index.md:6
+msgid "三种扩展类型"
+msgstr "The three extension types"
+
+#: ../../extend/index.md:8
+msgid ""
+"扩展类型由 `__catalog__` 声明，契约判断集中在 `sapic/libs/ext.py` （认证流程、存储解析、后台接口都问它，不各自 "
+"`getattr`）："
+msgstr ""
+"The extension type is declared by `__catalog__`, and contract checks live "
+"in `sapic/libs/ext.py` (the auth flow, storage resolution and admin APIs "
+"all ask it instead of calling `getattr` themselves):"
+
+#: ../../extend/index.md
+msgid "`__catalog__`"
+msgstr "`__catalog__`"
+
+#: ../../extend/index.md
+msgid "kind"
+msgstr "kind"
+
+#: ../../extend/index.md
+msgid "必需函数"
+msgstr "Required functions"
+
+#: ../../extend/index.md
+msgid "作用"
+msgstr "Purpose"
+
+#: ../../extend/index.md
+msgid "核心落点"
+msgstr "Core entry point"
+
+#: ../../extend/index.md
+msgid "`auth`"
+msgstr "`auth`"
+
+#: ../../extend/index.md
+msgid "`provider`"
+msgstr "`provider`"
+
+#: ../../extend/index.md
+msgid "`oidc_authorize_url`、`oidc_exchange`"
+msgstr "`oidc_authorize_url`, `oidc_exchange`"
+
+#: ../../extend/index.md
+msgid "第三方登录"
+msgstr "Third-party login"
+
+#: ../../extend/index.md
+msgid "`views/auth.py` 的 `/auth/oidc/<name>`"
+msgstr "`/auth/oidc/<name>` in `views/auth.py`"
+
+#: ../../extend/index.md
+msgid "`upload`"
+msgstr "`upload`"
+
+#: ../../extend/index.md
+msgid "`driver`"
+msgstr "`driver`"
+
+#: ../../extend/index.md
+msgid "`upimg_save`（`upimg_delete` 可选，私有桶还要 `upimg_url`）"
+msgstr ""
+"`upimg_save` (`upimg_delete` optional; private buckets also need "
+"`upimg_url`)"
+
+#: ../../extend/index.md
+msgid "对象存储驱动"
+msgstr "Object storage driver"
+
+#: ../../extend/index.md
+msgid "`libs/storage.py` 的上传/副本/删除"
+msgstr "Upload / replica / delete in `libs/storage.py`"
+
+#: ../../extend/index.md
+msgid "`processor`"
+msgstr "`processor`"
+
+#: ../../extend/index.md
+msgid "`upimg_stream_processor`"
+msgstr "`upimg_stream_processor`"
+
+#: ../../extend/index.md
+msgid "上传前改写数据"
+msgstr "Rewrite the bytes before upload"
+
+#: ../../extend/index.md
+msgid "`libs/images.process_stream`"
+msgstr "`libs/images.process_stream`"
+
+#: ../../extend/index.md
+msgid "其它/未声明"
+msgstr "Anything else / not declared"
+
+#: ../../extend/index.md
+msgid "`ui`"
+msgstr "`ui`"
+
+#: ../../extend/index.md
+msgid "—"
+msgstr "—"
+
+#: ../../extend/index.md
+msgid "只提供界面块与动作"
+msgstr "Interface blocks and actions only"
+
+#: ../../extend/index.md
+msgid "`libs/hook.py` 的插槽/动作/数据集"
+msgstr "Slots / actions / data sources in `libs/hook.py`"
+
+#: ../../extend/index.md:18
+msgid ""
+"清单里的 `kind` 与 `warnings` 由核心计算：`warnings` 会点明「声明了 upload 却缺 "
+"`upimg_save`」这类不完整实现，后台钩子页与 `GET /api/v2/hooks` 都能看到。"
+msgstr ""
+"The manifest `kind` and `warnings` are computed by the core: `warnings` "
+"points out incomplete implementations such as declaring `upload` without "
+"`upimg_save`, and both the admin hooks page and `GET /api/v2/hooks` show "
+"them."
+
+#: ../../extend/index.md:21
+msgid "加载与生效流程"
+msgstr "How hooks are loaded and applied"
+
+#: ../../extend/index.md:23
+msgid ""
+"**发现**：扫描包内 `server/sapic/hooks/*.py`（`family=local`）， 再按 `hooks_imported` "
+"设置里的模块名 `import`（`family=third`， 模块来自 `HOOK_PKG_STORAGE_DIR` 或已安装的 site-"
+"packages）。"
+msgstr ""
+"**Discovery**: modules under `server/sapic/hooks/*.py` are scanned "
+"(`family=local`), then the module names listed in the `hooks_imported` "
+"setting are imported (`family=third`, coming from `HOOK_PKG_STORAGE_DIR` or"
+" an installed site-packages)."
+
+#: ../../extend/index.md:26
+msgid "**校验元数据**：缺 `__version__` / `__author__` 的模块被跳过并记日志，不影响其它钩子。"
+msgstr ""
+"**Metadata check**: modules missing `__version__` / `__author__` are "
+"skipped and logged without affecting other hooks."
+
+#: ../../extend/index.md:27
+msgid "**启停**：`hooks_state` 里的布尔值优先，缺省看模块自己的 `__state__`（默认启用）。"
+msgstr ""
+"**Enable/disable**: a boolean in `hooks_state` wins; otherwise the module "
+"`__state__` applies (enabled by default)."
+
+#: ../../extend/index.md:28
+msgid ""
+"**配置**：`hooks_config` 存钩子级配置，字段由 `hook_manifest()` 的 `config_schema` 声明， "
+"后台钩子页据此渲染表单（`PUT /api/v2/hooks/config/<name>`）。"
+msgstr ""
+"**Configuration**: `hooks_config` stores per-hook config whose fields are "
+"declared by `config_schema` in `hook_manifest()`, and the admin hooks page "
+"renders the form from it (`PUT /api/v2/hooks/config/<name>`)."
+
+#: ../../extend/index.md:30
+msgid ""
+"**调用**：认证/存储/后处理按契约进入热路径；界面块、动作、数据集按前端请求触发。 "
+"处理器（`upimg_stream_processor`）还会拿到自己的 `config`（如 `pic2webp` 的 `quality`）， "
+"存储驱动则通过 `backend=` 取合并后的配置。"
+msgstr ""
+"**Invocation**: auth / storage / post-processing enter the hot path through"
+" their contract; interface blocks, actions and data sources are triggered "
+"by front-end requests. A processor (`upimg_stream_processor`) also receives"
+" its own `config` (e.g. `quality` for `pic2webp`), while a storage driver "
+"gets the merged config through `backend=`."
+
+#: ../../extend/index.md:34
+msgid ""
+"钩子热重载：`POST /api/v2/hooks/reload` 立即重建快照；平时每隔 `HOOK_RELOAD_TIME` 按「源文件 "
+"mtime + 已登记模块列表」决定是否换快照， 多 worker 部署下任意进程改了启停/安装列表，其它进程也会跟上。"
+msgstr ""
+"Hot reload: `POST /api/v2/hooks/reload` rebuilds the snapshot immediately; "
+"otherwise every `HOOK_RELOAD_TIME` seconds the snapshot is replaced when "
+"source mtimes or the registered module list changed, so in a multi-worker "
+"deployment a change made in any process reaches the others."
+
+#: ../../extend/index.md:38
+msgid "写一个最小钩子"
+msgstr "Write a minimal hook"
+
+#: ../../extend/index.md:40
+msgid "先跑通再对照契约。下面是一个只有界面块的钩子（不声明 `__catalog__`，一个文件即可）："
+msgstr ""
+"Get it running first, then read the contract. Below is a hook with a single"
+" interface block (no `__catalog__`; one file is enough):"
+
+#: ../../extend/index.md:61
+msgid "本地联调：不用打包、不用重启进程。"
+msgstr "Local debugging: no packaging, no process restart."
+
+#: ../../extend/index.md:76
+msgid "钩子跑在应用进程里：日志用 `logging.getLogger(__name__)`，与后端同一个输出；`print()` 不走日志。"
+msgstr ""
+"Hooks run inside the application process: log with "
+"`logging.getLogger(__name__)` so output goes to the same place as the "
+"backend; `print()` does not reach the log."
+
+#: ../../extend/index.md:77
+msgid "写成包（`sapic_storage_s3/`）时用 `pip install -e .` 装进当前解释器，再登记模块名同样能加载。"
+msgstr ""
+"When you turn it into a package (`sapic_storage_s3/`), install it into the "
+"running interpreter with `pip install -e .` and register the module name — "
+"it loads the same way."
+
+#: ../../extend/index.md:78
+msgid "插槽会渲染在哪个页面由白名单决定（见[钩子基础契约](contract.md)），`admin.*` 开头的只对管理员渲染。"
+msgstr ""
+"Which page a slot renders on is decided by the allowlist (see [Hook "
+"basics](contract.md)); slots starting with `admin.` only render for "
+"administrators."
+
+#: ../../extend/index.md:79
+msgid "本地环境搭建、跑测试与代码风格见[开发与贡献](../dev.md)。"
+msgstr ""
+"Local environment, tests and code style are covered in [Development and "
+"contributing](../dev.md)."
+
+#: ../../extend/index.md:81
+msgid "照抄哪个内置实现"
+msgstr "Which built-in to copy"
+
+#: ../../extend/index.md:83
+msgid "写自己的之前，先读 `server/sapic/hooks/` 里最短的对应实现："
+msgstr ""
+"Before writing your own, read the shortest matching implementation under "
+"`server/sapic/hooks/`:"
+
+#: ../../extend/index.md
+msgid "想写什么"
+msgstr "You want to write"
+
+#: ../../extend/index.md
+msgid "参考实现"
+msgstr "Reference"
+
+#: ../../extend/index.md
+msgid "看点"
+msgstr "What to look at"
+
+#: ../../extend/index.md
+msgid "存储驱动"
+msgstr "A storage driver"
+
+#: ../../extend/index.md
+msgid "`up2local.py`（最简，只写本地文件）→ 再看 `up2github.py`（HTTP API + 配置项 + 加速域名）"
+msgstr ""
+"`up2local.py` (simplest, writes local files) → then `up2github.py` (HTTP "
+"API + config fields + acceleration domain)"
+
+#: ../../extend/index.md
+msgid "`upimg_save` / `upimg_delete` / `upimg_url`"
+msgstr "`upimg_save` / `upimg_delete` / `upimg_url`"
+
+#: ../../extend/index.md
+msgid "登录 Provider"
+msgstr "A login provider"
+
+#: ../../extend/index.md
+msgid "`passport.py`（OIDC）"
+msgstr "`passport.py` (OIDC)"
+
+#: ../../extend/index.md
+msgid "`oidc_authorize_url` / `oidc_exchange`，登录按钮插槽"
+msgstr "`oidc_authorize_url` / `oidc_exchange`, login button slot"
+
+#: ../../extend/index.md
+msgid "上传后处理"
+msgstr "Post-upload processing"
+
+#: ../../extend/index.md
+msgid "`pic2webp.py`"
+msgstr "`pic2webp.py`"
+
+#: ../../extend/index.md
+msgid "`upimg_stream_processor` 与 processor 配置"
+msgstr "`upimg_stream_processor` and processor config"
+
+#: ../../extend/index.md
+msgid "纯界面钩子"
+msgstr "A UI-only hook"
+
+#: ../../extend/index.md
+msgid "无内置，看本节 20 行样例"
+msgstr "No built-in; use the 20-line sample above"
+
+#: ../../extend/index.md
+msgid "节点词表与动作返回值"
+msgstr "The node vocabulary and action return values"
+
+#: ../../extend/index.md:92
+msgid "安装第三方包"
+msgstr "Installing third-party packages"
+
+#: ../../extend/index.md:94
+msgid "两种方式都能把包交给 sapic（打包细节见 [发布与安装](publishing.md)）："
+msgstr ""
+"Both routes hand the package to sapic (packaging details are in [Packaging "
+"and publishing](publishing.md)):"
+
+#: ../../extend/index.md:96
+msgid ""
+"**后台安装**（推荐）：`POST /api/v2/hooks/install`，等价于 `pip install --target "
+"$HOOK_PKG_STORAGE_DIR <包名>`；如果包目录名与模块名不同， 再用 `POST /api/v2/hooks/import` "
+"登记模块名。"
+msgstr ""
+"**Install from the admin** (recommended): `POST /api/v2/hooks/install`, "
+"equivalent to `pip install --target $HOOK_PKG_STORAGE_DIR <package>`; if "
+"the package directory name differs from the module name, register the "
+"module with `POST /api/v2/hooks/import` afterwards."
+
+#: ../../extend/index.md:99
+msgid ""
+"**手动安装**：把包装进 `HOOK_PKG_STORAGE_DIR`（默认 `data/hooks`，已在 `sys.path` 上）， "
+"或装进解释器的 site-packages，然后登记模块名。"
+msgstr ""
+"**Manual install**: put the package into `HOOK_PKG_STORAGE_DIR` (default "
+"`data/hooks`, already on `sys.path`) or install it into the interpreter "
+"site-packages, then register the module name."
+
+#: ../../extend/index.md:102
+msgid ""
+"该目录只加入 `sys.path`，**不参与扫描**：`pip install --target` 会把依赖一并丢进去， "
+"按目录扫描会让无关第三方代码被当作钩子执行。"
+msgstr ""
+"That directory is only added to `sys.path` and is **never scanned**: `pip "
+"install --target` drops dependencies in there too, and scanning it would "
+"execute unrelated third-party code as hooks."
+
+#: ../../extend/index.md:105
+msgid "安全边界"
+msgstr "Security boundaries"
+
+#: ../../extend/index.md:107
+msgid "安装、导入、删除、重载、读配置都是 admin 接口；钩子代码本身就是任意 Python， 没有沙箱，装之前要信任来源。"
+msgstr ""
+"Installing, importing, deleting, reloading and reading config are all admin"
+" APIs; hook code is arbitrary Python with no sandbox, so trust the source "
+"before installing."
+
+#: ../../extend/index.md:109
+msgid ""
+"钩子返回的界面是**声明式 JSON**，不是 HTML/JS。节点类型、键、`href` 协议、 `action` 名、插槽名都在 "
+"`libs/ui.py` 白名单里清洗，未知内容直接丢弃， 因此插件不能在前端注入脚本。"
+msgstr ""
+"The interface a hook returns is **declarative JSON**, not HTML/JS. Node "
+"types, keys, `href` schemes, `action` names and slot names are all "
+"sanitised against the `libs/ui.py` allowlist and unknown content is "
+"dropped, so a plugin cannot inject scripts into the front end."
+
+#: ../../extend/index.md:112
+msgid "动作的 `scope` 由清单声明，`admin` 动作只有管理员能触发；数据源接口本身要求管理员。"
+msgstr ""
+"An action `scope` is declared in the manifest and `admin` actions can only "
+"be triggered by administrators; data source endpoints require an "
+"administrator as well."
+
+#: ../../extend/index.md:113
+msgid ""
+"驱动拿到的配置由核心合并（钩子级默认值 + 后端行配置 + 运行时 `root`）， 驱动不能决定图片可见性、优先级或过期策略，那些留在 "
+"`libs/storage.py`。"
+msgstr ""
+"Driver config is merged by the core (hook defaults + backend row config + "
+"the runtime `root`); a driver cannot decide image visibility, priority or "
+"expiry policy — those stay in `libs/storage.py`."
+

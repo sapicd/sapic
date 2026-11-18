@@ -45,7 +45,7 @@ make web-dev        # front end on 127.0.0.1:5173, proxies /api and /raw/ to 951
 ```
 
 These targets only wrap the real commands (they assume a repo-root `.venv` and a machine with `make`).
-Installation, containers and reverse proxies are covered in [DEPLOY.md](./DEPLOY.md).
+Installation, containers and reverse proxies are covered in [docs/deploy.md](./docs/deploy.md).
 
 **Code**
 

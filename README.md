@@ -14,8 +14,8 @@ pip package can add a new object store or identity provider without touching the
 >
 > The backend is now an API-only Flask app (Peewee + a relational database, no Redis), and the front end
 > is a standalone Vue 3 app. The v1 sources are no longer shipped in this repository (see the git tags).
-> To upgrade from v1, start with section 7 of [DEPLOY.md](./DEPLOY.md); the item-by-item changes are in
-> [CHANGELOG.md](./CHANGELOG.md).
+> To upgrade from v1, start with [docs/migrate-v1.md](./docs/migrate-v1.md); the item-by-item changes
+> are in [CHANGELOG.md](./CHANGELOG.md).
 
 Chinese version: [README-cn.md](./README-cn.md).
 
@@ -68,18 +68,21 @@ The built-in default secret is long enough to run as-is, but a **public multi-us
 replace it (the default is public, so anyone with the source can forge session cookies):
 `SAPIC_SECRET_KEY=$(openssl rand -hex 32) docker compose up -d`.
 Full installation, reverse proxy, container and cluster deployment, and the v1 data migration are covered in
-**[DEPLOY.md](./DEPLOY.md)**.
+**[docs/deploy.md](./docs/deploy.md)**.
 
 ## Documentation
 
 Online docs: <https://sapic.rtfd.vip>. To build them locally, run
 `pip install -r docs/requirements.txt` and then `cd docs && python -m sphinx -b html . _build/html`
-(output in `docs/_build/html`).
+(output in `docs/_build/html`). The docs are **bilingual**: Chinese is the source language and the
+English translation lives in `docs/locale/en` — preview it with `cd docs && make html-en`.
 
 | Topic | Location |
 | --- | --- |
 | Introduction and screenshots | [docs/intro.md](./docs/intro.md) |
-| Installation and deployment | [docs/install.md](./docs/install.md), [DEPLOY.md](./DEPLOY.md) |
+| Quick start (Docker / source) | [docs/quickstart.md](./docs/quickstart.md) |
+| Installation / deployment and operations | [docs/install.md](./docs/install.md), [docs/deploy.md](./docs/deploy.md) |
+| Migrating from v1 | [docs/migrate-v1.md](./docs/migrate-v1.md) |
 | Quick upload (PicGo / uTools / Typora / context menu / userscript) | [docs/usage.md](./docs/usage.md) |
 | `sapicli` command line tool | [docs/cli.md](./docs/cli.md) |
 | Configuration | [docs/config.md](./docs/config.md) |
@@ -88,9 +91,10 @@ Online docs: <https://sapic.rtfd.vip>. To build them locally, run
 | Architecture | [ARCH.md](./ARCH.md) |
 | Local development, testing and code style | [docs/dev.md](./docs/dev.md) |
 | Backend / front-end internals | [server/README.md](./server/README.md), [web/README.md](./web/README.md) |
+| Troubleshooting | [docs/faq.md](./docs/faq.md) |
 | Changelog | [CHANGELOG.md](./CHANGELOG.md) |
 
-Upgrading from v1? Read the data migration section of [DEPLOY.md](./DEPLOY.md) first (original SHAs are kept,
+Upgrading from v1? Read [docs/migrate-v1.md](./docs/migrate-v1.md) first (original SHAs are kept,
 so existing links keep working).
 
 ## Demo

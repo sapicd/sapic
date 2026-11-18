@@ -8,7 +8,7 @@ v1 代码已从仓库移除（历史代码看 git tag）。v1 → v2 的功能�
 
 技术栈（后端）：Python 3.10+，Flask，Peewee，psycopg(binary)，PyMySQL，PyJWT。（v2 不用 Redis。）
 前端：`web/` 是独立的 Vue 3 + Vite + Element Plus 应用，与后端通过 `/api` 与 `/raw/` 交互。
-详细架构见 `ARCH.md`，部署与运维见 `DEPLOY.md`，开发约定与测试见 `docs/dev.md`。
+详细架构见 `ARCH.md`，部署与运维见 `docs/deploy.md`，开发约定与测试见 `docs/dev.md`。
 
 > Python 版本下限是 **3.10**，可自由使用 3.10 语法（`X | Y` 联合类型、match 语句、内置泛型
 > `dict[str]` 等）。新增代码统一带类型注解，与既有 `sapic/` 模块风格一致。
@@ -17,7 +17,7 @@ v1 代码已从仓库移除（历史代码看 git tag）。v1 → v2 的功能�
 
 后端在 `server/`，包名 `sapic`，是**纯本地包**（不发布 PyPI、也不做 `pip install`）。
 命令均在 `server/` 下执行，`cwd` 已在 `sys.path`，可直接 `import sapic`；依赖由
-`server/requirements/` 管理（base/dev/prod/hooks），装在仓库根的 `.venv/`，不要手动 `activate`。
+`server/requirements/` 管理（base/dev/prod），装在仓库根的 `.venv/`，不要手动 `activate`。
 
 ```
 .
@@ -515,7 +515,10 @@ __state__ = "enabled"       # enabled / disabled
 
 ## 文档与变更记录
 
-- 用户文档在 `docs/`（Sphinx + MyST），运维/架构文档是仓库根的 `DEPLOY.md` / `ARCH.md`
+- 用户文档与运维文档都在 `docs/`（Sphinx + MyST，部署与运维是 `docs/deploy.md`），架构文档是仓库根的 `ARCH.md`
+- **文档是双语的**：中文是源语言，英文译在 `docs/locale/en/LC_MESSAGES/*.po`（每页一个，`gettext_compact = False`）。
+  改中文后要跑 `cd docs && make update-po` 再补 `msgstr`；`make html-en` 预览英文站，缺译会自动回落中文。
+  **代码块不参与抽取**，示例里的注释/占位值一律用英文写，别留中文（否则英文站会出现中文）
 - 每次新增功能、修复问题或行为变更，确保：
   1. 后端测试（`make test`，pytest，写在 `tests/`）通过
   2. 涉及数据结构的变更在 `sapic/migrations/` 注册迁移

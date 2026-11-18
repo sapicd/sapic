@@ -1,6 +1,6 @@
 # sapic v2 架构文档
 
-本文描述 sapic v2 的运行时组成、代码分层、数据模型与扩展点。部署步骤见 [DEPLOY.md](./DEPLOY.md)，
+本文描述 sapic v2 的运行时组成、代码分层、数据模型与扩展点。部署步骤见 [docs/deploy.md](./docs/deploy.md)，
 编码约定见 [AGENTS.md](./AGENTS.md)；v1 代码已从仓库移除。
 
 ## 1. 定位

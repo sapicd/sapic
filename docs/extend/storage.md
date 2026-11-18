@@ -7,11 +7,11 @@
 ## 契约
 
 ```python
-__catalog__ = "upload"                 # 必需：否则不会出现在后端列表里
+__catalog__ = "upload"                 # required: otherwise it never shows up in the backend list
 
 def upimg_save(filename, stream, upload_path="", backend=None, **kwargs) -> dict
-def upimg_delete(sha, upload_path, filename, basedir, save_result, backend=None) -> dict   # 强烈建议
-def upimg_url(save_result, filename="", backend=None, expires=300) -> dict                # 私有桶必需
+def upimg_delete(sha, upload_path, filename, basedir, save_result, backend=None) -> dict   # strongly recommended
+def upimg_url(save_result, filename="", backend=None, expires=300) -> dict                # required for private buckets
 ```
 
 | 函数 | 必需 | 说明 |
@@ -121,19 +121,19 @@ def upimg_url(save_result, filename="", backend=None, expires=300) -> dict      
 # sapic_storage_s3/__init__.py
 try:
     import boto3
-except ImportError:      # 可选依赖：不要写进 sapic 的 base 依赖
+except ImportError:      # optional dependency: do not add it to sapic base.txt
     boto3 = None
 
 __version__ = "0.1.0"
 __author__ = "you"
-__description__ = "保存到 S3 兼容对象存储"
+__description__ = "Save to S3-compatible object storage"
 __catalog__ = "upload"
 __state__ = "disabled"
 
 
 def hook_manifest():
     return {
-        "title": "S3 对象存储",
+        "title": "S3 object storage",
         "catalog": "upload",
         "config_schema": [
             {"type": "input", "key": "endpoint", "label": "Endpoint", "required": True},
@@ -141,10 +141,10 @@ def hook_manifest():
             {"type": "input", "key": "region", "label": "Region"},
             {"type": "input", "key": "access_key", "label": "Access Key", "required": True},
             {"type": "password", "key": "secret_key", "label": "Secret Key", "required": True},
-            {"type": "input", "key": "domain", "label": "访问域名",
-             "help": "公有读桶可直接访问时填；私有桶留空，由 sapic 的 /raw 转发"},
+            {"type": "input", "key": "domain", "label": "Public domain",
+             "help": "Fill in when a public-read bucket is reachable directly; leave empty for private buckets, served through /raw"},
         ],
-        "actions": [{"name": "ping", "label": "检查连通性", "scope": "admin", "with_form": True}],
+        "actions": [{"name": "ping", "label": "Check connectivity", "scope": "admin", "with_form": True}],
         "slots": [{"name": "admin.hook_setting"}],
     }
 
@@ -184,13 +184,13 @@ def upimg_save(filename, stream, upload_path="", backend=None, **kwargs):
     result = {"code": 0, "path": key, "size": len(data)}
     domain = str(config.get("domain") or "").strip().rstrip("/")
     if domain:
-        #: 只有公有读桶才给直链；后端设成 private 时核心也不会用它。
+        #: only public-read buckets get a direct URL; the core ignores it for private backends.
         result["src"] = "%s/%s" % (domain, key)
     return result
 
 
 def upimg_url(save_result, filename="", backend=None, expires=300, **kwargs):
-    """私有桶：签发一个短期可读的预签名地址，由 sapic 服务端转发。"""
+    """Private bucket: return a short-lived presigned URL that sapic proxies."""
     config = (backend or {}).get("config") or {}
     key = str((save_result or {}).get("path") or "").strip()
     if not key or not config.get("bucket"):
@@ -212,7 +212,7 @@ def upimg_delete(sha, upload_path, filename, basedir, save_result, backend=None,
     try:
         _client(config).delete_object(Bucket=config["bucket"], Key=key)
     except Exception as exc:
-        #: 失败不要抛：核心按 code 判定，抛出会打断同批次的其它副本删除。
+        #: never raise on failure: the core reads code, and raising aborts sibling replica deletes.
         return {"code": 1, "message": str(exc)}
     return {"code": 0}
 ```

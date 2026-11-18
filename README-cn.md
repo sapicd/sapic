@@ -12,7 +12,7 @@
 > **当前版本 `2.0.0-pre.1`（v2 重写版）**
 >
 > 后端已改为 API-only 的 Flask 应用（Peewee + 关系库，不再依赖 Redis），前端是独立的 Vue 3 应用。
-> v1 代码不再随仓库发布（历史版本看 git tag）。从 v1 升级先看 [DEPLOY.md](./DEPLOY.md) 第 7 节，
+> v1 代码不再随仓库发布（历史版本看 git tag）。从 v1 升级先看[从 v1 迁移数据](./docs/migrate-v1.md)，
 > 逐项变化见 [CHANGELOG.md](./CHANGELOG.md)。
 
 ## 特性
@@ -55,17 +55,21 @@ docker compose up -d
 
 内置默认密钥足够长，不配 `sapic_secretkey` 也能直接跑起来。**公网多用户**部署仍建议换成自己的
 （这个默认值是公开的，知道源码的人可以伪造会话 Cookie）：`SAPIC_SECRET_KEY=$(openssl rand -hex 32) docker compose up -d`。
-完整的安装、反代、容器与集群部署、从 v1 迁移数据见 **[DEPLOY.md](./DEPLOY.md)**。
+完整的安装、反代、容器与集群部署、从 v1 迁移数据见 **[部署与运维](./docs/deploy.md)**。
 
 ## 文档
 
 线上文档：<https://sapic.rtfd.vip>　本地构建：`pip install -r docs/requirements.txt` 后
 `cd docs && python -m sphinx -b html . _build/html`（产物在 `docs/_build/html`）。
+文档**中英双语**：中文是源语言，英文译文在 `docs/locale/en`，`cd docs && make html-en` 本地预览英文站。
+
 
 | 内容 | 位置 |
 | --- | --- |
 | 介绍与截图 | [docs/intro.md](./docs/intro.md) |
-| 安装部署 | [docs/install.md](./docs/install.md)、[DEPLOY.md](./DEPLOY.md) |
+| 快速开始（Docker / 源码） | [docs/quickstart.md](./docs/quickstart.md) |
+| 安装 / 部署与运维 | [docs/install.md](./docs/install.md)、[docs/deploy.md](./docs/deploy.md) |
+| 从 v1 迁移数据 | [docs/migrate-v1.md](./docs/migrate-v1.md) |
 | 快捷上传（PicGo / uTools / Typora / 右键菜单 / 油猴） | [docs/usage.md](./docs/usage.md) |
 | 命令行工具 sapicli | [docs/cli.md](./docs/cli.md) |
 | 配置项 | [docs/config.md](./docs/config.md) |
@@ -74,9 +78,10 @@ docker compose up -d
 | 架构说明 | [ARCH.md](./ARCH.md) |
 | 本地开发、测试与代码风格 | [docs/dev.md](./docs/dev.md) |
 | 后端 / 前端内部说明 | [server/README.md](./server/README.md)、[web/README.md](./web/README.md) |
+| 常见问题 | [docs/faq.md](./docs/faq.md) |
 | 变更记录 | [CHANGELOG.md](./CHANGELOG.md) |
 
-从 v1 升级请先看 [DEPLOY.md](./DEPLOY.md) 的数据迁移一节（保留原 sha，老链接继续有效）。
+从 v1 升级请先看[从 v1 迁移数据](./docs/migrate-v1.md)（保留原 sha，老链接继续有效）。
 
 ## 演示站
 

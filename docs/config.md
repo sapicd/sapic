@@ -11,10 +11,10 @@
 | --- | --- | --- | --- |
 | `ENV` | `sapic_env` | `production` | `dev` 启用开发默认值（DEBUG、内置密钥） |
 | `SECRET_KEY` | `sapic_secretkey` | 内置随机串 | Cookie 签名密钥，≥ 14 字节；可选，空值用默认（公开串，公网多用户建议替换） |
-| `DATABASE_URL` | `sapic_db_url` | `sqlite:///data/sapic.db` | `postgresql://` / `mysql://` / `sqlite:///` |
+| `DATABASE_URL` | `sapic_db_url` | `sqlite:///<server>/data/sapic.db` | `postgresql://` / `mysql://` / `sqlite:///` |
 | `MAX_UPLOAD` | `sapic_maxupload` | `25` | 整个请求的硬上限（MB）→ `MAX_CONTENT_LENGTH` |
-| `STORAGE_DIR` | `sapic_storagedir` | `data/upload` | 本地存储根目录，相对路径按 `server/` 归一 |
-| `SESSION_TTL` | `sapic_sessionttl` | `604800` | 会话有效期（秒），最小 60 |
+| `STORAGE_DIR` | `sapic_storagedir` | `<server>/data/upload` | 本地存储根目录，相对路径按 `server/` 归一 |
+| `SESSION_TTL` | `sapic_session_ttl` | `604800` | 会话有效期（秒），最小 60 |
 | `PROXY_FIX` | `sapic_proxyfix` | `false` | 信任 `X-Forwarded-*` |
 | `LOG_LEVEL` | `sapic_loglevel` | `INFO` | `DEBUG` / `INFO` / `WARNING` / `ERROR` |
 | `HOOK_PKG_STORAGE_DIR` | `sapic_hookpkgstoragedir` | `data/hooks` | 第三方钩子包目录（`pip install --target` 目标），置空关闭后台安装 |

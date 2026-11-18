@@ -1,0 +1,144 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, staugur
+# This file is distributed under the same license as the sapic package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-18 20:06+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../index.md:34
+msgid "开始"
+msgstr "Getting started"
+
+#: ../../index.md:42
+msgid "使用"
+msgstr "Using sapic"
+
+#: ../../index.md:55
+msgid "开发"
+msgstr "Development"
+
+#: ../../index.md:67
+msgid "参考"
+msgstr "Reference"
+
+#: ../../index.md:1
+msgid "sapic 文档"
+msgstr "sapic documentation"
+
+#: ../../index.md:3
+msgid "sapic"
+msgstr "sapic"
+
+#: ../../index.md:9
+msgid ""
+"sapic 是一个自建图床：后端是 API-only 的 Flask 应用（`server/`，包名 `sapic`）， 前端是独立的 Vue 3 +"
+" Vite 应用（`web/`），元数据存关系库（Peewee + PostgreSQL / MySQL / SQLite），不需要 Redis。"
+msgstr ""
+"sapic is a self-hosted image host: the backend is an API-only Flask "
+"application (`server/`, package name `sapic`) and the front end is a "
+"separate Vue 3 + Vite application (`web/`). Metadata lives in a relational "
+"database (Peewee + PostgreSQL / MySQL / SQLite); Redis is not required."
+
+#: ../../index.md:12
+msgid ""
+"**存储后端和登录方式都是扩展点**：一个第三方 pip 包声明 `__catalog__` 并实现约定的函数， 就能作为存储驱动或登录 "
+"Provider 接入，核心代码不需要改动。这部分契约见 [扩展开发](extend/index.md)。"
+msgstr ""
+"**Storage backends and login methods are both extension points**: a third-"
+"party pip package that declares `__catalog__` and implements the agreed "
+"functions becomes a storage driver or login provider, without touching the "
+"core. The contract is in [Extension development](extend/index.md)."
+
+#: ../../index.md:16
+msgid "我该看哪一页"
+msgstr "Where to start"
+
+#: ../../index.md:3
+msgid "你想做的事"
+msgstr "What you want to do"
+
+#: ../../index.md:3
+msgid "从这页开始"
+msgstr "Start here"
+
+#: ../../index.md:3
+msgid "先跑起来看看（Docker 一行 / 源码 5 分钟）"
+msgstr "See it running (Docker one-liner / source in 5 minutes)"
+
+#: ../../index.md:3
+msgid "[快速开始](quickstart.md)"
+msgstr "[Quick start](quickstart.md)"
+
+#: ../../index.md:3
+msgid "部署到自己的服务器（systemd、nginx、HTTPS、备份）"
+msgstr "Deploy to your own server (systemd, nginx, HTTPS, backups)"
+
+#: ../../index.md:3
+msgid "[部署与运维](deploy.md)"
+msgstr "[Deployment and operations](deploy.md)"
+
+#: ../../index.md:3
+msgid "查进程级配置项、调站点设置"
+msgstr "Look up process-level options, tune site settings"
+
+#: ../../index.md:3
+msgid "[配置](config.md)"
+msgstr "[Configuration](config.md)"
+
+#: ../../index.md:3
+msgid "接 PicGo / Typora / 右键菜单 / 油猴脚本"
+msgstr "Connect PicGo / Typora / the context menu / the userscript"
+
+#: ../../index.md:3
+msgid "[快捷上传](usage.md)"
+msgstr "[Quick upload](usage.md)"
+
+#: ../../index.md:3
+msgid "从 v1 升级"
+msgstr "Upgrade from v1"
+
+#: ../../index.md:3
+msgid "[从 v1 迁移数据](migrate-v1.md)"
+msgstr "[Migrating data from v1](migrate-v1.md)"
+
+#: ../../index.md:3
+msgid "写存储驱动 / 登录 Provider / 界面钩子"
+msgstr "Write a storage driver / login provider / UI hook"
+
+#: ../../index.md:3
+msgid "[扩展开发](extend/index.md)"
+msgstr "[Extension development](extend/index.md)"
+
+#: ../../index.md:3
+msgid "出问题了"
+msgstr "Something is broken"
+
+#: ../../index.md:3
+msgid "[常见问题](faq.md)"
+msgstr "[Troubleshooting](faq.md)"
+
+#: ../../index.md:29
+msgid ""
+"当前版本 **2.0.0-pre.1**（v2 重写版）。相对 v1 的变化：后端改为 API-only + Peewee、前端独立为 Vue 3 "
+"应用、运行时不再依赖 Redis；v1 代码不再随仓库发布（历史版本看 git tag）。 逐项变化见 `CHANGELOG.md`。"
+msgstr ""
+"Current version **2.0.0-pre.1** (the v2 rewrite). Compared with v1: the "
+"backend is API-only + Peewee, the front end is a standalone Vue 3 app and "
+"Redis is no longer required at runtime; the v1 sources are no longer "
+"shipped in this repository (see the git tags). Item-by-item changes are in "
+"`CHANGELOG.md`."
+

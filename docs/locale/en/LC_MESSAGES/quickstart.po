@@ -1,0 +1,82 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "快速开始"
+msgstr "Quick start"
+
+msgid ""
+"目标：几分钟内让 sapic 跑起来，并传上第一张图。只想看看效果就走 Docker，要改代码或长期运行就走 "
+"源码方式；systemd、nginx、HTTPS、数据库选择这些生产细节见[部署与运维](deploy.md)。"
+msgstr ""
+"Goal: get sapic running and upload your first image within a few minutes. If you only want to "
+"look around, use Docker; if you need to change code or run it long term, run it from source. "
+"Production details such as systemd, nginx, HTTPS and database choice are in "
+"[Deployment and operations](deploy.md)."
+
+msgid "方式一：Docker（最快）"
+msgstr "Option 1: Docker (fastest)"
+
+msgid ""
+"镜像里已经包含 gunicorn + nginx + 构建好的前端，浏览器打开 `http://<服务器IP>/` 就是站点。 SQLite "
+"库、上传文件与第三方钩子都在 `sapic-data` 卷里，删容器不丢数据。"
+msgstr ""
+"The image already bundles gunicorn, nginx and a built front end: open `http://<server-ip>/` in a "
+"browser and you are on the site. The SQLite database, uploaded files and third-party hooks all "
+"live in the `sapic-data` volume, so recreating the container keeps your data."
+
+msgid "换成自己的域名、并换掉内置密钥："
+msgstr "Point it at your own domain and replace the built-in secret:"
+
+msgid ""
+"端口冲突时用 `SAPIC_PORT=8080 docker compose up -d`。要用 PostgreSQL（多进程 / "
+"多副本）或部署到 Kubernetes，看[容器与编排](deploy.md)。"
+msgstr ""
+"If port 80 is taken, use `SAPIC_PORT=8080 docker compose up -d`. For PostgreSQL (multiple "
+"workers / replicas) or Kubernetes, see [Containers and orchestration](deploy.md)."
+
+msgid "方式二：源码运行"
+msgstr "Option 2: Run from source"
+
+msgid "开发时访问 <http://127.0.0.1:5173>（有热更新）。只起后端的话，9514 上只有 JSON 接口，没有页面。"
+msgstr ""
+"During development open <http://127.0.0.1:5173> (hot reload included). If you start the backend "
+"only, port 9514 serves JSON APIs and no pages."
+
+msgid "传第一张图"
+msgstr "Upload your first image"
+
+msgid "用刚建的管理员账号登录，进后台 `/admin/setting` 按需打开注册、匿名上传，调整单文件上限；"
+msgstr ""
+"Sign in with the administrator account you just created, then open `/admin/setting` to enable "
+"registration or anonymous uploads and adjust the per-file limits;"
+
+msgid "首页拖拽或粘贴图片上传，点结果里的地址确认能打开；"
+msgstr "drag or paste an image on the home page, then open the resulting URL to confirm it works;"
+
+msgid ""
+"「设置 → 访问令牌」建一枚只含「上传图片」的 PAT —— PicGo / Typora / 脚本都用它， "
+"逐项配置见[快捷上传](usage.md)。"
+msgstr ""
+"create a PAT with only the `upload` scope under Settings → Access tokens — PicGo, Typora and "
+"scripts all use it; per-client setup is in [Quick upload](usage.md)."
+
+msgid "接下来"
+msgstr "Next steps"
+
+msgid "部署到自己的服务器（systemd、nginx、HTTPS、备份）：[部署与运维](deploy.md)"
+msgstr "Deploy to your own server (systemd, nginx, HTTPS, backups): [Deployment and operations](deploy.md)"
+
+msgid "每个配置项与站点设置的含义：[配置](config.md)"
+msgstr "What every config option and site setting means: [Configuration](config.md)"
+
+msgid "从 v1 升级：[从 v1 迁移数据](migrate-v1.md)"
+msgstr "Upgrading from v1: [Migrating data from v1](migrate-v1.md)"
+
+msgid "起不来、传不上：[常见问题](faq.md)"
+msgstr "Won't start or won't upload: [Troubleshooting](faq.md)"

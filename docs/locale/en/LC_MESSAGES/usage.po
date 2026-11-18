@@ -1,0 +1,665 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, staugur
+# This file is distributed under the same license as the sapic package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-18 20:06+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../usage.md:1
+msgid "快捷上传"
+msgstr "Quick upload"
+
+#: ../../usage.md:3
+msgid "网页之外，sapic 还能被桌面工具、编辑器直接调用。所有方式走的都是同一个上传接口， 区别只在「谁发起请求」。先准备一个令牌："
+msgstr ""
+"Outside the web UI, sapic can be called directly by desktop tools and "
+"editors. Every route uses the same upload endpoint — only who initiates the"
+" request differs. Start by creating a token:"
+
+#: ../../usage.md:6
+msgid "登录站点，进入 **设置 → 访问令牌**，点「新建令牌」；"
+msgstr "Sign in, open **Settings → Access tokens** and click New token;"
+
+#: ../../usage.md:7
+msgid "作用域只勾 **上传图片**（`upload`）即可，客户端不需要读、写或管理权限；"
+msgstr ""
+"tick only the **Upload images** (`upload`) scope — clients need no read, "
+"write or admin permission;"
+
+#: ../../usage.md:8
+msgid "需要把客户端的图片固定收进某个相册时，在「默认相册」里选一个——客户端不会带 `album_id`，令牌会替你补上（相册被删后自动回落到你的默认相册）；"
+msgstr ""
+"to pin client uploads into one album, pick it under Default album — clients"
+" never send `album_id`, the token fills it in (and falls back to your "
+"default album once that album is deleted);"
+
+#: ../../usage.md:10
+msgid "令牌只在创建时显示一次（形如 `sp_xxxxxxxx`），下面统一写作 `<PAT>`。"
+msgstr ""
+"The token is shown only once at creation (like `sp_xxxxxxxx`); it is "
+"written `<PAT>` below."
+
+#: ../../usage.md:13
+msgid "浏览器的登录会话不能直接当 API 令牌用：会话请求必须带 CSRF 头，客户端带不了。 这也是为什么所有客户端都要求配置 PAT。"
+msgstr ""
+"A browser session cannot be used as an API token: session requests must "
+"carry a CSRF header, which clients cannot send. That is also why every "
+"client needs a PAT."
+
+#: ../../usage.md:17
+msgid "上传接口速查"
+msgstr "Upload endpoint at a glance"
+
+#: ../../usage.md:19
+msgid ""
+"所有客户端都打同一个端点：`POST /api/v2/upload`（`multipart/form-data`，字段 `file` 或 `url`，"
+" 可带 `album_id` / `title` / `expire`），鉴权用请求头 `Authorization: Bearer <PAT>`， "
+"成功返回 **HTTP 201**，图片地址取 `data.image.src`。"
+msgstr ""
+"Every client hits the same endpoint: `POST /api/v2/upload` (`multipart"
+"/form-data`, field `file` or `url`, optionally `album_id` / `title` / "
+"`expire`), authenticated with `Authorization: Bearer <PAT>`; success "
+"returns **HTTP 201** and the image URL is in `data.image.src`."
+
+#: ../../usage.md:30
+msgid "字段含义、响应结构、错误码与 URL 抓取的限制见[API 参考](api.md)的上传一节； 下面是各客户端的逐项配置。"
+msgstr ""
+"Field meanings, response shape, error codes and the URL-fetch restrictions "
+"are in the upload section of the [API reference](api.md); below is the per-"
+"client setup."
+
+#: ../../usage.md:33
+msgid "PicGo"
+msgstr "PicGo"
+
+#: ../../usage.md:35
+msgid "安装 [PicGo](https://github.com/Molunerfinn/PicGo/releases)；"
+msgstr "Install [PicGo](https://github.com/Molunerfinn/PicGo/releases);"
+
+#: ../../usage.md:36
+msgid "在 **插件设置** 里搜索并安装 `web-uploader`；"
+msgstr "search for and install `web-uploader` under **Plugin settings**;"
+
+#: ../../usage.md:37
+msgid "打开 **图床设置 → 自定义 Web 图床**，按下表填写，然后把它设为默认图床："
+msgstr ""
+"open **Image host settings → Custom web image host**, fill in the table "
+"below, then make it the default host:"
+
+#: ../../usage.md:12 ../../usage.md:83 ../../usage.md:172
+msgid "项"
+msgstr "Key"
+
+#: ../../usage.md:12 ../../usage.md:83 ../../usage.md:172
+msgid "值"
+msgstr "Value"
+
+#: ../../usage.md:12
+msgid "`url`"
+msgstr "`url`"
+
+#: ../../usage.md:12 ../../usage.md:83
+msgid "`https://your.site/api/v2/upload`"
+msgstr "`https://your.site/api/v2/upload`"
+
+#: ../../usage.md:12
+msgid "`paramName`"
+msgstr "`paramName`"
+
+#: ../../usage.md:12 ../../usage.md:83
+msgid "`file`"
+msgstr "`file`"
+
+#: ../../usage.md:12
+msgid "`jsonPath`"
+msgstr "`jsonPath`"
+
+#: ../../usage.md:12 ../../usage.md:83
+msgid "`data.image.src`"
+msgstr "`data.image.src`"
+
+#: ../../usage.md:12
+msgid "`customHeader`"
+msgstr "`customHeader`"
+
+#: ../../usage.md:12
+#, python-brace-format
+msgid "`{\"Authorization\": \"Bearer sp_xxxxxxxx\"}`"
+msgstr "`{\"Authorization\": \"Bearer sp_xxxxxxxx\"}`"
+
+#: ../../usage.md:12
+msgid "`customBody`"
+msgstr "`customBody`"
+
+#: ../../usage.md:12
+#, python-brace-format
+msgid "`{\"title\": \"从 PicGo 上传\"}`（可选）"
+msgstr "`{\"title\": \"Uploaded from PicGo\"}` (optional)"
+
+#: ../../usage.md:47
+msgid "`customHeader` 是必需的；`customBody` 只用来附加可选字段（标题、有效期）。"
+msgstr ""
+"`customHeader` is required; `customBody` only carries optional fields "
+"(title, expiry)."
+
+#: ../../usage.md:49
+msgid "PicGo-Core（命令行）"
+msgstr "PicGo-Core (command line)"
+
+#: ../../usage.md:51
+msgid "PicGo 桌面版的底层就是 PicGo-Core，很多编辑器插件也调用它。只想要命令行上传时："
+msgstr ""
+"The PicGo desktop app is built on PicGo-Core, and many editor plugins call "
+"it too. For command-line uploads only:"
+
+#: ../../usage.md:58
+msgid ""
+"把配置写进 `~/.picgo/config.json`（`picgo set uploader web-uploader` "
+"也可以，但逐项输入比较慢）："
+msgstr ""
+"Put the config into `~/.picgo/config.json` (`picgo set uploader web-"
+"uploader` works too, but typing each field is slow):"
+
+#: ../../usage.md:76
+msgid "`customHeader` 与 `customBody` 的值是**字符串化的 JSON**，注意转义。之后："
+msgstr ""
+"The `customHeader` and `customBody` values are **stringified JSON** — mind "
+"the escaping. Then:"
+
+#: ../../usage.md:84
+msgid ""
+"只是偶尔在命令行传几张图的话，用 [sapicli](cli.md) 更省事：不用装 Node、不用写配置文件， `-u` / `-t` "
+"直接给地址和令牌，`-c md` 还能顺手把链接放进剪贴板。"
+msgstr ""
+"If you only upload a few images from the command line now and then, "
+"[sapicli](cli.md) is easier: no Node, no config file, `-u` / `-t` take the "
+"address and token directly, and `-c md` drops the link into your clipboard."
+
+#: ../../usage.md:88
+msgid "uTools"
+msgstr "uTools"
+
+#: ../../usage.md:90
+msgid ""
+"uTools 应用市场里的「图床」插件多数基于 PicGo 内核，能安装 `web-uploader` 的话， 配置项与前面 PicGo "
+"一节完全相同。插件只提供「自定义接口」表单时，按下面的对应关系填："
+msgstr ""
+"Most image-host plugins in the uTools market are built on the PicGo core, "
+"so if `web-uploader` can be installed the settings are identical to the "
+"PicGo section above. When a plugin only offers a generic custom-endpoint "
+"form, map the fields as follows:"
+
+#: ../../usage.md:83
+msgid "插件里的字段"
+msgstr "Plugin field"
+
+#: ../../usage.md:83
+msgid "上传地址 / URL"
+msgstr "Upload URL"
+
+#: ../../usage.md:83
+msgid "文件字段名"
+msgstr "File field name"
+
+#: ../../usage.md:83
+msgid "请求头"
+msgstr "Headers"
+
+#: ../../usage.md:83
+msgid "`Authorization: Bearer sp_xxxxxxxx`"
+msgstr "`Authorization: Bearer sp_xxxxxxxx`"
+
+#: ../../usage.md:83
+msgid "返回字段 / JSON 路径"
+msgstr "Response field / JSON path"
+
+#: ../../usage.md:100
+msgid "如果这一版的插件两者都不支持，用 uTools 的「快捷命令」直接跑下文的脚本， 把关键字设成 `upload`，参数选「文件/图片」。"
+msgstr ""
+"If that plugin version supports neither, use a uTools quick command to run "
+"the script below, with the keyword `upload` and the argument type "
+"file/image."
+
+#: ../../usage.md:103
+msgid "uPic（macOS）"
+msgstr "uPic (macOS)"
+
+#: ../../usage.md:105
+msgid "[uPic](https://github.com/gee1k/uPic) 是 macOS 上常用的菜单栏图床工具，添加一个「自定义」图床："
+msgstr ""
+"[uPic](https://github.com/gee1k/uPic) is a popular menu-bar uploader on "
+"macOS; add a custom image host:"
+
+#: ../../usage.md:83
+msgid "API 地址"
+msgstr "API address"
+
+#: ../../usage.md:83
+msgid "请求方式"
+msgstr "Method"
+
+#: ../../usage.md:83
+msgid "`POST`"
+msgstr "`POST`"
+
+#: ../../usage.md:83
+msgid "URL 路径"
+msgstr "URL path"
+
+#: ../../usage.md:83
+msgid "`[\"data\", \"image\", \"src\"]`"
+msgstr "`[\"data\", \"image\", \"src\"]`"
+
+#: ../../usage.md:83
+msgid "`Authorization` = `Bearer sp_xxxxxxxx`"
+msgstr "`Authorization` = `Bearer sp_xxxxxxxx`"
+
+#: ../../usage.md:115
+msgid "ShareX（Windows）"
+msgstr "ShareX (Windows)"
+
+#: ../../usage.md:117
+msgid "ShareX 适合「截图 → 自动上传 → 链接进剪贴板」的流程。在 **目标 → 上传目标 → 自定义上传目标** 新建一项："
+msgstr ""
+"ShareX suits the screenshot → auto upload → link in clipboard flow. Under "
+"**Destinations → Upload destination → Custom upload destination**, add an "
+"entry:"
+
+#: ../../usage.md:83
+msgid "请求 URL"
+msgstr "Request URL"
+
+#: ../../usage.md:83
+msgid "请求方法"
+msgstr "Request method"
+
+#: ../../usage.md:83
+msgid "请求体"
+msgstr "Request body"
+
+#: ../../usage.md:83
+msgid "`Form (multipart/form-data)`"
+msgstr "`Form (multipart/form-data)`"
+
+#: ../../usage.md:83
+msgid "File form name"
+msgstr "File form name"
+
+#: ../../usage.md:83
+msgid "`file`（值类型选 **File**）"
+msgstr "`file` (set the value type to **File**)"
+
+#: ../../usage.md:83
+msgid "附加参数"
+msgstr "Extra parameters"
+
+#: ../../usage.md:83
+msgid "`title`（可选）"
+msgstr "`title` (optional)"
+
+#: ../../usage.md:83
+msgid "响应解析"
+msgstr "Response parsing"
+
+#: ../../usage.md:83
+msgid "JSON 路径 `$.data.image.src`"
+msgstr "JSON path `$.data.image.src`"
+
+#: ../../usage.md:130
+msgid ""
+"响应是上面那层统一包装，`src` 藏在 `data.image.src`。老版本 ShareX 只支持正则时， 用 "
+"`\"src\"\\s*:\\s*\"([^\"]+)\"` 也能取到——JSON 里只有 `data.image.src` 这一处 `src` 键 "
+"（`tpl.HTML` 里的地址是 `src='...'`，单引号，不会被这条正则命中）。"
+msgstr ""
+"The response uses the envelope above, so `src` sits in `data.image.src`. "
+"Old ShareX versions that only support regex can use "
+"`\"src\"\\s*:\\s*\"([^\"]+)\"` — the JSON contains only one `src` key "
+"(`tpl.HTML` uses `src='...'` with single quotes, which the regex does not "
+"match)."
+
+#: ../../usage.md:134
+msgid "编辑器插件（VS Code / Obsidian）"
+msgstr "Editor plugins (VS Code / Obsidian)"
+
+#: ../../usage.md:136
+msgid "这类插件多数只是调用 PicGo 或 PicGo-Core，**图床配置沿用上文即可**，插件里只需要指到可执行文件："
+msgstr ""
+"Most of these plugins just call PicGo or PicGo-Core, so **the host "
+"configuration above applies**; the plugin only needs the executable path:"
+
+#: ../../usage.md:138
+msgid ""
+"VS Code：安装 PicGo 相关扩展（如 `PicGo`、`Markdown Image`），设置里填 `picgo` 的路径； "
+"保存/粘贴图片时自动上传并插入 Markdown。"
+msgstr ""
+"VS Code: install a PicGo-related extension (such as `PicGo` or `Markdown "
+"Image`) and set the `picgo` path in its settings; saving or pasting an "
+"image uploads it and inserts Markdown."
+
+#: ../../usage.md:140
+msgid ""
+"Obsidian：安装 `Image auto upload` 插件，上传器选 PicGo 或 PicGo-Core， 同样读取 "
+"`~/.picgo/config.json`。"
+msgstr ""
+"Obsidian: install the `Image auto upload` plugin and choose PicGo or PicGo-"
+"Core as the uploader — it also reads `~/.picgo/config.json`."
+
+#: ../../usage.md:143
+msgid "Typora"
+msgstr "Typora"
+
+#: ../../usage.md:145
+msgid "Typora 的上传服务有三种接法，任选其一："
+msgstr "Typora can be wired up in three ways; pick one:"
+
+#: ../../usage.md:147
+msgid "**PicGo**：上传服务选 **PicGo**，填 `picgo` 的可执行文件路径，图床配置见上面 PicGo 一节。"
+msgstr ""
+"**PicGo**: choose **PicGo** as the upload service and point it at the "
+"`picgo` executable; the host config is the PicGo section above."
+
+#: ../../usage.md:148
+msgid ""
+"**sapicli**：上传服务选 **Custom Command**，命令填 `sapicli -u https://your.site -t "
+"<PAT> -s typora \"$@\"` —— `-s typora` 的输出正好是 Typora 要的格式；需要 CLI 支持 v2 "
+"的版本，用法见[命令行工具](cli.md)。"
+msgstr ""
+"**sapicli**: choose **Custom Command** and enter `sapicli -u "
+"https://your.site -t <PAT> -s typora \"$@\"` — `-s typora` produces exactly"
+" the format Typora wants; this needs a v2-capable CLI release, see [Command"
+" line tool](cli.md)."
+
+#: ../../usage.md:151
+msgid "**自带脚本**：见下，不用装任何工具，只要一条能把文件传上去并输出 URL 的命令。"
+msgstr ""
+"**Bundled script**: see below — no extra tools, just one command that "
+"uploads a file and prints the URL."
+
+#: ../../usage.md:153
+msgid ""
+"方式三的脚本存成 `/usr/local/bin/sapic-upload` 并 `chmod +x`（Windows 用后面 「Windows "
+"右键菜单」里的 `.cmd`）："
+msgstr ""
+"Save the third script as `/usr/local/bin/sapic-upload` and `chmod +x` it "
+"(on Windows use the `.cmd` from the Windows context menu section below):"
+
+#: ../../usage.md:168
+msgid ""
+"然后在 Typora **偏好设置 → 图像**：插入图片时选「上传图片」，上传服务选 **Custom Command**， 命令填 "
+"`/usr/local/bin/sapic-upload \"$@\"`（或用上面第 2 种的 `sapicli ...`）， "
+"点「验证图片上传选项」确认可用。"
+msgstr ""
+"Then in Typora **Preferences → Image**: choose to upload images on insert, "
+"set the upload service to **Custom Command** and enter `/usr/local/bin"
+"/sapic-upload \"$@\"` (or the `sapicli ...` form from option 2), and click "
+"the upload-verification button to confirm."
+
+#: ../../usage.md:173
+msgid "需要在正文里插入 Markdown 而不是裸链接时，把最后一行换成输出 `![](url)` 的写法即可；Typora 只要求每次上传输出一行文本。"
+msgstr ""
+"To insert Markdown instead of a bare link, replace the last line with one "
+"that prints `![](url)`; Typora only needs one line of text per upload."
+
+#: ../../usage.md:176
+msgid ""
+"脚本用 `python3` 解析 JSON（macOS 由 Xcode 命令行工具提供）。机器上没有 `python3` 时，改用 "
+"`jq`：把管道末尾换成 `| jq -r '.data.image.src // empty'`，记得先 `brew install jq`。"
+msgstr ""
+"The script parses JSON with `python3` (provided by the Xcode command line "
+"tools on macOS). Without `python3`, use `jq` instead: replace the tail of "
+"the pipeline with `| jq -r '.data.image.src // empty'` (run `brew install "
+"jq` first)."
+
+#: ../../usage.md:180
+msgid "Windows 右键菜单"
+msgstr "Windows context menu"
+
+#: ../../usage.md:182
+msgid ""
+"两种方式二选一，都用 [OpenWithPlusPlus](https://github.com/stax76/OpenWithPlusPlus) "
+"挂到右键菜单： 装了 sapicli 走方式一，没装走方式二（需要 Windows 10 及以上自带的 `curl.exe`）。"
+msgstr ""
+"Two options, pick one; both attach to the context menu with "
+"[OpenWithPlusPlus](https://github.com/stax76/OpenWithPlusPlus). Use option "
+"1 with sapicli installed, option 2 without it (it needs `curl.exe`, "
+"included in Windows 10 and later)."
+
+#: ../../usage.md:185
+msgid "方式一：sapicli"
+msgstr "Option 1: sapicli"
+
+#: ../../usage.md:187
+msgid "安装后 **add** 一条菜单项："
+msgstr "After installing, **add** one menu entry:"
+
+#: ../../usage.md:172
+msgid "Name"
+msgstr "Name"
+
+#: ../../usage.md:172
+msgid "`Upload to sapic`"
+msgstr "`Upload to sapic`"
+
+#: ../../usage.md:172
+msgid "File Type"
+msgstr "File Type"
+
+#: ../../usage.md:172
+#, python-format
+msgid "`%image%`"
+msgstr "`%image%`"
+
+#: ../../usage.md:172
+msgid "Path"
+msgstr "Path"
+
+#: ../../usage.md:172
+msgid "`sapicli.exe` 的绝对路径"
+msgstr "Absolute path to `sapicli.exe`"
+
+#: ../../usage.md:172
+msgid "Arguments"
+msgstr "Arguments"
+
+#: ../../usage.md:172
+msgid "`-u https://your.site -t <PAT> -c md \"$@\"`"
+msgstr "`-u https://your.site -t <PAT> -c md \"$@\"`"
+
+#: ../../usage.md:172
+msgid "其他"
+msgstr "Other"
+
+#: ../../usage.md:172
+msgid "勾选 **Run hidden**"
+msgstr "Tick **Run hidden**"
+
+#: ../../usage.md:197
+msgid ""
+"`-c md` 复制 Markdown 链接（`-c url` 复制裸地址、`-c rst` 复制 reST）， sapicli 需要支持 v2 "
+"的版本，见[命令行工具](cli.md)。"
+msgstr ""
+"`-c md` copies a Markdown link (`-c url` copies the bare address, `-c rst` "
+"copies reST); sapicli needs a v2-capable release, see [Command line "
+"tool](cli.md)."
+
+#: ../../usage.md:200
+msgid "方式二：自带 .cmd 脚本"
+msgstr "Option 2: the bundled .cmd script"
+
+#: ../../usage.md:202
+msgid ""
+"同样在 OpenWithPlusPlus 里 **add**，Path 指向 `C:\\tools\\sapic-"
+"upload.cmd`（下面这个脚本）， Arguments 填 `\"%1\"`，勾选 **Run hidden**："
+msgstr ""
+"Again **add** it in OpenWithPlusPlus, point Path at `C:\\tools\\sapic-"
+"upload.cmd` (the script below) and set Arguments to `\"%1\"`, with **Run "
+"hidden** ticked:"
+
+#: ../../usage.md:222
+msgid "上传成功后图片地址已经进了剪贴板；想改成上传完自动打开图片，把最后一行换成 `start \"\" \"%URL%\"`。"
+msgstr ""
+"After a successful upload the image URL is already on the clipboard; to "
+"open the image automatically instead, replace the last line with `start "
+"\"\" \"%URL%\"`."
+
+#: ../../usage.md:225
+msgid "macOS 右键菜单"
+msgstr "macOS context menu"
+
+#: ../../usage.md:227
+msgid "用系统自带的「自动操作」（Automator）做「快速操作」，脚本二选一："
+msgstr "Use the built-in Automator to create a Quick Action; either script works:"
+
+#: ../../usage.md:229
+msgid "「工作流程收到当前」选 **图像文件**，「位于」选 **访达**；"
+msgstr "set Workflow receives current to **image files** and in **Finder**;"
+
+#: ../../usage.md:230
+msgid "从资源库拖入 **运行 Shell 脚本**，「传递输入」选 **作为自变量**，Shell 选 `/bin/sh`；"
+msgstr ""
+"drag **Run Shell Script** from the library, set Pass input to **as "
+"arguments** and the shell to `/bin/sh`;"
+
+#: ../../usage.md:231
+msgid "脚本内容二选一（`/bin/sh` 下都可用）："
+msgstr "either script body works under `/bin/sh`:"
+
+#: ../../usage.md:233
+msgid "**方式一**，装了 sapicli（一行就够，`-c md` 把 Markdown 链接放进剪贴板）："
+msgstr ""
+"**Option 1** with sapicli installed (one line is enough; `-c md` puts the "
+"Markdown link on the clipboard):"
+
+#: ../../usage.md:239
+msgid "**方式二**，不装工具，用 curl + python3："
+msgstr "**Option 2** without any extra tool, using curl + python3:"
+
+#: ../../usage.md:253
+msgid "保存为 `Upload to sapic`。之后在访达里选中图片 → 右键 → **快速操作** 即可， 地址会写进剪贴板。"
+msgstr ""
+"Save it as `Upload to sapic`. Then select images in Finder → right click → "
+"**Quick Actions**, and the address lands on the clipboard."
+
+#: ../../usage.md:256
+msgid "油猴脚本"
+msgstr "Userscript"
+
+#: ../../usage.md:258
+msgid ""
+"浏览器里 Alt（或 Ctrl）+ 点击任意网站的图片就能直接上传。先在 **设置 → 个性化** 打开 「油猴脚本」开关，用同一行右侧的安装地址装到"
+" Tampermonkey，首次上传时粘贴一个只含 `upload` 的 PAT 即可（脚本源码里不含任何令牌，令牌存在脚本管理器本地）。"
+msgstr ""
+"Alt (or Ctrl) + click any image on any site to upload it. First enable the "
+"userscript switch under **Settings → Personalisation** and install it into "
+"Tampermonkey from the address on the right of that row; paste a PAT with "
+"only the `upload` scope on the first upload (the script source contains no "
+"token — it is stored locally by the script manager)."
+
+#: ../../usage.md:262
+msgid "Windows：`Ctrl + 点击` 或 `Alt + 点击`"
+msgstr "Windows: `Ctrl + click` or `Alt + click`"
+
+#: ../../usage.md:263
+msgid "macOS：`Alt + 点击`（`Ctrl + 点击` 是系统右键，脚本也做了兼容）"
+msgstr ""
+"macOS: `Alt + click` (`Ctrl + click` is the system context menu, which the "
+"script also handles)"
+
+#: ../../usage.md:265
+msgid "常见问题"
+msgstr "Troubleshooting"
+
+#: ../../usage.md:172
+msgid "现象"
+msgstr "Symptom"
+
+#: ../../usage.md:172
+msgid "原因与处理"
+msgstr "Cause and fix"
+
+#: ../../usage.md:172
+#, python-brace-format
+msgid "`{\"code\":\"FORBIDDEN\",\"message\":\"anonymous upload is disabled\"}`"
+msgstr "`{\"code\":\"FORBIDDEN\",\"message\":\"anonymous upload is disabled\"}`"
+
+#: ../../usage.md:172
+msgid "没带令牌，或站点关闭了匿名上传；按上文配置 PAT"
+msgstr ""
+"No token sent, or the site has anonymous uploads disabled; configure a PAT "
+"as described above"
+
+#: ../../usage.md:172
+#, python-brace-format
+msgid "`{\"code\":\"UNAUTHORIZED\",\"message\":\"invalid token\"}`"
+msgstr "`{\"code\":\"UNAUTHORIZED\",\"message\":\"invalid token\"}`"
+
+#: ../../usage.md:172
+msgid "令牌填错或已撤销，重新建一个"
+msgstr "The token is wrong or revoked; create a new one"
+
+#: ../../usage.md:172
+msgid "`token scope does not allow upload`"
+msgstr "`token scope does not allow upload`"
+
+#: ../../usage.md:172
+msgid "令牌没勾「上传图片」，重新建一个"
+msgstr "The token lacks the upload scope; create a new one"
+
+#: ../../usage.md:172
+msgid "`invalid csrf token`"
+msgstr "`invalid csrf token`"
+
+#: ../../usage.md:172
+msgid "用浏览器会话直接调接口了，客户端请改用 PAT"
+msgstr "A browser session was used to call the API directly; clients must use a PAT"
+
+#: ../../usage.md:172
+msgid "413 / `file exceeds N MB`"
+msgstr "413 / `file exceeds N MB`"
+
+#: ../../usage.md:172
+msgid "nginx 的 `client_max_body_size`、`sapic_maxupload`、后台单文件上限三者取最小值"
+msgstr ""
+"The minimum of nginx `client_max_body_size`, `sapic_maxupload` and the "
+"admin per-file limit"
+
+#: ../../usage.md:172
+msgid "`file type is not allowed`"
+msgstr "`file type is not allowed`"
+
+#: ../../usage.md:172
+msgid "后台「上传后缀白名单」没放开该格式"
+msgstr "The upload extension allowlist in the admin does not include that format"
+
+#: ../../usage.md:172
+msgid "上传成功但链接打不开"
+msgstr "The upload succeeded but the link does not open"
+
+#: ../../usage.md:172
+msgid "图片在私有相册 / 私有后端，只有登录后经 `/raw/<sha>` 才能访问"
+msgstr ""
+"The image is in a private album or on a private backend; it is only "
+"reachable through `/raw/<sha>` after signing in"
+
+#: ../../usage.md:172
+msgid "客户端报「找不到图片地址」"
+msgstr "The client says it cannot find the image URL"
+
+#: ../../usage.md:172
+msgid "JSON 路径填错：v2 信封是 `data.image.src`，不是 `src`"
+msgstr "The JSON path is wrong: the v2 envelope is `data.image.src`, not `src`"
+

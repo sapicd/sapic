@@ -37,7 +37,14 @@ extensions = [
 
 source_suffix = {".md": "markdown", ".rst": "restructuredtext"}
 root_doc = "index"
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "locale"]
+
+#: i18n: Chinese is the source language; English lives in ``locale/en`` .po files.
+#: ``gettext_compact = False`` keeps one .po per page so a page can be translated
+#: (and reviewed) on its own; ``gettext_auto_build`` compiles them during builds.
+locale_dirs = ["locale"]
+gettext_compact = False
+gettext_auto_build = True
 
 myst_enable_extensions = [
     "colon_fence",
@@ -52,7 +59,7 @@ extlinks = {
 }
 
 html_theme = "furo"
-html_title = "sapic 文档"
+html_title = "sapic"  #: language-neutral: English builds must not show a Chinese title
 htmlhelp_basename = "sapicdoc"
 html_static_path: list[str] = []
 

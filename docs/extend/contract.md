@@ -5,11 +5,11 @@
 ## 模块元数据
 
 ```python
-__version__ = "1.0.0"          # 必需：缺失则该模块被跳过
-__author__ = "your-name"       # 必需
-__description__ = "一句话说明"
-__catalog__ = "upload"         # auth / upload / processor，留空视为纯界面钩子
-__state__ = "enabled"          # 首次加载的默认状态，disabled 表示默认关闭
+__version__ = "1.0.0"          # required: the module is skipped without it
+__author__ = "your-name"       # required
+__description__ = "one-line description"
+__catalog__ = "upload"         # auth / upload / processor; empty means a UI-only hook
+__state__ = "enabled"          # initial state; "disabled" means off by default
 ```
 
 `__hookname__`、`__appversion__` 也可选，会原样出现在 `GET /api/v2/hooks` 的元数据里。
@@ -116,7 +116,7 @@ __state__ = "enabled"          # 首次加载的默认状态，disabled 表示�
   "data": {
     "code": 0,
     "message": "",
-    "toast": { "level": "success", "text": "已保存" },
+    "toast": { "level": "success", "text": "Saved" },
     "refresh": true
   }
 }

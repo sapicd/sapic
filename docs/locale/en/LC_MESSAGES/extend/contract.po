@@ -1,0 +1,683 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, staugur
+# This file is distributed under the same license as the sapic package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-18 20:06+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../extend/contract.md:1
+msgid "钩子基础契约"
+msgstr "Hook basics"
+
+#: ../../extend/contract.md:3
+msgid "任何钩子（不管是不是扩展点）都遵循这一套元数据与清单契约。"
+msgstr ""
+"Every hook (extension point or not) follows this metadata and manifest "
+"contract."
+
+#: ../../extend/contract.md:5
+msgid "模块元数据"
+msgstr "Module metadata"
+
+#: ../../extend/contract.md:15
+msgid "`__hookname__`、`__appversion__` 也可选，会原样出现在 `GET /api/v2/hooks` 的元数据里。"
+msgstr ""
+"`__hookname__` and `__appversion__` are optional too; they appear verbatim "
+"in the metadata from `GET /api/v2/hooks`."
+
+#: ../../extend/contract.md:17
+msgid ""
+"`__catalog__` 决定**扩展类型**，只有三个值有专门契约：`auth`（登录 Provider）、`upload`（存储驱动）、 "
+"`processor`（字节流后处理）；其他值或留空都按纯界面钩子处理（清单里的 `kind` 为 `ui`）。 "
+"声明的类型与模块实际导出的函数对不上时，`warnings` 里会列出缺失的函数名。"
+msgstr ""
+"`__catalog__` decides the **extension type**; only three values have a "
+"dedicated contract: `auth` (login provider), `upload` (storage driver) and "
+"`processor` (byte-stream post-processing). Any other value, or none at all,"
+" is treated as a UI-only hook (manifest `kind` is `ui`). When the declared "
+"type does not match the functions the module actually exports, `warnings` "
+"lists the missing function names."
+
+#: ../../extend/contract.md:21
+msgid "清单：`hook_manifest()`"
+msgstr "Manifest: `hook_manifest()`"
+
+#: ../../extend/contract.md:23
+msgid "一个可调用对象，返回如下字典（全部可选，核心会补齐默认值并清洗）："
+msgstr ""
+"A callable returning the dict below (everything is optional; the core fills"
+" in defaults and sanitises):"
+
+#: ../../extend/contract.md
+msgid "字段"
+msgstr "Field"
+
+#: ../../extend/contract.md
+msgid "类型"
+msgstr "Type"
+
+#: ../../extend/contract.md
+msgid "说明"
+msgstr "Description"
+
+#: ../../extend/contract.md
+msgid "`title`"
+msgstr "`title`"
+
+#: ../../extend/contract.md
+msgid "str"
+msgstr "str"
+
+#: ../../extend/contract.md
+msgid "展示名，缺省用模块名"
+msgstr "Display name; defaults to the module name"
+
+#: ../../extend/contract.md
+msgid "`catalog`"
+msgstr "`catalog`"
+
+#: ../../extend/contract.md
+msgid ""
+"展示分组，缺省取 `__catalog__`。**一般不要写**：前端靠 `catalog === \"upload\"` "
+"判断「这是存储驱动，凭据在存储后端页配置」，覆盖成别的值会让钩子页露出重复的配置表单"
+msgstr ""
+"Display group; defaults to `__catalog__`. **Usually leave it alone**: the "
+"front end uses `catalog === \"upload\"` to detect a storage driver whose "
+"credentials belong on the backend page, and overriding it makes the hooks "
+"page show a duplicate config form"
+
+#: ../../extend/contract.md
+msgid "`description`"
+msgstr "`description`"
+
+#: ../../extend/contract.md
+msgid "说明，缺省取 `__description__`"
+msgstr "Description; defaults to `__description__`"
+
+#: ../../extend/contract.md
+msgid "`config_schema`"
+msgstr "`config_schema`"
+
+#: ../../extend/contract.md
+msgid "list"
+msgstr "list"
+
+#: ../../extend/contract.md
+msgid "配置表单字段（下表）"
+msgstr "Config form fields (table below)"
+
+#: ../../extend/contract.md
+msgid "`actions`"
+msgstr "`actions`"
+
+#: ../../extend/contract.md
+#, python-brace-format
+msgid "可触发动作：`{name, label, scope, with_form, confirm}`"
+msgstr "Triggerable actions: `{name, label, scope, with_form, confirm}`"
+
+#: ../../extend/contract.md
+msgid "`data_sources`"
+msgstr "`data_sources`"
+
+#: ../../extend/contract.md
+#, python-brace-format
+msgid "只读数据集：`{name, label}`"
+msgstr "Read-only data sources: `{name, label}`"
+
+#: ../../extend/contract.md
+msgid "`slots`"
+msgstr "`slots`"
+
+#: ../../extend/contract.md
+#, python-brace-format
+msgid "声明界面插槽：`[{name: \"nav\"}]`，渲染模式固定 `declarative`"
+msgstr ""
+"Declared interface slots: `[{name: \"nav\"}]`; the render mode is always "
+"`declarative`"
+
+#: ../../extend/contract.md:35
+msgid ""
+"核心会额外输出 "
+"`kind`、`warnings`、`enabled`、`family`、`version`、`author`、`ui_version`。"
+msgstr ""
+"The core additionally emits `kind`, `warnings`, `enabled`, `family`, "
+"`version`, `author` and `ui_version`."
+
+#: ../../extend/contract.md:37
+msgid "`config_schema` 字段"
+msgstr "`config_schema` fields"
+
+#: ../../extend/contract.md
+msgid "键"
+msgstr "Key"
+
+#: ../../extend/contract.md
+msgid "`type`"
+msgstr "`type`"
+
+#: ../../extend/contract.md
+msgid "`input` / `number` / `password` / `textarea` / `switch` / `select` / `radio`"
+msgstr "`input` / `number` / `password` / `textarea` / `switch` / `select` / `radio`"
+
+#: ../../extend/contract.md
+msgid "`key`"
+msgstr "`key`"
+
+#: ../../extend/contract.md
+msgid "配置键，保存进 `hooks_config[<hook>][<key>]`"
+msgstr "Config key, stored in `hooks_config[<hook>][<key>]`"
+
+#: ../../extend/contract.md
+msgid "`label`"
+msgstr "`label`"
+
+#: ../../extend/contract.md
+msgid "表单标签"
+msgstr "Form label"
+
+#: ../../extend/contract.md
+msgid "`default`"
+msgstr "`default`"
+
+#: ../../extend/contract.md
+msgid "默认值"
+msgstr "Default value"
+
+#: ../../extend/contract.md
+msgid "`required`"
+msgstr "`required`"
+
+#: ../../extend/contract.md
+msgid "必填（存储驱动的必填项会影响「是否可用」判定）"
+msgstr "Required (for a storage driver this affects the ready / unready verdict)"
+
+#: ../../extend/contract.md
+msgid "`help` / `placeholder`"
+msgstr "`help` / `placeholder`"
+
+#: ../../extend/contract.md
+msgid "提示文案"
+msgstr "Hint text"
+
+#: ../../extend/contract.md
+msgid "`format`"
+msgstr "`format`"
+
+#: ../../extend/contract.md
+msgid "提示前端用哪种控件，如 `path`"
+msgstr "Hints which control the front end should use, e.g. `path`"
+
+#: ../../extend/contract.md
+msgid "`options`"
+msgstr "`options`"
+
+#: ../../extend/contract.md
+#, python-brace-format
+msgid "`select` / `radio` 的选项：`[{label, value}]`"
+msgstr "Options for `select` / `radio`: `[{label, value}]`"
+
+#: ../../extend/contract.md
+msgid "`multiple`"
+msgstr "`multiple`"
+
+#: ../../extend/contract.md
+msgid "`select` 是否多选"
+msgstr "Whether `select` is multiple"
+
+#: ../../extend/contract.md:51
+msgid "只有清单声明的键才能写库，未知键一律 400。"
+msgstr ""
+"Only keys declared in the manifest can be stored; unknown keys always "
+"return 400."
+
+#: ../../extend/contract.md:53
+msgid "函数命名规则"
+msgstr "Function naming rules"
+
+#: ../../extend/contract.md
+msgid "清单声明"
+msgstr "Manifest declaration"
+
+#: ../../extend/contract.md
+msgid "钩子需要实现"
+msgstr "Hook must implement"
+
+#: ../../extend/contract.md
+msgid "调用时传入"
+msgstr "Called with"
+
+#: ../../extend/contract.md
+#, python-brace-format
+msgid "`slots: [{name: \"nav\"}]`"
+msgstr "`slots: [{name: \"nav\"}]`"
+
+#: ../../extend/contract.md
+msgid "`slot_nav(context, values)`"
+msgstr "`slot_nav(context, values)`"
+
+#: ../../extend/contract.md
+msgid "`context`（含本钩子 `config`）、`values`"
+msgstr "`context` (including this hook `config`), `values`"
+
+#: ../../extend/contract.md
+#, python-brace-format
+msgid "`actions: [{name: \"ping\"}]`"
+msgstr "`actions: [{name: \"ping\"}]`"
+
+#: ../../extend/contract.md
+msgid "`action_ping(payload, context, values)`"
+msgstr "`action_ping(payload, context, values)`"
+
+#: ../../extend/contract.md
+msgid "同上，`payload` 是请求体"
+msgstr "As above; `payload` is the request body"
+
+#: ../../extend/contract.md
+#, python-brace-format
+msgid "`data_sources: [{name: \"items\"}]`"
+msgstr "`data_sources: [{name: \"items\"}]`"
+
+#: ../../extend/contract.md
+msgid "`data_items(query, context)`"
+msgstr "`data_items(query, context)`"
+
+#: ../../extend/contract.md
+msgid "`query` 是查询串字典"
+msgstr "`query` is the query-string dict"
+
+#: ../../extend/contract.md:61
+msgid ""
+"点号会被换成下划线：插槽 `admin.hook_setting` → `slot_admin_hook_setting`。 "
+"函数签名只写需要的参数即可（核心按签名过滤关键字参数），`**kwargs` 会收到全部。"
+msgstr ""
+"Dots become underscores: the `admin.hook_setting` slot is "
+"`slot_admin_hook_setting`. Declare only the parameters you need in the "
+"signature (the core filters keyword arguments by signature); `**kwargs` "
+"receives everything."
+
+#: ../../extend/contract.md:64
+msgid "插槽白名单"
+msgstr "Slot allowlist"
+
+#: ../../extend/contract.md:66
+msgid ""
+"`nav`、`login.after_form`、`profile`、`user.setting`、`admin.site_setting`、 "
+"`admin.hook_setting`、`image.detail`、`upload.after`。"
+msgstr ""
+"`nav`, `login.after_form`, `profile`, `user.setting`, `admin.site_setting`,"
+" `admin.hook_setting`, `image.detail`, `upload.after`."
+
+#: ../../extend/contract.md:69
+msgid "不在白名单里的插槽会被丢弃。以 `admin.` 开头的插槽、`scope: \"admin\"` 的动作与 数据源接口只对管理员开放。"
+msgstr ""
+"Slots outside the allowlist are dropped. Slots starting with `admin.`, "
+"actions with `scope: \"admin\"` and data-source endpoints are only "
+"available to administrators."
+
+#: ../../extend/contract.md:72
+msgid "界面节点词表"
+msgstr "Interface node vocabulary"
+
+#: ../../extend/contract.md:74
+#, python-brace-format
+msgid "钩子返回节点树（`{type, ...}` 或它们的列表），前端只有一个递归渲染器， 所有类型与键都在 `libs/ui.py` 里白名单化："
+msgstr ""
+"A hook returns a node tree (`{type, ...}` or a list of them); the front end"
+" has a single recursive renderer and every type and key is allowlisted in "
+"`libs/ui.py`:"
+
+#: ../../extend/contract.md:77
+msgid ""
+"**结构**：`fieldset`、`group`、`row`（`gap`）、`col`（`span`）、`tabs`、`collapse`、 "
+"`list`（`empty`）、`list_item`（`title`、`description`、`row_actions`）"
+msgstr ""
+"**Structure**: `fieldset`, `group`, `row` (`gap`), `col` (`span`), `tabs`, "
+"`collapse`, `list` (`empty`), `list_item` (`title`, `description`, "
+"`row_actions`)"
+
+#: ../../extend/contract.md:79
+msgid ""
+"**展示**：`text`（`muted`）、`alert` / "
+"`badge`（`level`）、`image`（`src`、`alt`、`fit`）、 `code`、`divider`（`label`）"
+msgstr ""
+"**Display**: `text` (`muted`), `alert` / `badge` (`level`), `image` (`src`,"
+" `alt`, `fit`), `code`, `divider` (`label`)"
+
+#: ../../extend/contract.md:81
+msgid ""
+"**表单**：`input`、`number`、`password`、`textarea`、`switch`、`select`、`radio` （键与"
+" `config_schema` 基本一致）"
+msgstr ""
+"**Forms**: `input`, `number`, `password`, `textarea`, `switch`, `select`, "
+"`radio` (keys basically match `config_schema`)"
+
+#: ../../extend/contract.md:83
+msgid ""
+"**交互**：`button`（`action`、`with_form`、`confirm`、`refresh`、`variant`、`size`）、"
+" `link`（`href`、`target`）、`dropdown` / `dropdown_item`"
+msgstr ""
+"**Interaction**: `button` (`action`, `with_form`, `confirm`, `refresh`, "
+"`variant`, `size`), `link` (`href`, `target`), `dropdown` / `dropdown_item`"
+
+#: ../../extend/contract.md:86
+msgid "约定与限制："
+msgstr "Conventions and limits:"
+
+#: ../../extend/contract.md:88
+#, python-brace-format
+msgid "每个节点都可带 `when: {field, op, value}`，按当前表单值决定是否渲染（`eq` / `ne` 等）。"
+msgstr ""
+"Every node may carry `when: {field, op, value}` to decide whether it "
+"renders from the current form values (`eq` / `ne` and so on)."
+
+#: ../../extend/contract.md:89
+#, python-brace-format
+msgid "文案里的 `{key}` 会用 `context` 的值替换，用于显示 `{username}` 之类的信息。"
+msgstr ""
+"`{key}` inside text is replaced with the `context` value, for showing "
+"things like `{username}`."
+
+#: ../../extend/contract.md:90
+msgid "`href` 只接受站内路径或 `http(s)` 协议，`//evil.com` 会被丢弃。"
+msgstr ""
+"`href` only accepts in-site paths or the `http(s)` scheme; `//evil.com` is "
+"dropped."
+
+#: ../../extend/contract.md:91
+msgid "`action` 必须是清单里声明过的名字，否则按钮不生效。"
+msgstr ""
+"`action` must be a name declared in the manifest, otherwise the button does"
+" nothing."
+
+#: ../../extend/contract.md:92
+msgid ""
+"图标写 `builtin:xxx` 或 `brand:xxx`。前端是一张**固定映射表** "
+"（`web/src/components/hook/icons.js`），当前可用的 `builtin` "
+"只有：`plug`、`external`、`link`、 "
+"`refresh`、`settings`、`upload`、`download`、`copy`、`tool`、`star`、`delete`； "
+"`brand:*` 不论叫什么一律显示通用链接图标。 表里没有的 `builtin:xxx` **不报错也不显示**（`<el-icon>` "
+"直接不渲染）；不带前缀的名字在清洗阶段 就被丢弃。"
+msgstr ""
+"Icons are written as `builtin:xxx` or `brand:xxx`. The front end uses a "
+"**fixed lookup table** (`web/src/components/hook/icons.js`); the available "
+"`builtin` values are only `plug`, `external`, `link`, `refresh`, "
+"`settings`, `upload`, `download`, `copy`, `tool`, `star`, `delete`. Any "
+"`brand:*` shows the generic link icon regardless of the name. A "
+"`builtin:xxx` missing from the table **neither errors nor renders** (`<el-"
+"icon>` renders nothing); a name without a prefix is dropped during "
+"sanitising."
+
+#: ../../extend/contract.md:98
+msgid "单次返回节点数、层级、文本长度都有上限（`MAX_CHILDREN` / `MAX_DEPTH` / `MAX_TEXT`）。"
+msgstr ""
+"The node count per response, nesting depth and text length are all capped "
+"(`MAX_CHILDREN` / `MAX_DEPTH` / `MAX_TEXT`)."
+
+#: ../../extend/contract.md:100
+msgid "动作与数据集返回值"
+msgstr "Action and data-source return values"
+
+#: ../../extend/contract.md:102
+msgid "这里有**三层**「响应」，键名相近但互不相同，先分清再写代码："
+msgstr ""
+"There are **three layers** of response here. The key names look alike but "
+"are different — tell them apart before writing code:"
+
+#: ../../extend/contract.md
+msgid "层"
+msgstr "Layer"
+
+#: ../../extend/contract.md
+msgid "形状"
+msgstr "Shape"
+
+#: ../../extend/contract.md
+msgid "由谁产出"
+msgstr "Produced by"
+
+#: ../../extend/contract.md
+msgid "谁消费"
+msgstr "Consumed by"
+
+#: ../../extend/contract.md
+msgid "HTTP 信封"
+msgstr "HTTP envelope"
+
+#: ../../extend/contract.md
+#, python-brace-format
+msgid "`{code: \"OK\" | 错误枚举, message, data}`"
+msgstr "`{code: \"OK\" | error enum, message, data}`"
+
+#: ../../extend/contract.md
+msgid "`views/*` 的 `ok()` / 异常处理器"
+msgstr "`ok()` in `views/*` / the error handler"
+
+#: ../../extend/contract.md
+msgid "前端 `api/client.js`、外部客户端"
+msgstr "The front-end `api/client.js` and external clients"
+
+#: ../../extend/contract.md
+msgid "钩子动作 / 数据集"
+msgstr "Hook actions / data sources"
+
+#: ../../extend/contract.md
+#, python-brace-format
+msgid "`{code: 0 | 非0, message, toast, refresh}`、`{items, total}`"
+msgstr "`{code: 0 | non-zero, message, toast, refresh}`, `{items, total}`"
+
+#: ../../extend/contract.md
+msgid "你的 `action_*` / `data_*`"
+msgstr "Your `action_*` / `data_*`"
+
+#: ../../extend/contract.md
+msgid "核心**原样塞进** HTTP 信封的 `data`"
+msgstr "The core places them **verbatim** into `data` of the HTTP envelope"
+
+#: ../../extend/contract.md
+msgid "存储驱动"
+msgstr "Storage driver"
+
+#: ../../extend/contract.md
+#, python-brace-format
+msgid "`{code: 0 | 非0, message, path / url / size}`"
+msgstr "`{code: 0 | non-zero, message, path / url / size}`"
+
+#: ../../extend/contract.md
+msgid "你的 `upimg_*`"
+msgstr "Your `upimg_*`"
+
+#: ../../extend/contract.md
+msgid "`libs/storage.py`，**不会**直接出现在 HTTP 响应里"
+msgstr "`libs/storage.py`; never appears in an HTTP response directly"
+
+#: ../../extend/contract.md:110
+msgid "所以动作接口的真实响应是两层嵌套："
+msgstr "So the real response of an action endpoint is nested two levels deep:"
+
+#: ../../extend/contract.md:125
+msgid "外层 `code` 是传输层结果，HTTP 200 时恒为 `\"OK\"`；内层 `code` 才是你的业务结果，`0` 成功、非 0 失败；"
+msgstr ""
+"The outer `code` is the transport result and is always `\"OK\"` for HTTP "
+"200; the inner `code` is your business result — `0` success, non-zero "
+"failure;"
+
+#: ../../extend/contract.md:126
+msgid "失败原因写在 `message`（英文），由前端映射成中文；`refresh: true` 让前端刷新当前块；"
+msgstr ""
+"the failure reason goes into `message` (English) and the front end maps it "
+"to Chinese; `refresh: true` makes the front end reload the current block;"
+
+#: ../../extend/contract.md:127
+#, python-brace-format
+msgid "数据集返回 `{items: [...], total: n}`，单行只保留可序列化的标量字段；"
+msgstr ""
+"a data source returns `{items: [...], total: n}`, keeping only serialisable"
+" scalar fields per row;"
+
+#: ../../extend/contract.md:128
+msgid ""
+"驱动 / processor / provider 的返回值同样是 `code: int` + `message`；沿用了老字段 `msg` 的 "
+"第三方驱动仍能工作（核心按 `message or msg` 读取），但新代码不要再用，见[存储驱动](storage.md)。"
+msgstr ""
+"Drivers, processors and providers use the same `code: int` + `message`; a "
+"third-party driver that still uses the old `msg` field keeps working (the "
+"core reads `message or msg`), but new code must not — see [Storage "
+"drivers](storage.md)."
+
+#: ../../extend/contract.md:131
+msgid "相关接口"
+msgstr "Related endpoints"
+
+#: ../../extend/contract.md
+msgid "方法"
+msgstr "Method"
+
+#: ../../extend/contract.md
+msgid "路径"
+msgstr "Path"
+
+#: ../../extend/contract.md
+msgid "权限"
+msgstr "Permission"
+
+#: ../../extend/contract.md
+msgid "GET"
+msgstr "GET"
+
+#: ../../extend/contract.md
+msgid "`/api/v2/hooks`"
+msgstr "`/api/v2/hooks`"
+
+#: ../../extend/contract.md
+msgid "登录"
+msgstr "Login"
+
+#: ../../extend/contract.md
+msgid "清单列表 + 当前用户可见的插槽名"
+msgstr "Manifest list plus the slot names visible to the current user"
+
+#: ../../extend/contract.md
+msgid "`/api/v2/hooks/manifests`"
+msgstr "`/api/v2/hooks/manifests`"
+
+#: ../../extend/contract.md
+msgid "admin"
+msgstr "admin"
+
+#: ../../extend/contract.md
+msgid "全部清单（含未启用）"
+msgstr "Every manifest, disabled ones included"
+
+#: ../../extend/contract.md
+msgid "POST"
+msgstr "POST"
+
+#: ../../extend/contract.md
+msgid "`/api/v2/hooks/reload`"
+msgstr "`/api/v2/hooks/reload`"
+
+#: ../../extend/contract.md
+msgid "立即重载"
+msgstr "Reload immediately"
+
+#: ../../extend/contract.md
+msgid "PATCH"
+msgstr "PATCH"
+
+#: ../../extend/contract.md
+msgid "`/api/v2/hooks/<name>`"
+msgstr "`/api/v2/hooks/<name>`"
+
+#: ../../extend/contract.md
+#, python-brace-format
+msgid "`{enabled: bool}`，持久化到 `hooks_state`"
+msgstr "`{enabled: bool}`, persisted to `hooks_state`"
+
+#: ../../extend/contract.md
+msgid "`/api/v2/hooks/slots/<slot>`"
+msgstr "`/api/v2/hooks/slots/<slot>`"
+
+#: ../../extend/contract.md
+msgid "匿名"
+msgstr "Anonymous"
+
+#: ../../extend/contract.md
+msgid "渲染插槽，`?context=` 传 JSON"
+msgstr "Render a slot; pass JSON in `?context=`"
+
+#: ../../extend/contract.md
+msgid "`/api/v2/hooks/<name>/actions/<action>`"
+msgstr "`/api/v2/hooks/<name>/actions/<action>`"
+
+#: ../../extend/contract.md
+msgid "触发动作（`admin` scope 需管理员）"
+msgstr "Trigger an action (the `admin` scope requires an administrator)"
+
+#: ../../extend/contract.md
+msgid "`/api/v2/hooks/<name>/data/<source>`"
+msgstr "`/api/v2/hooks/<name>/data/<source>`"
+
+#: ../../extend/contract.md
+msgid "读数据集"
+msgstr "Read a data source"
+
+#: ../../extend/contract.md
+msgid "GET/PUT"
+msgstr "GET/PUT"
+
+#: ../../extend/contract.md
+msgid "`/api/v2/hooks/config[/<name>]`"
+msgstr "`/api/v2/hooks/config[/<name>]`"
+
+#: ../../extend/contract.md
+msgid "读写钩子配置"
+msgstr "Read/write hook config"
+
+#: ../../extend/contract.md
+msgid "`/api/v2/hooks/import`"
+msgstr "`/api/v2/hooks/import`"
+
+#: ../../extend/contract.md
+msgid "登记模块名（第三方钩子入口）"
+msgstr "Register a module name (the third-party entry point)"
+
+#: ../../extend/contract.md
+msgid "`/api/v2/hooks/packages`"
+msgstr "`/api/v2/hooks/packages`"
+
+#: ../../extend/contract.md
+msgid "已安装包与包目录"
+msgstr "Installed packages and the package directory"
+
+#: ../../extend/contract.md
+msgid "`/api/v2/hooks/install`"
+msgstr "`/api/v2/hooks/install`"
+
+#: ../../extend/contract.md
+msgid "`pip install` 到包目录"
+msgstr "`pip install` into the package directory"
+
+#: ../../extend/contract.md
+msgid "`/api/v2/hooks/market`"
+msgstr "`/api/v2/hooks/market`"
+
+#: ../../extend/contract.md
+msgid "市场列表（`page` / `page_size` 分页）+ 本地安装/加载状态"
+msgstr ""
+"Market listing (`page` / `page_size` pagination) plus local "
+"installed/loaded state"
+

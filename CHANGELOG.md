@@ -11,7 +11,7 @@
 ## 2.0.0-pre — 2026-11-11
 
 首个 v2 预发布。相对 v1 是一次重写：后端拆成 API-only 的 Flask 应用（`server/`，Peewee + 关系库），
-前端独立为 Vue 3 SPA（`web/`），存储后端与登录方式全部插件化。安装与升级步骤见 `DEPLOY.md`，
+前端独立为 Vue 3 SPA（`web/`），存储后端与登录方式全部插件化。安装与升级步骤见 `docs/deploy.md`，
 接口细节见实例自带的在线文档（`/api/v2/docs`，Swagger UI 可直接试请求；文档源
 `/api/v2/openapi.json` 可导入 Apifox / Postman），
 跨接口的约定与鉴权流程见 `docs/api.md`。
@@ -71,7 +71,7 @@
 ### 升级注意
 
 - v1 → v2 数据迁移：`tools/migrate_v1_to_v2.py`（幂等、支持 `--dry-run`，保留原 `sha`，
-  已发布的 `/raw/<sha>` 与直链继续有效），用法见 `DEPLOY.md` 7.1。
+  已发布的 `/raw/<sha>` 与直链继续有效），用法见 `docs/migrate-v1.md`。
 - 客户端（PicGo / uPic / ShareX / uTools / Typora / 右键菜单 / 油猴）需改一次配置，逐项见
   [docs/usage.md](./docs/usage.md)。
 - `sapic_secretkey` 可选：内置默认值足够长，开箱即用；公网多用户建议换成自己的随机串。

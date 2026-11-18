@@ -35,9 +35,9 @@ python -m pip install -r server/requirements/dev.txt && (cd web && pnpm install)
 | `sapic_external_base_url` | 对外访问根地址，用于拼接图片外链 | 空（相对地址） |
 | `sapic_proxyfix` | 是否信任代理标头 | 关闭 |
 
-另有 `sapic_sessionttl`（会话有效期，默认 7 天）、`sapic_loglevel`（默认 `INFO`）、
+另有 `sapic_session_ttl`（会话有效期，默认 7 天）、`sapic_loglevel`（默认 `INFO`）、
 `sapic_hookpkgstoragedir`（第三方钩子包目录，默认 `data/hooks`）、`sapic_hookmarketurl`、
-`sapic_updatecheckurl`（置空即关闭出网检测），完整说明见仓库根的 `DEPLOY.md` 第 4 节与 `docs/config.md`。
+`sapic_updatecheckurl`（置空即关闭出网检测），完整说明见 `docs/config.md`。
 
 ## 数据库初始化
 
