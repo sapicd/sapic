@@ -52,8 +52,14 @@ v1 代码已从仓库移除（历史代码看 git tag）。v1 → v2 的功能�
 │   └── tests/            pytest 测试（test_*.py，pyproject 的 testpaths=["tests"]）
 ├── web/                  v2 前端（Vue 3 + Vite + Element Plus）
 ├── Makefile              常用命令入口
-└── README.md
+├── README.md             中文说明；英文在 README-en.md
+├── CONTRIBUTING.md       中文贡献指南；英文在 CONTRIBUTING-en.md
+├── SECURITY.md           中文安全策略；英文在 SECURITY-en.md
+├── ARCH.md / CHANGELOG.md / AGENTS.md   中文（无英文版）
 ```
+
+根目录的说明类文档**以中文为主**：`X.md` 是中文，英文版是 `X-en.md`（不叫 `X-cn.md`，
+也不让英文占正名）。新增/翻译这些文件时同步改两边的语言切换链接。
 
 依赖方向单向：`views → libs/utils → models/basis`；`utils/web.py` 依赖 Flask 上下文，
 禁止被非 Web 模块导入；`libs/hook` 依赖 `libs/ui` 做节点清洗；

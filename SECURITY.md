@@ -1,124 +1,116 @@
-# Security Policy
+# 安全策略
 
-Chinese version: [SECURITY-cn.md](./SECURITY-cn.md).
+英文版：[SECURITY-en.md](./SECURITY-en.md)。
 
-## Supported versions
+## 支持范围
 
-| Line | Version | Supported |
+| 版本线 | 版本 | 是否维护 |
 | --- | --- | --- |
-| v2 (`master`) | `2.0.0-pre.1` and later | Yes |
-| v1 (`1.x` tags, `1.16.x`) | `1.16.10` and later | Security fixes only |
-| v1 (`1.x` tags) | `1.16.9` and earlier | No — upgrade to `1.16.10` |
+| v2（`master`） | `2.0.0-pre.1` 及之后 | 是 |
+| v1（`1.x` tag，`1.16.x`） | `1.16.10` 及之后 | 仅安全修复 |
+| v1（`1.x` tag） | `1.16.9` 及更早 | 否，请升级到 `1.16.10` |
 
-Please reproduce issues against the latest release of the line you run before reporting.
+上报前请先在你所运行版本线的最新版上复现。
 
-## Reporting a vulnerability
+## 上报漏洞
 
-**Do not open a public issue, pull request or discussion for a security problem.**
+**不要为安全问题开公开 issue、PR 或 discussion。**
 
-Preferred, in this order:
+按优先级选择：
 
-1. **GitHub private vulnerability reporting** (enabled for this repository). Open the repository page,
-   choose the **Security** tab (labelled *Security and quality*), then **Report a vulnerability** next to
-   *Security advisories*. The report, the fix and the advisory then stay in one private workspace.
-   If that button is not visible, use option 2 instead of opening a public issue.
-2. Email **me@tcw.im** with the subject prefix `[sapic security]`. Encrypt with the same address's
-   key if you have one; otherwise send the report and we will move it to a private channel.
+1. **GitHub 私密漏洞上报**（本仓库已启用）：进入仓库页面顶部的 **Security**（标签为
+   *Security and quality*），在 *Security advisories* 标题旁点击 **Report a vulnerability**。
+   报告、修复与公告会留在同一个私密空间里。
+   如果看不到这个按钮，请改用第 2 种方式，**不要**改开公开 issue。
+2. 邮件 **me@tcw.im**，标题加前缀 `[sapic security]`。有公钥就加密，没有就先发正文，
+   我们会转到私密渠道继续。
 
-Note for maintainers: the on/off switch lives in **Settings → Security and quality → Advanced Security →
-Private vulnerability reporting** (the button there reads *Disable* when it is on). The **Security →
-Advisories → New draft security advisory** page is the publishing side only: it produces the GHSA and the
-credits, it does not accept incoming reports, and being able to create a draft says nothing about whether
-private reporting is enabled.
+维护者注意：开关在 **Settings → Security and quality → Advanced Security → Private vulnerability
+reporting**（开启时该行按钮显示 *Disable*）。**Security → Advisories → New draft security advisory**
+只是发布侧：它生成 GHSA 与致谢，本身不收报告，能建草稿也不代表私密上报已开启。
 
-Please include:
+请尽量写明：
 
-- affected version, tag or commit (and whether it is v1 or v2),
-- the deployment shape you tested (Docker image, bare `flask run`, reverse proxy, database),
-- reproduction steps or a proof-of-concept, and the impact you believe it has,
-- your name/handle and how you want to be credited in the advisory.
+- 受影响的版本 / tag / commit，以及是 v1 还是 v2；
+- 你测试的部署形态（Docker 镜像、`flask run`、反代、数据库）；
+- 复现步骤或 PoC，以及你认为的影响；
+- 你希望在公告里使用的署名。
 
-## What to expect
+## 处理时限
 
-| Stage | Target |
+| 阶段 | 目标 |
 | --- | --- |
-| Acknowledgement | within 3 business days |
-| Initial assessment (severity, affected lines) | within 10 business days |
-| Fix or mitigation released | within 90 days, sooner for high severity |
-| Public advisory | after a fixed release, or 90 days after the report |
+| 确认收到 | 3 个工作日内 |
+| 初步评估（定级、受影响范围） | 10 个工作日内 |
+| 发布修复或缓解措施 | 90 天内，高危更快 |
+| 公开公告 | 修复版本发布后，或上报满 90 天 |
 
-We follow 90-day coordinated disclosure. If a fix needs more time we will say so and ask for an extension
-before the deadline. Reporters are credited in the advisory and in `CHANGELOG.md` unless they ask otherwise.
+我们按 90 天协同披露执行。确实需要更多时间时，会在截止前说明并申请延期。
+除明确要求匿名外，上报者会出现在公告与 `CHANGELOG.md` 里。
 
-## Scope
+## 范围
 
-In scope: the code in this repository (backend in `server/`, front end in `web/`, deployment files), and the
-official container images built from it.
+纳入范围：本仓库代码（`server/` 后端、`web/` 前端、部署文件）以及由它构建的官方镜像。
 
-Out of scope: misconfiguration of your own deployment (for example exposing the admin account, running
-without HTTPS in front of a public site, or trusting `X-Forwarded-*` from untrusted peers), vulnerabilities
-in third-party hooks packaged separately from this repository, and findings that require an already
-compromised server or database.
+不在范围：你自己部署的配置问题（例如管理员账号暴露、公网站点前没有 HTTPS、
+信任不可信来源的 `X-Forwarded-*`），单独打包的第三方钩子自身的漏洞，
+以及需要服务器或数据库已被攻陷才能成立的发现。
 
-## Hardening already in place for URL uploads
+## URL 上传已有的加固
 
-`POST /api/v2/upload` with the `url` field makes the server fetch a remote object. That path is deliberately
-narrow, and these rules are covered by tests (`server/tests/test_images.py`):
+带 `url` 字段的 `POST /api/v2/upload` 会让服务端去抓取远端对象。这条路径刻意收得很窄，
+下列规则都有测试覆盖（`server/tests/test_images.py`）：
 
-- **Domain names only.** Address literals (`http://10.0.0.1/a.png`, `https://[::1]/a.png`, and public IPs
-  too) are rejected with `400`. There is nothing to resolve and nothing to check in a literal.
-- **Resolved once and pinned.** The host name is resolved a single time, every returned address is checked
-  against private / loopback / link-local / reserved / multicast ranges, and the connection is then dialed to
-  exactly those addresses. The name is still used for the `Host` header and TLS SNI, so virtual hosting and
-  certificate checks are unaffected. A second lookup (the DNS-rebinding time-of-check/time-of-use gap) does
-  not happen.
-- **No redirects.** A `3xx` answer is reported as `400` and not followed; a redirect would be a second
-  request to an address the caller never named. Storage backend read URLs, which sapic builds itself, still
-  follow redirects hop by hop.
-- **Proxy is administrator-only.** When `upload_fetch_proxy` is configured, only an administrator's upload
-  may fall back to it, because a proxied fetch is resolved and connected by the proxy and therefore leaves
-  the checks above. Anonymous and regular uploads always connect directly.
+- **只接受域名**：地址字面量（`http://10.0.0.1/a.png`、`https://[::1]/a.png`，公网 IP 同样）
+  直接 400 —— 字面量没有可解析、可校验的东西。
+- **只解析一次并绑定 IP**：域名只解析一次，逐条校验私网 / 环回 / 链路本地 / 保留 / 组播地址，
+  然后把连接拨到这些地址上；域名仍用于 `Host` 头与 TLS SNI，虚拟主机与证书校验不受影响。
+  不存在第二次解析（即 DNS rebinding 的 TOCTOU 缺口）。
+- **不跟随重定向**：`3xx` 直接 400，不跟；跟进去就是对调用方从未指定的地址再发一次请求。
+  存储后端的读取地址由 sapic 自己产生，仍保留逐跳跟随。
+- **代理仅管理员可用**：配置了 `upload_fetch_proxy` 时，只有管理员的上传才会在直连失败后走代理，
+  因为走代理时地址由代理解析与连接，绕过了上面所有校验。匿名与普通用户始终直连。
 
-## Verifying a fix
+## 验证修复
 
-The v2 regression tests simulate DNS rebinding deterministically (a stub resolver answers a public address
-first and an internal one afterwards) and assert that only the first answer is ever used:
+v2 的回归测试用桩解析器确定性地模拟 DNS rebinding（第一次答公网地址、之后答内网地址），
+并断言只使用第一次的结果：
 
 ```bash
 cd server
 python3 -m pytest tests/test_images.py -k "rebinding or redirects or address_literals or proxy" -v
 ```
 
-Manual checks against a running instance (a regular user token is enough):
+对运行中的实例做手工验证（普通用户令牌即可）：
 
 ```bash
-# 1. Address literal: must be rejected before any connection is made.
+# 1. 地址字面量：建立连接前就被拒绝。
 curl -sS -X POST https://your.site/api/v2/upload \
   -H "Authorization: Bearer $PAT" -F "url=http://127.0.0.1/secret.png"
 # -> HTTP 400, {"code": "PARAM_ERROR", "message": "url host must be a domain name"}
 
-# 2. Domain that resolves to a private address: must be rejected after the lookup.
+# 2. 解析到内网地址的域名：解析后拒绝。
 curl -sS -X POST https://your.site/api/v2/upload \
   -H "Authorization: Bearer $PAT" -F "url=http://internal.example.com/secret.png"
 # -> HTTP 403, {"code": "FORBIDDEN", "message": "url host is not allowed"}
 
-# 3. Endpoint that answers 302: must not be followed.
+# 3. 返回 302 的地址：不会被跟随。
 curl -sS -X POST https://your.site/api/v2/upload \
   -H "Authorization: Bearer $PAT" -F "url=http://your.site/redirect-to-internal"
 # -> HTTP 400, {"code": "PARAM_ERROR", "message": "url redirects are not followed"}
 
-# 4. DNS rebinding: run a lab resolver for one name that answers a public address with TTL 0 and, on the
-#    second query, the internal address. With the fix the instance answers 201 only for the public answer
-#    (or fails), the internal service never sees a request, and the resolver log shows exactly one query.
+# 4. DNS rebinding：搭一个实验解析器，让同一个域名第一次答公网地址（TTL 0）、第二次答内网地址。
+#    修复后实例只会成功抓到公网那一次（或直接失败），内网服务收不到任何请求，
+#    解析器日志里该域名只有一次查询。
 ```
 
-For the v1 line the same steps apply to `POST /api/upload` (`picbed=http://…`); the fix is described in the
-`1.x` security branch and in `CHANGELOG.md` of that branch.
+v1 版本线的验证步骤相同，只是端点换成 `POST /api/upload`（字段 `picbed=http://…`），
+修复内容见 `1.x` 安全分支及其 `CHANGELOG.md`。
 
-## Acknowledgements
+## 致谢
 
-Thanks to the people who reported issues privately and helped make sapic safer. With their permission they
-are credited here and in the [changelog](./CHANGELOG.md):
+感谢私下上报问题、帮助 sapic 变得更安全的人。经对方同意，致谢会出现在这里与
+[更新日志](./CHANGELOG.md) 中：
 
-- **Gantrel LLC (Jason Sager)** — reported the missing internal-address check in the v1 URL upload fetch and
-  the DNS-rebinding bypass of the v2 check (2026-11), and reviewed the proposed fixes.
+- **Gantrel LLC (Jason Sager)** —— 上报 v1 URL 上传抓取缺少内网地址校验、v2 的校验可被 DNS rebinding
+  绕过（2026-11），并审阅了修复方案。

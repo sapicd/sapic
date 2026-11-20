@@ -1,118 +1,104 @@
 # sapic
 
-A self-hosted image host. The backend is an API-only Flask application (`server/`, package name `sapic`);
-the front end is a separate Vue 3 single-page app (`web/`). Metadata lives in a relational database
-(PostgreSQL / MySQL / SQLite), and **both storage backends and login methods are plugins**: a third-party
-pip package can add a new object store or identity provider without touching the core.
+自建图床：后端是 API-only 的 Flask 应用（`server/`，包名 `sapic`），前端是独立的 Vue 3 单页应用（`web/`）。
+元数据存关系库（PostgreSQL / MySQL / SQLite），**存储后端与登录方式都是插件**，
+一个第三方 pip 包就能接入新的对象存储或第三方登录，核心代码不需要改。
 
 [![Actions Status: ci](https://github.com/sapicd/sapic/workflows/ci/badge.svg)](https://github.com/sapicd/sapic/actions?query=workflow%3A%22build+and+test%22)
 [![codecov](https://codecov.io/gh/sapicd/sapic/branch/master/graph/badge.svg)](https://codecov.io/gh/sapicd/sapic)
 ![Last Release](https://img.shields.io/github/release/sapicd/sapic.svg?style=flat-square)
 ![Version](https://img.shields.io/badge/version-2.0.0--pre.1-orange.svg?style=flat-square)
 
-> **Current version `2.0.0-pre.1` (the v2 rewrite)**
+> **当前版本 `2.0.0-pre.1`（v2 重写版）**
 >
-> The backend is now an API-only Flask app (Peewee + a relational database, no Redis), and the front end
-> is a standalone Vue 3 app. The v1 sources are no longer shipped in this repository (see the git tags).
-> To upgrade from v1, start with [docs/migrate-v1.md](./docs/migrate-v1.md); the item-by-item changes
-> are in [CHANGELOG.md](./CHANGELOG.md).
+> 后端已改为 API-only 的 Flask 应用（Peewee + 关系库，不再依赖 Redis），前端是独立的 Vue 3 应用。
+> v1 代码不再随仓库发布（历史版本看 git tag）。从 v1 升级先看[从 v1 迁移数据](./docs/migrate-v1.md)，
+> 逐项变化见 [CHANGELOG.md](./CHANGELOG.md)。
 
-Chinese version: [README-cn.md](./README-cn.md).
+英文版：[README-en.md](./README-en.md)。
 
-## Features
+## 特性
 
-- **Upload**: drag and drop, paste, remote URL (fetched by the server, domain names only, redirects are not
-  followed), batch queue; per-type suffix and size limits for images and videos, plus optional expiry.
-- **Image management**: cursor-paginated lists, keyword and tag filters, batch move / visibility / delete,
-  share templates (URL / HTML / Markdown / rST).
-- **Albums and visibility**: permissions are per album (public / private / shared), sharing is by username with
-  read or write access and an optional expiry, and a single image can override its album.
-- **Storage**: multiple backends with priority and replicas; built-in local / Qiniu / Upyun / GitHub / Gitee.
-- **Accounts**: registration review, email verification, password reset, OIDC single sign-on; access tokens
-  scoped `read` / `upload` / `write` / `admin`.
-- **Extensions**: hooks describe their admin UI in declarative JSON; third-party packages can be installed,
-  enabled and configured from the admin area, with per-backend settings.
-- **Clients**: PicGo / uPic / ShareX / uTools / Typora / a userscript all go through `POST /api/v2/upload`
-  with a personal access token.
+- **上传**：拖拽、粘贴、远程 URL（服务端抓取，只接受域名且不跟随重定向）、批量队列；图片与视频分别限制后缀与大小，支持有效期。
+- **图片管理**：游标分页列表、关键词与标签筛选、批量移动/可见性/删除、分享模板（URL / HTML / Markdown / rST）。
+- **相册与可见性**：权限以相册为维度（公开 / 私有 / 共享），按用户名共享并授予读写权限与有效期，单图可覆盖。
+- **存储**：多后端 + 优先级 + 副本；内置本地 / 七牛 / 又拍云 / GitHub / Gitee。
+- **账号**：注册审核、邮箱验证、找回密码、OIDC 统一登录；访问令牌分 `read` / `upload` / `write` / `admin` 四档。
+- **扩展**：钩子用声明式 JSON 描述后台界面，第三方包可在后台安装、启停、单后端独立配置。
+- **客户端接入**：PicGo / uPic / ShareX / uTools / Typora / 油猴脚本统一走 `POST /api/v2/upload` + PAT。
 
-## Getting started
+## 快速开始
 
 ```bash
 git clone https://github.com/sapicd/sapic && cd sapic
 
-# Dependencies: the backend goes into .venv at the repo root, the front end is its own pnpm project
+# 依赖：后端装在仓库根的 .venv，前端是独立的 pnpm 工程
 python3 -m venv .venv && ./.venv/bin/python -m pip install -r server/requirements/dev.txt
 (cd web && pnpm install)
 
-# Create an admin (sapic_env=dev uses the built-in defaults when server/.cfg is absent)
-(cd server && FLASK_APP=sapic sapic_env=dev ../.venv/bin/python -m flask sa create-admin -u admin -p 'your-password')
+# 创建管理员（本地没有 server/.cfg 时靠 sapic_env=dev 用内置默认配置）
+(cd server && FLASK_APP=sapic sapic_env=dev ../.venv/bin/python -m flask sa create-admin -u admin -p '你的密码')
 
-# Backend on http://127.0.0.1:9514, reloads on code changes
+# 后端 http://127.0.0.1:9514，改代码自动重载
 (cd server && FLASK_APP=sapic sapic_env=dev ../.venv/bin/python -m flask run --host 0.0.0.0 --port 9514 --reload)
 
-# In another terminal: front end on http://127.0.0.1:5173 (/api and /raw/ proxy to 9514)
+# 另开一个终端：前端 http://127.0.0.1:5173（/api 与 /raw/ 代理到 9514）
 (cd web && pnpm run dev)
 ```
 
-> The `Makefile` at the repository root is only a convenience wrapper for local development
-> (`make setup` / `make dev` / `make web-dev` are equivalent to the commands above). The docs always spell
-> out the real commands, so containers and machines without `make` can follow them verbatim.
+> 仓库根的 `Makefile` 只是本地开发的便利封装（`make setup` / `make dev` / `make web-dev`
+> 与上面的命令等价）。本文与各部署文档一律写真实命令，容器或没有 `make` 的机器可以直接照做。
 
-Single-container Docker (with SQLite):
+Docker 一行起（单容器 + SQLite）：
 
 ```bash
 docker compose up -d
 ```
 
-The built-in default secret is long enough to run as-is, but a **public multi-user** deployment should
-replace it (the default is public, so anyone with the source can forge session cookies):
-`SAPIC_SECRET_KEY=$(openssl rand -hex 32) docker compose up -d`.
-Full installation, reverse proxy, container and cluster deployment, and the v1 data migration are covered in
-**[docs/deploy.md](./docs/deploy.md)**.
+内置默认密钥足够长，不配 `sapic_secretkey` 也能直接跑起来。**公网多用户**部署仍建议换成自己的
+（这个默认值是公开的，知道源码的人可以伪造会话 Cookie）：`SAPIC_SECRET_KEY=$(openssl rand -hex 32) docker compose up -d`。
+完整的安装、反代、容器与集群部署、从 v1 迁移数据见 **[部署与运维](./docs/deploy.md)**。
 
-## Documentation
+## 文档
 
-Online docs: <https://sapic.rtfd.vip>. To build them locally, run
-`pip install -r docs/requirements.txt` and then `cd docs && python -m sphinx -b html . _build/html`
-(output in `docs/_build/html`). The docs are **bilingual**: Chinese is the source language and the
-English translation lives in `docs/locale/en` — preview it with `cd docs && make html-en`.
+线上文档：<https://sapic.rtfd.vip>　本地构建：`pip install -r docs/requirements.txt` 后
+`cd docs && python -m sphinx -b html . _build/html`（产物在 `docs/_build/html`）。
+文档**中英双语**：中文是源语言，英文译文在 `docs/locale/en`，`cd docs && make html-en` 本地预览英文站。
 
-| Topic | Location |
+
+| 内容 | 位置 |
 | --- | --- |
-| Introduction and screenshots | [docs/intro.md](./docs/intro.md) |
-| Quick start (Docker / source) | [docs/quickstart.md](./docs/quickstart.md) |
-| Installation / deployment and operations | [docs/install.md](./docs/install.md), [docs/deploy.md](./docs/deploy.md) |
-| Migrating from v1 | [docs/migrate-v1.md](./docs/migrate-v1.md) |
-| Quick upload (PicGo / uTools / Typora / context menu / userscript) | [docs/usage.md](./docs/usage.md) |
-| `sapicli` command line tool | [docs/cli.md](./docs/cli.md) |
-| Configuration | [docs/config.md](./docs/config.md) |
-| API reference | [docs/api.md](./docs/api.md) |
-| Extension development (hooks, storage drivers, login providers) | [docs/extend/](./docs/extend/index.md) |
-| Architecture | [ARCH.md](./ARCH.md) |
-| Local development, testing and code style | [docs/dev.md](./docs/dev.md) |
-| Backend / front-end internals | [server/README.md](./server/README.md), [web/README.md](./web/README.md) |
-| Troubleshooting | [docs/faq.md](./docs/faq.md) |
-| Changelog | [CHANGELOG.md](./CHANGELOG.md) |
+| 介绍与截图 | [docs/intro.md](./docs/intro.md) |
+| 快速开始（Docker / 源码） | [docs/quickstart.md](./docs/quickstart.md) |
+| 安装 / 部署与运维 | [docs/install.md](./docs/install.md)、[docs/deploy.md](./docs/deploy.md) |
+| 从 v1 迁移数据 | [docs/migrate-v1.md](./docs/migrate-v1.md) |
+| 快捷上传（PicGo / uTools / Typora / 右键菜单 / 油猴） | [docs/usage.md](./docs/usage.md) |
+| 命令行工具 sapicli | [docs/cli.md](./docs/cli.md) |
+| 配置项 | [docs/config.md](./docs/config.md) |
+| API 参考 | [docs/api.md](./docs/api.md) |
+| 扩展开发（钩子、存储驱动、登录 Provider） | [docs/extend/](./docs/extend/index.md) |
+| 架构说明 | [ARCH.md](./ARCH.md) |
+| 本地开发、测试与代码风格 | [docs/dev.md](./docs/dev.md) |
+| 后端 / 前端内部说明 | [server/README.md](./server/README.md)、[web/README.md](./web/README.md) |
+| 常见问题 | [docs/faq.md](./docs/faq.md) |
+| 变更记录 | [CHANGELOG.md](./CHANGELOG.md) |
 
-Upgrading from v1? Read [docs/migrate-v1.md](./docs/migrate-v1.md) first (original SHAs are kept,
-so existing links keep working).
+从 v1 升级请先看[从 v1 迁移数据](./docs/migrate-v1.md)（保留原 sha，老链接继续有效）。
 
-## Demo
+## 演示站
 
-<https://sapicd.com>, test account `demo` / `123456` (please do not change the password).
+<https://sapicd.com>，测试账号 `demo` / `123456`（请勿修改密码）。
 
-It is public: anonymous upload is disabled to keep junk out, registration is open, but please do not use it
-for anything beyond testing — images may be removed at any time.
+对外开放，为防止乱传已关闭匿名上传；随意注册，但不可用于非测试用途，图片保留删除权利。
 
-## Security
+## 安全
 
-Please report vulnerabilities privately instead of opening a public issue. Channels, supported versions and
-response times are in [SECURITY.md](./SECURITY.md). Chinese version: [SECURITY-cn.md](./SECURITY-cn.md).
+漏洞请私下上报，不要开公开 issue：渠道、支持版本与响应时限见 [SECURITY.md](./SECURITY.md)。
+英文版：[SECURITY-en.md](./SECURITY-en.md)。
 
 ## Contributing
 
-Issues and pull requests are welcome. Development conventions, tests and pre-commit checks are in
-[docs/dev.md](./docs/dev.md).
+欢迎提交 issue 与 PR，开发约定、测试与提交前检查见 [docs/dev.md](./docs/dev.md)。
 
 <a href="https://github.com/sapicd/sapic/graphs/contributors">
   <img src="https://opencollective.com/sapic/contributors.svg?width=890&button=false" />
