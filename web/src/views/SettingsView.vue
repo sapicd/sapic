@@ -7,7 +7,7 @@ import AvatarCropper from '@/components/AvatarCropper.vue'
 import HookSlot from '@/components/hook/HookSlot.vue'
 import { useSessionStore } from '@/stores/session'
 import { useSiteStore } from '@/stores/site'
-import { formatTime } from '@/utils/format'
+import { formatShortTime, formatTime } from '@/utils/format'
 
 const EXPIRES = [
   { label: '永久', value: 0 },
@@ -658,10 +658,15 @@ onMounted(() => {
             查看 API 文档（可试请求）
           </el-link>
         </p>
-        <el-table v-loading="tokensLoading" :data="tokens" size="small">
-          <el-table-column prop="name" label="名称" min-width="120" />
-          <el-table-column prop="prefix" label="前缀" width="140" />
-          <el-table-column label="权限" min-width="140">
+        <el-table
+          v-loading="tokensLoading"
+          :data="tokens"
+          size="small"
+          class="token-table"
+        >
+          <el-table-column prop="name" label="名称" min-width="90" show-overflow-tooltip />
+          <el-table-column prop="prefix" label="前缀" width="92" />
+          <el-table-column label="权限" min-width="92">
             <template #default="{ row }">
               <el-tag
                 v-for="scope in row.scopes || []"
@@ -674,26 +679,28 @@ onMounted(() => {
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="默认相册" min-width="130">
+          <el-table-column label="默认相册" min-width="96" show-overflow-tooltip>
             <template #default="{ row }">
               <span v-if="row.album_name">{{ row.album_name }}</span>
-              <el-text v-else type="info" size="small">跟随默认相册</el-text>
+              <el-text v-else type="info" size="small">跟随默认</el-text>
             </template>
           </el-table-column>
-          <el-table-column label="创建时间" width="180">
-            <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
+          <el-table-column label="创建时间" width="132">
+            <template #default="{ row }">{{ formatShortTime(row.created_at) }}</template>
           </el-table-column>
-          <el-table-column label="最近使用" width="180">
-            <template #default="{ row }">{{ formatTime(row.last_used_at) }}</template>
+          <el-table-column label="最近使用" width="132">
+            <template #default="{ row }">
+              {{ formatShortTime(row.last_used_at) }}
+            </template>
           </el-table-column>
-          <el-table-column label="状态" width="90">
+          <el-table-column label="状态" width="70">
             <template #default="{ row }">
               <el-tag size="small" :type="row.revoked ? 'info' : 'success'">
                 {{ row.revoked ? '已撤销' : '有效' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="100" align="right">
+          <el-table-column label="操作" width="72" align="right">
             <template #default="{ row }">
               <el-button
                 link

@@ -1513,6 +1513,11 @@ a {
   display: none;
 }
 
+/*: 令牌表列多且都是短字段，收紧单元格内边距，避免侧栏里出现横向滚动条。 */
+.token-table .cell {
+  padding: 0 6px;
+}
+
 .el-dialog {
   border-radius: var(--app-radius-lg);
   background: var(--app-surface-strong);
