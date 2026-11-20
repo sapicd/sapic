@@ -17,7 +17,7 @@ pip package can add a new object store or identity provider without touching the
 > To upgrade from v1, start with [docs/migrate-v1.md](./docs/migrate-v1.md); the item-by-item changes
 > are in [CHANGELOG.md](./CHANGELOG.md).
 
-Chinese version: [README.md](./README.md).
+中文版: [README.md](./README.md).
 
 ## Features
 
@@ -107,7 +107,7 @@ for anything beyond testing — images may be removed at any time.
 ## Security
 
 Please report vulnerabilities privately instead of opening a public issue. Channels, supported versions and
-response times are in [SECURITY-en.md](./SECURITY-en.md). Chinese version: [SECURITY.md](./SECURITY.md).
+response times are in [SECURITY-en.md](./SECURITY-en.md). 中文版: [SECURITY.md](./SECURITY.md).
 
 ## Contributing
 

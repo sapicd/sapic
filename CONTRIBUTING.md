@@ -1,6 +1,6 @@
 # 贡献指南
 
-感谢你的贡献！英文版：[CONTRIBUTING-en.md](./CONTRIBUTING-en.md)。
+感谢你的贡献！English version: [CONTRIBUTING-en.md](./CONTRIBUTING-en.md)。
 
 ## 安全问题
 

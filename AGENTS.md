@@ -59,7 +59,9 @@ v1 代码已从仓库移除（历史代码看 git tag）。v1 → v2 的功能�
 ```
 
 根目录的说明类文档**以中文为主**：`X.md` 是中文，英文版是 `X-en.md`（不叫 `X-cn.md`，
-也不让英文占正名）。新增/翻译这些文件时同步改两边的语言切换链接。
+也不让英文占正名）。新增/翻译这些文件时同步改两边的语言切换链接，**标签用目标文档的语言**：
+中文文件里写 `English version: [X-en.md](./X-en.md)。`，英文文件里写 `中文版: [X.md](./X.md).`
+（`web/`、`server/` 的 README 同理）。
 
 依赖方向单向：`views → libs/utils → models/basis`；`utils/web.py` 依赖 Flask 上下文，
 禁止被非 Web 模块导入；`libs/hook` 依赖 `libs/ui` 做节点清洗；

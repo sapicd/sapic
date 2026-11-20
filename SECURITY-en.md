@@ -1,6 +1,6 @@
 # Security Policy
 
-Chinese version: [SECURITY.md](./SECURITY.md).
+中文版: [SECURITY.md](./SECURITY.md).
 
 ## Supported versions
 

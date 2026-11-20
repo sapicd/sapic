@@ -2,7 +2,7 @@
 
 The sapic v2 backend, API-only (the front end is a separate Vue application).
 
-Chinese version: [README.md](./README.md).
+中文版: [README.md](./README.md).
 
 ## Requirements
 

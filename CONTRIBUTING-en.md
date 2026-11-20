@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for taking the time to contribute. Chinese version: [CONTRIBUTING.md](./CONTRIBUTING.md).
+Thanks for taking the time to contribute. 中文版: [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Security issues
 

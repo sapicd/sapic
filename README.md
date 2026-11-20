@@ -15,7 +15,7 @@
 > v1 代码不再随仓库发布（历史版本看 git tag）。从 v1 升级先看[从 v1 迁移数据](./docs/migrate-v1.md)，
 > 逐项变化见 [CHANGELOG.md](./CHANGELOG.md)。
 
-英文版：[README-en.md](./README-en.md)。
+English version: [README-en.md](./README-en.md)。
 
 ## 特性
 
@@ -94,7 +94,7 @@ docker compose up -d
 ## 安全
 
 漏洞请私下上报，不要开公开 issue：渠道、支持版本与响应时限见 [SECURITY.md](./SECURITY.md)。
-英文版：[SECURITY-en.md](./SECURITY-en.md)。
+English version: [SECURITY-en.md](./SECURITY-en.md)。
 
 ## Contributing
 
