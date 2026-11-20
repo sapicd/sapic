@@ -671,7 +671,7 @@ onBeforeUnmount(() => {
       </el-form>
       <p class="hint">
         外链只登记地址，不下载文件、不占存储；公开相册里的图片直接展示源站地址，私有图片由本站转发。
-        删除记录不会影响源站。
+        删除记录不会影响源站。只支持 https 的公网链接，内网地址（含解析到内网的域名）无法导入。
       </p>
       <template #footer>
         <el-button @click="importDialog = false">取消</el-button>

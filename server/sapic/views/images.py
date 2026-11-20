@@ -18,6 +18,7 @@ from ..libs.images import (
     resolve_expire_at,
     serialize_image,
     tag_condition,
+    uploads_enabled,
     visible_query,
 )
 from ..libs.storage import replica_link
@@ -160,6 +161,9 @@ def _target_album(raw) -> Album:
 @login_required
 def import_external():
     """Register external links without downloading them."""
+    #: 登记外链也是「新增图片」，站点冻结期间同样要关掉，否则绕过 upload_enabled。
+    if not uploads_enabled():
+        raise ApiError("upload is disabled", ErrorCode.FORBIDDEN, 403)
     require_scope(SCOPE_UPLOAD)
     data = request.get_json(silent=True) or {}
     raw = data.get("items")

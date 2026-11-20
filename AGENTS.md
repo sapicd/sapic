@@ -390,6 +390,11 @@ ShareX 等的逐项配置见 `docs/usage.md`。**不要再为老客户端补第�
 - 外链登记（`images.source_url`，`POST /images/import`）不下载文件、不写副本：公开图 `src` 直接是源站地址，
   私有图经 `/raw/<sha>` 转发；删除只删元数据。批量操作走 `POST /images/batch/delete` 与
   `PATCH /images/batch`（≤100 张，只允许自己的图片，移动目标需 `can_write`）。
+  链接校验在写入时做（`libs.images.validate_external_url`，逐条失败进 `failed`）：**只收 https 的公网域名**，
+  地址字面量、带凭据的链接、解析到内网/保留地址的域名一律拒绝；解析不到（含离线）放行，因为
+  `/raw` 转发时 `_open_once` 会再校验一次并钉住地址。站点冻结上传期间这个接口同样 403。
+  私有外链由 `/raw` 转发时**不信任源站 `Content-Type`**（`views/public.py` 的 `_media_type`，只放
+  image/video + `nosniff`），否则源站回一个 `text/html` 就是同源 XSS。
 - 图片有效期（`images.expire_at`，`NULL` = 永久）：上传传 `expire`（秒，v1 同语义），
   `PATCH /images/<sha>` 传 `expire_at`（绝对时间戳，`null` 取消）。**到期即视为不存在**——
   `/raw`、详情、列表、广场、相册计数统一走 `models.image.live_condition()`（`status=enabled`

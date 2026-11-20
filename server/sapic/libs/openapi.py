@@ -647,7 +647,10 @@ OPERATIONS: dict[str, dict] = {
         "summary": "登记外链图片",
         "tag": "图片",
         "auth": "login",
-        "description": "只登记地址、不下载字节；单请求最多 100 条。",
+        "description": (
+            "只登记地址、不下载字节；单请求最多 50 条。只接受 https 的公网域名，"
+            "地址字面量、带凭据的链接与解析到内网的域名会被逐条拒绝（列在 `failed` 里）。"
+        ),
         "body": _json_body(
             {
                 "items": {

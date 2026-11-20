@@ -79,11 +79,30 @@ def _body(response):
         response.close()
 
 
+def _media_type(remote_type: str, fallback: str, media_only: bool) -> str:
+    """Pick the ``Content-Type`` a relayed body is served with.
+
+    ``media_only`` is for bytes nobody vetted (an imported external link):
+    whatever the origin claims, only image/video types may be rendered, so a
+    ``text/html`` (or a mislabelled) answer cannot become script/html on this
+    origin. Storage relays keep the origin type, since we stored those bytes.
+    """
+    fallback = (fallback or "").lower()
+    if not media_only:
+        return remote_type or fallback or "application/octet-stream"
+    if remote_type.startswith(("image/", "video/")):
+        return remote_type
+    if fallback.startswith(("image/", "video/")):
+        return fallback
+    return "application/octet-stream"
+
+
 def _proxy(
     url: str,
     mime: str,
     headers: dict | None = None,
     allow_private: bool = False,
+    media_only: bool = False,
 ):
     request_headers = dict(headers or {})
     if request.headers.get("Range"):
@@ -94,16 +113,17 @@ def _proxy(
     response = Response(
         stream_with_context(_body(remote)),
         status=remote.status,
-        content_type=(
-            remote.headers.get_content_type()
-            or mime
-            or "application/octet-stream"
+        content_type=_media_type(
+            (remote.headers.get_content_type() or "").lower(), mime, media_only
         ),
     )
     for header in ("Content-Length", "Content-Range"):
         value = remote.headers.get(header)
         if value:
             response.headers[header] = value
+    if media_only:
+        #: 类型已被改写，别让浏览器再嗅探回去。
+        response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Accept-Ranges"] = "bytes"
     return response
 
@@ -137,7 +157,10 @@ def image(sha: str):
     if row.source_url:
         if public:
             return redirect(row.source_url)
-        return _cached(_proxy(row.source_url, row.mime), public=False)
+        #: 源站字节没人校验过，只按图片/视频类型转发（见 ``_media_type``）。
+        return _cached(
+            _proxy(row.source_url, row.mime, media_only=True), public=False
+        )
     replicas = replicas_for(row)
     #: 本地副本最便宜：Range 与缓存都由 send_file 处理，不必走网络。
     for replica in replicas:

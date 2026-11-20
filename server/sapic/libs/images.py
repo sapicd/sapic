@@ -1017,8 +1017,50 @@ def create_image(
     return image
 
 
-#: Only absolute http(s) links may be imported as external references.
-EXTERNAL_SCHEMES = ("http", "https")
+#: Imported links must be absolute https: a plain-http origin would let a
+#: visitor's browser (and the relay) talk to something we refuse to fetch.
+EXTERNAL_SCHEMES = ("https",)
+
+#: Imported link length cap; long enough for signed CDN URLs.
+EXTERNAL_MAX_LENGTH = 1024
+
+
+def validate_external_url(url: str) -> str:
+    """Check a link *before* it is registered, without fetching it.
+
+    The bytes stay at the origin, so nothing is downloaded here, but the record
+    outlives the request: a public image later 302s visitors to the origin and a
+    private one is relayed by ``/raw/<sha>``. Refusing plain http, address
+    literals and names that resolve into the intranet keeps the stored URL from
+    aiming at something this server must never talk to. The relay checks again
+    at fetch time (and pins the address it dialled), so this is a cheap first
+    gate rather than the only one; a name the server cannot resolve right now is
+    accepted, because the origin may sit behind a DNS split we cannot see.
+
+    Returns the stripped URL; raises :class:`ApiError` when it is not usable.
+    """
+    url = (url or "").strip()
+    if len(url) > EXTERNAL_MAX_LENGTH:
+        raise ApiError("url is too long", ErrorCode.PARAM_ERROR)
+    parsed = urlparse(url)
+    if parsed.scheme.lower() not in EXTERNAL_SCHEMES or not parsed.netloc:
+        raise ApiError("url must be an absolute https link", ErrorCode.PARAM_ERROR)
+    try:
+        parsed.port
+    except ValueError as exc:
+        raise ApiError("url has an invalid port", ErrorCode.PARAM_ERROR) from exc
+    if "@" in parsed.netloc:
+        #: 带凭据的地址会被浏览器 302 与日志一起带走，也没有正当用途。
+        raise ApiError("url must not carry credentials", ErrorCode.PARAM_ERROR)
+    host = parsed.hostname or ""
+    if not host:
+        raise ApiError("url must be an absolute https link", ErrorCode.PARAM_ERROR)
+    if _is_ip_literal(host):
+        raise ApiError("url host must be a domain name", ErrorCode.PARAM_ERROR)
+    #: 解析一次做内网校验：正常解析就复用结论，解析不了（含离线环境）放行，
+    #: 真正的连接由 ``/raw`` 转发时的 ``_open_once`` 再校验一遍。
+    _checked_addresses(host)
+    return url
 
 
 def create_external_image(
@@ -1034,14 +1076,8 @@ def create_external_image(
     private ones are relayed through ``/raw/<sha>``. No replica row is written,
     so deleting the record never touches the source.
     """
-    url = (url or "").strip()
+    url = validate_external_url(url)
     parsed = urlparse(url)
-    if parsed.scheme.lower() not in EXTERNAL_SCHEMES or not parsed.netloc:
-        raise ApiError(
-            "url must be an absolute http(s) link", ErrorCode.PARAM_ERROR
-        )
-    if len(url) > 1024:
-        raise ApiError("url is too long", ErrorCode.PARAM_ERROR)
 
     name = secure_filename(filename or posix_basename(parsed.path))
     if not name:
