@@ -191,6 +191,10 @@ def test_market_endpoint_merges_loaded_state(app, client, monkeypatch):
     assert item["loaded"] is True
     assert item["installed"] is True
     assert item["enabled"] is True
+    #: 内置钩子没有 dist-info，``installed_version`` 为空，但已加载的模块
+    #: 自报的 ``__version__`` 要能回传，前端的「已装版本」列才不会只剩「已加载」。
+    assert item["installed_version"] == ""
+    assert item["loaded_version"]
     #: 源里没标 appversion（V1 时代）的条目，只要本地已加载就仍然保留，
     #: 否则管理员在这里看不到它，也就没法卸载。
     assert item["compatible"] is False

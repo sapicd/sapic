@@ -269,6 +269,14 @@ def hook_market():
         item = dict(entry)
         item["loaded"] = hook is not None
         item["enabled"] = bool(hook.enabled) if hook is not None else False
+        #: ``installed_version`` only covers packages pip-installed into
+        #: ``HOOK_PKG_STORAGE_DIR`` (it reads ``*.dist-info``). A hook imported
+        #: from site-packages or the built-in directory has no metadata there,
+        #: so expose the running module's own ``__version__`` separately and let
+        #: the browser fall back to it instead of showing a bare "loaded".
+        item["loaded_version"] = (
+            str(hook.meta.get("__version__") or "") if hook is not None else ""
+        )
         item["installed"] = bool(item["installed_version"]) or hook is not None
         items.append(item)
     located["items"] = items

@@ -544,7 +544,11 @@ onMounted(refresh)
             </el-table-column>
             <el-table-column label="已装版本" width="110">
               <template #default="{ row }">
-                {{ row.installed_version || (row.loaded ? '已加载' : '-') }}
+                {{
+                  row.installed_version ||
+                  row.loaded_version ||
+                  (row.loaded ? '已加载' : '-')
+                }}
               </template>
             </el-table-column>
             <el-table-column label="操作" width="230" align="right">
