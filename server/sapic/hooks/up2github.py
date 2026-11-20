@@ -48,13 +48,17 @@ REQUIRED = ("token", "repo")
 def hook_manifest():
     return {
         "title": "GitHub 版本库",
+        "title_key": "hooks.up2github.title",
+        "description_key": "hooks.up2github.description",
         "catalog": "upload",
         "config_schema": [
             {
                 "type": kind,
                 "key": key,
                 "label": label,
+                "label_key": "hooks.up2github.fields.%s.label" % key,
                 "placeholder": hint,
+                "placeholder_key": "hooks.up2github.fields.%s.hint" % key,
                 "required": key in REQUIRED,
             }
             for key, kind, label, hint in FIELDS

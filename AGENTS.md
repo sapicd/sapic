@@ -472,6 +472,16 @@ __state__ = "enabled"       # enabled / disabled
 - 节点类型完整列表见 `ui.py`：`fieldset/group/row/col/tabs/collapse/list/list_item`、
   `text/alert/badge/image/code/divider`、`input/number/password/textarea/switch/select/radio`、
   `button/link/dropdown/dropdown_item`
+- 可见文案可带 i18n 键：节点用 `text_key` / `title_key` / `label_key` / `description_key` /
+  `legend_key` / `empty_key` / `help_key` / `placeholder_key`（清单见 `ui.KEY_FIELDS`，键是点分
+  标识符），`config_schema` 的字段用 `label_key` / `help_key` / `placeholder_key`，manifest 用
+  `title_key` / `description_key`。前端词表（`web/src/i18n/*.js`）有译文就用译文、没有就显示钩子
+  给的原文，所以第三方钩子只写一种语言也能用；内置钩子的译文放在词表的 `hooks.<模块名>` 下
+  （如 `hooks.passport.title`、`hooks.up2github.fields.repo.label`），管理员填过的自定义文案
+  不带键、永远照原样显示
+- 钩子**没声明**键时，前端还会按模块名兜底查 `hooks.<模块名>.title` / `.description`
+  （`web/src/components/hook/text.js` 的 `hookText`）：给市场里的第三方钩子补译文不必改它的包，
+  在词表里加两条即可；两处都没收录才显示钩子原文
 - `action` 返回里的 `toast` 仅当 `level` 在白名单内才会透传给前端；`refresh=True` 触发前端刷新
 - 钩子自带的私有依赖：在 `server/requirements/` 下加文件并用 `try/except ImportError` 兜底英文提示，
   **不要**在 `server/requirements/base.txt` 强制引入可选 SDK
@@ -513,13 +523,21 @@ __state__ = "enabled"       # enabled / disabled
 - **图标用字符串名引用时必须全局注册**：菜单 / 侧栏 / 设置分栏等通过 `icon: 'Brush'` +
   `<component :is="icon" />` 使用图标，模板里不会报错但图标静默不渲染，必须在 `web/src/main.js`
   的 `GLOBAL_ICONS` 里补上（同时补对应的具名 import）。新增/改动菜单项时要顺手核对一遍
-- **界面固定中文，不做多语言**：不要在模板里引入 `vue-i18n` / `t()`，用户可见文案直接写中文；
-  Element Plus 自带文案由 `App.vue` 的 `<el-config-provider :locale="zhCn">` 统一提供
-  （`html lang` 在 `index.html` 里固定 `zh-CN`）
-- **接口错误文案**：后端 `message` 固定英文原文，界面中文由 `web/src/api/messages.js` 的
-  `localizeMessage(message, code)` 转换（精确词典 → `%` 模板规则 → `ErrorCode` 兜底），
-  展示统一走 `api/client.js` 的 `errorMessage(error, fallback)`，不要直接 `ElMessage.error(error.message)`。
-  新增/修改后端 `ApiError` 文案时同步这个词典，否则只能退化到按 `code` 的中文兜底
+- **界面中英双语**（`web/src/i18n/`，没引入 vue-i18n）：**中文是源语言**，词表按区域分组放在
+  `i18n/zh.js`（新增文案先写这里）与 `i18n/en.js`（翻译）。模板直接写 `{{ t('area.key') }}` /
+  `:title="t('area.key')"`（`t` 由 `i18n` 插件挂到 `globalProperties`，不用每个组件 import）；
+  `<script setup>` 里用 `import { t } from '@/i18n'`。带变量写成 `t('upload.tooMany', { n: 3 })`，
+  不要手工拼句子。`t()` 内部读 `locale.value`，模板里调用即建立依赖，切语言会自动重渲染；
+  回落顺序是「当前语言 → 中文 → 键名」，缺键不会白屏但会把键名露在界面上。
+  Element Plus 自带文案跟着 `App.vue` 的 `el-config-provider :locale` 换（`zh-cn` / `en`），
+  不要写死 `zhCn`；`<html lang>` 由 `setLocale()` 维护
+- 语言选择存在 `localStorage.sapic_locale`，默认跟随浏览器语言；切换入口是
+  `components/LocaleSwitcher.vue`（顶栏常驻，窄屏保留，不随 `app-user` 收进抽屉）
+- **接口错误文案**：后端 `message` 固定英文原文，中文界面由 `web/src/api/messages.js` 的
+  `localizeMessage(message, code)` 转换（精确词典 → `%` 模板规则 → `ErrorCode` 兜底）；英文界面
+  直接用原文，只有原文为空时才用 `CODE_MESSAGES_EN` 兜底。展示统一走 `api/client.js` 的
+  `errorMessage(error, fallback)`，不要直接 `ElMessage.error(error.message)`。
+  新增/修改后端 `ApiError` 文案时同步中文词典，否则只能退化到按 `code` 的兜底
 - Element Plus 按需引入（`unplugin-auto-import` + `unplugin-vue-components`）：模板直接写 `<el-xxx>`，
   脚本直接用 `ElMessage` / `ElMessageBox` 等 API，**不要**再显式 `import ... from 'element-plus'`，
   组件样式由插件按需注入；中文化由 `App.vue` 的 `<el-config-provider :locale>` 统一提供

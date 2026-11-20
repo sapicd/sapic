@@ -364,7 +364,7 @@ def backend_payload(row: StorageBackend, primary_id: int | None = None) -> dict:
     manifest = get_hook_manager().manifest(row.hook_name) or {}
     config = dict(hook_config(row.hook_name) or {})
     config.update(dict(row.config or {}))
-    return {
+    payload = {
         "id": row.id,
         "name": row.name,
         "hook_name": row.hook_name,
@@ -382,6 +382,9 @@ def backend_payload(row: StorageBackend, primary_id: int | None = None) -> dict:
         #: 驱动声明的必填项还没填时，前端标「待配置」，上传会失败。
         "configured": not _required_missing(manifest, config),
     }
+    if manifest.get("title_key"):
+        payload["title_key"] = manifest["title_key"]
+    return payload
 
 
 def _upload_manifest(hook_name: str) -> dict:

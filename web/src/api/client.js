@@ -1,3 +1,5 @@
+import { t } from '@/i18n'
+
 import { localizeMessage } from './messages'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api/v2'
@@ -51,7 +53,7 @@ async function request(method, path, options = {}) {
   try {
     response = await fetch(buildUrl(path, query), init)
   } catch (error) {
-    throw new ApiError('网络异常，请确认后端服务已启动', 'NETWORK_ERROR', 0)
+    throw new ApiError(t('errors.network'), 'NETWORK_ERROR', 0)
   }
 
   const contentType = response.headers.get('content-type') || ''
@@ -64,7 +66,7 @@ async function request(method, path, options = {}) {
       unauthorizedHandler()
     }
     throw new ApiError(
-      payload?.message || response.statusText || '请求失败',
+      payload?.message || response.statusText || t('errors.http'),
       payload?.code || 'HTTP_ERROR',
       response.status,
     )
@@ -80,8 +82,8 @@ export const api = {
   del: (path, options) => request('DELETE', path, options),
 }
 
-export function errorMessage(error, fallback = '操作失败') {
-  //: ApiError.message 保留后端英文原文（排查用），展示前统一转成中文。
+export function errorMessage(error, fallback = t('errors.operation')) {
+  //: ApiError.message 保留后端英文原文（排查用），展示前按当前语言转换。
   if (error instanceof ApiError) {
     return localizeMessage(error.message, error.code) || fallback
   }

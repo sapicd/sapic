@@ -352,20 +352,21 @@ def read_identities():
         if not hook.enabled or not ext.is_provider(hook.module):
             continue
         namespace = ext.provider_issuer(hook.module, hook_config(name))
-        items.append(
-            {
-                "name": name,
-                "title": (manager.manifest(name) or {}).get("title") or name,
-                "bound": bool(
-                    user.oidc_subject
-                    and namespace
-                    and ext.normalize_issuer(user.oidc_issuer) == namespace
-                ),
-                "bind_url": url_for(
-                    "auth.oidc_start", name=name, bind=1, next="/settings"
-                ),
-            }
-        )
+        manifest = manager.manifest(name) or {}
+        item = {
+            "name": name,
+            "title": manifest.get("title") or name,
+            "bound": bool(
+                user.oidc_subject
+                and namespace
+                and ext.normalize_issuer(user.oidc_issuer) == namespace
+            ),
+            "bind_url": url_for("auth.oidc_start", name=name, bind=1, next="/settings"),
+        }
+        #: 钩子自带 i18n 键时前端优先用它翻译标题（缺译仍回落到 ``title``）。
+        if manifest.get("title_key"):
+            item["title_key"] = manifest["title_key"]
+        items.append(item)
     return ok({"items": items})
 
 

@@ -3,16 +3,17 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { api } from '@/api/client'
+import { t } from '@/i18n'
 import { formatTime } from '@/utils/format'
 
 const route = useRoute()
 
 //: 后台所有页面挂在这个壳里，侧栏互相切换，避免入口分散在多处菜单里。
 const items = computed(() => [
-  { name: 'admin', label: '站点设置', icon: 'Setting' },
-  { name: 'admin-hooks', label: '钩子管理', icon: 'Connection' },
-  { name: 'admin-backends', label: '存储后端', icon: 'FolderOpened' },
-  { name: 'admin-users', label: '用户管理', icon: 'UserFilled' },
+  { name: 'admin', label: t('admin.site'), icon: 'Setting' },
+  { name: 'admin-hooks', label: t('admin.hooks'), icon: 'Connection' },
+  { name: 'admin-backends', label: t('admin.backends'), icon: 'FolderOpened' },
+  { name: 'admin-users', label: t('admin.users'), icon: 'UserFilled' },
 ])
 
 //: ``/admin`` 上的默认子路由没有命名，按「站点设置」高亮。
@@ -42,7 +43,7 @@ onMounted(() => loadVersion())
 <template>
   <div class="page side-shell">
     <aside class="side-nav">
-      <div class="side-nav__title">后台管理</div>
+      <div class="side-nav__title">{{ t('admin.title') }}</div>
       <nav class="side-nav__menu">
         <router-link
           v-for="item in items"
@@ -58,9 +59,9 @@ onMounted(() => loadVersion())
 
       <div class="side-nav__foot">
         <button type="button" class="side-nav__version" @click="versionDialog = true">
-          <span>版本 v{{ version?.current || '—' }}</span>
+          <span>{{ t('admin.version', { version: version?.current || '—' }) }}</span>
           <el-tag v-if="version?.has_update" size="small" type="danger" effect="dark">
-            可更新
+            {{ t('admin.updatable') }}
           </el-tag>
         </button>
       </div>
@@ -70,19 +71,19 @@ onMounted(() => loadVersion())
       <router-view />
     </section>
 
-    <el-dialog v-model="versionDialog" title="版本信息" width="440px">
+    <el-dialog v-model="versionDialog" :title="t('admin.versionInfo')" width="440px">
       <el-descriptions :column="1" border size="small">
-        <el-descriptions-item label="当前版本">
+        <el-descriptions-item :label="t('admin.current')">
           v{{ version?.current || '—' }}
         </el-descriptions-item>
-        <el-descriptions-item label="最新版本">
+        <el-descriptions-item :label="t('admin.latest')">
           {{ version?.latest || '—' }}
         </el-descriptions-item>
-        <el-descriptions-item label="发布时间">
+        <el-descriptions-item :label="t('admin.releasedAt')">
           {{ version?.released_at ? formatTime(version.released_at) : '—' }}
         </el-descriptions-item>
-        <el-descriptions-item label="检查时间">
-          {{ version?.checked_at ? formatTime(version.checked_at) : '未检查' }}
+        <el-descriptions-item :label="t('admin.checkedAt')">
+          {{ version?.checked_at ? formatTime(version.checked_at) : t('admin.notChecked') }}
         </el-descriptions-item>
       </el-descriptions>
 
@@ -100,10 +101,10 @@ onMounted(() => loadVersion())
         :closable="false"
         show-icon
         style="margin-top: 12px"
-        title="未启用更新检测（sapic_updatecheckurl 为空）"
+        :title="t('admin.updateCheckDisabled')"
       />
       <p v-if="version?.has_update" class="hint">
-        有新版本可用，升级前请先备份数据库与上传目录。
+        {{ t('admin.updateHint') }}
       </p>
 
       <template #footer>
@@ -115,13 +116,13 @@ onMounted(() => loadVersion())
           target="_blank"
           rel="noopener"
         >
-          打开发布页
+          {{ t('admin.releasePage') }}
         </el-link>
         <el-button :loading="versionLoading" @click="loadVersion(true)">
-          重新检查
+          {{ t('admin.recheck') }}
         </el-button>
         <el-button type="primary" @click="versionDialog = false">
-          关闭
+          {{ t('common.close') }}
         </el-button>
       </template>
     </el-dialog>

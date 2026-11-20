@@ -3,7 +3,9 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import HookSlot from '@/components/hook/HookSlot.vue'
+import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 import RichText from '@/components/RichText.vue'
+import { t } from '@/i18n'
 import { useSessionStore } from '@/stores/session'
 import { useSiteStore } from '@/stores/site'
 
@@ -35,14 +37,14 @@ const backgroundStyle = computed(() => {
 })
 
 const menus = computed(() => {
-  const items = [{ name: 'upload', label: '首页', icon: 'HomeFilled' }]
+  const items = [{ name: 'upload', label: t('nav.home'), icon: 'HomeFilled' }]
   if (site.plazaEnabled) {
-    items.push({ name: 'plaza', label: '广场', icon: 'Grid' })
+    items.push({ name: 'plaza', label: t('nav.plaza'), icon: 'Grid' })
   }
   if (session.authenticated) {
-    items.push({ name: 'images', label: '图片', icon: 'Picture' })
-    items.push({ name: 'albums', label: '相册', icon: 'FolderOpened' })
-    items.push({ name: 'settings', label: '设置', icon: 'Setting' })
+    items.push({ name: 'images', label: t('nav.images'), icon: 'Picture' })
+    items.push({ name: 'albums', label: t('nav.albums'), icon: 'FolderOpened' })
+    items.push({ name: 'settings', label: t('nav.settings'), icon: 'Setting' })
   }
   return items
 })
@@ -87,7 +89,7 @@ async function onCommand(command) {
   navOpen.value = false
   if (command === 'logout') {
     await session.logout()
-    ElMessage.success('已退出登录')
+    ElMessage.success(t('nav.logoutSuccess'))
     router.push({ name: 'login' })
     return
   }
@@ -125,9 +127,11 @@ async function onCommand(command) {
               :class="{ 'is-active': adminActive }"
             >
               <el-icon><Tools /></el-icon>
-              <span>后台管理</span>
+              <span>{{ t('nav.admin') }}</span>
             </router-link>
           </nav>
+
+          <LocaleSwitcher />
 
           <div class="app-user">
             <el-dropdown v-if="session.authenticated" trigger="click" @command="onCommand">
@@ -144,14 +148,16 @@ async function onCommand(command) {
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                  <el-dropdown-item command="logout">
+                    {{ t('nav.logout') }}
+                  </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
             <template v-else>
               <router-link class="app-nav__item" :to="{ name: 'login' }">
                 <el-icon><Key /></el-icon>
-                <span>登录</span>
+                <span>{{ t('nav.login') }}</span>
               </router-link>
               <router-link
                 v-if="site.allowRegister"
@@ -159,7 +165,7 @@ async function onCommand(command) {
                 :to="{ name: 'register' }"
               >
                 <el-icon><User /></el-icon>
-                <span>注册</span>
+                <span>{{ t('nav.register') }}</span>
               </router-link>
             </template>
           </div>
@@ -167,7 +173,7 @@ async function onCommand(command) {
           <button
             class="app-header__toggle"
             type="button"
-            aria-label="打开导航"
+            :aria-label="t('nav.openMenu')"
             @click="navOpen = true"
           >
             <el-icon><Menu /></el-icon>
@@ -210,7 +216,7 @@ async function onCommand(command) {
       </p>
     </footer>
 
-    <el-drawer v-model="navOpen" title="导航" direction="rtl" size="252px">
+    <el-drawer v-model="navOpen" :title="t('nav.menu')" direction="rtl" size="252px">
       <div v-if="session.authenticated" class="app-nav-drawer__user">
         <el-avatar
           class="app-user__avatar"
@@ -243,7 +249,7 @@ async function onCommand(command) {
           @click="navOpen = false"
         >
           <el-icon><Tools /></el-icon>
-          <span>后台管理</span>
+          <span>{{ t('nav.admin') }}</span>
         </router-link>
       </nav>
 
@@ -253,7 +259,7 @@ async function onCommand(command) {
           class="app-nav-drawer__action"
           @click="onCommand('logout')"
         >
-          退出登录
+          {{ t('nav.logout') }}
         </el-button>
         <template v-else>
           <el-button
@@ -261,14 +267,14 @@ async function onCommand(command) {
             class="app-nav-drawer__action"
             @click="goPage('login')"
           >
-            登录
+            {{ t('nav.login') }}
           </el-button>
           <el-button
             v-if="site.allowRegister"
             class="app-nav-drawer__action"
             @click="goPage('register')"
           >
-            注册
+            {{ t('nav.register') }}
           </el-button>
         </template>
       </div>

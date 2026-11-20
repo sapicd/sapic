@@ -4,26 +4,28 @@ import { useRouter } from 'vue-router'
 
 import { api, errorMessage } from '@/api/client'
 import HookConfigForm from '@/components/hook/HookConfigForm.vue'
+import { hookText } from '@/components/hook/text'
+import { t } from '@/i18n'
 import { formatTime } from '@/utils/format'
 
 const router = useRouter()
 
-const CATALOGS = {
-  upload: '存储',
-  processor: '处理',
-  auth: '鉴权',
-  mail: '邮件',
-}
+//: 分类与市场状态都由后端 / 第三方数据给出，只做展示映射，不认识的值原样显示。
+const CATALOGS = computed(() => ({
+  upload: t('adminHooks.catalogUpload'),
+  processor: t('adminHooks.catalogProcessor'),
+  auth: t('adminHooks.catalogAuth'),
+  mail: t('adminHooks.catalogMail'),
+}))
 
-//: 市场列表的 status 由第三方数据给出，只做展示映射，不认识的值原样显示。
-const MARKET_STATUS = {
-  stable: '正式版',
-  production: '正式版',
-  ga: '正式版',
-  beta: '公测版',
-  rc: '预发布',
-  archive: '已封存',
-}
+const MARKET_STATUS = computed(() => ({
+  stable: t('adminHooks.statusStable'),
+  production: t('adminHooks.statusStable'),
+  ga: t('adminHooks.statusStable'),
+  beta: t('adminHooks.statusBeta'),
+  rc: t('adminHooks.statusRc'),
+  archive: t('adminHooks.statusArchived'),
+}))
 
 const tab = ref('hooks')
 const manifests = ref([])
@@ -81,7 +83,7 @@ async function loadHooks() {
     const data = await api.get('/hooks')
     manifests.value = data?.items || []
   } catch (error) {
-    ElMessage.error(errorMessage(error, '加载钩子清单失败'))
+    ElMessage.error(errorMessage(error, t('adminHooks.loadListFailed')))
   } finally {
     loading.value = false
   }
@@ -92,7 +94,7 @@ async function loadConfigs() {
     const data = await api.get('/hooks/config')
     configs.value = data?.items || []
   } catch (error) {
-    ElMessage.error(errorMessage(error, '加载钩子配置失败'))
+    ElMessage.error(errorMessage(error, t('adminHooks.loadConfigFailed')))
   }
 }
 
@@ -106,9 +108,9 @@ async function reloadHooks() {
   try {
     await api.post('/hooks/reload')
     await refresh()
-    ElMessage.success('钩子管理器已重载')
+    ElMessage.success(t('adminHooks.reloaded'))
   } catch (error) {
-    ElMessage.error(errorMessage(error, '重载失败'))
+    ElMessage.error(errorMessage(error, t('adminHooks.reloadFailed')))
   } finally {
     reloading.value = false
   }
@@ -122,7 +124,7 @@ function openImport() {
 async function importHook() {
   const module = importModule.value.trim()
   if (!module) {
-    ElMessage.warning('请输入模块名')
+    ElMessage.warning(t('adminHooks.moduleRequired'))
     return
   }
   importing.value = true
@@ -130,19 +132,24 @@ async function importHook() {
     await api.post('/hooks/import', { json: { module } })
     importDialog.value = false
     await refresh()
-    ElMessage.success('钩子已导入')
+    ElMessage.success(t('adminHooks.imported'))
   } catch (error) {
-    ElMessage.error(errorMessage(error, '导入失败'))
+    ElMessage.error(errorMessage(error, t('adminHooks.importFailed')))
   } finally {
     importing.value = false
   }
 }
 
+//: 钩子可以给自己的 manifest 文案配 i18n 键；没配时按模块名兜底，最后才用原文。
+function manifestText(row, field) {
+  return hookText(row.name, field, row[field], row[`${field}_key`])
+}
+
 async function removeHook(row) {
   try {
     await ElMessageBox.confirm(
-      `确定移除钩子「${row.name}」吗？已安装的 Python 包不会被卸载。`,
-      '移除钩子',
+      t('adminHooks.removeConfirm', { name: row.name }),
+      t('adminHooks.removeTitle'),
       { type: 'warning' },
     )
   } catch (error) {
@@ -152,9 +159,9 @@ async function removeHook(row) {
   try {
     await api.del(`/hooks/import/${row.name}`)
     await refresh()
-    ElMessage.success('已移除')
+    ElMessage.success(t('adminHooks.removed'))
   } catch (error) {
-    ElMessage.error(errorMessage(error, '移除失败'))
+    ElMessage.error(errorMessage(error, t('adminHooks.removeFailed')))
   } finally {
     removing.value = ''
   }
@@ -167,9 +174,9 @@ async function toggleHook(row, enabled) {
     row.enabled = data?.enabled ?? enabled
     const config = configs.value.find((item) => item.name === row.name)
     if (config) config.enabled = row.enabled
-    ElMessage.success(row.enabled ? '已启用' : '已禁用')
+    ElMessage.success(row.enabled ? t('adminHooks.enabled') : t('adminHooks.disabled'))
   } catch (error) {
-    ElMessage.error(errorMessage(error, '操作失败'))
+    ElMessage.error(errorMessage(error, t('adminHooks.actionFailed')))
   } finally {
     toggling.value = ''
   }
@@ -180,9 +187,9 @@ async function saveConfig(item, values) {
   try {
     const data = await api.put(`/hooks/config/${item.name}`, { json: values })
     item.values = data?.values || values
-    ElMessage.success('配置已保存')
+    ElMessage.success(t('adminHooks.configSaved'))
   } catch (error) {
-    ElMessage.error(errorMessage(error, '保存失败'))
+    ElMessage.error(errorMessage(error, t('adminHooks.saveFailed')))
   } finally {
     saving.value = ''
   }
@@ -195,12 +202,12 @@ async function pingHook(item, values) {
       json: { values },
     })
     if (data?.code === 0) {
-      ElMessage.success(data?.toast?.text || '检测通过')
+      ElMessage.success(data?.toast?.text || t('adminHooks.checkPassed'))
     } else {
-      ElMessage.error(data?.message || '检测未通过')
+      ElMessage.error(data?.message || t('adminHooks.checkFailed'))
     }
   } catch (error) {
-    ElMessage.error(errorMessage(error, '检测失败'))
+    ElMessage.error(errorMessage(error, t('adminHooks.checkError')))
   } finally {
     pinging.value = ''
   }
@@ -234,7 +241,7 @@ async function loadMarket(refreshNow = false) {
     }
     marketLoaded.value = true
   } catch (error) {
-    marketError.value = errorMessage(error, '加载钩子市场失败')
+    marketError.value = errorMessage(error, t('adminHooks.marketLoadFailed'))
   } finally {
     marketLoading.value = false
   }
@@ -279,7 +286,7 @@ function openCustomInstall() {
 async function submitInstall() {
   const packageName = installForm.value.package.trim()
   if (!packageName) {
-    ElMessage.warning('请输入包名')
+    ElMessage.warning(t('adminHooks.packageRequired'))
     return
   }
   installing.value = true
@@ -292,13 +299,13 @@ async function submitInstall() {
     installResult.value = Boolean(result.ok)
     installLog.value = result.output || ''
     if (result.ok) {
-      ElMessage.success('安装成功')
+      ElMessage.success(t('adminHooks.installed'))
       installDialog.value = false
       await Promise.all([refresh(), loadMarket()])
     }
   } catch (error) {
     installResult.value = false
-    installLog.value = errorMessage(error, '安装失败')
+    installLog.value = errorMessage(error, t('adminHooks.installFailed'))
   } finally {
     installing.value = false
   }
@@ -308,10 +315,10 @@ async function importMarketItem(item) {
   busyItem.value = item.module
   try {
     await api.post('/hooks/import', { json: { module: item.module } })
-    ElMessage.success('钩子已引入')
+    ElMessage.success(t('adminHooks.marketImported'))
     await Promise.all([refresh(), loadMarket()])
   } catch (error) {
-    ElMessage.error(errorMessage(error, '引入失败'))
+    ElMessage.error(errorMessage(error, t('adminHooks.marketImportFailed')))
   } finally {
     busyItem.value = ''
   }
@@ -320,8 +327,11 @@ async function importMarketItem(item) {
 async function purgePackage(item) {
   try {
     await ElMessageBox.confirm(
-      `确定卸载「${item.name}」吗？会删除 ${marketMeta.value.storage_dir || '包目录'} 下的包文件，且不可恢复。`,
-      '卸载第三方包',
+      t('adminHooks.purgeConfirm', {
+        name: item.name,
+        dir: marketMeta.value.storage_dir || t('adminHooks.packageDir'),
+      }),
+      t('adminHooks.purgeTitle'),
       { type: 'warning' },
     )
   } catch (error) {
@@ -330,10 +340,10 @@ async function purgePackage(item) {
   busyItem.value = item.module
   try {
     await api.del(`/hooks/import/${item.module}`, { query: { purge: 1 } })
-    ElMessage.success('已卸载')
+    ElMessage.success(t('adminHooks.purged'))
     await Promise.all([refresh(), loadMarket()])
   } catch (error) {
-    ElMessage.error(errorMessage(error, '卸载失败'))
+    ElMessage.error(errorMessage(error, t('adminHooks.purgeFailed')))
   } finally {
     busyItem.value = ''
   }
@@ -345,63 +355,71 @@ onMounted(refresh)
 <template>
   <div v-loading="loading" class="page">
     <div class="page__header">
-      <h2 class="page__title">钩子管理</h2>
-      <el-button @click="refresh">刷新</el-button>
+      <h2 class="page__title">{{ t('admin.hooks') }}</h2>
+      <el-button @click="refresh">{{ t('common.refresh') }}</el-button>
     </div>
 
     <el-card>
       <el-tabs v-model="tab">
-        <el-tab-pane label="钩子扩展" name="hooks">
+        <el-tab-pane :label="t('adminHooks.tabHooks')" name="hooks">
           <div class="toolbar hook-toolbar">
             <el-button type="primary" :loading="reloading" @click="reloadHooks">
-              重载钩子管理器
+              {{ t('adminHooks.reload') }}
             </el-button>
-            <el-button @click="openImport">导入钩子</el-button>
+            <el-button @click="openImport">{{ t('adminHooks.importHook') }}</el-button>
             <span class="toolbar__meta">
-              共 {{ manifests.length }} 个钩子，已启用 {{ enabledCount }} 个（禁用后其插槽与动作立即失效）
+              {{ t('adminHooks.summary', { total: manifests.length, enabled: enabledCount }) }}
             </span>
           </div>
 
-          <el-empty v-if="!manifests.length" description="没有可用钩子" :image-size="60" />
+          <el-empty
+            v-if="!manifests.length"
+            :description="t('adminHooks.emptyHooks')"
+            :image-size="60"
+          />
           <el-table v-else :data="manifests" row-key="name" style="width: 100%">
-            <el-table-column label="名称" min-width="150">
+            <el-table-column :label="t('common.name')" min-width="150">
               <template #default="{ row }">
-                <span :title="row.title">{{ row.name }}</span>
+                <span :title="manifestText(row, 'title')">{{ row.name }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="version" label="版本" width="90" />
-            <el-table-column prop="author" label="作者" width="130" show-overflow-tooltip />
+            <el-table-column prop="version" :label="t('adminHooks.version')" width="90" />
             <el-table-column
-              prop="description"
-              label="描述"
-              min-width="200"
+              prop="author"
+              :label="t('adminHooks.author')"
+              width="130"
               show-overflow-tooltip
             />
-            <el-table-column label="类型" width="90">
+            <el-table-column :label="t('adminHooks.description')" min-width="200" show-overflow-tooltip>
               <template #default="{ row }">
-                {{ CATALOGS[row.catalog] || row.catalog || '其他' }}
+                {{ manifestText(row, 'description') }}
               </template>
             </el-table-column>
-            <el-table-column label="来源" width="90">
+            <el-table-column :label="t('adminHooks.type')" width="90">
+              <template #default="{ row }">
+                {{ CATALOGS[row.catalog] || row.catalog || t('adminHooks.catalogOther') }}
+              </template>
+            </el-table-column>
+            <el-table-column :label="t('adminHooks.source')" width="90">
               <template #default="{ row }">
                 <el-tag size="small" :type="row.family === 'third' ? 'warning' : 'info'" effect="plain">
-                  {{ row.family === 'third' ? '第三方' : '本地' }}
+                  {{ row.family === 'third' ? t('adminHooks.sourceThird') : t('adminHooks.sourceLocal') }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="状态" width="100">
+            <el-table-column :label="t('common.status')" width="100">
               <template #default="{ row }">
                 <el-switch
                   :model-value="row.enabled"
                   :loading="toggling === row.name"
-                  active-text="启用"
-                  inactive-text="禁用"
+                  :active-text="t('adminHooks.switchOn')"
+                  :inactive-text="t('adminHooks.switchOff')"
                   inline-prompt
                   @change="(value) => toggleHook(row, value)"
                 />
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="90" align="right">
+            <el-table-column :label="t('common.actions')" width="90" align="right">
               <template #default="{ row }">
                 <el-button
                   v-if="row.family === 'third'"
@@ -410,17 +428,15 @@ onMounted(refresh)
                   :loading="removing === row.name"
                   @click="removeHook(row)"
                 >
-                  移除
+                  {{ t('adminHooks.remove') }}
                 </el-button>
               </template>
             </el-table-column>
           </el-table>
         </el-tab-pane>
 
-        <el-tab-pane label="钩子配置" name="config">
-          <p class="hint">
-            这里配置鉴权、处理、邮件类钩子的参数；存储驱动的凭据统一在「存储后端」里填写。
-          </p>
+        <el-tab-pane :label="t('adminHooks.tabConfig')" name="config">
+          <p class="hint">{{ t('adminHooks.configHint') }}</p>
 
           <el-alert
             v-if="uploadConfigs.length"
@@ -430,16 +446,20 @@ onMounted(refresh)
             style="margin-bottom: 16px"
           >
             <template #title>
-              存储驱动（{{ uploadConfigs.map((item) => item.title).join('、') }}）的凭据在「存储后端」配置
+              {{
+                t('adminHooks.storageConfigAlert', {
+                  names: uploadConfigs.map((item) => manifestText(item, 'title')).join(' / '),
+                })
+              }}
             </template>
             <el-button link type="primary" @click="router.push({ name: 'admin-backends' })">
-              去存储后端
+              {{ t('adminHooks.goBackends') }}
             </el-button>
           </el-alert>
 
           <el-empty
             v-if="!otherConfigs.length"
-            description="没有需要配置的钩子（禁用的钩子不显示配置项）"
+            :description="t('adminHooks.emptyConfig')"
             :image-size="60"
           />
           <HookConfigForm
@@ -453,26 +473,31 @@ onMounted(refresh)
           />
         </el-tab-pane>
 
-        <el-tab-pane label="钩子市场" name="market">
+        <el-tab-pane :label="t('adminHooks.tabMarket')" name="market">
           <el-alert
             v-if="!marketMeta.configured"
             type="warning"
             :closable="false"
             show-icon
             style="margin-bottom: 12px"
-            title="未配置第三方包目录，暂时不能在后台安装扩展"
-            description="设置 sapic_hookpkgstoragedir（如 data/hooks）后重启服务；该目录会被加入 sys.path 并作为钩子扫描路径。"
+            :title="t('adminHooks.marketNotConfiguredTitle')"
+            :description="t('adminHooks.marketNotConfiguredDesc')"
           />
 
           <div class="toolbar hook-toolbar">
             <el-button :loading="marketLoading" @click="refreshMarket">
-              刷新列表
+              {{ t('adminHooks.refreshMarket') }}
             </el-button>
-            <el-button @click="openCustomInstall">手动安装</el-button>
+            <el-button @click="openCustomInstall">{{ t('adminHooks.manualInstall') }}</el-button>
             <span class="toolbar__meta">
-              共 {{ marketTotal }} 个扩展<template v-if="marketMeta.updated_at">
-                · 列表缓存于 {{ formatTime(marketMeta.updated_at) }}</template
-              >
+              {{
+                marketMeta.updated_at
+                  ? t('adminHooks.marketSummaryCached', {
+                      total: marketTotal,
+                      time: formatTime(marketMeta.updated_at),
+                    })
+                  : t('adminHooks.marketSummary', { total: marketTotal })
+              }}
             </span>
           </div>
 
@@ -485,15 +510,15 @@ onMounted(refresh)
             :title="marketError"
           />
           <p class="hint">
-            列表取自官方仓库的 list.json（可用 sapic_hookmarketurl 指向镜像），只显示声明
-            <code>appversion: "2.x"</code> 的扩展——V1 钩子与本版本的契约不兼容；本地已加载的除外。
-            安装会把包 pip 到 <code>{{ marketMeta.storage_dir || '包目录' }}</code
-            >，再「引入」后即出现在「钩子扩展」里。
+            {{ t('adminHooks.marketHintBefore') }}<code>appversion: "2.x"</code>{{
+              t('adminHooks.marketHintMiddle')
+            }}<code>{{ marketMeta.storage_dir || t('adminHooks.packageDir') }}</code
+            >{{ t('adminHooks.marketHintAfter') }}
           </p>
 
           <el-empty
             v-if="!marketLoading && !marketItems.length"
-            description="没有可用的市场数据"
+            :description="t('adminHooks.emptyMarket')"
             :image-size="60"
           />
           <el-table
@@ -503,12 +528,12 @@ onMounted(refresh)
             row-key="module"
             style="width: 100%"
           >
-            <el-table-column label="名称" min-width="150">
+            <el-table-column :label="t('common.name')" min-width="150">
               <template #default="{ row }">
                 <div class="market-name">
                   <span>{{ row.name }}</span>
                   <el-tag v-if="row.loaded" size="small" type="success" effect="plain">
-                    已加载
+                    {{ t('adminHooks.loaded') }}
                   </el-tag>
                 </div>
                 <span class="market-module">{{ row.module }}</span>
@@ -516,11 +541,11 @@ onMounted(refresh)
             </el-table-column>
             <el-table-column
               prop="description"
-              label="描述"
+              :label="t('adminHooks.description')"
               min-width="200"
               show-overflow-tooltip
             />
-            <el-table-column label="作者" width="120" show-overflow-tooltip>
+            <el-table-column :label="t('adminHooks.author')" width="120" show-overflow-tooltip>
               <template #default="{ row }">
                 <el-link
                   v-if="row.home"
@@ -535,23 +560,23 @@ onMounted(refresh)
                 <span v-else>{{ row.author || '-' }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="状态" width="100">
+            <el-table-column :label="t('common.status')" width="100">
               <template #default="{ row }">
                 <el-tag size="small" effect="plain">
-                  {{ MARKET_STATUS[row.status] || row.status || '未知' }}
+                  {{ MARKET_STATUS[row.status] || row.status || t('common.unknown') }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="已装版本" width="110">
+            <el-table-column :label="t('adminHooks.columnInstalledVersion')" width="110">
               <template #default="{ row }">
                 {{
                   row.installed_version ||
                   row.loaded_version ||
-                  (row.loaded ? '已加载' : '-')
+                  (row.loaded ? t('adminHooks.loaded') : '-')
                 }}
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="230" align="right">
+            <el-table-column :label="t('common.actions')" width="230" align="right">
               <template #default="{ row }">
                 <div class="row-links">
                   <el-button
@@ -560,7 +585,7 @@ onMounted(refresh)
                     type="primary"
                     @click="openInstall(row)"
                   >
-                    {{ row.installed ? '更新' : '安装' }}
+                    {{ row.installed ? t('adminHooks.update') : t('adminHooks.install') }}
                   </el-button>
                   <el-button
                     v-if="!row.loaded"
@@ -569,7 +594,7 @@ onMounted(refresh)
                     :loading="busyItem === row.module"
                     @click="importMarketItem(row)"
                   >
-                    引入
+                    {{ t('adminHooks.importAction') }}
                   </el-button>
                   <el-button
                     v-if="row.pypi"
@@ -589,7 +614,7 @@ onMounted(refresh)
                     :loading="busyItem === row.module"
                     @click="purgePackage(row)"
                   >
-                    卸载
+                    {{ t('adminHooks.uninstall') }}
                   </el-button>
                 </div>
               </template>
@@ -612,53 +637,51 @@ onMounted(refresh)
       </el-tabs>
     </el-card>
 
-    <el-dialog v-model="importDialog" title="导入钩子" width="480px">
+    <el-dialog v-model="importDialog" :title="t('adminHooks.importHook')" width="480px">
       <el-form label-position="top">
-        <el-form-item label="模块名">
+        <el-form-item :label="t('adminHooks.module')">
           <el-input
             v-model="importModule"
-            placeholder="如 sapic_hook_cos（需已安装到运行 sapic 的 Python 环境）"
+            :placeholder="t('adminHooks.installHint')"
             @keyup.enter="importHook"
           />
         </el-form-item>
       </el-form>
-      <p class="hint">
-        钩子是被声明式加载的 Python 模块，要求提供
-        <code>__version__</code> 与 <code>__author__</code>，并实现
-        <code>hook_manifest()</code> 或 <code>upimg_save</code> /
-        <code>upimg_delete</code> 等约定函数。导入只是把模块加入加载列表，请先
-        <code>pip install</code> 对应包。
-      </p>
+      <p class="hint">{{ t('adminHooks.importHint') }}</p>
       <template #footer>
-        <el-button @click="importDialog = false">取消</el-button>
+        <el-button @click="importDialog = false">{{ t('common.cancel') }}</el-button>
         <el-button type="primary" :loading="importing" @click="importHook">
-          导入
+          {{ t('adminHooks.import') }}
         </el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="installDialog" title="安装第三方钩子包" width="560px">
+    <el-dialog
+      v-model="installDialog"
+      :title="t('adminHooks.installPackage')"
+      width="560px"
+    >
       <el-form label-position="top">
-        <el-form-item label="包名">
+        <el-form-item :label="t('adminHooks.packageLabel')">
           <el-input
             v-model="installForm.package"
-            placeholder="如 sapic-hook-cos，可带版本：sapic-hook-cos==1.0.0"
+            :placeholder="t('adminHooks.packagePlaceholder')"
             @keyup.enter="submitInstall"
           />
         </el-form-item>
-        <el-form-item label="模块名（可选）">
+        <el-form-item :label="t('adminHooks.moduleOptional')">
           <el-input
             v-model="installForm.module"
-            placeholder="安装完成后要引入的模块，如 sapic_hook_cos"
+            :placeholder="t('adminHooks.moduleOptionalPlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="镜像地址（可选）">
+        <el-form-item :label="t('adminHooks.indexUrl')">
           <el-input
             v-model="installForm.index_url"
-            placeholder="https://pypi.tuna.tsinghua.edu.cn/simple"
+            :placeholder="t('adminHooks.indexUrlPlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="覆盖已安装版本">
+        <el-form-item :label="t('adminHooks.upgrade')">
           <el-switch v-model="installForm.upgrade" />
         </el-form-item>
       </el-form>
@@ -667,16 +690,16 @@ onMounted(refresh)
         type="warning"
         :closable="false"
         show-icon
-        title="安装会在服务端执行 pip，只安装可信来源的包；过程可能持续数十秒。"
+        :title="t('adminHooks.installWarning')"
       />
       <pre v-if="installLog" class="install-log" :class="{ 'is-error': !installResult }">{{
         installLog
       }}</pre>
 
       <template #footer>
-        <el-button @click="installDialog = false">关闭</el-button>
+        <el-button @click="installDialog = false">{{ t('common.close') }}</el-button>
         <el-button type="primary" :loading="installing" @click="submitInstall">
-          开始安装
+          {{ t('adminHooks.startInstall') }}
         </el-button>
       </template>
     </el-dialog>

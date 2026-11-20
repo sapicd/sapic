@@ -43,13 +43,17 @@ LABELS = {key: label for key, _, label, _ in FIELDS}
 def hook_manifest():
     return {
         "title": "SendCloud 邮件",
+        "title_key": "hooks.sendcloud.title",
+        "description_key": "hooks.sendcloud.description",
         "catalog": "mail",
         "config_schema": [
             {
                 "type": kind,
                 "key": key,
                 "label": label,
+                "label_key": "hooks.sendcloud.fields.%s.label" % key,
                 "placeholder": hint,
+                "placeholder_key": "hooks.sendcloud.fields.%s.hint" % key,
                 "required": key in REQUIRED,
             }
             for key, kind, label, hint in FIELDS

@@ -392,6 +392,14 @@ class HookManager:
             "data_sources": ui.clean_sources(data.get("data_sources")),
             "slots": ui.clean_slots(data.get("slots")),
         }
+        #: Optional i18n keys for the manifest strings; the frontend prefers them
+        #: and falls back to ``title`` / ``description`` for unknown entries.
+        title_key = ui.clean_key(data.get("title_key"))
+        if title_key:
+            entry["title_key"] = title_key
+        description_key = ui.clean_key(data.get("description_key"))
+        if description_key:
+            entry["description_key"] = description_key
         with self._lock:
             self._manifests[hook.name] = entry
         return entry
@@ -471,9 +479,10 @@ class HookManager:
                 context=hook_context,
             )
             if cleaned:
-                blocks.append(
-                    {"hook": hook_name, "title": manifest["title"], "nodes": cleaned}
-                )
+                block = {"hook": hook_name, "title": manifest["title"], "nodes": cleaned}
+                if manifest.get("title_key"):
+                    block["title_key"] = manifest["title_key"]
+                blocks.append(block)
         return blocks
 
     def action(self, name: str, action: str, payload=None, context=None):

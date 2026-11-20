@@ -5,25 +5,27 @@ import { useRoute, useRouter } from 'vue-router'
 import { api, errorMessage } from '@/api/client'
 import AvatarCropper from '@/components/AvatarCropper.vue'
 import HookSlot from '@/components/hook/HookSlot.vue'
+import { hookText } from '@/components/hook/text'
+import { t } from '@/i18n'
 import { useSessionStore } from '@/stores/session'
 import { useSiteStore } from '@/stores/site'
 import { formatShortTime, formatTime } from '@/utils/format'
 
-const EXPIRES = [
-  { label: '永久', value: 0 },
-  { label: '30 天', value: 30 },
-  { label: '90 天', value: 90 },
-  { label: '365 天', value: 365 },
-]
+const EXPIRES = computed(() => [
+  { label: t('upload.forever'), value: 0 },
+  { label: t('upload.days', { n: 30 }), value: 30 },
+  { label: t('upload.days', { n: 90 }), value: 90 },
+  { label: t('upload.days', { n: 365 }), value: 365 },
+])
 
 //: 与后端 libs.auth 的 PAT_SCOPES 一一对应；admin 仅在管理员勾选时出现。
 const DEFAULT_SCOPES = ['read', 'upload', 'write']
-const SCOPES = [
-  { label: '读取（GET 接口）', value: 'read' },
-  { label: '上传图片', value: 'upload' },
-  { label: '写入（修改/删除相册与图片）', value: 'write' },
-  { label: '管理后台', value: 'admin', admin: true },
-]
+const SCOPES = computed(() => [
+  { label: t('settings.scopeRead'), value: 'read' },
+  { label: t('settings.scopeUpload'), value: 'upload' },
+  { label: t('settings.scopeWrite'), value: 'write' },
+  { label: t('settings.scopeAdmin'), value: 'admin', admin: true },
+])
 
 //: Swagger 文档挂在后端 `/api/v2` 下：dev 由 vite 代理，生产同源，直接用绝对路径即可。
 const API_DOCS_URL = '/api/v2/docs'
@@ -34,14 +36,14 @@ const session = useSessionStore()
 const site = useSiteStore()
 
 //: 账号设置分区块展示，左栏切换；区块 key 同时写进 ?tab= 便于刷新与分享。
-const SECTIONS = [
-  { key: 'profile', label: '账号信息', icon: 'UserFilled' },
-  { key: 'preferences', label: '个性化', icon: 'Brush' },
-  { key: 'password', label: '修改密码', icon: 'Key' },
-  { key: 'tokens', label: '访问令牌', icon: 'Connection' },
-  { key: 'identities', label: '统一登录', icon: 'Link' },
-]
-const SECTION_KEYS = SECTIONS.map((section) => section.key)
+const SECTIONS = computed(() => [
+  { key: 'profile', label: t('settings.secProfile'), icon: 'UserFilled' },
+  { key: 'preferences', label: t('settings.secPreferences'), icon: 'Brush' },
+  { key: 'password', label: t('settings.secPassword'), icon: 'Key' },
+  { key: 'tokens', label: t('settings.secTokens'), icon: 'Connection' },
+  { key: 'identities', label: t('settings.secIdentities'), icon: 'Link' },
+])
+const SECTION_KEYS = ['profile', 'preferences', 'password', 'tokens', 'identities']
 
 function sectionFromQuery() {
   const value = Array.isArray(route.query.tab) ? route.query.tab[0] : route.query.tab
@@ -98,17 +100,17 @@ function openDeleteAccount() {
 
 async function confirmDeleteAccount() {
   if (!deletePassword.value) {
-    ElMessage.warning('请输入当前密码')
+    ElMessage.warning(t('settings.currentPasswordRequired'))
     return
   }
   deleting.value = true
   try {
     await session.deleteAccount(deletePassword.value)
     deleteDialog.value = false
-    ElMessage.success('账号已注销')
+    ElMessage.success(t('settings.accountDeleted'))
     router.push({ name: 'home' })
   } catch (error) {
-    ElMessage.error(errorMessage(error, '注销失败'))
+    ElMessage.error(errorMessage(error, t('settings.deleteAccountFailed')))
   } finally {
     deleting.value = false
   }
@@ -160,9 +162,9 @@ async function savePrefs() {
   savingPrefs.value = true
   try {
     await session.saveSettings({ ...prefs })
-    ElMessage.success('个性化设置已保存')
+    ElMessage.success(t('settings.prefsSaved'))
   } catch (error) {
-    ElMessage.error(errorMessage(error, '保存失败'))
+    ElMessage.error(errorMessage(error, t('albums.saveFailed')))
   } finally {
     savingPrefs.value = false
   }
@@ -204,9 +206,9 @@ async function saveProfile() {
   try {
     const data = await api.put('/auth/profile', { json: { ...profile } })
     session.updateUser(data?.user)
-    ElMessage.success('账号信息已更新')
+    ElMessage.success(t('settings.profileUpdated'))
   } catch (error) {
-    ElMessage.error(errorMessage(error, '保存失败'))
+    ElMessage.error(errorMessage(error, t('albums.saveFailed')))
   } finally {
     savingProfile.value = false
   }
@@ -215,7 +217,7 @@ async function saveProfile() {
 //: 只有验证通过的邮箱才算「绑定」，未验证地址既不能找回密码也不能关联统一登录。
 async function submitVerifyToken(token) {
   if (!token) {
-    ElMessage.warning('请填写邮件中的令牌')
+    ElMessage.warning(t('settings.tokenRequired'))
     return
   }
   confirming.value = true
@@ -224,9 +226,9 @@ async function submitVerifyToken(token) {
     session.updateUser(data?.user)
     verifySent.value = false
     verifyToken.value = ''
-    ElMessage.success('邮箱已验证')
+    ElMessage.success(t('settings.emailVerified'))
   } catch (error) {
-    ElMessage.error(errorMessage(error, '邮箱验证失败'))
+    ElMessage.error(errorMessage(error, t('settings.emailVerifyFailed')))
   } finally {
     confirming.value = false
   }
@@ -234,15 +236,15 @@ async function submitVerifyToken(token) {
 
 async function verifyEmail() {
   if (!session.user?.email) {
-    ElMessage.warning('请先填写邮箱并保存')
+    ElMessage.warning(t('settings.emailNeeded'))
     return
   }
   if (profile.email !== session.user.email) {
-    ElMessage.warning('邮箱有未保存的改动，请先保存')
+    ElMessage.warning(t('settings.emailUnsaved'))
     return
   }
   if (!site.mailEnabled) {
-    ElMessage.warning('站点未配置邮件服务，请联系管理员')
+    ElMessage.warning(t('settings.mailNotConfigured'))
     return
   }
   sendingVerify.value = true
@@ -255,12 +257,12 @@ async function verifyEmail() {
       return
     }
     verifySent.value = true
-    ElMessage.success('验证邮件已发送，请查收邮件并提交令牌')
+    ElMessage.success(t('settings.verifyMailSent'))
   } catch (error) {
     ElMessage.error(
       error?.code === 'SERVICE_UNAVAILABLE'
-        ? '站点未配置邮件服务，请联系管理员'
-        : errorMessage(error, '邮箱验证失败'),
+        ? t('settings.mailNotConfigured')
+        : errorMessage(error, t('settings.emailVerifyFailed')),
     )
   } finally {
     sendingVerify.value = false
@@ -272,9 +274,9 @@ async function changePassword() {
   try {
     await session.changePassword({ ...password })
     Object.assign(password, { old_password: '', new_password: '' })
-    ElMessage.success('密码已更新')
+    ElMessage.success(t('settings.passwordUpdated'))
   } catch (error) {
-    ElMessage.error(errorMessage(error, '修改密码失败'))
+    ElMessage.error(errorMessage(error, t('settings.passwordFailed')))
   } finally {
     changing.value = false
   }
@@ -286,7 +288,7 @@ async function loadTokens() {
     const data = await api.get('/auth/tokens')
     tokens.value = data?.items || []
   } catch (error) {
-    ElMessage.error(errorMessage(error, '加载令牌失败'))
+    ElMessage.error(errorMessage(error, t('settings.tokensLoadFailed')))
   } finally {
     tokensLoading.value = false
   }
@@ -319,7 +321,7 @@ function openTokenDialog() {
 async function createToken() {
   //: 后端不再把空列表当默认权限，空选直接拦在前端。
   if (!tokenForm.scopes.length) {
-    ElMessage.warning('请至少选择一项权限')
+    ElMessage.warning(t('settings.scopeRequired'))
     return
   }
   tokenSaving.value = true
@@ -336,7 +338,7 @@ async function createToken() {
     createdToken.value = data?.token || null
     await loadTokens()
   } catch (error) {
-    ElMessage.error(errorMessage(error, '创建令牌失败'))
+    ElMessage.error(errorMessage(error, t('settings.tokenCreateFailed')))
   } finally {
     tokenSaving.value = false
   }
@@ -344,7 +346,7 @@ async function createToken() {
 
 async function revoke(row) {
   try {
-    await ElMessageBox.confirm(`确定撤销「${row.name || row.prefix}」吗？`, '撤销令牌', {
+    await ElMessageBox.confirm(t('settings.tokenRevokeConfirm', { name: row.name || row.prefix }), t('settings.tokenRevokeTitle'), {
       type: 'warning',
     })
   } catch (error) {
@@ -352,19 +354,19 @@ async function revoke(row) {
   }
   try {
     await api.del(`/auth/tokens/${row.id}`)
-    ElMessage.success('已撤销')
+    ElMessage.success(t('settings.revoked'))
     await loadTokens()
   } catch (error) {
-    ElMessage.error(errorMessage(error, '撤销失败'))
+    ElMessage.error(errorMessage(error, t('settings.tokenRevokeFailed')))
   }
 }
 
 async function copy(text) {
   try {
     await navigator.clipboard.writeText(text)
-    ElMessage.success('已复制到剪贴板')
+    ElMessage.success(t('common.copiedToast'))
   } catch (error) {
-    ElMessage.warning('复制失败，请手动复制')
+    ElMessage.warning(t('common.copyFailed'))
   }
 }
 
@@ -373,8 +375,13 @@ async function loadIdentities() {
     const data = await api.get('/auth/identities')
     identities.value = data?.items || []
   } catch (error) {
-    ElMessage.error(errorMessage(error, '加载登录方式失败'))
+    ElMessage.error(errorMessage(error, t('settings.identitiesLoadFailed')))
   }
+}
+
+//: 钩子自带 i18n 键时优先用它翻译名称，其次按模块名兜底，最后回落到后端给的 title。
+function identityTitle(item) {
+  return hookText(item.name, 'title', item.title, item.title_key)
 }
 
 function bindIdentity(item) {
@@ -385,11 +392,11 @@ async function unbindIdentity(item) {
   let password = ''
   try {
     const { value } = await ElMessageBox.prompt(
-      '解除后该账号无法再通过统一登录进入，请输入当前密码确认',
-      '解除绑定',
+      t('settings.unbindPrompt'),
+      t('settings.unbindTitle'),
       {
         inputType: 'password',
-        inputValidator: (value) => Boolean(value) || '请输入密码',
+        inputValidator: (value) => Boolean(value) || t('settings.passwordPrompt'),
       }
     )
     password = value
@@ -398,10 +405,10 @@ async function unbindIdentity(item) {
   }
   try {
     await api.del(`/auth/identities/${item.name}`, { json: { password } })
-    ElMessage.success('已解除绑定')
+    ElMessage.success(t('settings.unbound'))
     await loadIdentities()
   } catch (error) {
-    ElMessage.error(errorMessage(error, '解除绑定失败'))
+    ElMessage.error(errorMessage(error, t('settings.unbindFailed')))
   }
 }
 
@@ -411,10 +418,10 @@ onMounted(() => {
   loadTokens()
   loadIdentities()
   const flag = typeof route.query.identity === 'string' ? route.query.identity : ''
-  if (flag === 'bound') ElMessage.success('统一登录已绑定')
+  if (flag === 'bound') ElMessage.success(t('settings.bound'))
   if (flag === 'conflict')
-    ElMessage.error('该身份已绑定到另一个账号，请先在那个账号解除绑定')
-  if (flag === 'error') ElMessage.error('绑定失败，请重试或联系管理员')
+    ElMessage.error(t('settings.bindConflict'))
+  if (flag === 'error') ElMessage.error(t('settings.bindFailed'))
   //: 绑定回跳直接落在「统一登录」区块，省得用户自己找。
   if (flag) switchSection('identities')
 })
@@ -423,7 +430,7 @@ onMounted(() => {
 <template>
   <div class="page side-shell">
     <aside class="side-nav">
-      <div class="side-nav__title">账号设置</div>
+      <div class="side-nav__title">{{ t('settings.title') }}</div>
       <nav class="side-nav__menu">
         <button
           v-for="section in SECTIONS"
@@ -441,23 +448,23 @@ onMounted(() => {
 
     <section class="side-main">
       <el-card v-if="activeSection === 'profile'">
-        <template #header>账号信息</template>
+        <template #header>{{ t('settings.profileHeader') }}</template>
         <el-form class="side-main__form" label-position="top">
-          <el-form-item label="用户名">
+          <el-form-item :label="t('settings.username')">
             <el-input :model-value="session.user?.username || ''" disabled />
           </el-form-item>
-          <el-form-item label="昵称">
-            <el-input v-model="profile.nickname" maxlength="64" placeholder="右上角显示的名称" />
+          <el-form-item :label="t('settings.nickname')">
+            <el-input v-model="profile.nickname" maxlength="64" :placeholder="t('settings.nicknamePlaceholder')" />
           </el-form-item>
-          <el-form-item label="邮箱">
-            <el-input v-model="profile.email" placeholder="用于找回密码与统一登录关联，可留空" />
+          <el-form-item :label="t('settings.email')">
+            <el-input v-model="profile.email" :placeholder="t('settings.emailPlaceholder')" />
             <div v-if="session.user?.email" class="email-verify">
               <el-tag
                 size="small"
                 :type="session.user?.email_verified ? 'success' : 'warning'"
                 effect="plain"
               >
-                {{ session.user?.email_verified ? '已验证' : '未验证' }}
+                {{ session.user?.email_verified ? t('settings.verified') : t('settings.unverified') }}
               </el-tag>
               <el-button
                 v-if="!session.user?.email_verified"
@@ -468,37 +475,37 @@ onMounted(() => {
                 :disabled="!site.mailEnabled"
                 @click="verifyEmail"
               >
-                发送验证邮件
+                {{ t('settings.sendVerify') }}
               </el-button>
               <el-input
                 v-if="verifySent && !session.user?.email_verified"
                 v-model="verifyToken"
                 class="email-verify__token"
                 size="small"
-                placeholder="粘贴邮件中的令牌"
+                :placeholder="t('settings.tokenPlaceholder')"
               >
                 <template #append>
                   <el-button :loading="confirming" @click="submitVerifyToken(verifyToken)">
-                    验证
+                    {{ t('settings.verify') }}
                   </el-button>
                 </template>
               </el-input>
               <span class="node-field__help">
                 {{
                   site.mailEnabled
-                    ? '验证后才能用该邮箱找回密码、关联统一登录。'
-                    : '站点未配置邮件服务，暂时无法验证邮箱。'
+                    ? t('settings.verifiedHint')
+                    : t('settings.mailMissingHint')
                 }}
               </span>
             </div>
           </el-form-item>
-          <el-form-item label="头像">
+          <el-form-item :label="t('settings.avatar')">
             <div class="avatar-field">
               <el-avatar :size="56" :src="profile.avatar || undefined">
                 {{ avatarInitial() }}
               </el-avatar>
               <el-button size="small" @click="cropperVisible = true">
-                上传头像
+                {{ t('settings.uploadAvatar') }}
               </el-button>
               <el-button
                 v-if="profile.avatar"
@@ -506,20 +513,20 @@ onMounted(() => {
                 text
                 @click="profile.avatar = ''"
               >
-                清除
+                {{ t('settings.clearAvatar') }}
               </el-button>
             </div>
             <div class="node-field__help">
-              上传后拖动、缩放裁剪，保存的图片会存入你的默认相册。
+              {{ t('settings.avatarHint') }}
             </div>
           </el-form-item>
           <div class="form-actions">
             <el-button type="primary" :loading="savingProfile" @click="saveProfile">
-              保存
+              {{ t('common.save') }}
             </el-button>
             <span class="form-actions__meta">
-              {{ session.isAdmin ? '管理员' : '普通用户' }} ·
-              {{ formatTime(session.user?.created_at) }} 注册
+              {{ session.isAdmin ? t('settings.roleAdmin') : t('settings.roleUser') }} ·
+              {{ t('settings.registeredAt', { date: formatTime(session.user?.created_at) }) }}
             </span>
           </div>
         </el-form>
@@ -531,12 +538,12 @@ onMounted(() => {
 
         <div class="danger-zone">
           <div class="danger-zone__text">
-            <strong>注销账号</strong>
+            <strong>{{ t('settings.deleteAccount') }}</strong>
             <span class="node-field__help">
               {{
                 session.isAdmin
-                  ? '管理员账号需由其他管理员在后台删除，避免后台失去入口。'
-                  : '需先删除名下全部图片；注销后账号、相册与令牌一并删除，无法恢复。'
+                  ? t('settings.adminDeleteHint')
+                  : t('settings.userDeleteHint')
               }}
             </span>
           </div>
@@ -546,18 +553,18 @@ onMounted(() => {
             :disabled="session.isAdmin"
             @click="openDeleteAccount"
           >
-            注销账号
+            {{ t('settings.deleteAccount') }}
           </el-button>
         </div>
       </el-card>
 
       <el-card v-else-if="activeSection === 'preferences'">
-        <template #header>个性化</template>
+        <template #header>{{ t('settings.prefsHeader') }}</template>
         <el-form class="side-main__form" label-position="top">
-          <el-form-item label="油猴脚本（Tampermonkey）">
+          <el-form-item :label="t('settings.userscriptLabel')">
             <el-switch v-model="prefs.userscript_enabled" />
             <div class="node-field__help">
-              开启后可安装/更新脚本；关闭后安装地址立即 404。脚本源码不含令牌，首次上传时会要求粘贴只勾选「上传图片」的 PAT。
+              {{ t('settings.userscriptHint') }}
             </div>
             <el-link
               v-if="prefs.userscript_enabled"
@@ -567,76 +574,75 @@ onMounted(() => {
               rel="noopener"
               style="margin-top: 4px"
             >
-              安装 / 更新脚本
+              {{ t('settings.userscriptInstall') }}
             </el-link>
             <div v-if="prefs.userscript_enabled" class="node-field__help">
-              保存后开关才会生效；安装时需在本站保持登录。
+              {{ t('settings.userscriptSaveHint') }}
             </div>
           </el-form-item>
-          <el-form-item label="背景图（PC 端）">
+          <el-form-item :label="t('settings.bgPcLabel')">
             <el-input
               v-model="prefs.bg_image"
-              placeholder="留空跟随站点背景；支持 http(s) 链接或站内 / 路径"
+              :placeholder="t('settings.bgPcPlaceholder')"
             />
           </el-form-item>
-          <el-form-item label="背景图（移动端）">
-            <el-input v-model="prefs.bg_image_mobile" placeholder="留空沿用 PC 端背景" />
+          <el-form-item :label="t('settings.bgMobileLabel')">
+            <el-input v-model="prefs.bg_image_mobile" :placeholder="t('settings.bgMobilePlaceholder')" />
           </el-form-item>
-          <el-form-item label="背景遮罩">
+          <el-form-item :label="t('settings.bgOpacity')">
             <el-slider v-model="opacityValue" :min="0" :max="1" :step="0.1" show-input />
             <div class="node-field__help">
-              自定义后不再跟随站点；当前站点遮罩为 {{ site.backgroundOpacity }}。
+              {{ t('settings.bgOpacityHint', { value: site.backgroundOpacity }) }}
               <el-link
                 v-if="prefs.bg_opacity !== null"
                 type="primary"
                 :underline="false"
                 @click="followSiteOpacity"
               >
-                恢复跟随站点
+                {{ t('settings.followSite') }}
               </el-link>
             </div>
           </el-form-item>
-          <el-form-item label="防盗链">
+          <el-form-item :label="t('settings.hotlink')">
             <el-switch v-model="prefs.hotlink_enabled" />
             <div class="node-field__help">
-              开启后只允许本站与下方域名引用你的公开图片，其余来源返回 403。仅对由
-              sapic 输出的 /raw 链接生效；配置了加速域名的存储请在其 CDN/nginx 上单独设置。
+              {{ t('settings.hotlinkHint') }}
             </div>
           </el-form-item>
           <template v-if="prefs.hotlink_enabled">
-            <el-form-item label="允许引用的域名">
+            <el-form-item :label="t('settings.allowDomains')">
               <el-input
                 v-model="prefs.hotlink_allow_hosts"
-                placeholder="如 blog.example.com,*.example.org（逗号分隔）"
+                :placeholder="t('settings.allowDomainsPlaceholder')"
               />
               <div class="node-field__help">
-                *.example.com 只匹配子域，不包含 example.com 本身；本站域名始终放行。
+                {{ t('settings.allowDomainsHint') }}
               </div>
             </el-form-item>
-            <el-form-item label="允许空来源">
+            <el-form-item :label="t('settings.allowEmptyReferer')">
               <el-switch v-model="prefs.hotlink_allow_empty" />
               <div class="node-field__help">
-                浏览器直接打开图片、聊天工具预览等请求不带来源；关闭后这些访问同样会被拒绝。
+                {{ t('settings.allowEmptyHint') }}
               </div>
             </el-form-item>
           </template>
           <el-button type="primary" :loading="savingPrefs" @click="savePrefs">
-            保存
+            {{ t('common.save') }}
           </el-button>
         </el-form>
       </el-card>
 
       <el-card v-else-if="activeSection === 'password'">
-        <template #header>修改密码</template>
+        <template #header>{{ t('settings.passwordHeader') }}</template>
         <el-form class="side-main__form" label-position="top">
-          <el-form-item label="当前密码">
+          <el-form-item :label="t('settings.currentPassword')">
             <el-input v-model="password.old_password" type="password" show-password />
           </el-form-item>
-          <el-form-item label="新密码">
+          <el-form-item :label="t('settings.newPassword')">
             <el-input v-model="password.new_password" type="password" show-password />
           </el-form-item>
           <el-button type="primary" :loading="changing" @click="changePassword">
-            更新密码
+            {{ t('settings.updatePassword') }}
           </el-button>
         </el-form>
       </el-card>
@@ -644,18 +650,16 @@ onMounted(() => {
       <el-card v-else-if="activeSection === 'tokens'">
         <template #header>
           <div style="display: flex; justify-content: space-between; align-items: center">
-            <span>访问令牌（PAT）</span>
+            <span>{{ t('settings.patTitle') }}</span>
             <el-button size="small" type="primary" @click="openTokenDialog">
-              新建令牌
+              {{ t('settings.newToken') }}
             </el-button>
           </div>
         </template>
         <p class="hint">
-          访问令牌（Personal Access Token）用于 PicGo、uPic、CLI 等客户端代替密码调用上传
-          API：请求头携带 <code>Authorization: Bearer &lt;令牌&gt;</code>，令牌只在创建时显示一次，
-          可随时撤销。
+          {{ t('settings.patIntro') }}
           <el-link type="primary" :href="API_DOCS_URL" target="_blank" rel="noopener noreferrer">
-            查看 API 文档（可试请求）
+            {{ t('settings.apiDocs') }}
           </el-link>
         </p>
         <el-table
@@ -664,9 +668,9 @@ onMounted(() => {
           size="small"
           class="token-table"
         >
-          <el-table-column prop="name" label="名称" min-width="90" show-overflow-tooltip />
-          <el-table-column prop="prefix" label="前缀" width="92" />
-          <el-table-column label="权限" min-width="92">
+          <el-table-column prop="name" :label="t('common.name')" min-width="90" show-overflow-tooltip />
+          <el-table-column prop="prefix" :label="t('settings.prefix')" width="92" />
+          <el-table-column :label="t('settings.permission')" min-width="92">
             <template #default="{ row }">
               <el-tag
                 v-for="scope in row.scopes || []"
@@ -679,28 +683,28 @@ onMounted(() => {
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="默认相册" min-width="96" show-overflow-tooltip>
+          <el-table-column :label="t('upload.defaultAlbum')" min-width="96" show-overflow-tooltip>
             <template #default="{ row }">
               <span v-if="row.album_name">{{ row.album_name }}</span>
-              <el-text v-else type="info" size="small">跟随默认</el-text>
+              <el-text v-else type="info" size="small">{{ t('settings.followDefault') }}</el-text>
             </template>
           </el-table-column>
-          <el-table-column label="创建时间" width="132">
+          <el-table-column :label="t('common.createdAt')" width="132">
             <template #default="{ row }">{{ formatShortTime(row.created_at) }}</template>
           </el-table-column>
-          <el-table-column label="最近使用" width="132">
+          <el-table-column :label="t('settings.lastUsed')" width="132">
             <template #default="{ row }">
               {{ formatShortTime(row.last_used_at) }}
             </template>
           </el-table-column>
-          <el-table-column label="状态" width="70">
+          <el-table-column :label="t('common.status')" width="70">
             <template #default="{ row }">
               <el-tag size="small" :type="row.revoked ? 'info' : 'success'">
-                {{ row.revoked ? '已撤销' : '有效' }}
+                {{ row.revoked ? t('settings.statusRevoked') : t('settings.statusActive') }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="72" align="right">
+          <el-table-column :label="t('common.actions')" width="72" align="right">
             <template #default="{ row }">
               <el-button
                 link
@@ -708,21 +712,20 @@ onMounted(() => {
                 :disabled="row.revoked"
                 @click="revoke(row)"
               >
-                撤销
+                {{ t('settings.revoke') }}
               </el-button>
             </template>
           </el-table-column>
           <template #empty>
-            <el-empty description="还没有令牌" :image-size="60" />
+            <el-empty :description="t('settings.tokensEmpty')" :image-size="60" />
           </template>
         </el-table>
       </el-card>
 
       <el-card v-else-if="activeSection === 'identities'">
-        <template #header>统一登录</template>
+        <template #header>{{ t('settings.identitiesHeader') }}</template>
         <p class="hint">
-          绑定后可用对应的平台账号登录本站；解除绑定需要输入当前密码。关闭「密码登录」后，
-          这里将是唯一的登录方式。
+          {{ t('settings.oidcIntro') }}
         </p>
         <div
           v-for="item in identities"
@@ -735,9 +738,9 @@ onMounted(() => {
             border-bottom: 1px solid var(--el-border-color-lighter);
           "
         >
-          <span style="flex: 1">{{ item.title }}</span>
+          <span style="flex: 1">{{ identityTitle(item) }}</span>
           <el-tag size="small" :type="item.bound ? 'success' : 'info'">
-            {{ item.bound ? '已绑定' : '未绑定' }}
+            {{ item.bound ? t('settings.boundTag') : t('settings.unboundTag') }}
           </el-tag>
           <el-button
             v-if="item.bound"
@@ -745,15 +748,15 @@ onMounted(() => {
             type="danger"
             @click="unbindIdentity(item)"
           >
-            解除绑定
+            {{ t('settings.unbind') }}
           </el-button>
           <el-button v-else link type="primary" @click="bindIdentity(item)">
-            立即绑定
+            {{ t('settings.bind') }}
           </el-button>
         </div>
         <el-empty
           v-if="!identities.length"
-          description="站点未启用第三方登录"
+          :description="t('settings.oidcDisabled')"
           :image-size="60"
         />
       </el-card>
@@ -768,38 +771,38 @@ onMounted(() => {
 
     <AvatarCropper v-model="cropperVisible" @uploaded="onAvatarUploaded" />
 
-    <el-dialog v-model="deleteDialog" title="注销账号" width="420px">
+    <el-dialog v-model="deleteDialog" :title="t('settings.deleteDialogTitle')" width="420px">
       <el-alert
         type="error"
         :closable="false"
         show-icon
-        title="账号、相册与访问令牌会被永久删除，且无法恢复。"
+        :title="t('settings.deleteWarning')"
       />
       <el-form label-position="top" style="margin-top: 12px">
-        <el-form-item label="当前密码">
+        <el-form-item :label="t('settings.currentPassword')">
           <el-input
             v-model="deletePassword"
             type="password"
             show-password
-            placeholder="确认是本人操作"
+            :placeholder="t('settings.deletePasswordPlaceholder')"
             @keyup.enter="confirmDeleteAccount"
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="deleteDialog = false">取消</el-button>
+        <el-button @click="deleteDialog = false">{{ t('common.cancel') }}</el-button>
         <el-button type="danger" :loading="deleting" @click="confirmDeleteAccount">
-          确认注销
+          {{ t('settings.deleteConfirmButton') }}
         </el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="tokenDialog" title="新建令牌" width="440px">
+    <el-dialog v-model="tokenDialog" :title="t('settings.tokenDialogTitle')" width="440px">
       <el-form label-position="top">
-        <el-form-item label="名称">
-          <el-input v-model="tokenForm.name" maxlength="64" placeholder="如 picgo" />
+        <el-form-item :label="t('settings.name')">
+          <el-input v-model="tokenForm.name" maxlength="64" :placeholder="t('settings.tokenNamePlaceholder')" />
         </el-form-item>
-        <el-form-item label="有效期">
+        <el-form-item :label="t('upload.expire')">
           <el-select v-model="tokenForm.expires_in" style="width: 100%">
             <el-option
               v-for="option in EXPIRES"
@@ -809,7 +812,7 @@ onMounted(() => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="权限范围">
+        <el-form-item :label="t('settings.scopes')">
           <el-checkbox-group v-model="tokenForm.scopes">
             <el-checkbox
               v-for="option in SCOPES"
@@ -821,11 +824,11 @@ onMounted(() => {
             </el-checkbox>
           </el-checkbox-group>
         </el-form-item>
-        <el-form-item label="默认相册">
+        <el-form-item :label="t('upload.defaultAlbum')">
           <el-select
             v-model="tokenForm.album_id"
             clearable
-            placeholder="跟随默认相册"
+            :placeholder="t('upload.followDefaultAlbum')"
             style="width: 100%"
           >
             <el-option
@@ -836,7 +839,7 @@ onMounted(() => {
             />
           </el-select>
           <span class="node-field__help">
-            用该令牌上传且未指定 album_id 时落到这里；相册被删除后回落到默认相册。
+            {{ t('settings.tokenAlbumHint') }}
           </span>
         </el-form-item>
       </el-form>
@@ -846,23 +849,23 @@ onMounted(() => {
         type="success"
         :closable="false"
         show-icon
-        title="令牌只显示一次，请立即保存"
+        :title="t('settings.tokenOnceTitle')"
       >
         <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px">
           <code style="word-break: break-all">{{ createdToken }}</code>
-          <el-button link type="primary" @click="copy(createdToken)">复制</el-button>
+          <el-button link type="primary" @click="copy(createdToken)">{{ t('common.copy') }}</el-button>
         </div>
       </el-alert>
 
       <template #footer>
-        <el-button @click="tokenDialog = false">关闭</el-button>
+        <el-button @click="tokenDialog = false">{{ t('common.close') }}</el-button>
         <el-button
           v-if="!createdToken"
           type="primary"
           :loading="tokenSaving"
           @click="createToken"
         >
-          创建
+          {{ t('common.create') }}
         </el-button>
       </template>
     </el-dialog>

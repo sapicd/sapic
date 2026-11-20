@@ -36,16 +36,20 @@ MAX_QUALITY = 100
 def hook_manifest():
     return {
         "title": "转 WebP",
+        "title_key": "hooks.pic2webp.title",
+        "description_key": "hooks.pic2webp.description",
         "catalog": "processor",
         "config_schema": [
             {
                 "key": "quality",
                 "type": "number",
                 "label": "WebP 质量",
+                "label_key": "hooks.pic2webp.fields.quality.label",
                 "default": DEFAULT_QUALITY,
                 "min": MIN_QUALITY,
                 "max": MAX_QUALITY,
                 "help": "1-100，越大越清晰、体积也越大；默认 75",
+                "help_key": "hooks.pic2webp.fields.quality.hint",
             }
         ],
     }

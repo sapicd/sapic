@@ -1,18 +1,26 @@
 <script setup>
-import { provide, reactive, watch } from 'vue'
+import { computed, provide, reactive, watch } from 'vue'
 
 import { api, errorMessage } from '@/api/client'
+import { t } from '@/i18n'
 
 import NodeRenderer from './NodeRenderer.vue'
+import { hookText } from './text'
 
 const props = defineProps({
   hook: { type: String, required: true },
   title: { type: String, default: '' },
+  titleKey: { type: String, default: '' },
   nodes: { type: Array, default: () => [] },
   context: { type: Object, default: () => ({}) },
   showTitle: { type: Boolean, default: false },
   refresh: { type: Function, required: true },
 })
+
+//: 钩子只提供原始文案（多为中文）时照旧显示；带键或词表按模块名收录了译文才翻译。
+const heading = computed(() =>
+  hookText(props.hook, 'title', props.title, props.titleKey),
+)
 
 const TOAST_TYPES = {
   success: 'success',
@@ -40,9 +48,11 @@ async function runAction(action, options = {}) {
 
   if (confirm) {
     try {
-      await ElMessageBox.confirm(`确定执行「${action}」吗？`, '确认操作', {
-        type: 'warning',
-      })
+      await ElMessageBox.confirm(
+        t('hooks.confirmText', { action }),
+        t('hooks.confirmTitle'),
+        { type: 'warning' },
+      )
     } catch (error) {
       return undefined
     }
@@ -58,7 +68,7 @@ async function runAction(action, options = {}) {
       },
     })
   } catch (error) {
-    ElMessage.error(errorMessage(error, '操作失败'))
+    ElMessage.error(errorMessage(error, t('hooks.actionFailed')))
     return undefined
   }
   if (!result) return undefined
@@ -71,7 +81,7 @@ async function runAction(action, options = {}) {
   }
   if (result.code !== 0) {
     if (!result.toast?.text) {
-      ElMessage.error(result.message || '操作失败')
+      ElMessage.error(result.message || t('hooks.actionFailed'))
     }
     return result
   }
@@ -92,7 +102,7 @@ provide('hookRuntime', {
 
 <template>
   <section class="hook-block">
-    <h4 v-if="showTitle && title" class="hook-block__title">{{ title }}</h4>
+    <h4 v-if="showTitle && heading" class="hook-block__title">{{ heading }}</h4>
     <NodeRenderer
       v-for="(node, index) in nodes"
       :key="node.id || index"

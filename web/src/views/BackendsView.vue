@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 
 import { api, errorMessage } from '@/api/client'
+import { hookText } from '@/components/hook/text'
 
 const items = ref([])
 const drivers = ref([])
@@ -37,7 +38,7 @@ async function load() {
     items.value = data?.items || []
     drivers.value = data?.drivers || []
   } catch (error) {
-    ElMessage.error(errorMessage(error, '加载存储后端失败'))
+    ElMessage.error(errorMessage(error, t('backends.loadFailed')))
   } finally {
     loading.value = false
   }
@@ -69,11 +70,11 @@ function openEdit(row) {
 
 async function save() {
   if (!form.hook_name) {
-    ElMessage.warning('请选择存储驱动')
+    ElMessage.warning(t('backends.driverRequired'))
     return
   }
   if (form.visibility === 'private' && !driverPrivateReadable.value) {
-    ElMessage.warning('当前驱动不支持私有读，请改用公开直链或换驱动')
+    ElMessage.warning(t('backends.privateUnsupported'))
     return
   }
   const payload = {
@@ -90,9 +91,9 @@ async function save() {
     items.value = data?.items || items.value
     drivers.value = data?.drivers || drivers.value
     dialog.value = false
-    ElMessage.success(editing.value ? '后端已更新' : '后端已创建')
+    ElMessage.success(editing.value ? t('backends.updated') : t('backends.created'))
   } catch (error) {
-    ElMessage.error(errorMessage(error, '保存失败'))
+    ElMessage.error(errorMessage(error, t('albums.saveFailed')))
   } finally {
     saving.value = false
   }
@@ -103,9 +104,9 @@ async function runPing(hookName, values) {
     json: { values },
   })
   if (data?.code === 0) {
-    ElMessage.success(data?.toast?.text || '检测通过')
+    ElMessage.success(data?.toast?.text || t('backends.checkPassed'))
   } else {
-    ElMessage.error(data?.message || '检测未通过')
+    ElMessage.error(data?.message || t('backends.checkFailed'))
   }
 }
 
@@ -114,7 +115,7 @@ async function ping(row) {
   try {
     await runPing(row.hook_name, row.config)
   } catch (error) {
-    ElMessage.error(errorMessage(error, '检测失败'))
+    ElMessage.error(errorMessage(error, t('backends.checkError')))
   } finally {
     checking.value = 0
   }
@@ -126,7 +127,7 @@ async function pingForm() {
   try {
     await runPing(form.hook_name, form.config)
   } catch (error) {
-    ElMessage.error(errorMessage(error, '检测失败'))
+    ElMessage.error(errorMessage(error, t('backends.checkError')))
   } finally {
     checkingForm.value = false
   }
@@ -137,9 +138,9 @@ async function toggle(row, enabled) {
   try {
     const data = await api.patch(`/backends/${row.id}`, { json: { enabled } })
     items.value = data?.items || items.value
-    ElMessage.success(enabled ? '已启用' : '已禁用')
+    ElMessage.success(enabled ? t('backends.toggledOn') : t('backends.toggledOff'))
   } catch (error) {
-    ElMessage.error(errorMessage(error, '操作失败'))
+    ElMessage.error(errorMessage(error, t('backends.actionFailed')))
   } finally {
     toggling.value = 0
   }
@@ -157,16 +158,16 @@ async function move(row, step) {
     })
     items.value = data?.items || items.value
   } catch (error) {
-    ElMessage.error(errorMessage(error, '调整优先级失败'))
+    ElMessage.error(errorMessage(error, t('backends.priorityFailed')))
   }
 }
 
 async function remove(row) {
   try {
     await ElMessageBox.confirm(
-      `确定删除存储后端「${row.name}」吗？仍有图片副本时会被拒绝。`,
-      '删除后端',
-      { type: 'warning', confirmButtonText: '删除' },
+      t('backends.deleteConfirm', { name: row.name }),
+      t('backends.deleteTitle'),
+      { type: 'warning', confirmButtonText: t('common.delete') },
     )
   } catch (error) {
     return
@@ -174,9 +175,9 @@ async function remove(row) {
   try {
     const data = await api.del(`/backends/${row.id}`)
     items.value = data?.items || items.value
-    ElMessage.success('后端已删除')
+    ElMessage.success(t('backends.deleted'))
   } catch (error) {
-    ElMessage.error(errorMessage(error, '删除失败'))
+    ElMessage.error(errorMessage(error, t('backends.deleteFailed')))
   }
 }
 
@@ -186,29 +187,24 @@ onMounted(load)
 <template>
   <div v-loading="loading" class="page">
     <div class="page__header">
-      <h2 class="page__title">存储后端</h2>
+      <h2 class="page__title">{{ t('backends.title') }}</h2>
       <div>
-        <el-button @click="load">刷新</el-button>
-        <el-button type="primary" @click="openCreate">新增后端</el-button>
+        <el-button @click="load">{{ t('common.refresh') }}</el-button>
+        <el-button type="primary" @click="openCreate">{{ t('backends.createTitle') }}</el-button>
       </div>
     </div>
 
     <el-card>
       <p class="hint">
-        上传同步写入 <code>priority</code> 数值最小的启用后端（数值越小越优先），
-        其余启用的后端在后台异步补副本（站点设置里可关闭）；
-        直链与读取按 <code>priority</code> 升序在可用副本间选择，取不到就换下一个，所以仍有副本的后端不能删除或禁用。
-        启用存储钩子后会自动出现对应后端，<strong>驱动凭据只在这里填写</strong>（同一驱动可建多个后端各自一套配置）。
-        后端为<strong>公开</strong>时公开图直接用直链，为<strong>私有</strong>时（七牛 / 又拍 / GitHub 私有仓库，
-        或本地目录）所有图片都经 <code>/raw</code> 由服务端签名读取，桶始终不对外。
+        {{ t('backends.intro') }}
       </p>
 
       <el-table :data="items" size="small">
-        <el-table-column label="名称" min-width="140">
+        <el-table-column :label="t('backends.name')" min-width="140">
           <template #default="{ row }">
             <span>{{ row.name }}</span>
             <el-tag v-if="row.in_use" size="small" type="success" effect="plain" style="margin-left: 6px">
-              当前写入
+              {{ t('backends.currentWrite') }}
             </el-tag>
             <el-tag
               v-if="!row.configured"
@@ -217,24 +213,26 @@ onMounted(load)
               effect="plain"
               style="margin-left: 6px"
             >
-              待配置
+              {{ t('backends.needConfig') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="驱动" min-width="150">
+        <el-table-column :label="t('backends.driver')" min-width="150">
           <template #default="{ row }">
-            <span :title="row.hook_name">{{ row.title }}</span>
+            <span :title="row.hook_name">
+              {{ hookText(row.hook_name, 'title', row.title, row.title_key) }}
+            </span>
             <div class="hint">{{ row.hook_name }}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="priority" label="优先级" width="90" />
-        <el-table-column label="访问方式" width="100">
+        <el-table-column prop="priority" :label="t('backends.priority')" width="90" />
+        <el-table-column :label="t('backends.accessLabel')" width="100">
           <template #default="{ row }">
             <el-tooltip
               :content="
                 row.visibility === 'private'
-                  ? '桶私有读，所有访问经 /raw 由服务端签发读地址后转发'
-                  : '桶公有读，公开图直接使用驱动返回的直链'
+                  ? t('backends.privateAccessHint')
+                  : t('backends.publicAccessHint')
               "
             >
               <el-tag
@@ -242,37 +240,37 @@ onMounted(load)
                 effect="plain"
                 :type="row.visibility === 'private' ? 'warning' : 'info'"
               >
-                {{ row.visibility === 'private' ? '私有' : '公开' }}
+                {{ row.visibility === 'private' ? t('images.private') : t('images.public') }}
               </el-tag>
             </el-tooltip>
           </template>
         </el-table-column>
-        <el-table-column label="副本" width="80">
+        <el-table-column :label="t('backends.replicas')" width="80">
           <template #default="{ row }">
-            <el-tooltip content="仅统计写入成功的副本" placement="top">
+            <el-tooltip :content="t('backends.replicaTooltip')" placement="top">
               <span>{{ row.replicas }}</span>
             </el-tooltip>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100">
+        <el-table-column :label="t('common.status')" width="100">
           <template #default="{ row }">
             <el-switch
               :model-value="row.enabled"
               :loading="toggling === row.id"
-              active-text="启用"
-              inactive-text="禁用"
+              :active-text="t('backends.enable')"
+              :inactive-text="t('backends.disable')"
               inline-prompt
               @change="(value) => toggle(row, value)"
             />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="260" align="right">
+        <el-table-column :label="t('common.actions')" width="260" align="right">
           <template #default="{ row }">
             <el-button link size="small" :disabled="!row.enabled" @click="move(row, -1)">
-              上移
+              {{ t('backends.moveUp') }}
             </el-button>
             <el-button link size="small" :disabled="!row.enabled" @click="move(row, 1)">
-              下移
+              {{ t('backends.moveDown') }}
             </el-button>
             <el-button
               link
@@ -280,61 +278,61 @@ onMounted(load)
               :loading="checking === row.id"
               @click="ping(row)"
             >
-              检查
+              {{ t('backends.check') }}
             </el-button>
-            <el-button link type="primary" size="small" @click="openEdit(row)">配置</el-button>
-            <el-button link type="danger" size="small" @click="remove(row)">删除</el-button>
+            <el-button link type="primary" size="small" @click="openEdit(row)">{{ t('backends.config') }}</el-button>
+            <el-button link type="danger" size="small" @click="remove(row)">{{ t('common.delete') }}</el-button>
           </template>
         </el-table-column>
         <template #empty>
-          <el-empty description="还没有存储后端" :image-size="60" />
+          <el-empty :description="t('backends.empty')" :image-size="60" />
         </template>
       </el-table>
     </el-card>
 
     <el-dialog
       v-model="dialog"
-      :title="editing ? '编辑存储后端' : '新增存储后端'"
+      :title="editing ? t('backends.editTitle') : t('backends.createTitle')"
       width="520px"
     >
       <el-form label-position="top">
-        <el-form-item label="驱动">
+        <el-form-item :label="t('backends.driverLabel')">
           <el-select v-model="form.hook_name" :disabled="editing" style="width: 100%">
             <el-option
               v-for="driver in drivers"
               :key="driver.name"
-              :label="`${driver.title}（${driver.name}）`"
+              :label="`${hookText(driver.name, 'title', driver.title, driver.title_key)} (${driver.name})`"
               :value="driver.name"
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="名称">
-          <el-input v-model="form.name" placeholder="留空则按驱动名自动生成" />
+        <el-form-item :label="t('backends.name')">
+          <el-input v-model="form.name" :placeholder="t('backends.namePlaceholder')" />
         </el-form-item>
-        <el-form-item label="访问方式">
+        <el-form-item :label="t('backends.accessLabel')">
           <el-select v-model="form.visibility" style="width: 100%">
-            <el-option label="公开直链（公有读桶 + CDN）" value="public" />
+            <el-option :label="t('backends.accessPublic')" value="public" />
             <el-option
-              label="私有代理（私有桶，经 /raw 转发）"
+              :label="t('backends.accessPrivate')"
               value="private"
               :disabled="!driverPrivateReadable"
             />
           </el-select>
           <div class="hint">
-            公开：公开图直接使用驱动返回的直链（需桶公有读、可配域名）。
-            私有：桶保持私有读，任何访问都先经 sapic 鉴权，再由服务端凭驱动签发的临时读地址转发。
+            {{ t('backends.accessPublicHint') }}
+            {{ t('backends.accessPrivateHint') }}
             <template v-if="!driverPrivateReadable">
-              当前驱动未实现 upimg_url，只能作为公开后端。
+              {{ t('backends.noUpimgUrl') }}
             </template>
           </div>
         </el-form-item>
-        <el-form-item label="优先级（越小越先写入）">
+        <el-form-item :label="t('backends.priorityLabel')">
           <el-input-number
             v-model="form.priority"
             :min="1"
             :step="10"
             controls-position="right"
-            placeholder="留空自动排到最后"
+            :placeholder="t('backends.priorityPlaceholder')"
             style="width: 100%"
           />
         </el-form-item>
@@ -354,12 +352,12 @@ onMounted(load)
         </el-form-item>
       </el-form>
       <p class="hint">
-        带 * 的字段是驱动必需项，保存时会校验；「检查」会用当前表单的值探测一次存储桶。
+        {{ t('backends.formHint') }}
       </p>
       <template #footer>
-        <el-button :loading="checkingForm" @click="pingForm">检查</el-button>
-        <el-button @click="dialog = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+        <el-button :loading="checkingForm" @click="pingForm">{{ t('backends.check') }}</el-button>
+        <el-button @click="dialog = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="save">{{ t('common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>

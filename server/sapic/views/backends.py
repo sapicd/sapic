@@ -54,8 +54,9 @@ def _json_body() -> dict:
 
 
 def _drivers() -> list[dict]:
-    return [
-        {
+    items = []
+    for manifest in upload_drivers():
+        item = {
             "name": manifest["name"],
             "title": manifest["title"],
             "description": manifest["description"],
@@ -63,8 +64,10 @@ def _drivers() -> list[dict]:
             #: 能否作为「私有」后端：驱动要能签发临时读地址（本地驱动除外）。
             "private_readable": private_readable(manifest["name"]),
         }
-        for manifest in upload_drivers()
-    ]
+        if manifest.get("title_key"):
+            item["title_key"] = manifest["title_key"]
+        items.append(item)
+    return items
 
 
 def _payload() -> dict:

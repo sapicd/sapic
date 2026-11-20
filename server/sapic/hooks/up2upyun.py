@@ -61,13 +61,17 @@ REST_HOST = "https://v0.api.upyun.com"
 def hook_manifest():
     return {
         "title": "又拍云存储",
+        "title_key": "hooks.up2upyun.title",
+        "description_key": "hooks.up2upyun.description",
         "catalog": "upload",
         "config_schema": [
             {
                 "type": kind,
                 "key": key,
                 "label": label,
+                "label_key": "hooks.up2upyun.fields.%s.label" % key,
                 "placeholder": hint,
+                "placeholder_key": "hooks.up2upyun.fields.%s.hint" % key,
                 "required": key in REQUIRED,
             }
             for key, kind, label, hint in FIELDS

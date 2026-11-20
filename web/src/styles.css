@@ -244,6 +244,27 @@ a {
   background: rgba(255, 255, 255, 0.58);
 }
 
+/*: 语言切换：和导航胶囊同高，窄屏上保留（不随 app-user 一起收进抽屉）。 */
+.locale-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: #2a3642;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.locale-switch:hover {
+  background: rgba(255, 255, 255, 0.58);
+}
+
 .app-announcement {
   width: 100%;
   max-width: 1240px;
@@ -1656,6 +1677,13 @@ a {
 
   .app-header__toggle {
     display: inline-flex;
+  }
+
+  /*: 窄屏把语言切换压到最小，只留图标与两个字母。 */
+  .locale-switch {
+    height: 34px;
+    padding: 0 6px;
+    font-size: 12px;
   }
 
   .app-header__inner {

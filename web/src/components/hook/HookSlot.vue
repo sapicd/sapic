@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 
 import { api, errorMessage } from '@/api/client'
+import { t } from '@/i18n'
 
 import HookBlock from './HookBlock.vue'
 
@@ -33,7 +34,7 @@ async function load() {
       blocks.value = []
       return
     }
-    ElMessage.error(errorMessage(error, '扩展加载失败'))
+    ElMessage.error(errorMessage(error, t('hooks.slotLoadFailed')))
   } finally {
     loading.value = false
   }
@@ -52,6 +53,7 @@ defineExpose({ refresh: load })
       :key="block.hook"
       :hook="block.hook"
       :title="block.title"
+      :title-key="block.title_key"
       :nodes="block.nodes"
       :context="context"
       :show-title="showTitle"

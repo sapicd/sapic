@@ -3,6 +3,8 @@ import { computed, inject, onMounted, ref } from 'vue'
 
 import { api } from '@/api/client'
 
+import { nodeText } from './text'
+
 const props = defineProps({
   node: { type: Object, required: true },
 })
@@ -35,13 +37,13 @@ onMounted(async () => {
 <template>
   <div class="node-field">
     <label class="node-field__label" :class="{ 'is-required': node.required }">
-      {{ node.label || node.key }}
+      {{ nodeText(node, 'label') || node.key }}
     </label>
     <div class="node-field__control">
       <el-input
         v-if="node.type === 'input'"
         v-model="value"
-        :placeholder="node.placeholder"
+        :placeholder="nodeText(node, 'placeholder')"
         :readonly="node.readonly"
         :disabled="node.disabled"
         :maxlength="node.maxlength"
@@ -55,7 +57,7 @@ onMounted(async () => {
         v-else-if="node.type === 'password'"
         v-model="value"
         type="password"
-        :placeholder="node.placeholder"
+        :placeholder="nodeText(node, 'placeholder')"
         :disabled="node.disabled"
         :show-password="node.reveal !== false"
       />
@@ -65,7 +67,7 @@ onMounted(async () => {
         v-model="value"
         type="textarea"
         :rows="node.rows || 3"
-        :placeholder="node.placeholder"
+        :placeholder="nodeText(node, 'placeholder')"
         :disabled="node.disabled"
         :maxlength="node.maxlength"
         :class="{ 'is-mono': node.mono }"
@@ -93,7 +95,7 @@ onMounted(async () => {
       <el-select
         v-else-if="node.type === 'select'"
         v-model="value"
-        :placeholder="node.placeholder"
+        :placeholder="nodeText(node, 'placeholder')"
         :disabled="node.disabled"
         :multiple="node.multiple"
         clearable
@@ -122,7 +124,9 @@ onMounted(async () => {
         </el-radio>
       </el-radio-group>
 
-      <div v-if="node.help" class="node-field__help">{{ node.help }}</div>
+      <div v-if="nodeText(node, 'help')" class="node-field__help">
+        {{ nodeText(node, 'help') }}
+      </div>
     </div>
   </div>
 </template>

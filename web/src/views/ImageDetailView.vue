@@ -4,16 +4,24 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { api, errorMessage } from '@/api/client'
 import HookSlot from '@/components/hook/HookSlot.vue'
+import { t } from '@/i18n'
 import { useSiteStore } from '@/stores/site'
 import { absoluteUrl, formatSize, formatTime } from '@/utils/format'
 
-const VISIBILITY_LABELS = { public: '公开', private: '私有', shared: '共享' }
+//: 可见性文案复用 images / albums 的词条，避免同一批枚举出现两套说法。
+const VISIBILITY_KEYS = { public: 'images.public', private: 'images.private', shared: 'albums.shared' }
 const VISIBILITY_TAGS = { public: 'success', private: 'info', shared: 'warning' }
+
+function visibilityLabel(value) {
+  const key = VISIBILITY_KEYS[value]
+  return key ? t(key) : ''
+}
+
 //: 共享只存在于相册维度，单图只能覆盖为公开/私有（空值表示跟随相册）。
-const VISIBILITIES = [
-  { label: '公开', value: 'public' },
-  { label: '私有', value: 'private' },
-]
+const VISIBILITIES = computed(() => [
+  { label: t('images.public'), value: 'public' },
+  { label: t('images.private'), value: 'private' },
+])
 
 const route = useRoute()
 const router = useRouter()
@@ -40,22 +48,28 @@ const effective = computed(() => {
 })
 //: 只有作者和管理员能编辑；广场里点进来的公开图只读。
 const canEdit = computed(() => Boolean(image.value?.can_edit))
-const effectiveLabel = computed(() => VISIBILITY_LABELS[effective.value.value] || '未知')
+const effectiveLabel = computed(
+  () => visibilityLabel(effective.value.value) || t('common.unknown'),
+)
 const effectiveType = computed(() => VISIBILITY_TAGS[effective.value.value] || 'info')
-const albumLabel = computed(() => VISIBILITY_LABELS[image.value?.album?.visibility] || '公开')
+const albumLabel = computed(
+  () => visibilityLabel(image.value?.album?.visibility) || t('images.public'),
+)
 const visibilityOptions = computed(() => [
-  { label: `跟随相册（${albumLabel.value}）`, value: '' },
-  ...VISIBILITIES,
+  { label: t('detail.followAlbumWith', { label: albumLabel.value }), value: '' },
+  ...VISIBILITIES.value,
 ])
 
 //: 广场三态：跟随相册 / 强制发布 / 强制排除，只有公开图片会真正出现在广场。
 const plazaOptions = computed(() => [
   {
-    label: `跟随相册（${image.value?.album?.plaza ? '已发布' : '未发布'}）`,
+    label: t('detail.followAlbumWith', {
+      label: image.value?.album?.plaza ? t('detail.plazaPublished') : t('detail.plazaUnpublished'),
+    }),
     value: 'inherit',
   },
-  { label: '发布到广场', value: 'on' },
-  { label: '不发布', value: 'off' },
+  { label: t('albums.publishToPlaza'), value: 'on' },
+  { label: t('detail.doNotPublish'), value: 'off' },
 ])
 
 async function load() {
@@ -75,7 +89,7 @@ async function load() {
       ? new Date(image.value.expire_at * 1000)
       : null
   } catch (error) {
-    ElMessage.error(errorMessage(error, '加载图片失败'))
+    ElMessage.error(errorMessage(error, t('images.loadFailed')))
   } finally {
     loading.value = false
   }
@@ -106,9 +120,9 @@ async function save() {
       },
     })
     if (data?.image) image.value = { ...image.value, ...data.image }
-    ElMessage.success('已保存')
+    ElMessage.success(t('albums.saved'))
   } catch (error) {
-    ElMessage.error(errorMessage(error, '保存失败'))
+    ElMessage.error(errorMessage(error, t('albums.saveFailed')))
   } finally {
     saving.value = false
   }
@@ -116,7 +130,10 @@ async function save() {
 
 async function remove() {
   try {
-    await ElMessageBox.confirm('删除后不可恢复，确定继续吗？', '删除图片', {
+    await ElMessageBox.confirm(
+      t('detail.deleteConfirm'),
+      t('images.deleteTitle'),
+      {
       type: 'warning',
     })
   } catch (error) {
@@ -124,10 +141,10 @@ async function remove() {
   }
   try {
     await api.del(`/images/${route.params.sha}`)
-    ElMessage.success('已删除')
+    ElMessage.success(t('common.deleted'))
     router.push({ name: 'images' })
   } catch (error) {
-    ElMessage.error(errorMessage(error, '删除失败'))
+    ElMessage.error(errorMessage(error, t('images.deleteFailed')))
   }
 }
 
@@ -139,9 +156,9 @@ function openAlbum() {
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text)
-    ElMessage.success('已复制到剪贴板')
+    ElMessage.success(t('common.copiedToast'))
   } catch (error) {
-    ElMessage.warning('复制失败，请手动复制')
+    ElMessage.warning(t('common.copyFailed'))
   }
 }
 
@@ -167,8 +184,8 @@ const linkHint = computed(() => {
   if (!srcIsRaw.value) return ''
   //: 非公开图（私有 / 共享）的 /raw 是鉴权出口；公开图回落 /raw 则是出不了直链。
   return effective.value.value === 'public'
-    ? '地址由本站代理输出：后端未配加速域名，或副本所在的桶不允许匿名读取。'
-    : '该图片不公开：地址经本站鉴权，他人打开需要先登录。'
+    ? t('detail.proxyHint')
+    : t('detail.privateHint')
 })
 
 //: 模板由后端按 v1 的 gen_url_tpl 生成；src 是相对地址时补全，复制出去才可用。
@@ -196,13 +213,15 @@ onMounted(load)
     <div class="page__header">
       <div class="page__heading">
         <h2 class="page__title">
-          {{ image?.title || image?.filename || '图片详情' }}
+          {{ image?.title || image?.filename || t('detail.title') }}
         </h2>
         <div v-if="image?.title" class="page__subtitle">{{ image.filename }}</div>
       </div>
       <div class="detail-actions">
-        <el-button :disabled="!image" @click="copy">复制链接</el-button>
-        <el-button @click="router.push({ name: 'images' })">返回列表</el-button>
+        <el-button :disabled="!image" @click="copy">{{ t('common.copyLink') }}</el-button>
+        <el-button @click="router.push({ name: 'images' })">
+          {{ t('detail.backToList') }}
+        </el-button>
       </div>
     </div>
 
@@ -228,69 +247,75 @@ onMounted(load)
 
       <el-col :xs="24" :md="10">
         <el-descriptions
-          title="元数据"
+          :title="t('detail.meta')"
           :column="1"
           :label-width="80"
           size="small"
           border
           class="detail-sheet"
         >
-          <el-descriptions-item label="相册">
+          <el-descriptions-item :label="t('detail.album')">
             <el-tag
               v-if="image.album"
               size="small"
               effect="plain"
               class="detail-album"
-              title="查看该相册的图片"
+              :title="t('detail.viewAlbumImages')"
               @click="openAlbum"
             >
               {{ image.album.name }} · {{ albumLabel }}
             </el-tag>
             <span v-else-if="image.album_id" class="detail-info__muted">
-              所属相册不可见
+              {{ t('detail.albumNotVisible') }}
             </span>
-            <span v-else class="detail-info__muted">未归属</span>
+            <span v-else class="detail-info__muted">{{ t('detail.noAlbum') }}</span>
           </el-descriptions-item>
-          <el-descriptions-item label="可见性">
+          <el-descriptions-item :label="t('images.visibility')">
             <el-tag size="small" :type="effectiveType" effect="light">
               {{ effectiveLabel }}
             </el-tag>
             <span class="detail-info__muted">
-              {{ effective.follow ? '跟随相册' : '单图覆盖' }}
+              {{ effective.follow ? t('images.followAlbum') : t('detail.singleOverride') }}
             </span>
           </el-descriptions-item>
-          <el-descriptions-item v-if="site.plazaEnabled" label="广场">
+          <el-descriptions-item v-if="site.plazaEnabled" :label="t('nav.plaza')">
             <el-tag
               size="small"
               :type="image.plaza_effective ? 'success' : 'info'"
               effect="plain"
             >
-              {{ image.plaza_effective ? '已发布' : '未发布' }}
+              {{
+                image.plaza_effective ? t('detail.plazaPublished') : t('detail.plazaUnpublished')
+              }}
             </el-tag>
             <span class="detail-info__muted">
-              {{ image.plaza === null || image.plaza === undefined ? '跟随相册' : '单图设置' }}
+              {{
+                image.plaza === null || image.plaza === undefined
+                  ? t('images.followAlbum')
+                  : t('detail.singleSetting')
+              }}
             </span>
           </el-descriptions-item>
-          <el-descriptions-item label="类型">
-            {{ image.mime || '未知类型' }}
+          <el-descriptions-item :label="t('images.type')">
+            {{ image.mime || t('detail.unknownType') }}
           </el-descriptions-item>
-          <el-descriptions-item label="大小">
+          <el-descriptions-item :label="t('detail.size')">
             {{ formatSize(image.size) }}
           </el-descriptions-item>
-          <el-descriptions-item label="尺寸">
+          <el-descriptions-item :label="t('detail.dimensions')">
             <span v-if="image.width && image.height">
               {{ image.width }} × {{ image.height }}
             </span>
-            <span v-else class="detail-info__muted">未知</span>
+            <span v-else class="detail-info__muted">{{ t('common.unknown') }}</span>
           </el-descriptions-item>
-          <el-descriptions-item label="上传时间">
+          <el-descriptions-item :label="t('detail.uploadedAt')">
             {{ formatTime(image.created_at) }}
           </el-descriptions-item>
-          <el-descriptions-item label="过期时间">
+          <el-descriptions-item :label="t('detail.expiresAt')">
             <span v-if="image.expire_at">{{ formatTime(image.expire_at) }}</span>
-            <span v-else class="detail-info__muted">永久</span>
+            <span v-else class="detail-info__muted">{{ t('upload.forever') }}</span>
           </el-descriptions-item>
-          <el-descriptions-item v-if="image.tags?.length" label="标签">
+          <el-descriptions-item v-if="image.tags?.length" :label="t('detail.tags')">
             <div class="detail-info__tags">
               <el-tag
                 v-for="tag in image.tags"
@@ -303,7 +328,7 @@ onMounted(load)
               </el-tag>
             </div>
           </el-descriptions-item>
-          <el-descriptions-item label="快捷链接">
+          <el-descriptions-item :label="t('detail.quickLinks')">
             <!--: 只放分享格式：地址本身太长（又拍云直链也一样），复制地址走顶部「复制链接」。 -->
             <div class="detail-link">
               <el-link
@@ -322,7 +347,7 @@ onMounted(load)
 
         <el-descriptions
           v-if="replicas.length"
-          title="副本"
+          :title="t('detail.replicas')"
           :column="1"
           :label-width="80"
           size="small"
@@ -344,7 +369,9 @@ onMounted(load)
             >
               {{ replica.state }}
             </el-tag>
-            <span v-if="replica.is_primary" class="detail-info__muted">主副本</span>
+            <span v-if="replica.is_primary" class="detail-info__muted">
+              {{ t('detail.primaryReplica') }}
+            </span>
             <span v-if="replica.size" class="detail-info__muted">
               {{ formatSize(replica.size) }}
             </span>
@@ -360,15 +387,17 @@ onMounted(load)
                 :underline="false"
                 @click="copyText(replica.link)"
               >
-                复制单副本链接
+                {{ t('detail.copyReplicaLink') }}
               </el-link>
             </el-tooltip>
             <el-tooltip
               v-else
-              content="私有后端或未配置加速域名，访问统一由 /raw/<sha> 输出"
+              :content="t('detail.replicaPrivateHint')"
               placement="top"
             >
-              <span class="replica-copy replica-copy--empty">无直链</span>
+              <span class="replica-copy replica-copy--empty">
+                {{ t('detail.noDirectLink') }}
+              </span>
             </el-tooltip>
             <div v-if="replica.error" class="replica-meta replica-meta--error">
               {{ replica.error }}
@@ -378,17 +407,17 @@ onMounted(load)
 
         <el-descriptions
           v-if="canEdit"
-          title="编辑"
+          :title="t('detail.edit')"
           :column="1"
           :label-width="80"
           size="small"
           border
           class="detail-sheet detail-block"
         >
-          <el-descriptions-item label="标题">
+          <el-descriptions-item :label="t('detail.titleLabel')">
             <el-input v-model="form.title" maxlength="255" />
           </el-descriptions-item>
-          <el-descriptions-item label="标签">
+          <el-descriptions-item :label="t('detail.tags')">
             <el-select
               v-model="form.tags"
               multiple
@@ -397,11 +426,11 @@ onMounted(load)
               default-first-option
               :reserve-keyword="false"
               :multiple-limit="10"
-              placeholder="输入后回车添加，最多 10 个"
+              :placeholder="t('detail.tagPlaceholder')"
               style="width: 100%"
             />
           </el-descriptions-item>
-          <el-descriptions-item label="可见性">
+          <el-descriptions-item :label="t('images.visibility')">
             <el-select v-model="form.visibility" style="width: 100%">
               <el-option
                 v-for="option in visibilityOptions"
@@ -411,7 +440,7 @@ onMounted(load)
               />
             </el-select>
           </el-descriptions-item>
-          <el-descriptions-item v-if="site.plazaEnabled" label="广场">
+          <el-descriptions-item v-if="site.plazaEnabled" :label="t('nav.plaza')">
             <el-select v-model="form.plaza" style="width: 100%">
               <el-option
                 v-for="option in plazaOptions"
@@ -421,21 +450,23 @@ onMounted(load)
               />
             </el-select>
           </el-descriptions-item>
-          <el-descriptions-item label="有效期">
+          <el-descriptions-item :label="t('upload.expire')">
             <el-date-picker
               v-model="form.expireAt"
               type="datetime"
-              placeholder="留空表示永久保留"
+              :placeholder="t('detail.expirePlaceholder')"
               :disabled-date="disabledExpireDate"
               clearable
               style="width: 100%"
             />
           </el-descriptions-item>
-          <el-descriptions-item label="操作">
+          <el-descriptions-item :label="t('common.actions')">
             <el-button type="primary" :loading="saving" @click="save">
-              保存
+              {{ t('common.save') }}
             </el-button>
-            <el-button type="danger" plain @click="remove">删除</el-button>
+            <el-button type="danger" plain @click="remove">
+              {{ t('common.delete') }}
+            </el-button>
           </el-descriptions-item>
         </el-descriptions>
 

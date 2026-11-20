@@ -306,22 +306,25 @@ def read_config():
         values = saved.get(manifest["name"]) or {}
         if not isinstance(values, dict):
             values = {}
-        items.append(
-            {
-                "name": manifest["name"],
-                "title": manifest["title"],
-                "description": manifest["description"],
-                "catalog": manifest["catalog"],
-                "version": manifest["version"],
-                "enabled": manifest["enabled"],
-                "fields": fields,
-                "actions": manifest["actions"],
-                "values": {
-                    field["key"]: values.get(field["key"], field.get("default"))
-                    for field in fields
-                },
-            }
-        )
+        item = {
+            "name": manifest["name"],
+            "title": manifest["title"],
+            "description": manifest["description"],
+            "catalog": manifest["catalog"],
+            "version": manifest["version"],
+            "enabled": manifest["enabled"],
+            "fields": fields,
+            "actions": manifest["actions"],
+            "values": {
+                field["key"]: values.get(field["key"], field.get("default"))
+                for field in fields
+            },
+        }
+        #: 钩子自带 i18n 键时前端优先翻译标题与描述（缺译仍回落到原文）。
+        for key in ("title_key", "description_key"):
+            if manifest.get(key):
+                item[key] = manifest[key]
+        items.append(item)
     return ok({"items": items})
 
 

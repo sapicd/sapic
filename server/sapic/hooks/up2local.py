@@ -31,19 +31,25 @@ __state__ = "enabled"
 def hook_manifest():
     return {
         "title": "本地存储",
+        "title_key": "hooks.up2local.title",
+        "description_key": "hooks.up2local.description",
         "catalog": "upload",
         "config_schema": [
             {
                 "key": "domain",
                 "type": "input",
                 "label": "加速域名",
+                "label_key": "hooks.up2local.fields.domain.label",
                 "placeholder": "如 https://img.example.com，留空则由 sapic 代理访问",
+                "placeholder_key": "hooks.up2local.fields.domain.hint",
             },
             {
                 "key": "root",
                 "type": "input",
                 "label": "存储根目录",
+                "label_key": "hooks.up2local.fields.root.label",
                 "placeholder": "留空则使用站点配置的存储目录",
+                "placeholder_key": "hooks.up2local.fields.root.hint",
                 "format": "path",
             },
         ],

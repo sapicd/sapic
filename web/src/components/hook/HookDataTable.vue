@@ -2,6 +2,7 @@
 import { inject, onMounted, ref } from 'vue'
 
 import { api, errorMessage } from '@/api/client'
+import { t } from '@/i18n'
 
 const props = defineProps({
   node: { type: Object, required: true },
@@ -28,7 +29,7 @@ async function load() {
       columns.value = data?.columns || []
     }
   } catch (error) {
-    ElMessage.error(errorMessage(error, '数据加载失败'))
+    ElMessage.error(errorMessage(error, t('hooks.dataLoadFailed')))
   } finally {
     loading.value = false
   }
@@ -57,7 +58,7 @@ onMounted(load)
     />
     <el-table-column
       v-if="node.row_actions?.length"
-      label="操作"
+      :label="t('common.actions')"
       width="140"
       align="right"
     >
@@ -74,10 +75,10 @@ onMounted(load)
       </template>
     </el-table-column>
     <template #empty>
-      <el-empty :description="node.empty || '暂无数据'" :image-size="60" />
+      <el-empty :description="node.empty || t('hooks.tableEmpty')" :image-size="60" />
     </template>
   </el-table>
   <div v-if="total > rows.length" class="node-field__help">
-    共 {{ total }} 条，当前显示 {{ rows.length }} 条
+    {{ t('hooks.tableTotal', { total, shown: rows.length }) }}
   </div>
 </template>

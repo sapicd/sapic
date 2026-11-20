@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 
 import { api, errorMessage } from '@/api/client'
 import HookSlot from '@/components/hook/HookSlot.vue'
+import { t } from '@/i18n'
 import { useSessionStore } from '@/stores/session'
 import { useSiteStore } from '@/stores/site'
 
@@ -11,11 +12,11 @@ const router = useRouter()
 const session = useSessionStore()
 const site = useSiteStore()
 
-const STATUS_TEXT = {
-  ready: '待上传',
-  uploading: '上传中',
-  fail: '失败',
-}
+const statusText = computed(() => ({
+  ready: t('upload.statusReady'),
+  uploading: t('upload.statusUploading'),
+  fail: t('upload.statusFail'),
+}))
 
 //: 粘贴得来的文件常常没有文件名或扩展名（如截图），按 MIME 补全，后端按后缀校验白名单。
 const MIME_EXT = {
@@ -53,8 +54,8 @@ const expireOptions = computed(() => {
     if (extra && (!max || extra <= max) && !days.includes(extra)) days.push(extra)
   }
   days.sort((a, b) => a - b)
-  const options = days.map((day) => ({ label: `${day} 天`, value: day }))
-  if (!max) options.unshift({ label: '永久', value: 0 })
+  const options = days.map((day) => ({ label: t('upload.days', { n: day }), value: day }))
+  if (!max) options.unshift({ label: t('upload.forever'), value: 0 })
   return options
 })
 
@@ -74,6 +75,16 @@ watch(
 
 const pendingTotal = computed(() => fileList.value.length + urlList.value.length)
 
+//: 上传区的尺寸提示随站点配置变化，拼成一句话交给词表插值。
+const zoneHint = computed(() =>
+  t(site.allowVideo ? 'upload.zoneHintVideo' : 'upload.zoneHint', {
+    kind: t(site.allowVideo ? 'upload.kindBoth' : 'upload.kindImage'),
+    image: site.uploadImageMaxSize,
+    video: site.uploadVideoMaxSize,
+    count: site.uploadCountLimit,
+  }),
+)
+
 //: 站点冻结上传时只封入口，历史图片的浏览、编辑与删除都不受影响。
 const uploadFrozen = computed(() => !site.uploadEnabled)
 
@@ -90,7 +101,7 @@ function remainingSlots() {
 }
 
 function onExceed() {
-  ElMessage.warning(`单次最多上传 ${site.uploadCountLimit} 个文件`)
+  ElMessage.warning(t('upload.tooMany', { n: site.uploadCountLimit }))
 }
 
 //: 新加入的文件默认跟随顶部「默认相册」，之后可逐个改成别的相册。
@@ -127,7 +138,7 @@ function onPaste(event) {
     //: 冻结期间连「攒进待上传列表」也拦掉，避免用户排一堆任务后集体失败。
     if (!isEditableTarget(event.target)) {
       event.preventDefault()
-      ElMessage.warning('站点已暂停上传')
+      ElMessage.warning(t('upload.frozen'))
     }
     return
   }
@@ -151,31 +162,31 @@ function onPaste(event) {
   }
   event.preventDefault()
   if (uploading.value) {
-    ElMessage.warning('正在上传，请稍后再粘贴')
+    ElMessage.warning(t('upload.busy'))
     return
   }
 
   const room = remainingSlots()
   if (!room) {
-    ElMessage.warning(`单次最多上传 ${site.uploadCountLimit} 个文件`)
+    ElMessage.warning(t('upload.tooMany', { n: site.uploadCountLimit }))
     return
   }
   const pending = raws.slice(0, room)
   if (pending.length < raws.length) {
-    ElMessage.warning(`单次最多上传 ${site.uploadCountLimit} 个文件，多余的已忽略`)
+    ElMessage.warning(t('upload.tooManyIgnored', { n: site.uploadCountLimit }))
   }
 
   let added = 0
   for (const raw of pending) {
     const name = pasteName(raw)
     if (!isAccepted(name, raw.type)) {
-      ElMessage.warning(`不支持粘贴该类型的文件：${name}`)
+      ElMessage.warning(t('upload.unsupportedPaste', { name }))
       continue
     }
     uploadRef.value?.handleStart(new File([raw], name, { type: raw.type }))
     added += 1
   }
-  if (added) ElMessage.success(`已加入 ${added} 个粘贴的文件`)
+  if (added) ElMessage.success(t('upload.pastedAdded', { n: added }))
 }
 
 function isEditableTarget(target) {
@@ -209,20 +220,20 @@ function urlName(url) {
 //: 链接不上传到浏览器，只登记 URL，由后端抓取，避免跨域与防盗链问题。
 function addUrl(url) {
   if (uploading.value) {
-    ElMessage.warning('正在上传，请稍后再粘贴')
+    ElMessage.warning(t('upload.busy'))
     return
   }
   if (!remainingSlots()) {
-    ElMessage.warning(`单次最多上传 ${site.uploadCountLimit} 个文件`)
+    ElMessage.warning(t('upload.tooMany', { n: site.uploadCountLimit }))
     return
   }
   const href = url.toString()
   if (urlList.value.some((item) => item.url === href)) {
-    ElMessage.info('该链接已在待上传列表中')
+    ElMessage.info(t('upload.urlDuplicate'))
     return
   }
   urlList.value.push({ url: href, name: urlName(url), status: 'ready' })
-  ElMessage.success('已加入待上传列表')
+  ElMessage.success(t('upload.urlAdded'))
 }
 
 function removeUrl(index) {
@@ -268,9 +279,9 @@ async function uploadOne(item) {
   } catch (error) {
     item.status = 'fail'
     if (error?.code === 'FORBIDDEN' && !session.authenticated) {
-      ElMessage.error('站点未开放匿名上传，请先登录')
+      ElMessage.error(t('upload.anonymousForbidden'))
     } else {
-      ElMessage.error(`${item.name} 上传失败：${errorMessage(error)}`)
+      ElMessage.error(t('upload.uploadFailed', { name: item.name, message: errorMessage(error) }))
     }
     return false
   }
@@ -291,9 +302,9 @@ async function uploadRemote(item) {
   } catch (error) {
     item.status = 'fail'
     if (error?.code === 'FORBIDDEN' && !session.authenticated) {
-      ElMessage.error('站点未开放匿名上传，请先登录')
+      ElMessage.error(t('upload.anonymousForbidden'))
     } else {
-      ElMessage.error(`${item.name} 上传失败：${errorMessage(error)}`)
+      ElMessage.error(t('upload.uploadFailed', { name: item.name, message: errorMessage(error) }))
     }
     return false
   }
@@ -301,13 +312,13 @@ async function uploadRemote(item) {
 
 async function startUpload() {
   if (uploadFrozen.value) {
-    ElMessage.warning('站点已暂停上传')
+    ElMessage.warning(t('upload.frozen'))
     return
   }
   const pendingFiles = fileList.value.filter((item) => item.status !== 'success')
   const pendingUrls = urlList.value.filter((item) => item.status !== 'success')
   if (!pendingFiles.length && !pendingUrls.length) {
-    ElMessage.warning('请先选择文件或粘贴图片链接')
+    ElMessage.warning(t('upload.needFiles'))
     return
   }
 
@@ -332,15 +343,15 @@ async function startUpload() {
   } finally {
     uploading.value = false
   }
-  if (done) ElMessage.success(`已上传 ${done} 个文件`)
+  if (done) ElMessage.success(t('upload.done', { n: done }))
 }
 
 async function copy(text) {
   try {
     await navigator.clipboard.writeText(text)
-    ElMessage.success('已复制到剪贴板')
+    ElMessage.success(t('common.copiedToast'))
   } catch (error) {
-    ElMessage.warning('复制失败，请手动复制')
+    ElMessage.warning(t('common.copyFailed'))
   }
 }
 
@@ -361,9 +372,9 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="upload-hero">
-    <h1 class="upload-hero__title">上传图片</h1>
+    <h1 class="upload-hero__title">{{ t('upload.title') }}</h1>
     <p class="upload-hero__desc">
-      {{ site.uploadNotice || '拖拽、点击选择或粘贴图片/链接，选好后点「开始上传」' }}
+      {{ site.uploadNotice || t('upload.descDefault') }}
     </p>
 
     <el-alert
@@ -372,8 +383,8 @@ onBeforeUnmount(() => {
       type="warning"
       show-icon
       :closable="false"
-      title="站点已暂停上传"
-      description="管理员暂时关闭了上传入口；已有图片的访问、编辑与删除不受影响。"
+      :title="t('upload.frozen')"
+      :description="t('upload.frozenDesc')"
     />
 
     <el-alert
@@ -382,22 +393,26 @@ onBeforeUnmount(() => {
       type="info"
       show-icon
       :closable="false"
-      title="当前未登录"
+      :title="t('upload.guestTitle')"
     >
       <span>
-        站点开放匿名上传时可直接上传；{{
-          site.allowRegister ? '注册' : '登录'
-        }}后可管理自己的图片。
+        {{
+          t('upload.guestDesc', {
+            action: site.allowRegister ? t('auth.signUp') : t('auth.signIn'),
+          })
+        }}
       </span>
-      <router-link :to="{ name: 'login', query: { redirect: '/' } }">登录</router-link>
+      <router-link :to="{ name: 'login', query: { redirect: '/' } }">
+        {{ t('auth.signIn') }}
+      </router-link>
     </el-alert>
 
     <div class="upload-hero__toolbar">
       <template v-if="session.authenticated">
-        <span class="upload-hero__label">默认相册</span>
+        <span class="upload-hero__label">{{ t('upload.defaultAlbum') }}</span>
         <el-select
           v-model="albumId"
-          placeholder="未指定（使用默认相册）"
+          :placeholder="t('upload.albumPlaceholder')"
           clearable
           style="width: 220px"
         >
@@ -409,7 +424,7 @@ onBeforeUnmount(() => {
           />
         </el-select>
       </template>
-      <span class="upload-hero__label">有效期</span>
+      <span class="upload-hero__label">{{ t('upload.expire') }}</span>
       <el-select v-model="expireDays" style="width: 150px">
         <el-option
           v-for="option in expireOptions"
@@ -419,7 +434,7 @@ onBeforeUnmount(() => {
         />
       </el-select>
       <span class="upload-hero__label upload-hero__label--hint">
-        {{ expireDays ? '到期后图片与文件会被删除' : '选中文件后可逐个修改' }}
+        {{ expireDays ? t('upload.expireHint') : t('upload.expireHintPending') }}
       </span>
     </div>
 
@@ -438,17 +453,12 @@ onBeforeUnmount(() => {
       <div class="upload-zone__icon">
         <el-icon><UploadFilled /></el-icon>
       </div>
-      <div class="upload-zone__text">拖拽文件到此处，或<em>点击选择</em>、粘贴图片</div>
-      <div class="upload-zone__hint">
-        支持{{ site.allowVideo ? '图片与视频' : '图片' }} · 图片不超过
-        {{ site.uploadImageMaxSize }} MB<span v-if="site.allowVideo"
-          >、视频不超过 {{ site.uploadVideoMaxSize }} MB</span
-        >
-        · 单次最多 {{ site.uploadCountLimit }} 个
+      <div class="upload-zone__text">
+        {{ t('upload.zoneTextBefore') }}<em>{{ t('upload.clickToSelect') }}</em
+        >{{ t('upload.zoneTextAfter') }}
       </div>
-      <div class="upload-zone__note">
-        支持 Ctrl/⌘ + V 粘贴图片或图片链接，加入列表后点「开始上传」
-      </div>
+      <div class="upload-zone__hint">{{ zoneHint }}</div>
+      <div class="upload-zone__note">{{ t('upload.zoneNote') }}</div>
 
       <template #file="{ file, index }">
         <div class="upload-item">
@@ -458,7 +468,7 @@ onBeforeUnmount(() => {
             v-model="file.albumId"
             size="small"
             class="upload-item__album"
-            placeholder="跟随默认相册"
+            :placeholder="t('upload.followDefaultAlbum')"
             clearable
             :disabled="uploading"
           >
@@ -470,7 +480,7 @@ onBeforeUnmount(() => {
             />
           </el-select>
           <span class="upload-item__status">
-            {{ STATUS_TEXT[file.status] || '' }}
+            {{ statusText[file.status] || '' }}
           </span>
           <el-button
             link
@@ -479,7 +489,7 @@ onBeforeUnmount(() => {
             :disabled="uploading"
             @click="removeFile(index)"
           >
-            移除
+            {{ t('common.remove') }}
           </el-button>
         </div>
       </template>
@@ -490,7 +500,7 @@ onBeforeUnmount(() => {
         <el-tag size="small" type="info">URL</el-tag>
         <span class="upload-item__name" :title="item.url">{{ item.name }}</span>
         <span class="upload-item__status">
-          {{ STATUS_TEXT[item.status] || '' }}
+          {{ statusText[item.status] || '' }}
         </span>
         <el-button
           link
@@ -499,7 +509,7 @@ onBeforeUnmount(() => {
           :disabled="uploading"
           @click="removeUrl(index)"
         >
-          移除
+          {{ t('common.remove') }}
         </el-button>
       </div>
     </div>
@@ -511,10 +521,10 @@ onBeforeUnmount(() => {
         :disabled="!pendingTotal || uploadFrozen"
         @click="startUpload"
       >
-        开始上传{{ pendingTotal ? `（${pendingTotal}）` : '' }}
+        {{ pendingTotal ? t('upload.startCount', { n: pendingTotal }) : t('upload.start') }}
       </el-button>
       <el-button :disabled="uploading || !pendingTotal" @click="clearFiles">
-        清空
+        {{ t('upload.clear') }}
       </el-button>
     </div>
 
@@ -534,14 +544,14 @@ onBeforeUnmount(() => {
           <div class="upload-result__link">{{ absolute(item.src) }}</div>
         </div>
         <el-button type="primary" plain size="small" @click="copy(absolute(item.src))">
-          复制链接
+          {{ t('common.copyLink') }}
         </el-button>
         <el-button
           size="small"
           text
           @click="router.push({ name: 'image-detail', params: { sha: item.sha } })"
         >
-          详情
+          {{ t('upload.detail') }}
         </el-button>
       </div>
     </div>

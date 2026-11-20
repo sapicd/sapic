@@ -50,13 +50,17 @@ REQUIRED = ("domain", "bucket", "access_key", "secret_key")
 def hook_manifest():
     return {
         "title": "七牛云存储",
+        "title_key": "hooks.up2qiniu.title",
+        "description_key": "hooks.up2qiniu.description",
         "catalog": "upload",
         "config_schema": [
             {
                 "type": kind,
                 "key": key,
                 "label": label,
+                "label_key": "hooks.up2qiniu.fields.%s.label" % key,
                 "placeholder": hint,
+                "placeholder_key": "hooks.up2qiniu.fields.%s.hint" % key,
                 "required": key in REQUIRED,
             }
             for key, kind, label, hint in FIELDS

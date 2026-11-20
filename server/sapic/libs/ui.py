@@ -41,45 +41,64 @@ SLOT_MODES = {"declarative"}
 #: onto its own component library.
 ICON_RE = re.compile(r"^(?:builtin|brand):[a-z0-9_\-]+$", re.IGNORECASE)
 
+#: Optional i18n keys a hook may attach to its visible strings. The frontend
+#: translates the key and falls back to the literal text when the catalogue has
+#: no entry, so a hook can stay single-language and still be localisable.
+KEY_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*$")
+KEY_FIELDS = (
+    "text_key",
+    "title_key",
+    "label_key",
+    "description_key",
+    "legend_key",
+    "empty_key",
+    "help_key",
+    "placeholder_key",
+)
+
 #: Allowed node types and the keys each may carry.
 _TYPE_KEYS = {
     # structural
-    "fieldset": {"type", "legend", "status", "children", "when", "icon"},
-    "group": {"type", "title", "children", "when", "icon"},
+    "fieldset": {"type", "legend", "legend_key", "status", "children", "when", "icon"},
+    "group": {"type", "title", "title_key", "children", "when", "icon"},
     "row": {"type", "gap", "children", "when"},
     "col": {"type", "span", "children", "when"},
     "tabs": {"type", "children", "when"},
     "collapse": {"type", "children", "when"},
-    "list": {"type", "empty", "children", "when"},
-    "list_item": {"type", "title", "description", "row_actions", "when"},
+    "list": {"type", "empty", "empty_key", "children", "when"},
+    "list_item": {"type", "title", "title_key", "description", "description_key",
+                  "row_actions", "when"},
     # display
-    "text": {"type", "text", "muted", "when", "icon"},
-    "alert": {"type", "level", "text", "when"},
-    "badge": {"type", "level", "text", "when"},
+    "text": {"type", "text", "text_key", "muted", "when", "icon"},
+    "alert": {"type", "level", "text", "text_key", "title", "title_key", "when"},
+    "badge": {"type", "level", "text", "text_key", "when"},
     "image": {"type", "src", "alt", "fit", "width", "height", "when"},
-    "code": {"type", "text", "when"},
-    "divider": {"type", "label", "when"},
+    "code": {"type", "text", "text_key", "when"},
+    "divider": {"type", "label", "label_key", "when"},
     # input
-    "input": {"type", "key", "label", "default", "required", "help", "readonly",
-              "disabled", "placeholder", "maxlength", "prefix", "suffix", "when"},
-    "number": {"type", "key", "label", "default", "required", "help", "disabled",
-               "min", "max", "step", "when"},
-    "password": {"type", "key", "label", "default", "required", "help",
-                 "disabled", "placeholder", "when"},
-    "textarea": {"type", "key", "label", "default", "required", "help",
-                  "disabled", "placeholder", "maxlength", "rows", "mono", "when"},
-    "switch": {"type", "key", "label", "default", "required", "disabled",
-               "help", "active_text", "inactive_text", "when"},
-    "select": {"type", "key", "label", "default", "required", "help",
-               "disabled", "placeholder", "multiple", "options", "source", "when"},
-    "radio": {"type", "key", "label", "default", "required", "disabled",
+    "input": {"type", "key", "label", "label_key", "default", "required", "help",
+              "help_key", "readonly", "disabled", "placeholder", "placeholder_key",
+              "maxlength", "prefix", "suffix", "when"},
+    "number": {"type", "key", "label", "label_key", "default", "required", "help",
+               "help_key", "disabled", "min", "max", "step", "when"},
+    "password": {"type", "key", "label", "label_key", "default", "required", "help",
+                 "help_key", "disabled", "placeholder", "placeholder_key", "when"},
+    "textarea": {"type", "key", "label", "label_key", "default", "required", "help",
+                  "help_key", "disabled", "placeholder", "placeholder_key",
+                  "maxlength", "rows", "mono", "when"},
+    "switch": {"type", "key", "label", "label_key", "default", "required", "disabled",
+               "help", "help_key", "active_text", "inactive_text", "when"},
+    "select": {"type", "key", "label", "label_key", "default", "required", "help",
+               "help_key", "disabled", "placeholder", "placeholder_key", "multiple",
+               "options", "source", "when"},
+    "radio": {"type", "key", "label", "label_key", "default", "required", "disabled",
               "options", "when"},
     # interactive
-    "button": {"type", "text", "action", "with_form", "confirm", "refresh",
+    "button": {"type", "text", "text_key", "action", "with_form", "confirm", "refresh",
                "icon", "variant", "size", "disabled", "disabled_reason", "when"},
-    "link": {"type", "text", "href", "target", "icon", "when"},
-    "dropdown": {"type", "text", "icon", "children", "when"},
-    "dropdown_item": {"type", "text", "action", "with_form", "confirm",
+    "link": {"type", "text", "text_key", "href", "target", "icon", "when"},
+    "dropdown": {"type", "text", "text_key", "icon", "children", "when"},
+    "dropdown_item": {"type", "text", "text_key", "action", "with_form", "confirm",
                       "danger", "disabled", "when"},
 }
 
@@ -111,6 +130,16 @@ def _text(value, limit=MAX_TEXT):
     if limit and len(text) > limit:
         text = text[:limit]
     return text
+
+
+def clean_key(value):
+    """Return a whitelisted i18n key, ``None`` when it is not a dotted name."""
+    if not isinstance(value, str):
+        return None
+    key = value.strip()
+    if not key or len(key) > 64 or not KEY_RE.match(key):
+        return None
+    return key
 
 
 def _expand(text, context):
@@ -234,6 +263,12 @@ def clean_node(node, actions=None, values=None, context=None, depth=0):
             continue
         out[key] = value
 
+    for field in KEY_FIELDS:
+        if field in allowed and field in node:
+            i18n_key = clean_key(node[field])
+            if i18n_key:
+                out[field] = i18n_key
+
     if "level" in node and "level" in allowed:
         out["level"] = node["level"] if node["level"] in _LEVELS else "info"
     if "variant" in node and "variant" in allowed:
@@ -341,6 +376,10 @@ def clean_fields(fields):
             item["help"] = _text(field["help"])
         if field.get("placeholder"):
             item["placeholder"] = _text(field["placeholder"])
+        for name in ("label_key", "help_key", "placeholder_key"):
+            i18n_key = clean_key(field.get(name))
+            if i18n_key:
+                item[name] = i18n_key
         if field.get("format"):
             item["format"] = _text(field["format"], 32)
         if ftype in ("select", "radio") and field.get("options"):

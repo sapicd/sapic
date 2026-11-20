@@ -44,13 +44,17 @@ REQUIRED = ("token", "repo")
 def hook_manifest():
     return {
         "title": "Gitee 版本库",
+        "title_key": "hooks.up2gitee.title",
+        "description_key": "hooks.up2gitee.description",
         "catalog": "upload",
         "config_schema": [
             {
                 "type": kind,
                 "key": key,
                 "label": label,
+                "label_key": "hooks.up2gitee.fields.%s.label" % key,
                 "placeholder": hint,
+                "placeholder_key": "hooks.up2gitee.fields.%s.hint" % key,
                 "required": key in REQUIRED,
             }
             for key, kind, label, hint in FIELDS

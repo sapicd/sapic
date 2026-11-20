@@ -4,6 +4,7 @@ import { computed, inject } from 'vue'
 import HookDataTable from './HookDataTable.vue'
 import NodeField from './NodeField.vue'
 import { iconOf } from './icons'
+import { nodeText } from './text'
 
 const FIELD_TYPES = new Set([
   'input',
@@ -92,7 +93,7 @@ async function onRowAction(action) {
   <!-- 容器 -->
   <fieldset v-if="node.type === 'fieldset'" class="node-fieldset">
     <legend v-if="node.legend || node.status">
-      <span v-if="node.legend">{{ node.legend }}</span>
+      <span v-if="node.legend">{{ nodeText(node, 'legend') }}</span>
       <el-tag v-if="node.status" size="small" type="success" effect="plain">
         {{ node.status }}
       </el-tag>
@@ -122,7 +123,7 @@ async function onRowAction(action) {
   </el-col>
 
   <div v-else-if="node.type === 'group'" class="node-group">
-    <div v-if="node.title" class="node-group__title">{{ node.title }}</div>
+    <div v-if="node.title" class="node-group__title">{{ nodeText(node, 'title') }}</div>
     <NodeRenderer
       v-for="(child, index) in node.children"
       :key="child.id || index"
@@ -161,21 +162,21 @@ async function onRowAction(action) {
   </el-collapse>
 
   <!-- 展示 -->
-  <p v-else-if="node.type === 'text'" :class="textClass">{{ node.text }}</p>
+  <p v-else-if="node.type === 'text'" :class="textClass">{{ nodeText(node) }}</p>
 
   <el-alert
     v-else-if="node.type === 'alert'"
     class="node-alert"
     :type="alertType"
-    :title="node.title || node.text"
-    :description="node.title ? node.text : undefined"
+    :title="nodeText(node, 'title') || nodeText(node)"
+    :description="node.title || node.title_key ? nodeText(node) : undefined"
     :closable="Boolean(node.closable)"
     show-icon
   />
 
   <div v-else-if="node.type === 'badge'" class="node-badge">
     <el-tag :type="tagType" size="small" :effect="node.dot ? 'plain' : 'light'">
-      {{ node.text }}
+      {{ nodeText(node) }}
     </el-tag>
   </div>
 
@@ -188,9 +189,9 @@ async function onRowAction(action) {
     :style="{ width: px(node.width), height: px(node.height), maxWidth: '100%' }"
   />
 
-  <pre v-else-if="node.type === 'code'" class="node-code"><code>{{ node.text }}</code></pre>
+  <pre v-else-if="node.type === 'code'" class="node-code"><code>{{ nodeText(node) }}</code></pre>
 
-  <el-divider v-else-if="node.type === 'divider'">{{ node.label }}</el-divider>
+  <el-divider v-else-if="node.type === 'divider'">{{ nodeText(node, 'label') }}</el-divider>
 
   <HookDataTable v-else-if="node.type === 'table'" :node="node" />
 
@@ -202,16 +203,16 @@ async function onRowAction(action) {
     />
     <el-empty
       v-if="!node.children?.length"
-      :description="node.empty || '暂无内容'"
+      :description="nodeText(node, 'empty') || '暂无内容'"
       :image-size="60"
     />
   </div>
 
   <div v-else-if="node.type === 'list_item'" class="node-list-item">
     <div class="node-list-item__body">
-      <div class="node-list-item__title">{{ node.title }}</div>
+      <div class="node-list-item__title">{{ nodeText(node, 'title') }}</div>
       <div v-if="node.description" class="node-list-item__desc">
-        {{ node.description }}
+        {{ nodeText(node, 'description') }}
       </div>
     </div>
     <div class="node-list-item__actions">
@@ -241,7 +242,7 @@ async function onRowAction(action) {
     :title="node.disabled_reason"
     @click="onButton"
   >
-    {{ node.text }}
+    {{ nodeText(node) }}
   </el-button>
 
   <el-link
@@ -254,12 +255,12 @@ async function onRowAction(action) {
     rel="noopener noreferrer"
   >
     <el-icon v-if="icon"><component :is="icon" /></el-icon>
-    {{ node.text }}
+    {{ nodeText(node) }}
   </el-link>
 
   <el-dropdown v-else-if="node.type === 'dropdown'" @command="onDropdownCommand">
     <el-button :type="buttonType" :size="size" :icon="icon">
-      {{ node.text }}
+      {{ nodeText(node) }}
       <el-icon class="el-icon--right"><ArrowDown /></el-icon>
     </el-button>
     <template #dropdown>
@@ -271,7 +272,7 @@ async function onRowAction(action) {
           :disabled="child.disabled"
           :divided="child.danger"
         >
-          {{ child.text }}
+          {{ nodeText(child) }}
         </el-dropdown-item>
       </el-dropdown-menu>
     </template>

@@ -13,6 +13,7 @@ import {
   Picture,
   Search,
   Setting,
+  Switch,
   Tools,
   UploadFilled,
   User,
@@ -23,6 +24,7 @@ import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 
 import App from './App.vue'
+import i18n from './i18n'
 import router from './router'
 import './styles.css'
 
@@ -42,6 +44,7 @@ const GLOBAL_ICONS = [
   Picture,
   Search,
   Setting,
+  Switch,
   Tools,
   UploadFilled,
   User,
@@ -56,5 +59,7 @@ GLOBAL_ICONS.forEach((icon) => {
 })
 
 app.use(createPinia())
+//: 必须在 router 之前注册：路由守卫与视图渲染都可能马上用到 ``t()``。
+app.use(i18n)
 app.use(router)
 app.mount('#app')

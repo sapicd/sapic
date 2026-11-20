@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { api, errorMessage } from '@/api/client'
+import { t } from '@/i18n'
 
 const router = useRouter()
 
@@ -28,7 +29,7 @@ async function load(reset = true) {
     hasMore.value = Boolean(data?.has_more)
     failed.value = ''
   } catch (error) {
-    failed.value = errorMessage(error, '广场加载失败')
+    failed.value = errorMessage(error, t('plaza.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -45,9 +46,9 @@ function absolute(url) {
 async function copy(text) {
   try {
     await navigator.clipboard.writeText(text)
-    ElMessage.success('已复制到剪贴板')
+    ElMessage.success(t('common.copiedToast'))
   } catch (error) {
-    ElMessage.warning('复制失败，请手动复制')
+    ElMessage.warning(t('common.copyFailed'))
   }
 }
 
@@ -57,8 +58,8 @@ onMounted(() => load(true))
 <template>
   <div class="page">
     <div class="page__header">
-      <h2 class="page__title">广场</h2>
-      <span class="page__subtitle">仅展示作者主动发布的公开图片</span>
+      <h2 class="page__title">{{ t('plaza.title') }}</h2>
+      <span class="page__subtitle">{{ t('plaza.subtitle') }}</span>
     </div>
 
     <el-alert
@@ -82,7 +83,7 @@ onMounted(() => load(true))
       </div>
     </div>
 
-    <el-empty v-else-if="isEmpty" description="广场还是空的，主动发布几张图片吧" />
+    <el-empty v-else-if="isEmpty" :description="t('plaza.empty')" />
 
     <div v-else class="image-grid">
       <div v-for="item in items" :key="item.sha" class="image-card">
@@ -102,10 +103,10 @@ onMounted(() => load(true))
             style="width: 100%; height: 100%"
           />
           <div class="image-card__overlay" @click.stop>
-            <el-button circle title="复制链接" @click="copy(absolute(item.src))">
+            <el-button circle :title="t('common.copyLink')" @click="copy(absolute(item.src))">
               <el-icon><CopyDocument /></el-icon>
             </el-button>
-            <el-button circle title="查看详情" @click="openDetail(item)">
+            <el-button circle :title="t('common.viewDetail')" @click="openDetail(item)">
               <el-icon><View /></el-icon>
             </el-button>
           </div>
@@ -114,7 +115,7 @@ onMounted(() => load(true))
           <div class="image-card__name">{{ item.title || item.filename }}</div>
           <div class="image-card__sub">
             <el-tag v-if="item.is_video" size="small" type="warning" effect="plain">
-              视频
+              {{ t('common.video') }}
             </el-tag>
             <el-tag v-if="item.album" size="small" effect="plain">
               {{ item.album.name }}
@@ -134,7 +135,9 @@ onMounted(() => load(true))
     </div>
 
     <div v-if="hasMore" class="load-more">
-      <el-button round :loading="loading" @click="load(false)">加载更多</el-button>
+      <el-button round :loading="loading" @click="load(false)">
+        {{ t('common.loadMore') }}
+      </el-button>
     </div>
   </div>
 </template>

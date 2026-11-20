@@ -70,6 +70,69 @@ def test_icon_must_come_from_the_builtin_sets():
     assert node["icon"] == "brand:github"
 
 
+def test_i18n_keys_are_whitelisted():
+    node = ui.clean_node(
+        {
+            "type": "link",
+            "text": "登录",
+            "text_key": "hooks.passport.signIn",
+            "label_key": "common.or",
+            "href": "/login",
+        }
+    )
+    assert node["text_key"] == "hooks.passport.signIn"
+    #: ``label_key`` 只属于带 ``label`` 的节点，其他类型带了也不透传。
+    assert "label_key" not in node
+    #: 键必须是点分标识符（``hooks.passport.signIn``），非法值静默丢弃。
+    for bad in ("Not A Key", "hooks..title", "hooks/title", "x" * 80, 42):
+        assert "text_key" not in ui.clean_node(
+            {"type": "text", "text": "hi", "text_key": bad}
+        )
+
+
+def test_field_i18n_keys_are_kept_and_validated():
+    fields = ui.clean_fields(
+        [
+            {
+                "type": "input",
+                "key": "issuer",
+                "label": "Issuer 地址",
+                "label_key": "hooks.passport.fields.issuer.label",
+                "placeholder": "x",
+                "placeholder_key": "hooks.passport.fields.issuer.hint",
+                "help_key": "bad key",
+            }
+        ]
+    )
+    assert fields == [
+        {
+            "type": "input",
+            "key": "issuer",
+            "label": "Issuer 地址",
+            "placeholder": "x",
+            "label_key": "hooks.passport.fields.issuer.label",
+            "placeholder_key": "hooks.passport.fields.issuer.hint",
+        }
+    ]
+
+
+def test_field_node_i18n_keys_are_whitelisted():
+    node = ui.clean_node(
+        {
+            "type": "input",
+            "key": "domain",
+            "label": "加速域名",
+            "label_key": "hooks.up2local.fields.domain.label",
+            "placeholder_key": "hooks.up2local.fields.domain.hint",
+            "text_key": "hooks.up2local.fields.domain.hint",
+        }
+    )
+    assert node["label_key"] == "hooks.up2local.fields.domain.label"
+    assert node["placeholder_key"] == "hooks.up2local.fields.domain.hint"
+    #: ``text_key`` 不属于输入控件，带了也不会透传。
+    assert "text_key" not in node
+
+
 def test_depth_is_capped():
     root = {"type": "row", "children": []}
     cursor = root

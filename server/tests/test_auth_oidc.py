@@ -136,6 +136,22 @@ def test_login_slot_only_renders_when_configured(app):
     )
     link = next(node for node in nodes if node["type"] == "link")
     assert link["href"] == "/api/v2/auth/oidc/passport"
+    #: 默认文案带 i18n 键，英文界面才能翻译；管理员自定义文案时不带。
+    assert link["text_key"] == "hooks.passport.signIn"
+    divider = next(node for node in nodes if node["type"] == "divider")
+    assert divider["label_key"] == "common.or"
+
+    custom = module.slot_login_after_form(
+        context={
+            "config": {
+                "issuer": CONFIG["issuer"],
+                "client_id": "sp-client",
+                "button_text": "SSO",
+            }
+        }
+    )
+    assert next(node for node in custom if node["type"] == "link")["text"] == "SSO"
+    assert "text_key" not in next(node for node in custom if node["type"] == "link")
 
 
 def test_authorize_url_follows_the_discovery_document(app, monkeypatch):
@@ -446,7 +462,10 @@ def test_bind_holds_when_the_configured_issuer_ends_with_a_slash(
     with app.app_context():
         assert User.get_by_id(user_id).oidc_issuer == CONFIG["issuer"]
     items = client.get("/api/v2/auth/identities").get_json()["data"]["items"]
-    assert next(item for item in items if item["name"] == "passport")["bound"]
+    passport = next(item for item in items if item["name"] == "passport")
+    assert passport["bound"]
+    #: 账号设置里的 Provider 名称同样带 i18n 键。
+    assert passport["title_key"] == "hooks.passport.title"
 
 
 def test_bind_reports_an_identity_bound_to_another_account(app, client, monkeypatch):
@@ -621,5 +640,10 @@ def test_login_slot_renders_the_button_over_http(app, client):
     assert response.status_code == 200
     blocks = response.get_json()["data"]["blocks"]
     assert [block["hook"] for block in blocks] == ["passport"]
+    #: i18n 键穿过清洗层到达前端，英文界面据此翻译。
+    assert blocks[0]["title_key"] == "hooks.passport.title"
     link = next(node for node in blocks[0]["nodes"] if node["type"] == "link")
     assert link["href"] == "/api/v2/auth/oidc/passport"
+    assert link["text_key"] == "hooks.passport.signIn"
+    divider = next(node for node in blocks[0]["nodes"] if node["type"] == "divider")
+    assert divider["label_key"] == "common.or"

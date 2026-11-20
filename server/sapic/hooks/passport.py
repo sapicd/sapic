@@ -65,8 +65,10 @@ def _field_node(key: str, kind: str, label: str, hint: str) -> dict:
             "type": kind,
             "key": key,
             "label": label,
+            "label_key": "hooks.passport.fields.%s.label" % key,
             "default": True,
             "help": hint,
+            "help_key": "hooks.passport.fields.%s.hint" % key,
             "active_text": "开启",
             "inactive_text": "关闭",
         }
@@ -74,17 +76,22 @@ def _field_node(key: str, kind: str, label: str, hint: str) -> dict:
         "type": kind,
         "key": key,
         "label": label,
+        "label_key": "hooks.passport.fields.%s.label" % key,
         "placeholder": hint,
+        "placeholder_key": "hooks.passport.fields.%s.hint" % key,
         "required": key in REQUIRED,
     }
     if FIELD_HELP.get(key):
         node["help"] = FIELD_HELP[key]
+        node["help_key"] = "hooks.passport.fields.%s.help" % key
     return node
 
 
 def hook_manifest():
     return {
         "title": "Passport 统一登录",
+        "title_key": "hooks.passport.title",
+        "description_key": "hooks.passport.description",
         "catalog": "auth",
         "config_schema": [_field_node(*field) for field in FIELDS],
         "actions": [
@@ -104,15 +111,19 @@ def slot_login_after_form(context=None, **kwargs):
     if not config.get("issuer") or not config.get("client_id"):
         #: 未配置时不在登录页出现，避免把用户引到一个 404 的路由。
         return []
-    text = str(config.get("button_text") or "").strip() or "通过 Passport 登录"
+    #: 管理员填了自定义文案就照用；没填时带上 i18n 键，让英文界面能翻译。
+    text = str(config.get("button_text") or "").strip()
+    link = {
+        "type": "link",
+        "text": text or "通过 Passport 登录",
+        "href": "/api/v2/auth/oidc/passport",
+        "icon": "builtin:link",
+    }
+    if not text:
+        link["text_key"] = "hooks.passport.signIn"
     return [
-        {"type": "divider", "label": "或"},
-        {
-            "type": "link",
-            "text": text,
-            "href": "/api/v2/auth/oidc/passport",
-            "icon": "builtin:link",
-        },
+        {"type": "divider", "label": "或", "label_key": "common.or"},
+        link,
     ]
 
 
@@ -279,5 +290,5 @@ def action_ping(values=None, context=None, **kwargs):
     return {
         "code": 0,
         "message": "discovery ok",
-        "toast": {"level": "success", "text": "discovery 正常：%s" % issuer},
+        "toast": {"level": "success", "text": "discovery ok: %s" % issuer},
     }

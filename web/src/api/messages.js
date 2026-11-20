@@ -1,6 +1,7 @@
-//: 接口错误文案的中文化。后端按约定只返回英文原文（code 为 ErrorCode 字符串），
-//: 界面固定中文，所以这里做「英文原文 → 中文」的展示层转换，不依赖 vue-i18n。
+//: 接口错误文案的展示层转换。后端按约定只返回英文原文（code 为 ErrorCode 字符串），
+//: 中文界面把原文映射成中文，英文界面直接用原文（原文本来就是英文）。
 //: 键必须与 server/sapic 里 ApiError 的 message 完全一致，改后端文案时同步这里。
+import { currentLocale } from '@/i18n'
 
 const MESSAGES = {
   'HOOK_PKG_STORAGE_DIR is not configured': '未配置钩子包目录，无法存放钩子包',
@@ -188,9 +189,30 @@ const CODE_MESSAGES = {
   HTTP_ERROR: '请求失败',
 }
 
+//: 英文界面直接展示后端原文；只有原文缺失时才按 ErrorCode 兜一句英文。
+const CODE_MESSAGES_EN = {
+  BAD_REQUEST: 'Bad request',
+  PARAM_ERROR: 'Invalid parameters',
+  UNAUTHORIZED: 'Please sign in first',
+  FORBIDDEN: 'You are not allowed to do that',
+  NOT_FOUND: 'Not found',
+  METHOD_NOT_ALLOWED: 'Method not allowed',
+  CONFLICT: 'Conflict, refresh and try again',
+  PAYLOAD_TOO_LARGE: 'Payload too large',
+  RATE_LIMITED: 'Too many requests, try again later',
+  INTERNAL_ERROR: 'Server error, try again later',
+  SERVICE_UNAVAILABLE: 'Service unavailable',
+  NETWORK_ERROR: 'Network error, check that the server is running',
+  HTTP_ERROR: 'Request failed',
+}
+
 export function localizeMessage(message, code = '') {
   const text = String(message || '').trim()
-  if (!text) return CODE_MESSAGES[code] || ''
+  const english = currentLocale() === 'en'
+  if (!text) {
+    return (english ? CODE_MESSAGES_EN[code] : CODE_MESSAGES[code]) || ''
+  }
+  if (english) return text
   if (MESSAGES[text]) return MESSAGES[text]
   for (const [pattern, render] of PATTERNS) {
     const match = pattern.exec(text)

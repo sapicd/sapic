@@ -1,46 +1,48 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { t } from '@/i18n'
 import { useSessionStore } from '@/stores/session'
 import { useSiteStore } from '@/stores/site'
 
+//: ``meta.title`` 存词表键名而不是中文，切换语言时标题也跟着变。
 const routes = [
   {
     path: '/',
     name: 'upload',
     component: () => import('@/views/UploadView.vue'),
-    meta: { title: '首页' },
+    meta: { title: 'nav.home' },
   },
   { path: '/upload', redirect: { name: 'upload' } },
   {
     path: '/plaza',
     name: 'plaza',
     component: () => import('@/views/PlazaView.vue'),
-    meta: { title: '广场' },
+    meta: { title: 'nav.plaza' },
   },
   {
     path: '/images',
     name: 'images',
     component: () => import('@/views/ImagesView.vue'),
     //: 图片列表是个人图库，未登录没有内容可看。
-    meta: { requiresAuth: true, title: '图片' },
+    meta: { requiresAuth: true, title: 'nav.images' },
   },
   {
     path: '/images/:sha',
     name: 'image-detail',
     component: () => import('@/views/ImageDetailView.vue'),
-    meta: { title: '图片详情' },
+    meta: { title: 'detail.title' },
   },
   {
     path: '/albums',
     name: 'albums',
     component: () => import('@/views/AlbumsView.vue'),
-    meta: { requiresAuth: true, title: '相册' },
+    meta: { requiresAuth: true, title: 'nav.albums' },
   },
   {
     path: '/settings',
     name: 'settings',
     component: () => import('@/views/SettingsView.vue'),
-    meta: { requiresAuth: true, title: '账号设置' },
+    meta: { requiresAuth: true, title: 'settings.title' },
   },
   {
     //: 后台是一个壳：侧栏在四个页面间切换，URL 各自独立。
@@ -53,31 +55,31 @@ const routes = [
       {
         path: '',
         component: () => import('@/views/AdminView.vue'),
-        meta: { title: '站点设置' },
+        meta: { title: 'admin.site' },
       },
       {
         path: 'setting',
         name: 'admin',
         component: () => import('@/views/AdminView.vue'),
-        meta: { title: '站点设置' },
+        meta: { title: 'admin.site' },
       },
       {
         path: 'hooks',
         name: 'admin-hooks',
         component: () => import('@/views/HooksView.vue'),
-        meta: { title: '钩子管理' },
+        meta: { title: 'admin.hooks' },
       },
       {
         path: 'backends',
         name: 'admin-backends',
         component: () => import('@/views/BackendsView.vue'),
-        meta: { title: '存储后端' },
+        meta: { title: 'admin.backends' },
       },
       {
         path: 'users',
         name: 'admin-users',
         component: () => import('@/views/UsersView.vue'),
-        meta: { title: '用户管理' },
+        meta: { title: 'admin.users' },
       },
     ],
   },
@@ -85,19 +87,19 @@ const routes = [
     path: '/login',
     name: 'login',
     component: () => import('@/views/LoginView.vue'),
-    meta: { guestOnly: true, title: '登录' },
+    meta: { guestOnly: true, title: 'auth.signIn' },
   },
   {
     path: '/register',
     name: 'register',
     component: () => import('@/views/RegisterView.vue'),
-    meta: { guestOnly: true, title: '注册' },
+    meta: { guestOnly: true, title: 'auth.signUp' },
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('@/views/NotFoundView.vue'),
-    meta: { title: '页面不存在' },
+    meta: { title: 'notFound.title' },
   },
 ]
 
@@ -142,7 +144,8 @@ router.beforeEach(async (to) => {
 
 router.afterEach((to) => {
   const site = useSiteStore()
-  document.title = to.meta.title ? `${to.meta.title} · ${site.name}` : site.name
+  const title = to.meta.title ? t(to.meta.title) : ''
+  document.title = title ? `${title} · ${site.name}` : site.name
 })
 
 export default router
