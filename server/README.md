@@ -2,6 +2,8 @@
 
 sapic v2 后端，API-only（前端由独立的 Vue 应用提供）。
 
+英文版：[README-en.md](./README-en.md)。
+
 ## 运行要求
 
 - Python 3.10+

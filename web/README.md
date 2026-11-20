@@ -4,6 +4,8 @@ sapic 的前端：Vue 3 + Vite + Element Plus 单页应用。与后端 `server/`
 数据走 `/api/v2/*`（统一信封 `{code, message, data}`），图片走 `/raw/<sha>`；
 生产环境由 nginx 托管构建产物并把这两个前缀反代给 Flask（容器镜像已内置，见 `docs/deploy.md`）。
 
+English version: [README-en.md](./README-en.md)。
+
 ## 环境要求
 
 - Node.js 23+、pnpm 8（`packageManager: pnpm@8.14.1`，`corepack enable` 即可用）
@@ -27,11 +29,13 @@ pnpm run preview  # 预览构建产物
 | --- | --- |
 | `src/api/client.js` | 唯一的请求封装：信封解析、CSRF 头、401 回调、错误归一（`errorMessage`） |
 | `src/api/messages.js` | 后端英文 `message` → 中文的词典与模板规则（`localizeMessage`） |
+| `src/i18n/` | 界面中英词表（`zh.js` 是源语言、`en.js` 是译文）与 `t()` / `setLocale()` |
 | `src/stores/session.js` | 当前用户、CSRF、`authenticated` / `isAdmin` |
 | `src/stores/site.js` | 站点信息（名称、背景、注册/匿名上传/广场开关），来自 `GET /api/v2/site` |
 | `src/router/index.js` | 路由与守卫（未登录跳登录、后台未授权渲染 404、广场关闭回首页） |
 | `src/layout/AppLayout.vue` | 顶部导航 / 全屏背景 / 页脚外壳 |
 | `src/layout/AdminLayout.vue` | 后台侧栏壳：站点设置 / 钩子 / 存储后端 / 用户 |
+| `src/components/LocaleSwitcher.vue` | 顶栏的中英切换下拉 |
 | `src/components/hook/` | 插件节点渲染：`HookSlot` 按插槽名拉节点树，`NodeRenderer` 递归分发词表 |
 | `src/components/AvatarCropper.vue` | 头像裁剪 |
 | `src/views/` | 页面组件，与下表的页面一一对应 |
@@ -60,8 +64,9 @@ pnpm run preview  # 预览构建产物
 - `<script setup>`；组件 PascalCase、函数 camelCase，变量只用 `let` / `const`
 - 接口一律走 `api/client.js`，不要散落 `fetch`；错误提示用 `errorMessage(error, fallback)`，
   不要直接 `ElMessage.error(error.message)`（后端 message 是英文，需经 `messages.js` 本地化）
-- 界面**固定中文**，不引入 `vue-i18n`；Element Plus 文案由 `App.vue` 的
-  `<el-config-provider :locale="zhCn">` 统一提供
+- 界面**中英双语**，不引入 `vue-i18n`：文案写在 `src/i18n/zh.js`（源语言）与 `src/i18n/en.js`，
+  模板用 `{{ t('area.key') }}` / `:label="t('area.key')"`，不要在组件里写死中文；
+  Element Plus 文案由 `App.vue` 的 `<el-config-provider :locale>` 跟随语言切换（`zh-cn` / `en`）
 - Element Plus 按需引入：模板直接写 `<el-xxx>`、脚本直接用 `ElMessage`，
   **不要**再显式 `import ... from 'element-plus'`
 - 插件界面不写业务分支：`HookSlot` / `NodeRenderer` 只认后端声明的词表，未知类型静默跳过；
