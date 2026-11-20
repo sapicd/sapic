@@ -375,13 +375,13 @@ msgstr ""
 #: ../../usage.md:148
 msgid ""
 "**sapicli**：上传服务选 **Custom Command**，命令填 `sapicli -u https://your.site -t "
-"<PAT> -s typora \"$@\"` —— `-s typora` 的输出正好是 Typora 要的格式；需要 CLI 支持 v2 "
-"的版本，用法见[命令行工具](cli.md)。"
+"<PAT> -s typora \"$@\"` —— `-s typora` 的输出正好是 Typora 要的格式；`sapicli` v0.6.0 "
+"起支持 v2，用法见[命令行工具](cli.md)。"
 msgstr ""
 "**sapicli**: choose **Custom Command** and enter `sapicli -u "
 "https://your.site -t <PAT> -s typora \"$@\"` — `-s typora` produces exactly"
-" the format Typora wants; this needs a v2-capable CLI release, see [Command"
-" line tool](cli.md)."
+" the format Typora wants; `sapicli` has supported v2 since v0.6.0, see "
+"[Command line tool](cli.md)."
 
 #: ../../usage.md:151
 msgid "**自带脚本**：见下，不用装任何工具，只要一条能把文件传上去并输出 URL 的命令。"
@@ -489,11 +489,11 @@ msgstr "Tick **Run hidden**"
 
 #: ../../usage.md:197
 msgid ""
-"`-c md` 复制 Markdown 链接（`-c url` 复制裸地址、`-c rst` 复制 reST）， sapicli 需要支持 v2 "
-"的版本，见[命令行工具](cli.md)。"
+"`-c md` 复制 Markdown 链接（`-c url` 复制裸地址、`-c rst` 复制 reST）， `sapicli` v0.6.0 "
+"起支持 v2，见[命令行工具](cli.md)。"
 msgstr ""
 "`-c md` copies a Markdown link (`-c url` copies the bare address, `-c rst` "
-"copies reST); sapicli needs a v2-capable release, see [Command line "
+"copies reST); `sapicli` has supported v2 since v0.6.0, see [Command line "
 "tool](cli.md)."
 
 #: ../../usage.md:200

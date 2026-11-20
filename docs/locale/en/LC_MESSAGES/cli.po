@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sapic 2.0.0-pre.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-18 20:06+0800\n"
+"POT-Creation-Date: 2026-11-20 19:38+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -26,37 +26,37 @@ msgstr "sapicli command line tool"
 #: ../../cli.md:3
 msgid ""
 "`sapicli` 是独立的 Go 程序（仓库 [sapicd/cli](https://github.com/sapicd/cli)），不依赖 "
-"Python 环境，官方发布 Windows / macOS / Linux 三端压缩包，解压即用，功能覆盖上传、相册、有效期、 "
-"输出风格与剪贴板复制。"
+"Python 环境，官方发布 Windows / macOS / Linux 三端压缩包（amd64 与 arm64），解压即用，功能覆盖上传、 "
+"相册、有效期、输出风格与剪贴板复制。"
 msgstr ""
 "`sapicli` is a standalone Go program "
 "([sapicd/cli](https://github.com/sapicd/cli)) that needs no Python "
-"environment. Official builds are published as archives for Windows / macOS "
-"/ Linux and run as soon as you unpack them, covering uploads, albums, "
-"expiry, output styles and clipboard copying."
+"environment. Official builds are published as archives for Windows / "
+"macOS / Linux on amd64 and arm64 and run as soon as you unpack them, "
+"covering uploads, albums, expiry, output styles and clipboard copying."
 
 #: ../../cli.md:8
 msgid ""
-"`sapicli` 是**独立项目**，当前发布版仍按 v1 接口设计：`-u` 会自动补 `/api/upload`，`-t` 传的是 v1 的 "
-"LinkToken，因此在 v2 站点上**用不了**。支持 v2 的版本发布后，只需把 `-u` 指向站点根地址、 `-t` 换成 "
-"PAT，参数与输出风格不变。在那之前请用[快捷上传](usage.md)里的 curl / PicGo 方案。"
+"`sapicli` 是**独立项目**，从 **v0.6.0**（2026-11）起**同时支持 v1 与 v2 接口**：`-u` 只填站点 "
+"根地址（接口路径自动拼接），`-t` 在 v2 站点上换成 PAT（`sp_` 开头）。参数、输出风格与剪贴板行为 在 v1 / v2 "
+"下完全一致，接口版本默认自动判定，也可以用 `-A` 指定。更早的版本只认 v1 接口。"
 msgstr ""
-"`sapicli` is a **separate project** and the current release still targets "
-"the v1 API: `-u` appends `/api/upload` automatically and `-t` takes a v1 "
-"LinkToken, so it **does not work** against a v2 site. Once a v2-capable "
-"release ships you only point `-u` at the site root and pass a PAT to `-t`; "
-"arguments and output stay the same. Until then use the curl / PicGo recipes"
-" in [Quick upload](usage.md)."
+"`sapicli` is a **separate project**, and since **v0.6.0** (2026-11) it "
+"**speaks both the v1 and the v2 API**: `-u` takes only the site root (the "
+"API path is appended automatically) and `-t` takes a PAT (`sp_...`) on a v2 "
+"site. Arguments, output styles and clipboard behaviour are identical on both "
+"versions; the API version is detected automatically and may be pinned with "
+"`-A`. Older releases only talk to v1."
 
 #: ../../cli.md:13
 msgid "功能"
 msgstr "Features"
 
 #: ../../cli.md:15
-msgid "批量上传任意数量图片，支持匿名上传与临时图片（有效期）"
+msgid "批量上传任意数量图片（并发上传），支持匿名上传与临时图片（有效期）"
 msgstr ""
-"Upload any number of images in one go, including anonymous uploads and "
-"temporary images (expiry)"
+"Upload any number of images in one go (concurrently), including anonymous "
+"uploads and temporary images (expiry)"
 
 #: ../../cli.md:16
 msgid "设置相册、标题/描述"
@@ -73,26 +73,160 @@ msgid "上传结果跨平台复制到剪贴板，支持 URL / Markdown / rST 三
 msgstr "Copy results to the clipboard on any platform as URL / Markdown / rST"
 
 #: ../../cli.md:20
+msgid "v1 与 v2"
+msgstr "v1 and v2"
+
+#: ../../cli.md:7
+msgid "项目"
+msgstr "Item"
+
+#: ../../cli.md:7
+msgid "v1 站点"
+msgstr "v1 site"
+
+#: ../../cli.md:7
+msgid "v2 站点（本仓库当前版本）"
+msgstr "v2 site (current version of this repository)"
+
+#: ../../cli.md:7
+msgid "上传接口"
+msgstr "Upload endpoint"
+
+#: ../../cli.md:7
+msgid "`POST /api/upload`"
+msgstr "`POST /api/upload`"
+
+#: ../../cli.md:7
+msgid "`POST /api/v2/upload`"
+msgstr "`POST /api/v2/upload`"
+
+#: ../../cli.md:7
+msgid "认证头"
+msgstr "Auth header"
+
+#: ../../cli.md:7
+msgid "`Authorization: LinkToken <token>`"
+msgstr "`Authorization: LinkToken <token>`"
+
+#: ../../cli.md:7
+msgid "`Authorization: Bearer <PAT>`"
+msgstr "`Authorization: Bearer <PAT>`"
+
+#: ../../cli.md:7
+msgid "请求体"
+msgstr "Request body"
+
+#: ../../cli.md:7
+msgid "表单，图片 base64 放在 `picbed` 字段"
+msgstr "Form data, with the image base64-encoded in `picbed`"
+
+#: ../../cli.md:7
+msgid "`multipart/form-data`，文件放在 `file` 字段"
+msgstr "`multipart/form-data`, with the file in the `file` field"
+
+#: ../../cli.md:7
+msgid "相册"
+msgstr "Album"
+
+#: ../../cli.md:7
+msgid "`album`（相册名）"
+msgstr "`album` (album name)"
+
+#: ../../cli.md:7
+msgid "`album_id`（`-a` 传名称时工具先解析成 id）"
+msgstr "`album_id` (`-a` resolves a name to its id first)"
+
+#: ../../cli.md:29
+msgid ""
+"`-u` 只写**站点根地址**（如 `https://your.site`），`/api/upload` 或 `/api/v2/upload` "
+"由工具 自动拼接；写成 `https://your.site/api/v2` 也可以，工具会把路径剥掉再补。"
+msgstr ""
+"`-u` takes only the **site root** (e.g. `https://your.site`); `sapicli` "
+"appends `/api/upload` or `/api/v2/upload` itself. Passing "
+"`https://your.site/api/v2` works too: the tool strips the path and adds it "
+"back."
+
+#: ../../cli.md:31
+msgid ""
+"v2 的令牌是 **PAT**：站点「设置 → 访问令牌」里创建，勾选 `upload` 作用域，形如 `sp_...`。 `-a` "
+"传**相册名**时工具要先 `GET /api/v2/albums` 解析 id，令牌需要同时带 `read`（默认创建就含）； 直接传**相册 "
+"id** 则只要 `upload`。相册名解析失败只会打一行日志并退回令牌默认相册，不会中断上传。"
+msgstr ""
+"On v2 the token is a **PAT**: create one under Settings → Access tokens with "
+"the `upload` scope; it looks like `sp_...`. When `-a` carries an **album "
+"name** the tool first resolves the id via `GET /api/v2/albums`, so the token "
+"also needs `read` (included by default); passing the **album id** needs only "
+"`upload`. A name that cannot be resolved just logs a line and falls back to "
+"the token's default album — the upload still happens."
+
+#: ../../cli.md:34
+msgid ""
+"v2 的响应信封（`code` / `message` / `data`）会被展平成 v1 的结果结构，`-s` 与 `-c` 的表现 "
+"不变；失败时 `message` 里会附上 `request_id`，排查问题时可凭它在服务端日志里定位。"
+msgstr ""
+"The v2 response envelope (`code` / `message` / `data`) is flattened into the "
+"v1 result shape, so `-s` and `-c` behave exactly the same; on failure the "
+"`message` carries a `request_id` you can search for in the server logs."
+
+#: ../../cli.md:37
+msgid "**接口版本自动判定顺序**（`-A auto`，默认）："
+msgstr "**API version detection order** (`-A auto`, the default):"
+
+#: ../../cli.md:39
+msgid "显式指定的 `-A`；"
+msgstr "an explicit `-A`;"
+
+#: ../../cli.md:40
+msgid "`-u` 里已经带了 `/api/v2` 或 `/api/upload`；"
+msgstr "`-u` already contains `/api/v2` or `/api/upload`;"
+
+#: ../../cli.md:41
+msgid "探测 `GET /api/v2/site`（5 秒超时），`data.version` 以 `2.` 开头即 v2；"
+msgstr ""
+"probing `GET /api/v2/site` (5 s timeout): a `data.version` starting with "
+"`2.` means v2;"
+
+#: ../../cli.md:42
+msgid "令牌以 `sp_` 开头；"
+msgstr "a token that starts with `sp_`;"
+
+#: ../../cli.md:43
+msgid "都不满足就回退 v1。"
+msgstr "otherwise it falls back to v1."
+
+#: ../../cli.md:45
+msgid "站点探测不到（内网、离线、域名不可达）时用 `-A v2` 明确指定最省事。"
+msgstr ""
+"When the probe cannot reach the site (intranet, offline, unresolvable host), "
+"spelling out `-A v2` is the simplest fix."
+
+#: ../../cli.md:47
 msgid "安装"
 msgstr "Install"
 
-#: ../../cli.md:22
+#: ../../cli.md:49
 msgid ""
-"到 [cli release](https://github.com/sapicd/cli/releases) 下载对应压缩包：Windows 选 "
-"`xxx-windows-amd64.zip`，macOS 选 `xxx-darwin-amd64.tar.gz`。压缩包里只有一个可执行文件， 放进"
-" `PATH` 里的目录，或直接用绝对路径调用。"
+"到 [cli release](https://github.com/sapicd/cli/releases) 下载对应压缩包：Windows 选"
+" `xxx-windows-amd64.zip`（ARM 机器选 `arm64`），macOS Intel 选 `xxx-darwin-"
+"amd64.tar.gz`、 Apple Silicon 选 `xxx-darwin-arm64.tar.gz`。压缩包里只有一个可执行文件，放进"
+" `PATH` 里的目录， 或直接用绝对路径调用。"
 msgstr ""
 "Download the archive for your platform from the [cli "
 "releases](https://github.com/sapicd/cli/releases): `xxx-windows-amd64.zip` "
-"for Windows, `xxx-darwin-amd64.tar.gz` for macOS. The archive holds a "
-"single executable — put it in a directory on `PATH`, or call it by absolute"
-" path."
+"for Windows (`arm64` for ARM machines), `xxx-darwin-amd64.tar.gz` for Intel "
+"macOS and `xxx-darwin-arm64.tar.gz` for Apple Silicon. The archive holds a "
+"single executable — put it in a directory on `PATH`, or call it by absolute "
+"path."
 
-#: ../../cli.md:26
+#: ../../cli.md:54
 msgid "macOS 也可以用 Homebrew 安装："
 msgstr "On macOS you can also install it with Homebrew:"
 
-#: ../../cli.md:33
+#: ../../cli.md:61
+msgid "需要容器里用时，官方镜像 `staugur/sapicli` 也可直接用："
+msgstr "Inside a container the official `staugur/sapicli` image works as well:"
+
+#: ../../cli.md:67
 msgid "命令选项"
 msgstr "Options"
 
@@ -109,28 +243,31 @@ msgid "`-u`"
 msgstr "`-u`"
 
 #: ../../cli.md:7
-msgid "站点地址，可省略 `http://`，末尾的接口路径也会自动补齐；也可用环境变量 `sapicli_apiurl`"
+msgid "站点根地址，可省略 `http://`，接口路径自动补齐（v1 / v2 自适应）；也可用环境变量 `sapicli_apiurl`"
 msgstr ""
-"Site address; `http://` may be omitted and the API path is appended "
-"automatically. Also available as the `sapicli_apiurl` environment variable"
+"Site root address; `http://` may be omitted and the API path (v1 or v2) is "
+"appended automatically. Also available as the `sapicli_apiurl` environment "
+"variable"
 
 #: ../../cli.md:7
 msgid "`-t`"
 msgstr "`-t`"
 
 #: ../../cli.md:7
-msgid "访问令牌，需要上传权限；也可用环境变量 `sapicli_apitoken`"
+msgid "令牌：v1 用 LinkToken，v2 用 PAT（`sp_` 开头，需 `upload`）；也可用环境变量 `sapicli_apitoken`"
 msgstr ""
-"Access token with upload permission. Also available as the "
-"`sapicli_apitoken` environment variable"
+"Token: a LinkToken on v1, a PAT (`sp_...`, needs `upload`) on v2. Also "
+"available as the `sapicli_apitoken` environment variable"
 
 #: ../../cli.md:7
 msgid "`-a`"
 msgstr "`-a`"
 
 #: ../../cli.md:7
-msgid "相册名，可覆盖令牌默认相册"
-msgstr "Album name; overrides the album fixed on the token"
+msgid "相册，可覆盖令牌默认相册；v2 支持相册名或相册 id"
+msgstr ""
+"Album; overrides the album fixed on the token. v2 accepts a name or an "
+"album id"
 
 #: ../../cli.md:7
 msgid "`-d`"
@@ -164,7 +301,24 @@ msgstr "`-c`"
 msgid "上传后按 `url` / `md` / `rst` 复制到剪贴板"
 msgstr "Copy the result to the clipboard as `url` / `md` / `rst`"
 
-#: ../../cli.md:73
+#: ../../cli.md:7
+msgid "`-A`"
+msgstr "`-A`"
+
+#: ../../cli.md:7
+msgid "接口版本：`auto`（默认）/ `v1` / `v2`"
+msgstr "API version: `auto` (default) / `v1` / `v2`"
+
+#: ../../cli.md:7
+msgid "`-i`"
+msgstr "`-i`"
+
+#: ../../cli.md:7
+msgid "打印 CLI 与接口版本、commit、Go 版本、平台等完整信息后退出"
+msgstr ""
+"Print full info (CLI and API version, commit, Go version, platform) and exit"
+
+#: ../../cli.md:120
 msgid "**输出风格**："
 msgstr "**Output styles**:"
 
@@ -218,60 +372,59 @@ msgstr ""
 "Custom output: sapicli calls it with `python -m <module>` and passes the "
 "result as JSON in a positional argument"
 
-#: ../../cli.md:83
+#: ../../cli.md:130
 msgid "自定义输出的模块示例："
 msgstr "Example custom output module:"
 
-#: ../../cli.md:95
+#: ../../cli.md:142
 msgid ""
-"**剪贴板复制**：`-c url` 复制裸地址，`-c md` 复制 `![1.png](http://cdn.com/1.png)`， `-c "
-"rst` 复制 reST 的 `.. image::` 形式；多个文件的结果用换行连接。Windows 用 `clip`， macOS 用 "
+"**剪贴板复制**：`-c url` 复制裸地址，`-c md` 复制 `![1.png](http://cdn.com/1.png)`， `-c"
+" rst` 复制 reST 的 `.. image::` 形式；多个文件的结果用换行连接。Windows 用 `clip`， macOS 用 "
 "`pbcopy`，Linux 需要先装 `xclip`（仅桌面环境）。"
 msgstr ""
 "**Clipboard**: `-c url` copies the bare URL, `-c md` copies "
-"`![1.png](http://cdn.com/1.png)` and `-c rst` copies the reST `.. image::` "
-"form; results for several files are joined with newlines. Windows uses "
-"`clip`, macOS uses `pbcopy`, and Linux needs `xclip` installed (desktop "
-"only)."
+"`![1.png](http://cdn.com/1.png)` and `-c rst` copies the reST `.. "
+"image::` form; results for several files are joined with newlines. "
+"Windows uses `clip`, macOS uses `pbcopy`, and Linux needs `xclip` "
+"installed (desktop only)."
 
-#: ../../cli.md:100
+#: ../../cli.md:147
 msgid "上传的文件要放在**所有选项之后**，否则选项会被当成文件名。"
 msgstr ""
 "Files must come **after all options**, otherwise an option is taken as a "
 "filename."
 
-#: ../../cli.md:103
+#: ../../cli.md:150
 msgid "示例"
 msgstr "Examples"
 
-#: ../../cli.md:116
+#: ../../cli.md:169
 msgid "作为 Typora 上传服务"
 msgstr "Use as the Typora upload service"
 
-#: ../../cli.md:118
+#: ../../cli.md:171
 msgid "Typora → **偏好设置 → 图像**：插入图片时选「上传图片」，上传服务选 **Custom Command**， 命令填："
 msgstr ""
-"Typora → **Preferences → Image**: choose to upload images on insert, pick "
-"**Custom Command** as the upload service and enter:"
+"Typora → **Preferences → Image**: choose to upload images on insert, pick"
+" **Custom Command** as the upload service and enter:"
 
-#: ../../cli.md:125
+#: ../../cli.md:178
 msgid "点「验证图片上传选项」确认可用。不想依赖 CLI 时，也可以用[快捷上传](usage.md)里的 `curl` 脚本，效果一致。"
 msgstr ""
 "Click the upload-verification button to confirm. If you prefer not to "
-"depend on the CLI, the `curl` script in [Quick upload](usage.md) does the "
-"same job."
+"depend on the CLI, the `curl` script in [Quick upload](usage.md) does the"
+" same job."
 
-#: ../../cli.md:128
+#: ../../cli.md:181
 msgid "右键菜单"
 msgstr "Context menu"
 
-#: ../../cli.md:130
+#: ../../cli.md:183
 msgid ""
 "Windows 与 macOS 的右键上传菜单（含 sapicli 与免安装的 `.cmd` 脚本两种方式）统一整理在 "
 "[快捷上传](usage.md)的「Windows 右键菜单」「macOS 右键菜单」两节，这里不再重复。"
 msgstr ""
-"The Windows and macOS right-click upload menus (both the sapicli route and "
-"the dependency-free `.cmd` script) live in the Windows context menu and "
-"macOS context menu sections of [Quick upload](usage.md) and are not "
+"The Windows and macOS right-click upload menus (both the sapicli route "
+"and the dependency-free `.cmd` script) live in the Windows context menu "
+"and macOS context menu sections of [Quick upload](usage.md) and are not "
 "repeated here."
-

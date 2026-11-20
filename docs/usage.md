@@ -147,7 +147,7 @@ Typora 的上传服务有三种接法，任选其一：
 1. **PicGo**：上传服务选 **PicGo**，填 `picgo` 的可执行文件路径，图床配置见上面 PicGo 一节。
 2. **sapicli**：上传服务选 **Custom Command**，命令填
    `sapicli -u https://your.site -t <PAT> -s typora "$@"` —— `-s typora` 的输出正好是
-   Typora 要的格式；需要 CLI 支持 v2 的版本，用法见[命令行工具](cli.md)。
+   Typora 要的格式；`sapicli` v0.6.0 起支持 v2，用法见[命令行工具](cli.md)。
 3. **自带脚本**：见下，不用装任何工具，只要一条能把文件传上去并输出 URL 的命令。
 
 方式三的脚本存成 `/usr/local/bin/sapic-upload` 并 `chmod +x`（Windows 用后面
@@ -195,7 +195,7 @@ curl -sS -X POST "$SAPIC/api/v2/upload" \
 | 其他 | 勾选 **Run hidden** |
 
 `-c md` 复制 Markdown 链接（`-c url` 复制裸地址、`-c rst` 复制 reST），
-sapicli 需要支持 v2 的版本，见[命令行工具](cli.md)。
+`sapicli` v0.6.0 起支持 v2，见[命令行工具](cli.md)。
 
 ### 方式二：自带 .cmd 脚本
 
