@@ -228,6 +228,13 @@ JSON 可导入 Apifox / Postman。文档**从 `app.url_map` 生成**，元数据
   （`views/docs.py` 的 `SWAGGER_UI_BASE`），**不把约 1.5MB 静态资源打进仓库**，也**不引入
   flasgger/apispec 之类的依赖**。内网加载不到 CDN 时页面自动降级为「去拿 JSON」的提示，
   所以不要给这段降级逻辑加别的分支。
+- **文档中英双语**：`OPERATIONS` / `SCHEMAS` / `TAGS` 里正文仍写中文（源语言），英文由
+  `libs/openapi.py` 的 `TRANSLATIONS_EN` 按「中文原文 → 英文」整表替换（`build_spec(app, lang)`
+  里走 `_localize`）；访问 `GET /api/v2/docs?lang=en` 或 `GET /api/v2/openapi.json?lang=en`
+  取英文版，页面右上角有语言切换，两种语言各自缓存。不带 `lang` 时按 `Accept-Language`
+  猜（认不出用中文），所以**前端链接要显式带上 `lang`**（`SettingsView` 的文档链接跟着界面
+  语言走）。**新增/改动文案时同步补 `TRANSLATIONS_EN`**——`tests/test_docs.py` 会扫英文文档
+  里的汉字，漏译直接失败。
 
 ## v1 兼容与数据迁移 ★
 

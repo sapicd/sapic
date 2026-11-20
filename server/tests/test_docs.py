@@ -136,6 +136,63 @@ def test_references_and_operation_ids_are_valid(spec):
     )
 
 
+def test_english_document_is_fully_translated(client):
+    """`?lang=en` 的正文必须是纯英文：漏译会被这里挡住。"""
+    response = client.get("/api/v2/openapi.json?lang=en")
+    assert response.status_code == 200
+
+    leftovers: list[tuple[str, str]] = []
+
+    def walk(node, path: str = "") -> None:
+        if isinstance(node, dict):
+            for key, value in node.items():
+                walk(value, f"{path}.{key}")
+        elif isinstance(node, list):
+            for index, value in enumerate(node):
+                walk(value, f"{path}[{index}]")
+        elif isinstance(node, str) and re.search(r"[\u4e00-\u9fff]", node):
+            leftovers.append((path, node))
+
+    walk(response.get_json())
+    assert leftovers == []
+
+
+def test_language_variants_share_the_same_structure(client):
+    zh = client.get("/api/v2/openapi.json").get_json()
+    en = client.get("/api/v2/openapi.json?lang=en").get_json()
+    assert set(zh["paths"]) == set(en["paths"])
+    assert zh["components"].keys() == en["components"].keys()
+    assert en["paths"]["/api/v2/health"]["get"]["summary"] == "Health check"
+    assert zh["paths"]["/api/v2/health"]["get"]["summary"] == "健康检查"
+
+
+def test_unknown_language_falls_back_to_chinese(client):
+    spec = client.get("/api/v2/openapi.json?lang=fr").get_json()
+    assert spec["paths"]["/api/v2/health"]["get"]["summary"] == "健康检查"
+    #: 显式给了不支持的语言时不再猜浏览器偏好。
+    spec = client.get(
+        "/api/v2/openapi.json?lang=fr", headers={"Accept-Language": "en-US,en;q=0.9"}
+    ).get_json()
+    assert spec["paths"]["/api/v2/health"]["get"]["summary"] == "健康检查"
+
+
+def test_accept_language_picks_the_document(client):
+    """直接打开文档（没有 ``?lang``）时跟随浏览器语言，英文环境不会拿到中文。"""
+    en = client.get(
+        "/api/v2/openapi.json", headers={"Accept-Language": "en-US,en;q=0.9"}
+    ).get_json()
+    assert en["paths"]["/api/v2/health"]["get"]["summary"] == "Health check"
+
+    zh = client.get(
+        "/api/v2/openapi.json", headers={"Accept-Language": "zh-CN,zh;q=0.9"}
+    ).get_json()
+    assert zh["paths"]["/api/v2/health"]["get"]["summary"] == "健康检查"
+
+    page = client.get("/api/v2/docs", headers={"Accept-Language": "en"}).get_data(as_text=True)
+    assert "sapic API documentation" in page
+    assert "openapi.json?lang=en" in page
+
+
 def test_docs_page_renders_swagger_ui(client):
     response = client.get("/api/v2/docs")
     assert response.status_code == 200
@@ -144,3 +201,17 @@ def test_docs_page_renders_swagger_ui(client):
     assert "SwaggerUIBundle" in page
     #: 页面必须指向本站的 JSON，而不是外部地址。
     assert "/api/v2/openapi.json" in page
+    assert "?lang=en" in page
+
+
+def test_docs_page_switches_language(client):
+    zh_page = client.get("/api/v2/docs").get_data(as_text=True)
+    assert '<html lang="zh-CN">' in zh_page
+    assert "sapic API 文档" in zh_page
+    assert "openapi.json?lang=zh" in zh_page
+
+    en_page = client.get("/api/v2/docs?lang=en").get_data(as_text=True)
+    assert '<html lang="en">' in en_page
+    assert "sapic API documentation" in en_page
+    assert "openapi.json?lang=en" in en_page
+    assert "?lang=zh" in en_page

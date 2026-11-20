@@ -6,7 +6,7 @@ import { api, errorMessage } from '@/api/client'
 import AvatarCropper from '@/components/AvatarCropper.vue'
 import HookSlot from '@/components/hook/HookSlot.vue'
 import { hookText } from '@/components/hook/text'
-import { t } from '@/i18n'
+import { locale, t } from '@/i18n'
 import { useSessionStore } from '@/stores/session'
 import { useSiteStore } from '@/stores/site'
 import { formatShortTime, formatTime } from '@/utils/format'
@@ -28,7 +28,8 @@ const SCOPES = computed(() => [
 ])
 
 //: Swagger 文档挂在后端 `/api/v2` 下：dev 由 vite 代理，生产同源，直接用绝对路径即可。
-const API_DOCS_URL = '/api/v2/docs'
+//: 文档有中英两版，链接跟着界面语言走（`?lang=zh|en`），否则英文界面会打开中文文档。
+const API_DOCS_URL = computed(() => `/api/v2/docs?lang=${locale.value}`)
 
 const route = useRoute()
 const router = useRouter()

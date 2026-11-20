@@ -809,6 +809,277 @@ OPERATIONS: dict[str, dict] = {
 }
 
 
+# ---------------------------------------------------------------- translations
+
+#: 英文正文。键就是上面表格里出现的中文原文，值是对应英文——文档只有中英两版，
+#: 正文统一留中文（源语言），英文版整篇按这张表替换。漏译的条目在英文文档里仍是
+#: 中文（``tests/test_docs.py`` 会把漏译挡下来），新增端点时顺手补上即可。
+TRANSLATIONS_EN: dict[str, str] = {
+    "-2 已拒绝 / -1 待审核 / 0 已禁用 / 1 正常": (
+        "-2 rejected / -1 pending review / 0 disabled / 1 active"
+    ),
+    "10 位 Unix 时间戳（秒）": "10-digit Unix timestamp (seconds)",
+    "OpenAPI 3.0 文档": "OpenAPI 3.0 document",
+    "OpenAPI 文档": "OpenAPI document",
+    "Provider 名": "Provider name",
+    "Provider 名（见 `/auth/identities`）": "Provider name (see `/auth/identities`)",
+    "Provider 回传的授权码": "Authorisation code returned by the provider",
+    "`album_id` 不能置空（图片必须属于一个相册）；`expire_at` 是绝对时间戳。": (
+        "`album_id` cannot be cleared (an image always belongs to an album); "
+        "`expire_at` is an absolute timestamp."
+    ),
+    "`file` 与 `url` 二选一；`album_id` 省略时用 PAT 的默认相册，再兜底到用户的默认相册"
+    "（匿名上传进系统相册）。`url` 只接受域名地址（不接受 IP 字面量），且不跟随重定向。": (
+        "`file` and `url` are mutually exclusive; when `album_id` is omitted the PAT's default "
+        "album is used, then the user's default album (anonymous uploads go to the system album). "
+        "`url` only accepts domain names (no IP literals) and redirects are not followed."
+    ),
+    "`mine`（默认）或 `all`（仅管理员）": "`mine` (default) or `all` (admins only)",
+    "`scopes` 缺省为 read/upload/write；`album_id` 是上传默认相册。": (
+        "`scopes` defaults to read/upload/write; `album_id` is the default upload album."
+    ),
+    "`token` 只在这里出现一次，之后无法再取回": (
+        "`token` is shown only here and cannot be retrieved again"
+    ),
+    "`username` 不可改；换邮箱后 `email_verified` 会重置为 false。": (
+        "`username` cannot be changed; changing the email resets `email_verified` to false."
+    ),
+    "一次最多 100 张；只改传入的字段。": (
+        "At most 100 images per call; only the supplied fields change."
+    ),
+    "上一页返回的 `next_cursor`": "The `next_cursor` returned by the previous page",
+    "上传": "Upload",
+    "上传图片或视频": "Upload an image or a video",
+    "上传头像（服务端裁剪后写入）": "Upload an avatar (cropped server-side)",
+    "不是所有者": "Not the owner",
+    "不能共享给自己": "You cannot share with yourself",
+    "个人偏好": "Personal preferences",
+    "个人图库": "Personal library",
+    "令牌 ID": "Token ID",
+    "令牌不存在": "Token not found",
+    "令牌前 10 位，用于辨认": "First 10 characters of the token, for identification",
+    "令牌无效或已过期": "Token invalid or expired",
+    "保存个人偏好": "Save personal preferences",
+    "修改图片属性": "Update image attributes",
+    "修改密码": "Change password",
+    "修改相册": "Update album",
+    "修改资料": "Update profile",
+    "健康检查": "Health check",
+    "公开标识，`/raw/<sha>` 用它": "Public identifier, used by `/raw/<sha>`",
+    "关闭注册或 `register_review` 打开时行为不同：后者建号后是待审核状态。": (
+        "Behaviour depends on the registration switches: with `register_review` on, new accounts "
+        "start as pending review."
+    ),
+    "其中一张不存在或不属于当前账号": "One of them is missing or not owned by this account",
+    "写操作要带回 `X-CSRF-Token` 头（仅 Cookie 会话需要）": (
+        "Writes must echo the `X-CSRF-Token` header (cookie sessions only)"
+    ),
+    "分享模板：URL / HTML / Markdown / rST": "Share templates: URL / HTML / Markdown / rST",
+    "删除图片": "Delete image",
+    "删除相册": "Delete album",
+    "前台展示用的站点配置（`/api/v2/site`）": (
+        "Site configuration shown in the front end (`/api/v2/site`)"
+    ),
+    "前端启动时读取，匿名可访问。": "Read by the front end at startup; anonymous access.",
+    "匿名可读；站点关闭广场时 404。只列作者显式发布且可见性为 public 的图片。": (
+        "Anonymous read; 404 when the site disables the plaza. Lists only images their owner "
+        "published explicitly with public visibility."
+    ),
+    "发起统一登录": "Start single sign-on",
+    "发送重置邮件": "Send a reset email",
+    "只含自己的图片与共享给自己的相册；管理员需显式 `scope=all` 看全站公开图。": (
+        "Only your own images and albums shared with you; admins must pass `scope=all` to see "
+        "every public image."
+    ),
+    "只登记地址、不下载字节；单请求最多 50 条。只接受 https 的公网域名，地址字面量、"
+    "带凭据的链接与解析到内网的域名会被逐条拒绝（列在 `failed` 里）。": (
+        "Registers URLs only, nothing is downloaded; at most 50 per request. Only public https "
+        "domains are accepted — IP literals, links with credentials and hostnames resolving to a "
+        "private network are rejected item by item and listed under `failed`."
+    ),
+    "可用的第三方登录": "Available third-party logins",
+    "名下还有图片": "Images still exist",
+    "含自己的相册与共享给自己的相册；管理员额外拿到系统相册（`role=system`）。": (
+        "Your own albums plus albums shared with you; admins also get the system album "
+        "(`role=system`)."
+    ),
+    "图片": "Images",
+    "图片 sha": "Image sha",
+    "图片不存在": "Image not found",
+    "图片不存在或无权访问": "Image not found or not accessible",
+    "图片地址，公开图优先给存储直链": (
+        "Image URL; public images prefer a direct storage link"
+    ),
+    "图片地址，由服务端抓取（仅域名、不跟随重定向）": (
+        "Image URL fetched by the server (domains only, redirects are not followed)"
+    ),
+    "图片广场": "Image plaza",
+    "图片或目标相册不存在": "Image or target album not found",
+    "图片详情": "Image details",
+    "外链登记（未下载字节）": "External link registered (no bytes downloaded)",
+    "失败响应：`code` 是错误枚举名（如 `NOT_FOUND`），`data` 为 null": (
+        "Failure response: `code` is an error enum name (e.g. `NOT_FOUND`) and `data` is null"
+    ),
+    "字符串数组，或 `{url, filename, title}` 对象数组": (
+        "An array of strings, or an array of `{url, filename, title}` objects"
+    ),
+    "密码错误": "Wrong password",
+    "密码错误或账号是管理员": "Wrong password, or the account is an admin",
+    "广场": "Plaza",
+    "当前会话": "Current session",
+    "当前密码不正确": "The current password is incorrect",
+    "必须提交当前密码；名下还有未删除的图片时直接 409，管理员不能自删。": (
+        "The current password is required; returns 409 while undeleted images remain, and admins "
+        "cannot delete themselves."
+    ),
+    "成功后吊销其它会话，并给当前会话发新 CSRF。": (
+        "On success the other sessions are revoked and the current one receives a new CSRF token."
+    ),
+    "成员用户 ID": "Member user ID",
+    "批量修改属性": "Batch update attributes",
+    "批量删除": "Batch delete",
+    "按标签筛选": "Filter by tag",
+    "按用户名添加；私有相册添加成员后自动变为 `shared`。": (
+        "Added by username; a private album turns `shared` once it has members."
+    ),
+    "按相册筛选": "Filter by album",
+    "授权记录不存在": "Share record not found",
+    "提交邮箱验证令牌": "Submit the email verification token",
+    "撤销访问令牌": "Revoke an access token",
+    "数据库探活；不可用时返回 503 与 `code=SERVICE_UNAVAILABLE`。": (
+        "Database liveness probe; returns 503 with `code=SERVICE_UNAVAILABLE` when unavailable."
+    ),
+    "文件名或标题关键词": "Filename or title keyword",
+    "新建相册": "Create album",
+    "新建访问令牌": "Create an access token",
+    "有效期秒数，0 表示永久": "Lifetime in seconds; 0 means permanent",
+    "未登录时返回 `authenticated=false`；PAT 鉴权同样算已认证。": (
+        "Returns `authenticated=false` when signed out; a PAT counts as authenticated too."
+    ),
+    "本页展示的文档源，可直接导入 Apifox / Postman / Insomnia。": (
+        "The document source rendered on this page; importable into Apifox / Postman / Insomnia."
+    ),
+    "每页数量（默认 15）": "Page size (default 15)",
+    "每页数量（默认 20，最多 100）": "Page size (default 20, at most 100)",
+    "注册": "Register",
+    "注册或密码登录已关闭": "Registration or password login is disabled",
+    "添加相册成员": "Add an album member",
+    "游标模式给 `next_cursor` / `has_more` / `limit`，页码模式给 `total` / `page` / `page_size`": (
+        "Cursor mode returns `next_cursor` / `has_more` / `limit`; page mode returns `total` / "
+        "`page` / `page_size`"
+    ),
+    "用令牌重置密码": "Reset the password with a token",
+    "用户不存在或未激活": "User not found or inactive",
+    "用户名/邮箱已被占用": "Username or email already taken",
+    "用户名或密码错误": "Wrong username or password",
+    "申请 admin scope 但不是管理员": "Requested the admin scope without being an admin",
+    "登录": "Log in",
+    "登记外链图片": "Register external images",
+    "目标相册（需写权限）": "Target album (write permission required)",
+    "相册": "Albums",
+    "相册 ID": "Album ID",
+    "相册不存在或不是自己的": "Album missing or not yours",
+    "相册不存在或没有写权限": "Album missing or no write permission",
+    "相册列表": "Album list",
+    "相册成员列表": "Album member list",
+    "秒": "seconds",
+    "秒；省略表示不过期": "seconds; omit for no expiry",
+    "秒；省略表示永久": "seconds; omit for permanent",
+    "移除相册成员": "Remove an album member",
+    "空串表示跟随用户默认相册": "An empty string follows the user's default album",
+    "站点": "Site",
+    "站点公开配置": "Public site configuration",
+    "站点未开启广场": "The plaza is disabled on this site",
+    "站点未配置 SMTP": "SMTP is not configured",
+    "纯文本 + `**加粗**` / `[文字](链接)`": "Plain text plus `**bold**` / `[text](link)`",
+    "统一登录回调": "Single sign-on callback",
+    "自助注销": "Delete my account",
+    "解绑第三方身份": "Unbind a third-party identity",
+    "认证": "Auth",
+    "访问令牌列表": "Access token list",
+    "该身份未绑定": "That identity is not bound",
+    "读取当前 CSRF 令牌": "Read the current CSRF token",
+    "调整成员权限或有效期": "Update a member's permission or expiry",
+    "账号不可用、关闭了匿名上传，或站点已冻结上传": (
+        "Account unavailable, anonymous upload disabled, or uploads are frozen"
+    ),
+    "账号待审核/已禁用/未开放密码登录": (
+        "Account pending review / disabled / password login not enabled"
+    ),
+    "超过 2 MB": "Larger than 2 MB",
+    "超过单文件大小上限": "Exceeds the per-file size limit",
+    "退出登录": "Log out",
+    "邮箱已被占用": "Email already taken",
+    "邮箱未验证或未配置 SMTP 时不会签发令牌，但响应一致。": (
+        "No token is issued when the email is unverified or SMTP is unconfigured, but the "
+        "response is identical."
+    ),
+    "重新发送邮箱验证": "Resend email verification",
+    "键与默认值见 `libs/user_settings.py`；未知键直接 400。": (
+        "Keys and defaults live in `libs/user_settings.py`; unknown keys are rejected with 400."
+    ),
+    "防重放状态值": "Anti-replay state value",
+    "非管理员请求 `scope=all`": "Non-admin requested `scope=all`",
+    "页码，从 1 开始；带 `page` 时返回页码模式": (
+        "Page number starting at 1; supplying `page` switches to page mode"
+    ),
+    "默认相册不可删 / 相册里还有图片": (
+        "The default album cannot be deleted / the album still holds images"
+    ),
+    # ---- builder-level text (responses, tags, info, security schemes)
+    "公开站点配置与健康检查": "Public site configuration and health check",
+    "会话、注册登录、邮箱验证与访问令牌": (
+        "Sessions, registration and login, email verification and access tokens"
+    ),
+    "图片/视频上传": "Image and video upload",
+    "个人图库：查询、修改、删除": "Personal library: list, update, delete",
+    "相册与共享授权": "Albums and share permissions",
+    "公开图片广场（站点开启后才有数据）": (
+        "Public image plaza (only populated when the site turns it on)"
+    ),
+    "待补文档": "Pending docs",
+    "路由存在但尚未编写文档": "Routes that exist but have no documentation yet",
+    "浏览器登录会话；写操作还要带 `X-CSRF-Token` 头": (
+        "Browser login session; writes also need the `X-CSRF-Token` header"
+    ),
+    "个人访问令牌（`sp_...`），不同端点要求不同 scope": (
+        "Personal access token (`sp_...`); each endpoint requires a different scope"
+    ),
+    "文件内容": "File contents",
+    "跳转到存储后端的公开地址": "Redirect to the public URL of the storage backend",
+    "被防盗链规则拒绝": "Rejected by the hotlink protection rule",
+    "图片不存在、已过期或不可见": "Image missing, expired or not visible",
+    "跳转（Provider 授权页或前端页面）": (
+        "Redirect (provider authorisation page or a front-end page)"
+    ),
+    "成功": "Success",
+    "参数不合法（PARAM_ERROR）": "Invalid argument (PARAM_ERROR)",
+    "未登录或凭据无效（UNAUTHORIZED）": (
+        "Not signed in or invalid credentials (UNAUTHORIZED)"
+    ),
+    "权限不足（FORBIDDEN）": "Insufficient permission (FORBIDDEN)",
+    "无权限（FORBIDDEN）": "Permission denied (FORBIDDEN)",
+    "所有 `/api/v2/*` 响应都是 `{code, message, data}` 信封；成功时 `code` 恒为 "
+    "`OK`，失败时是错误枚举名。写操作可用 Cookie 会话（需 `X-CSRF-Token` 头）"
+    "或 PAT（`Authorization: Bearer sp_...`）。": (
+        "Every `/api/v2/*` response uses the `{code, message, data}` envelope: `code` is always "
+        "`OK` on success and an error enum name on failure. Writes accept a cookie session (with "
+        "the `X-CSRF-Token` header) or a PAT (`Authorization: Bearer sp_...`)."
+    ),
+}
+
+
+def _localize(value: Any) -> Any:
+    """Replace known Chinese strings with their English text, recursively."""
+    if isinstance(value, dict):
+        return {key: _localize(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_localize(item) for item in value]
+    if isinstance(value, str):
+        return TRANSLATIONS_EN.get(value, value)
+    return value
+
+
 # -------------------------------------------------------------------- builder
 
 
@@ -901,17 +1172,20 @@ def _tag_for(meta: dict) -> str:
     return meta.get("tag") or "待补文档"
 
 
-def _undocumented_summary(endpoint: str, method: str) -> str:
+def _undocumented_summary(endpoint: str, method: str, lang: str = "zh") -> str:
     blueprint, _, name = endpoint.partition(".")
     readable = (name or blueprint).replace("_", " ")
+    if lang == "en":
+        return "%s %s (undocumented)" % (method, readable)
     return "%s %s（未编写文档）" % (method, readable)
 
 
-def _operation(rule, method: str) -> dict:
+def _operation(rule, method: str, lang: str = "zh") -> dict:
     meta = OPERATIONS.get(rule.endpoint) or {}
     op: dict[str, Any] = {
         "tags": [_tag_for(meta)],
-        "summary": meta.get("summary") or _undocumented_summary(rule.endpoint, method),
+        "summary": meta.get("summary")
+        or _undocumented_summary(rule.endpoint, method, lang),
         "operationId": "%s_%s" % (rule.endpoint.replace(".", "_"), method.lower()),
     }
     if meta.get("description"):
@@ -948,8 +1222,12 @@ def _operation(rule, method: str) -> dict:
     return op
 
 
-def build_spec(app: Flask) -> dict:
-    """Build the OpenAPI document for ``app`` from its live route table."""
+def build_spec(app: Flask, lang: str = "zh") -> dict:
+    """Build the OpenAPI document for ``app`` from its live route table.
+
+    The table is authored in Chinese; ``lang="en"`` returns the same structure
+    with every known string swapped for its :data:`TRANSLATIONS_EN` text.
+    """
     paths: dict[str, dict] = {}
     for rule in app.url_map.iter_rules():
         #: 静态文件不是 API；``/static`` 由 Flask 自带。
@@ -965,9 +1243,9 @@ def build_spec(app: Flask) -> dict:
         path = _convert_path(rule.rule)
         operations = paths.setdefault(path, {})
         for method in methods:
-            operations[method.lower()] = _operation(rule, method)
+            operations[method.lower()] = _operation(rule, method, lang)
 
-    return {
+    spec = {
         "openapi": "3.0.3",
         "info": {
             "title": "sapic API",
@@ -989,6 +1267,7 @@ def build_spec(app: Flask) -> dict:
             "securitySchemes": SECURITY_SCHEMES,
         },
     }
+    return _localize(spec) if lang == "en" else spec
 
 
 __all__ = [

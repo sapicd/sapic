@@ -111,8 +111,9 @@ gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent
 | GET | `/api/v2/userscript.user.js` | 油猴脚本（Tampermonkey/Violentmonkey），需登录；受个人设置 `userscript_enabled` 控制，可用 `?token=`（`upload` scope）安装 |
 | GET/PUT | `/api/v2/auth/settings` | 个人偏好：`userscript_enabled` / `bg_image` / `bg_image_mobile` / `bg_opacity` |
 
-这里只列主干；**参数、响应字段与错误码见实例自带的在线文档**（`GET /api/v2/docs`，
-文档源 `GET /api/v2/openapi.json`），跨接口的约定、鉴权与业务规则见仓库根的 `docs/api.md`。
+这里只列主干；**参数、响应字段与错误码见实例自带的在线文档**（`GET /api/v2/docs`，文档源
+`GET /api/v2/openapi.json`，两者都支持 `?lang=zh|en`，不带时跟随浏览器语言），跨接口的约定、
+鉴权与业务规则见仓库根的 `docs/api.md`。
 响应统一信封 `{code, message, data}`，失败时 `code` 取 `basis/errors.py` 的 `ErrorCode`。
 
 认证方式：Cookie 会话（写操作需要 `X-CSRF-Token`）或 `Authorization: Bearer <PAT>`。

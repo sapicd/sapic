@@ -117,9 +117,10 @@ gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent
 | GET/PUT | `/api/v2/auth/settings` | Personal preferences: `userscript_enabled` / `bg_image` / `bg_image_mobile` / `bg_opacity` |
 
 This list only covers the main endpoints; **parameters, response fields and error codes are in the
-online documentation served by each instance** (`GET /api/v2/docs`, source `GET /api/v2/openapi.json`),
-and the cross-endpoint conventions, authentication and business rules are in `docs/api.md` at the
-repository root. Every response uses the envelope `{code, message, data}`; on failure `code` is an
+online documentation served by each instance** (`GET /api/v2/docs`, source
+`GET /api/v2/openapi.json`; both accept `?lang=zh|en` and otherwise follow the browser's
+`Accept-Language`), and the cross-endpoint conventions, authentication and business rules are in
+`docs/api.md` at the repository root. Every response uses the envelope `{code, message, data}`; on failure `code` is an
 `ErrorCode` from `basis/errors.py`.
 
 Authentication: cookie session (writes require `X-CSRF-Token`) or `Authorization: Bearer <PAT>`.
