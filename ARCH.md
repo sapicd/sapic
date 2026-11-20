@@ -205,7 +205,7 @@ server/sapic/
 - 节点词表见 `libs/ui.py`（唯一可信来源），未知类型/键、非法 `href`、未声明的 `action` 一律丢弃。
 - `slots` 必须在白名单内；`admin.*` 插槽与 `scope: "admin"` 的动作、数据集接口只允许管理员。
 - 内置钩子：`up2local`、`up2github`、`up2gitee`、`up2qiniu`、`up2upyun`、`pic2webp`（图片后处理）、
-  `passport`（OIDC 统一登录）。启用状态与配置存在 `settings.hooks_state` / `hooks_config`，
+  `passport`（OIDC 统一登录）、`sendcloud`（SendCloud 邮件通道）。启用状态与配置存在 `settings.hooks_state` / `hooks_config`，
   第三方模块名存 `hooks_imported`，包目录 `HOOK_PKG_STORAGE_DIR`（默认 `data/hooks`）只加入
   `sys.path`、参与扫描的是模块名，所以 `pip install --target` 装进去的包可按模块名 import，
   而其依赖不会被当成钩子执行。
@@ -216,11 +216,11 @@ server/sapic/
   `DELETE /hooks/import/<module>?purge=1` 连同包文件一起删除。市场列表只是数据源，
   钩子加载始终以 `hooks_imported` + 目录扫描为准。
 - **扩展点契约集中在 `libs/ext.py`**：`__catalog__` 决定 kind（`auth`→provider、
-  `upload`→driver、`processor`→processor，其余为纯界面钩子），必需函数缺失时清单里的
+  `upload`→driver、`processor`→processor、`mail`→mail，其余为纯界面钩子），必需函数缺失时清单里的
   `warnings` 会点明。认证流程（`views/auth`）、存储解析（`libs/storage`）、
   后台接口都问它，不再各自 `getattr` 判断，第三方 Provider/驱动因此无需改核心代码。
   契约细节见 `docs/extend/`。
-- 内置钩子（`up2qiniu` / `up2upyun` / `up2github` / `up2gitee` / `passport` / `pic2webp`）用到的
+- 内置钩子（`up2qiniu` / `up2upyun` / `up2github` / `up2gitee` / `passport` / `sendcloud` / `pic2webp`）用到的
   SDK 属基本能力，统一放在 `server/requirements/base.txt`；第三方钩子作为独立 pip 包自带依赖，
   代码里仍用 `try/except ImportError` 兜底给出「请安装 X」的提示。
 
@@ -230,7 +230,9 @@ server/sapic/
   （`SECRET_KEY` 长度与生产非默认值、`MAX_UPLOAD`/`SESSION_TTL` 为正整数、`STORAGE_DIR` 为绝对路径）。
 - **站点设置**（`libs/settings.py` 的 `DEFAULTS`，存 `settings` 表）：站点展示、上传白名单/大小/视频开关、
   URL 抓取代理（`upload_fetch_proxy`，直连失败才用）、注册与审核、`password_login`、默认相册可见性、
-  `plaza_enabled`、SMTP（465/994 走隐式 SSL、其余端口按 `tls` 走 STARTTLS）、钩子状态等。后台
+  `plaza_enabled`、SMTP（465/994 走隐式 SSL、其余端口按 `tls` 走 STARTTLS）、钩子状态等。
+  发信通道由 `libs/mail.mail_ready()` 统一判定：启用的 `mail` 类钩子（如 `sendcloud`）配置完整时优先，
+  否则用 SMTP；后台测试邮件与 `GET /site` 的 `mail_enabled` 都走这个判定。后台
   `GET/PUT /api/v2/settings` 维护，前台通过 `GET /api/v2/site` 读取展示字段。
 - 新增配置项必须同时接入「后台表单 + 实际生效点」，避免只存不用。
 
@@ -253,6 +255,7 @@ server/sapic/
 | 新增配置项 | `basis/conf.py`（进程级）或 `libs/settings.DEFAULTS`（站点级）+ 生效点 |
 | 新增存储驱动 | `hooks/up2xxx.py` 声明 `__catalog__="upload"` + 实现 `upimg_save` / `upimg_delete`（私有桶再加 `upimg_url`），启用钩子后自动出现后端行；契约见 `libs/ext.py` 与 `docs/extend/storage.md` |
 | 新增登录 Provider | `__catalog__="auth"` + `oidc_authorize_url` / `oidc_exchange`（可选 `identity_issuer`），核心自动暴露 `/auth/oidc/<模块名>`；见 `docs/extend/provider.md` |
+| 新增邮件通道 | `__catalog__="mail"` + `send_mail(config, to, subject, body)`（可选 `mail_ready(config)` 报告配置是否完整），启用并配好后优先于 SMTP；见 `libs/mail.py` |
 | 新增后台界面块 | 钩子 `slot_admin_*` 返回节点树 |
 | 新增后台动作 | 钩子 `action_<name>`，涉及路径/凭据的标 `scope: "admin"` |
 | **用户自定义存储（预留口子）** | 数据层已就绪：`storage_backends` 写 `scope="user"` + `owner`；`list_backends()` 已按归属过滤并支持 `UserBackend.priority` 覆盖；开关是 `allow_user_backends`。新接口只需在 `views/` 加用户端 CRUD（创建时固定 `scope="user"`、`owner=当前用户`，配置走 `libs/storage.clean_backend_config` + 必填校验），前端复用 `BackendsView` 的字段渲染即可 |

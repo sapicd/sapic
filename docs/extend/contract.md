@@ -8,14 +8,14 @@
 __version__ = "1.0.0"          # required: the module is skipped without it
 __author__ = "your-name"       # required
 __description__ = "one-line description"
-__catalog__ = "upload"         # auth / upload / processor; empty means a UI-only hook
+__catalog__ = "upload"         # auth / upload / processor / mail; empty means a UI-only hook
 __state__ = "enabled"          # initial state; "disabled" means off by default
 ```
 
 `__hookname__`、`__appversion__` 也可选，会原样出现在 `GET /api/v2/hooks` 的元数据里。
 
-`__catalog__` 决定**扩展类型**，只有三个值有专门契约：`auth`（登录 Provider）、`upload`（存储驱动）、
-`processor`（字节流后处理）；其他值或留空都按纯界面钩子处理（清单里的 `kind` 为 `ui`）。
+`__catalog__` 决定**扩展类型**，只有四个值有专门契约：`auth`（登录 Provider）、`upload`（存储驱动）、
+`processor`（字节流后处理）、`mail`（邮件通道）；其他值或留空都按纯界面钩子处理（清单里的 `kind` 为 `ui`）。
 声明的类型与模块实际导出的函数对不上时，`warnings` 里会列出缺失的函数名。
 
 ## 清单：`hook_manifest()`

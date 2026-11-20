@@ -45,7 +45,7 @@ cd server && ../.venv/bin/python -c "import json; from sapic.basis.conf import l
 | 存储 | `storage_replica`（多副本）、`allow_user_backends`、`user_backend_limit` |
 | 注册与账号 | `allow_register`、`register_review`、`password_login`、`forbidden_username`、`default_album_visibility` |
 | 广场 | `plaza_enabled`（默认关） |
-| 邮件 | `smtp`（`{host, port, user, password, from, tls}`，`tls` 表示 STARTTLS；端口 465/994 自动走隐式 SSL，不要勾 `tls`） |
+| 邮件 | `smtp`（`{host, port, user, password, from, tls}`，`tls` 表示 STARTTLS；端口 465/994 自动走隐式 SSL，不要勾 `tls`）。启用并配好 `mail` 类钩子（如 `sendcloud`）时优先走钩子，SMTP 只作兜底 |
 | 钩子 | `hooks_state`、`hooks_config`、`hooks_imported`（由钩子接口写入，不走键白名单） |
 
 几个容易踩的点：

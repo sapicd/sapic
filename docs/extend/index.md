@@ -3,7 +3,7 @@
 sapic 的插件叫**钩子（hook）**：一个 Python 模块或包，被核心按需加载，
 用它自己声明的清单描述界面与能力。核心不认识任何插件名，只认契约。
 
-## 三种扩展类型
+## 四种扩展类型
 
 扩展类型由 `__catalog__` 声明，契约判断集中在 `sapic/libs/ext.py`
 （认证流程、存储解析、后台接口都问它，不各自 `getattr`）：
@@ -13,6 +13,7 @@ sapic 的插件叫**钩子（hook）**：一个 Python 模块或包，被核心�
 | `auth` | `provider` | `oidc_authorize_url`、`oidc_exchange` | 第三方登录 | `views/auth.py` 的 `/auth/oidc/<name>` |
 | `upload` | `driver` | `upimg_save`（`upimg_delete` 可选，私有桶还要 `upimg_url`） | 对象存储驱动 | `libs/storage.py` 的上传/副本/删除 |
 | `processor` | `processor` | `upimg_stream_processor` | 上传前改写数据 | `libs/images.process_stream` |
+| `mail` | `mail` | `send_mail`（`mail_ready` 可选，报告配置是否完整） | 邮件发送通道 | `libs/mail.py`（配置完整时优先于 SMTP） |
 | 其它/未声明 | `ui` | — | 只提供界面块与动作 | `libs/hook.py` 的插槽/动作/数据集 |
 
 清单里的 `kind` 与 `warnings` 由核心计算：`warnings` 会点明「声明了 upload 却缺
@@ -87,6 +88,7 @@ curl -X POST http://127.0.0.1:9514/api/v2/hooks/reload -H 'X-CSRF-Token: <csrf>'
 | 存储驱动 | `up2local.py`（最简，只写本地文件）→ 再看 `up2github.py`（HTTP API + 配置项 + 加速域名） | `upimg_save` / `upimg_delete` / `upimg_url` |
 | 登录 Provider | `passport.py`（OIDC） | `oidc_authorize_url` / `oidc_exchange`，登录按钮插槽 |
 | 上传后处理 | `pic2webp.py` | `upimg_stream_processor` 与 processor 配置 |
+| 邮件通道 | `sendcloud.py`（HTTP API） | `send_mail` / `mail_ready`，配置完整时接管 SMTP |
 | 纯界面钩子 | 无内置，看本节 20 行样例 | 节点词表与动作返回值 |
 
 ## 安装第三方包

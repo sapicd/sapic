@@ -426,7 +426,7 @@ ShareX 等的逐项配置见 `docs/usage.md`。**不要再为老客户端补第�
 __version__ = "0.4.0"
 __author__ = "staugur"
 __description__ = "将图片保存到本地目录"
-__catalog__ = "upload"      # 归类，upload 表示存储后端
+__catalog__ = "upload"      # 归类：auth / upload / processor / mail
 __state__ = "enabled"       # enabled / disabled
 ```
 
@@ -452,6 +452,10 @@ __state__ = "enabled"       # enabled / disabled
 
 - 存储驱动（`catalog=upload`）的 `config_schema` 字段由**存储后端**消费，不在「钩子配置」里出现：
   后端行新增/修改时按 `required` 校验、缺项标「待配置」，`driver_backend()` 仍兼容钩子级默认值
+- `mail` 类钩子（`__catalog__="mail"` + `send_mail(config, to, subject, body)`，可选 `mail_ready(config)`
+  报告配置是否完整）在配置完整时优先于内置 SMTP：判定与投递顺序只在 `libs/mail.py`，`views/site.py`
+  的 `mail_enabled`、后台测试邮件与全部业务邮件都用它；发信只走一条通道，失败不重试另一条
+  （避免同一封邮件发两次）。内置实现是 `hooks/sendcloud.py`（纯文本走 API 的 `plain` 字段）
 - `config_schema` / `actions` / `data_sources` / `slots` 全部经 `sapic/libs/ui.py` 的
   `clean_*` 清洗：未知类型/键被丢弃、`href` 仅允许 `http(s)` 与站内 `/`、
   `action` 必须声明于 manifest，否则被静默忽略（防 XSS / 越权）
@@ -472,7 +476,7 @@ __state__ = "enabled"       # enabled / disabled
 
 | 端点 | 作用 |
 | --- | --- |
-| `GET /hooks/market` | 拉官方 `list.json`（`sapic_hookmarketurl` 可换镜像），6 小时缓存，合并本地 `installed` / `loaded`；只展示 `appversion` 主版本 ≥ 2 的条目（V1 契约不兼容，已加载的例外） |
+| `GET /hooks/market` | 拉官方 `list.json`（`sapic_hookmarketurl` 可换镜像），6 小时缓存，合并本地 `installed` / `loaded`；只展示 `appversion` 主版本 ≥ 2 的条目（V1 契约不兼容，已加载的例外）。版本有两个来源：`installed_version` 只来自 `HOOK_PKG_STORAGE_DIR` 的 `*.dist-info`，`loaded_version` 是运行中模块的 `__version__`，前端优先后者兜底（来自 site-packages 或内置目录的钩子没有 dist-info） |
 | `POST /hooks/install` | `pip install --target <HOOK_PKG_STORAGE_DIR>`；包名与 `index_url` 先校验，180s 超时 |
 | `GET /hooks/packages` | 目标目录里的 `*.dist-info` 清单（不跑 `pip list`，避免子进程开销） |
 | `POST /hooks/import` | 把模块名写入 `hooks_imported`，非法钩子会回滚 |

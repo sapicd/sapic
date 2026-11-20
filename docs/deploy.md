@@ -287,7 +287,8 @@ sapic_db_url=sqlite:////data/sapic/sapic.db
    （单图上限）在后台「站点设置 → 上传」配置，单位天，`0` 表示永久 / 不限制；设了上限后不再允许
    永久图片。到期图片会在请求期被节流清理（每进程最多每 5 分钟一批），想更准时可加 cron：
    `flask sa purge-expired`（应用目录下、用部署用的 Python 执行）。
-4. 邮件（注册验证、找回密码）在后台配置 SMTP；不配也能用，但相关功能不可用。
+4. 邮件（注册验证、找回密码）在后台配置 SMTP，或启用 `sendcloud` 等 `mail` 类钩子并填好 API 凭据
+   （配置完整时优先于 SMTP）；不配也能用，但相关功能不可用。
    端口决定传输方式：465/994 走隐式 SSL（不勾 STARTTLS），587 勾 STARTTLS，25 一般都不用。
    阿里/腾讯企业邮箱用 465 + 授权码（不是登录密码）。
 5. 统一登录（OIDC）：`/admin/hooks` 启用 `passport`，填 `issuer` / `client_id` / `client_secret`；

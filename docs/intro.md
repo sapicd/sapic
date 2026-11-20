@@ -28,14 +28,15 @@ sapic v2 与 v1 最大的区别是**前后端分离**与**数据落库**：
   会话吊销、自助注销。
 - **存储**：多后端 + 优先级 + 多副本（主后端同步、其余异步），后台可增删改与单独配置；
   用户自定义存储（`/api/v2/me/backends`，站点开关 `allow_user_backends`）。
-- **扩展**：内置本地 / 七牛 / 又拍云 / GitHub / Gitee 驱动、WebP 后处理、Passport OIDC 登录；
-  第三方包通过钩子体系接入，后台可安装、启停、配置。
+- **扩展**：内置本地 / 七牛 / 又拍云 / GitHub / Gitee 驱动、WebP 后处理、Passport OIDC 登录、
+  SendCloud 邮件通道；第三方包通过钩子体系接入，后台可安装、启停、配置。
 - **广场**：可选（默认关闭）的公开曝光渠道，与权限无关，只有主动发布的公开图片会进入。
 
 ## 不打算做的
 
 - 个人 RSS（`/feed`）：匿名聚合出口会泄露「某用户有哪些图、何时上传」。
-- `sendmail` 钩子、`token` 钩子、`/api/extendpoint`：分别被内置 SMTP、PAT、声明式动作取代。
+- `sendmail` 钩子、`token` 钩子、`/api/extendpoint`：分别被内置 SMTP / `mail` 类钩子（`sendcloud`）、
+  PAT、声明式动作取代。
 - v1 的 `/api/upload` 兼容层：维护双份上传语义的成本高于让客户端改一次配置，
   PicGo / uPic / Typora 等按[快捷上传](usage.md) 指向 `/api/v2/upload` 即可。
 - 前端多语言（界面固定中文，后端消息固定英文、由前端映射）。
