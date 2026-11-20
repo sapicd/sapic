@@ -9,6 +9,7 @@ import { hookText } from '@/components/hook/text'
 import { locale, t } from '@/i18n'
 import { useSessionStore } from '@/stores/session'
 import { useSiteStore } from '@/stores/site'
+import { albumName } from '@/utils/album'
 import { formatShortTime, formatTime } from '@/utils/format'
 
 const EXPIRES = computed(() => [
@@ -835,7 +836,7 @@ onMounted(() => {
             <el-option
               v-for="album in tokenAlbums"
               :key="album.id"
-              :label="album.name"
+              :label="albumName(album)"
               :value="album.id"
             />
           </el-select>

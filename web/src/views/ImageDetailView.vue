@@ -6,6 +6,7 @@ import { api, errorMessage } from '@/api/client'
 import HookSlot from '@/components/hook/HookSlot.vue'
 import { t } from '@/i18n'
 import { useSiteStore } from '@/stores/site'
+import { albumName } from '@/utils/album'
 import { absoluteUrl, formatSize, formatTime } from '@/utils/format'
 
 //: 可见性文案复用 images / albums 的词条，避免同一批枚举出现两套说法。
@@ -263,7 +264,7 @@ onMounted(load)
               :title="t('detail.viewAlbumImages')"
               @click="openAlbum"
             >
-              {{ image.album.name }} · {{ albumLabel }}
+              {{ albumName(image.album) }} · {{ albumLabel }}
             </el-tag>
             <span v-else-if="image.album_id" class="detail-info__muted">
               {{ t('detail.albumNotVisible') }}

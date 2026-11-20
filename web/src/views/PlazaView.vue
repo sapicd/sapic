@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 
 import { api, errorMessage } from '@/api/client'
 import { t } from '@/i18n'
+import { albumName } from '@/utils/album'
 
 const router = useRouter()
 
@@ -118,7 +119,7 @@ onMounted(() => load(true))
               {{ t('common.video') }}
             </el-tag>
             <el-tag v-if="item.album" size="small" effect="plain">
-              {{ item.album.name }}
+              {{ albumName(item.album) }}
             </el-tag>
             <el-tag
               v-for="name in (item.tags || []).slice(0, 2)"

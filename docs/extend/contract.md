@@ -96,6 +96,11 @@ __state__ = "enabled"          # initial state; "disabled" means off by default
   表里没有的 `builtin:xxx` **不报错也不显示**（`<el-icon>` 直接不渲染）；不带前缀的名字在清洗阶段
   就被丢弃。
 - 单次返回节点数、层级、文本长度都有上限（`MAX_CHILDREN` / `MAX_DEPTH` / `MAX_TEXT`）。
+- 多语言：节点与 `config_schema` 可带 `text_key` / `label_key` / `placeholder_key` / `help_key`，
+  由前端词表（`web/src/i18n/zh.js` / `en.js`）翻译，词表没有该键时显示你给的原文。
+  **不声明这些键的钩子也能被翻译**——前端会按模块名兜底查
+  `hooks.<模块名>.fields.<字段 key>.label`（`placeholder` / `help` 同理）与
+  `hooks.<模块名>.title` / `.description`，所以站点可以在词表里为第三方钩子补译文，不必改钩子包。
 
 ## 动作与数据集返回值
 

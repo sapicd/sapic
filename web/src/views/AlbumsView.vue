@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { api, errorMessage } from '@/api/client'
 import { t } from '@/i18n'
 import { useSiteStore } from '@/stores/site'
+import { albumName } from '@/utils/album'
 import { formatTime } from '@/utils/format'
 
 const router = useRouter()
@@ -233,7 +234,7 @@ onMounted(load)
       >
         <el-table-column :label="t('albums.name')" min-width="180">
           <template #default="{ row }">
-            <el-link type="primary" :underline="false">{{ row.name }}</el-link>
+            <el-link type="primary" :underline="false">{{ albumName(row) }}</el-link>
             <el-tag v-if="row.is_default" size="small" effect="plain" class="album-tag">
               {{ t('albums.isDefault') }}
             </el-tag>

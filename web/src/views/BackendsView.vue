@@ -2,7 +2,8 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 
 import { api, errorMessage } from '@/api/client'
-import { hookText } from '@/components/hook/text'
+import { hookText, nodeText } from '@/components/hook/text'
+import { t } from '@/i18n'
 
 const items = ref([])
 const drivers = ref([])
@@ -339,16 +340,18 @@ onMounted(load)
         <el-form-item
           v-for="field in fields"
           :key="field.key"
-          :label="field.label || field.key"
+          :label="nodeText(field, 'label', form.hook_name) || field.key"
           :required="field.required"
         >
           <el-input
             v-model="form.config[field.key]"
             :type="field.type === 'password' ? 'password' : 'text'"
             :show-password="field.type === 'password'"
-            :placeholder="field.placeholder"
+            :placeholder="nodeText(field, 'placeholder', form.hook_name)"
           />
-          <div v-if="field.help" class="hint">{{ field.help }}</div>
+          <div v-if="field.help || field.help_key" class="hint">
+            {{ nodeText(field, 'help', form.hook_name) }}
+          </div>
         </el-form-item>
       </el-form>
       <p class="hint">

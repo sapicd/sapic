@@ -7,6 +7,7 @@ import HookSlot from '@/components/hook/HookSlot.vue'
 import { t } from '@/i18n'
 import { useSessionStore } from '@/stores/session'
 import { useSiteStore } from '@/stores/site'
+import { albumName } from '@/utils/album'
 
 const router = useRouter()
 const session = useSessionStore()
@@ -419,7 +420,7 @@ onBeforeUnmount(() => {
           <el-option
             v-for="album in uploadableAlbums"
             :key="album.id"
-            :label="album.name"
+            :label="albumName(album)"
             :value="album.id"
           />
         </el-select>
@@ -475,7 +476,7 @@ onBeforeUnmount(() => {
             <el-option
               v-for="album in uploadableAlbums"
               :key="album.id"
-              :label="album.name"
+              :label="albumName(album)"
               :value="album.id"
             />
           </el-select>

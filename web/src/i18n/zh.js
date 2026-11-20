@@ -442,6 +442,7 @@ export default {
     shared: '共享',
     sharedByOthers: '他人共享',
     sharesLoadFailed: '加载共享成员失败',
+    systemAlbum: '公共相册',
     username: '用户名',
     visibility: '可见性',
     writable: '可编辑',
@@ -743,10 +744,6 @@ export default {
       },
       title: '转 WebP',
     },
-    sapic_hook_cos: {
-      description: '腾讯云 COS 存储',
-      title: '腾讯云 COS',
-    },
     sendcloud: {
       description: '使用 SendCloud 发送邮件',
       fields: {
@@ -761,6 +758,55 @@ export default {
     slotLoadFailed: '扩展加载失败',
     tableEmpty: '暂无数据',
     tableTotal: '共 {total} 条，当前显示 {shown} 条',
+    up2b2: {
+      description: '将图片保存到Backblaze B2',
+      fields: {
+        application_key: {
+          hint: 'Backblaze B2 应用密钥（applicationKey），需读写删除权限',
+          label: '应用密钥',
+        },
+        basedir: { hint: '图片存储到 B2 的基础目录，默认是根目录', label: '存储根目录' },
+        bucket: { hint: 'B2 存储桶名称', label: 'Bucket' },
+        domain: {
+          hint: '下载前缀，如 https://f005.backblazeb2.com/file/ 或 S3 URL 前缀；私有桶留空，由 sapic 转发读取',
+          label: '访问域名',
+        },
+        key_id: { hint: 'Backblaze B2 应用密钥的 keyID', label: 'keyID' },
+        thumb_suffix: {
+          hint: '图片处理后缀，如 ?width=400（CDN 图片处理）；留空则列表页加载原图',
+          label: '缩略图参数',
+        },
+      },
+      title: 'Backblaze B2',
+    },
+    up2cos: {
+      description: '将图片保存到腾讯云',
+      fields: {
+        basedir: { hint: '图片存储到 COS 的基础目录，默认是根目录', label: '存储根目录' },
+        bucket: { hint: 'COS 存储桶名称，形如 test-1250000000', label: 'Bucket' },
+        domain: {
+          hint: 'COS 绑定的公有读加速域名；私有桶留空，由 sapic 的 /raw 转发读取',
+          label: '加速域名',
+        },
+        region: {
+          hint: '存储桶所在地域，如 ap-beijing；留空则自动探测（需要列举存储桶权限）',
+          label: '地域',
+        },
+        secret_id: {
+          hint: '腾讯云 API 密钥的 SecretId，支持有 COS 管理权限的子用户',
+          label: 'SecretId',
+        },
+        secret_key: {
+          hint: '腾讯云 API 密钥的 SecretKey，子用户需勾选编程访问',
+          label: 'SecretKey',
+        },
+        thumb_suffix: {
+          hint: '图片处理后缀，如 ?imageMogr2/thumbnail/400x；留空则列表页加载原图',
+          label: '缩略图参数',
+        },
+      },
+      title: '腾讯云 COS',
+    },
     up2gitee: {
       description: '将图片保存到Gitee',
       fields: {
@@ -797,6 +843,34 @@ export default {
       },
       title: '本地存储',
     },
+    up2oss: {
+      description: '将图片保存到阿里云',
+      fields: {
+        access_key_id: {
+          hint: '阿里云 AccessKey 的 ID，支持有 OSS 管理权限的 RAM 子用户',
+          label: 'AccessKeyID',
+        },
+        basedir: { hint: '图片存储到 OSS 的基础目录，默认是根目录', label: '存储根目录' },
+        bucket: { hint: 'OSS 存储空间名称', label: 'Bucket' },
+        domain: {
+          hint: 'OSS 绑定的公有读用户域名；私有桶留空，由 sapic 的 /raw 转发读取',
+          label: '用户域名',
+        },
+        endpoint: {
+          hint: '存储空间所在地域的外网 Endpoint，如 https://oss-cn-hangzhou.aliyuncs.com；留空则自动探测',
+          label: 'Endpoint',
+        },
+        secret_key: {
+          hint: '阿里云 AccessKey 的 Secret，RAM 子用户需勾选编程访问',
+          label: 'SecretKey',
+        },
+        thumb_suffix: {
+          hint: '图片处理后缀，如 ?x-oss-process=image/resize,w_400；留空则列表页加载原图',
+          label: '缩略图参数',
+        },
+      },
+      title: '阿里云 OSS',
+    },
     up2qiniu: {
       description: '将图片保存到七牛云',
       fields: {
@@ -814,6 +888,39 @@ export default {
         },
       },
       title: '七牛云存储',
+    },
+    up2s3: {
+      description: '将图片保存到S3',
+      fields: {
+        access_key_id: {
+          hint: 'AWS 访问密钥 ID（可用有 S3 权限的 IAM 子用户）',
+          label: 'AccessKey',
+        },
+        acl: {
+          hint: '上传时写入的对象 ACL；AWS 新版桶默认禁用 ACL，保持留空由桶策略决定',
+          label: '对象 ACL',
+        },
+        basedir: { hint: '图片存储到 S3 的基础目录，默认是根目录', label: '存储根目录' },
+        bucket: { hint: 'S3 存储桶名称', label: 'Bucket' },
+        domain: {
+          hint: 'S3/CloudFront 绑定的自定义域名，如 https://img.example.com；私有桶留空',
+          label: '自定义域名',
+        },
+        endpoint: {
+          hint: 'S3 兼容服务的 Endpoint，如 https://minio.example.com；AWS 留空',
+          label: 'Endpoint',
+        },
+        region: {
+          hint: '存储桶所在地域，如 ap-northeast-1；留空则自动探测（需 s3:GetBucketLocation）',
+          label: '地域',
+        },
+        secret_key: { hint: 'AWS 访问密钥密码', label: 'SecretKey' },
+        thumb_suffix: {
+          hint: '图片处理后缀，如 ?width=400（CloudFront 图片处理）；留空则列表页加载原图',
+          label: '缩略图参数',
+        },
+      },
+      title: 'AWS S3',
     },
     up2upyun: {
       description: '将图片保存到又拍云',

@@ -6,6 +6,7 @@ import { api, errorMessage } from '@/api/client'
 import { t } from '@/i18n'
 import { useSessionStore } from '@/stores/session'
 import { useSiteStore } from '@/stores/site'
+import { albumName } from '@/utils/album'
 
 const route = useRoute()
 const router = useRouter()
@@ -412,12 +413,12 @@ onBeforeUnmount(() => {
         <el-option
           v-for="album in albums"
           :key="album.id"
-          :label="album.name"
+          :label="albumName(album)"
           :value="album.id"
         />
       </el-select>
       <el-tag v-if="activeAlbum" size="small" closable @close="selectAlbum(null)">
-        {{ activeAlbum.name }}
+        {{ albumName(activeAlbum) }}
       </el-tag>
       <el-tag
         v-if="scopeAll"
@@ -607,7 +608,7 @@ onBeforeUnmount(() => {
               {{ t('images.external') }}
             </el-tag>
             <el-tag v-if="item.album" size="small" effect="plain">
-              {{ item.album.name }}
+              {{ albumName(item.album) }}
             </el-tag>
             <el-tag
               v-if="item.visibility"
@@ -657,7 +658,7 @@ onBeforeUnmount(() => {
         <el-option
           v-for="album in uploadableAlbums"
           :key="album.id"
-          :label="album.name"
+          :label="albumName(album)"
           :value="album.id"
         />
       </el-select>
@@ -690,7 +691,7 @@ onBeforeUnmount(() => {
             <el-option
               v-for="album in uploadableAlbums"
               :key="album.id"
-              :label="album.name"
+              :label="albumName(album)"
               :value="album.id"
             />
           </el-select>

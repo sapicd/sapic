@@ -455,6 +455,7 @@ export default {
     shared: 'Shared',
     sharedByOthers: 'Shared with me',
     sharesLoadFailed: 'Failed to load shared members',
+    systemAlbum: 'Public',
     username: 'Username',
     visibility: 'Visibility',
     writable: 'Can edit',
@@ -778,10 +779,6 @@ export default {
       },
       title: 'Convert to WebP',
     },
-    sapic_hook_cos: {
-      description: 'Tencent COS storage',
-      title: 'Tencent COS',
-    },
     sendcloud: {
       description: 'Send mail through SendCloud',
       fields: {
@@ -808,6 +805,61 @@ export default {
     slotLoadFailed: 'Failed to load the extension',
     tableEmpty: 'No data',
     tableTotal: '{total} row(s), showing {shown}',
+    up2b2: {
+      description: 'Save images to Backblaze B2',
+      fields: {
+        application_key: {
+          hint: 'Backblaze B2 applicationKey; needs read, write and delete permissions',
+          label: 'Application key',
+        },
+        basedir: {
+          hint: 'Base directory inside the bucket, defaults to the root',
+          label: 'Storage root',
+        },
+        bucket: { hint: 'B2 bucket name', label: 'Bucket' },
+        domain: {
+          hint: 'Download prefix, e.g. https://f005.backblazeb2.com/file/ or an S3 URL prefix; leave empty for private buckets, which sapic relays',
+          label: 'Download domain',
+        },
+        key_id: { hint: 'keyID of the Backblaze B2 application key', label: 'keyID' },
+        thumb_suffix: {
+          hint: 'Image processing suffix, e.g. ?width=400 (CDN image handling); leave empty to load originals in lists',
+          label: 'Thumbnail suffix',
+        },
+      },
+      title: 'Backblaze B2',
+    },
+    up2cos: {
+      description: 'Save images to Tencent Cloud',
+      fields: {
+        basedir: {
+          hint: 'Base directory inside the bucket, defaults to the root',
+          label: 'Storage root',
+        },
+        bucket: { hint: 'COS bucket name, e.g. test-1250000000', label: 'Bucket' },
+        domain: {
+          hint: 'Public-read CDN domain bound to the bucket; leave empty for private buckets, which sapic relays through /raw',
+          label: 'CDN domain',
+        },
+        region: {
+          hint: 'Bucket region, e.g. ap-beijing; leave empty to detect it (requires permission to list buckets)',
+          label: 'Region',
+        },
+        secret_id: {
+          hint: 'SecretId of the Tencent Cloud API key; a sub-user with COS management rights works',
+          label: 'SecretId',
+        },
+        secret_key: {
+          hint: 'SecretKey of the Tencent Cloud API key; sub-users need programmatic access enabled',
+          label: 'SecretKey',
+        },
+        thumb_suffix: {
+          hint: 'Image processing suffix, e.g. ?imageMogr2/thumbnail/400x; leave empty to load originals in lists',
+          label: 'Thumbnail suffix',
+        },
+      },
+      title: 'Tencent COS',
+    },
     up2gitee: {
       description: 'Save images to a Gitee repository',
       fields: {
@@ -862,6 +914,37 @@ export default {
       },
       title: 'Local storage',
     },
+    up2oss: {
+      description: 'Save images to Alibaba Cloud',
+      fields: {
+        access_key_id: {
+          hint: 'AccessKey ID of the Alibaba Cloud key pair; a RAM sub-user with OSS rights works',
+          label: 'AccessKeyID',
+        },
+        basedir: {
+          hint: 'Base directory inside the bucket, defaults to the root',
+          label: 'Storage root',
+        },
+        bucket: { hint: 'OSS bucket name', label: 'Bucket' },
+        domain: {
+          hint: 'Public-read user domain bound to the bucket; leave empty for private buckets, which sapic relays through /raw',
+          label: 'User domain',
+        },
+        endpoint: {
+          hint: 'Public endpoint of the bucket region, e.g. https://oss-cn-hangzhou.aliyuncs.com; leave empty to detect it',
+          label: 'Endpoint',
+        },
+        secret_key: {
+          hint: 'AccessKey secret; RAM sub-users need programmatic access enabled',
+          label: 'SecretKey',
+        },
+        thumb_suffix: {
+          hint: 'Image processing suffix, e.g. ?x-oss-process=image/resize,w_400; leave empty to load originals in lists',
+          label: 'Thumbnail suffix',
+        },
+      },
+      title: 'Alibaba Cloud OSS',
+    },
     up2qiniu: {
       description: 'Save images to Qiniu',
       fields: {
@@ -882,6 +965,42 @@ export default {
         },
       },
       title: 'Qiniu storage',
+    },
+    up2s3: {
+      description: 'Save images to S3',
+      fields: {
+        access_key_id: {
+          hint: 'AWS access key ID (an IAM sub-user with S3 permissions works)',
+          label: 'AccessKey',
+        },
+        acl: {
+          hint: 'ACL written with each upload; new AWS buckets disable ACLs, so keep it empty and let the bucket policy decide',
+          label: 'Object ACL',
+        },
+        basedir: {
+          hint: 'Base directory inside the bucket, defaults to the root',
+          label: 'Storage root',
+        },
+        bucket: { hint: 'S3 bucket name', label: 'Bucket' },
+        domain: {
+          hint: 'Custom domain bound to S3/CloudFront, e.g. https://img.example.com; leave empty for private buckets',
+          label: 'Custom domain',
+        },
+        endpoint: {
+          hint: 'Endpoint of an S3-compatible service, e.g. https://minio.example.com; leave empty for AWS',
+          label: 'Endpoint',
+        },
+        region: {
+          hint: 'Bucket region, e.g. ap-northeast-1; leave empty to detect it (needs s3:GetBucketLocation)',
+          label: 'Region',
+        },
+        secret_key: { hint: 'AWS secret access key', label: 'SecretKey' },
+        thumb_suffix: {
+          hint: 'Image processing suffix, e.g. ?width=400 (CloudFront image handling); leave empty to load originals in lists',
+          label: 'Thumbnail suffix',
+        },
+      },
+      title: 'AWS S3',
     },
     up2upyun: {
       description: 'Save images to Upyun',

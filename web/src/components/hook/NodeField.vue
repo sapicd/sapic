@@ -37,13 +37,13 @@ onMounted(async () => {
 <template>
   <div class="node-field">
     <label class="node-field__label" :class="{ 'is-required': node.required }">
-      {{ nodeText(node, 'label') || node.key }}
+      {{ nodeText(node, 'label', runtime?.hook) || node.key }}
     </label>
     <div class="node-field__control">
       <el-input
         v-if="node.type === 'input'"
         v-model="value"
-        :placeholder="nodeText(node, 'placeholder')"
+        :placeholder="nodeText(node, 'placeholder', runtime?.hook)"
         :readonly="node.readonly"
         :disabled="node.disabled"
         :maxlength="node.maxlength"
@@ -57,7 +57,7 @@ onMounted(async () => {
         v-else-if="node.type === 'password'"
         v-model="value"
         type="password"
-        :placeholder="nodeText(node, 'placeholder')"
+        :placeholder="nodeText(node, 'placeholder', runtime?.hook)"
         :disabled="node.disabled"
         :show-password="node.reveal !== false"
       />
@@ -67,7 +67,7 @@ onMounted(async () => {
         v-model="value"
         type="textarea"
         :rows="node.rows || 3"
-        :placeholder="nodeText(node, 'placeholder')"
+        :placeholder="nodeText(node, 'placeholder', runtime?.hook)"
         :disabled="node.disabled"
         :maxlength="node.maxlength"
         :class="{ 'is-mono': node.mono }"
@@ -95,7 +95,7 @@ onMounted(async () => {
       <el-select
         v-else-if="node.type === 'select'"
         v-model="value"
-        :placeholder="nodeText(node, 'placeholder')"
+        :placeholder="nodeText(node, 'placeholder', runtime?.hook)"
         :disabled="node.disabled"
         :multiple="node.multiple"
         clearable
@@ -124,8 +124,8 @@ onMounted(async () => {
         </el-radio>
       </el-radio-group>
 
-      <div v-if="nodeText(node, 'help')" class="node-field__help">
-        {{ nodeText(node, 'help') }}
+      <div v-if="nodeText(node, 'help', runtime?.hook)" class="node-field__help">
+        {{ nodeText(node, 'help', runtime?.hook) }}
       </div>
     </div>
   </div>

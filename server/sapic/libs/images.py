@@ -269,6 +269,8 @@ def serialize_image(
                 "id": album.id,
                 "name": album.name,
                 "visibility": album.visibility,
+                #: 系统相册（owner 为 NULL）的名称只是展示文案，前端按此标记翻译。
+                "is_system": album.owner_id is None,
             }
             if album is not None
             else None

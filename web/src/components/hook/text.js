@@ -2,9 +2,25 @@
 //: 词表有译文就用译文，没有就回落到钩子给的原文（第三方钩子可以只写一种语言）。
 import { hasKey, t } from '@/i18n'
 
-export function nodeText(node, field = 'text') {
-  const key = node[`${field}_key`]
-  const value = key && hasKey(key) ? t(key) : node[field]
+function translated(key) {
+  return key && hasKey(key) ? t(key) : ''
+}
+
+/**
+ * Translate the ``field`` text of a hook node.
+ *
+ * Order: the key the node declares (``label_key`` …), then the module-scoped
+ * fallback ``hooks.<hook>.fields.<key>.<field>`` for third-party hooks that
+ * never declare keys, and finally the hook's own literal text.
+ */
+export function nodeText(node, field = 'text', hook = '') {
+  const declared = translated(node[`${field}_key`])
+  if (declared) return declared
+  if (hook && node.key) {
+    const scoped = translated(`hooks.${hook}.fields.${node.key}.${field}`)
+    if (scoped) return scoped
+  }
+  const value = node[field]
   return value === undefined || value === null ? '' : value
 }
 
