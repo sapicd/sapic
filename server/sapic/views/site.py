@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from flask import Blueprint
 
-from ..libs.mail import smtp_ready
+from ..libs.mail import mail_ready
 from ..libs.settings import get_setting
 from ..utils.web import ok
 from ..version import __version__
@@ -47,8 +47,9 @@ def site():
             "plaza_enabled": bool(get_setting("plaza_enabled", False)),
             "allow_register": bool(get_setting("allow_register", True)),
             "password_login": bool(get_setting("password_login", True)),
-            #: 只有配置了 SMTP 才能寄验证码/重置链接，前端据此隐藏不可用的入口。
-            "mail_enabled": smtp_ready(),
+            #: 只有存在可用邮件通道（SMTP 或 mail 类钩子）才能寄验证码/重置链接，
+            #: 前端据此隐藏不可用的入口。
+            "mail_enabled": mail_ready(),
             "allow_anonymous_upload": bool(
                 get_setting("allow_anonymous_upload", False)
             ),

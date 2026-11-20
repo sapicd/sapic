@@ -26,6 +26,11 @@ Recognised catalogues:
 ``processor``
     A stream processor (:data:`PROCESSOR_FUNCS`) that may rewrite the uploaded
     bytes before they are stored.
+``mail``
+    A mail transport (:data:`MAIL_FUNCS`) that takes over from the built-in
+    SMTP client while it reports itself configured; the readiness check is an
+    optional :data:`MAIL_READY_FUNC` so an unconfigured hook never swallows
+    verification mails.
 
 Any other catalogue is a plain UI hook: its only job is declarative
 slots/actions/datasets, so it never enters an upload or login path.
@@ -40,11 +45,13 @@ logger = logging.getLogger(__name__)
 CATALOG_AUTH = "auth"
 CATALOG_UPLOAD = "upload"
 CATALOG_PROCESSOR = "processor"
+CATALOG_MAIL = "mail"
 
 #: Extension kinds reported by :func:`kind_of` (a catalogue, plus ``ui``).
 KIND_PROVIDER = "provider"
 KIND_DRIVER = "driver"
 KIND_PROCESSOR = "processor"
+KIND_MAIL = "mail"
 KIND_UI = "ui"
 
 #: Required by ``auth``: build the authorize URL, then trade the code for claims.
@@ -63,6 +70,13 @@ DRIVER_READ_FUNC = "upimg_url"
 
 #: Required by ``processor``: rewrite the payload before it is stored.
 PROCESSOR_FUNCS = ("upimg_stream_processor",)
+
+#: Required by ``mail``: deliver one plain-text message (``config=``, ``to=``,
+#: ``subject=``, ``body=``), raising ``ValueError`` when delivery fails.
+MAIL_FUNCS = ("send_mail",)
+#: Optional for ``mail``: whether the saved config is complete enough to use.
+#: A hook without it is called whenever it is enabled.
+MAIL_READY_FUNC = "mail_ready"
 
 #: Keys of the dict returned by ``oidc_exchange``; only ``subject`` is required.
 IDENTITY_KEYS = (
@@ -107,6 +121,13 @@ def is_processor(module) -> bool:
     )
 
 
+def is_mailer(module) -> bool:
+    """Whether the module satisfies the mail transport contract."""
+    return catalog_of(module) == CATALOG_MAIL and not missing_callables(
+        module, MAIL_FUNCS
+    )
+
+
 def supports_private_read(module) -> bool:
     """Whether the driver can serve objects it stored in a private bucket.
 
@@ -134,6 +155,8 @@ def kind_of(module) -> str:
         return KIND_DRIVER
     if catalog == CATALOG_PROCESSOR:
         return KIND_PROCESSOR
+    if catalog == CATALOG_MAIL:
+        return KIND_MAIL
     return KIND_UI
 
 
@@ -161,6 +184,11 @@ def warnings_of(module) -> list[str]:
         problems += [
             "processor is missing required function: %s" % name
             for name in missing_callables(module, PROCESSOR_FUNCS)
+        ]
+    elif catalog == CATALOG_MAIL:
+        problems += [
+            "mail transport is missing required function: %s" % name
+            for name in missing_callables(module, MAIL_FUNCS)
         ]
     return problems
 

@@ -256,6 +256,14 @@ onMounted(loadSettings)
         </el-tab-pane>
 
         <el-tab-pane label="邮件" name="mail">
+          <el-alert
+            type="info"
+            :closable="false"
+            show-icon
+            style="margin-bottom: 16px"
+            title="启用邮件类钩子（如 SendCloud）并填好配置后，发信优先走钩子，这里的 SMTP 只在没有可用钩子时使用。"
+            description="测试邮件同样遵循这个顺序。"
+          />
           <el-form label-width="120px">
             <el-form-item label="SMTP 服务器">
               <el-input

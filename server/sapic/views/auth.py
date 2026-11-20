@@ -29,7 +29,7 @@ from ..libs.auth import (
 )
 from ..libs.albums import can_write
 from ..libs.hook import get_hook_manager
-from ..libs.mail import send_mail, smtp_ready
+from ..libs.mail import mail_ready, send_mail
 from ..libs.settings import get_setting
 from ..libs.storage import hook_config
 from ..libs.user_settings import get_user_settings, set_user_settings
@@ -435,7 +435,7 @@ def forgot_password():
 
     payload = {"sent": True}
     #: Without SMTP configured, expose the token to local/dev clients only.
-    if reset_token and not smtp_ready():
+    if reset_token and not mail_ready():
         if current_app.config.get("TESTING") or current_app.debug:
             payload["reset_token"] = reset_token
     return ok(payload, status=202)
@@ -474,7 +474,7 @@ def send_email_verification():
 
     token = _mail_verification(user)
     payload = {"sent": True}
-    if not smtp_ready():
+    if not mail_ready():
         #: 本地/测试环境没有邮件服务，直接把令牌回给调用方；线上则明确报错，
         #: 不能假装「已发送」让用户等一封永远到不了的邮件。
         if current_app.config.get("TESTING") or current_app.debug:

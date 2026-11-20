@@ -9,7 +9,7 @@ from ..basis.common import as_bool
 from ..basis.errors import ApiError, ErrorCode
 from ..libs import release
 from ..libs.auth import admin_required
-from ..libs.mail import SMTP_DEFAULTS, send_test_mail, smtp_ready
+from ..libs.mail import SMTP_DEFAULTS, mail_ready, send_test_mail
 from ..libs.settings import DEFAULTS, get_setting, set_setting
 from ..utils.common import parse_proxy_url
 from ..utils.web import ok
@@ -224,12 +224,17 @@ def check_version():
 @bp.post("/settings/smtp/test")
 @admin_required
 def test_smtp():
-    """Send a probe mail so the operator can verify the SMTP settings."""
+    """Send a probe mail so the operator can verify the mail transport.
+
+    The path still says ``smtp`` for compatibility, but delivery follows
+    :func:`sapic.libs.mail.mail_ready`: a configured ``mail`` hook wins, SMTP is
+    the transport only when no hook takes over.
+    """
     data = request.get_json(silent=True) or {}
     to = str(data.get("to") or "").strip() or (getattr(g.user, "email", "") or "")
     if not to:
         raise ApiError("email is required", ErrorCode.PARAM_ERROR)
-    if not smtp_ready():
+    if not mail_ready():
         raise ApiError(
             "mail service is not configured", ErrorCode.SERVICE_UNAVAILABLE, 503
         )

@@ -1,14 +1,23 @@
 # -*- coding: utf-8 -*-
-"""SMTP mail delivery."""
+"""Mail delivery.
+
+Transport selection is a fixed choice, not a fallback chain: an enabled hook
+declaring ``__catalog__ = "mail"`` (see :mod:`sapic.libs.ext`) owns delivery as
+soon as its own readiness check passes, otherwise the built-in SMTP client is
+used. Retrying the same message through the second transport would just risk
+sending it twice when the first one failed halfway.
+"""
 
 from __future__ import annotations
 
 import smtplib
 from email.message import EmailMessage
 
-from flask import current_app
+from flask import current_app, has_app_context
 
 from ..basis.errors import ApiError, ErrorCode
+from . import ext
+from .hook import get_hook_manager
 from .settings import get_setting
 
 SMTP_DEFAULTS = {
@@ -34,13 +43,61 @@ def smtp_config() -> dict:
     return config
 
 
-def smtp_ready() -> bool:
-    """Whether a mail server is configured; without ``host`` mail is skipped."""
-    return bool(smtp_config().get("host"))
+def _hook_config(name: str) -> dict:
+    """Hook-wide values managed on the hooks page (``hooks_config``)."""
+    saved = get_setting("hooks_config", {}) or {}
+    data = saved.get(name) if isinstance(saved, dict) else None
+    return dict(data) if isinstance(data, dict) else {}
+
+
+def _mail_hook():
+    """Enabled hook that can deliver mail: ``(name, module, config)`` or ``None``.
+
+    A hook that declares the contract but has not been filled in yet says so
+    through ``mail_ready(config)``; skipping it there keeps SMTP usable and
+    stops a half-configured transport from swallowing verification mails.
+    Hooks are walked in name order, so two configured transports never race.
+    """
+    if not has_app_context():
+        return None
+    hooks = get_hook_manager().hooks
+    for name in sorted(hooks):
+        hook = hooks[name]
+        if not hook.enabled or not ext.is_mailer(hook.module):
+            continue
+        config = _hook_config(name)
+        check = getattr(hook.module, ext.MAIL_READY_FUNC, None)
+        if callable(check):
+            try:
+                if not check(config):
+                    continue
+            except Exception:
+                current_app.logger.exception(
+                    "mail hook %s readiness check failed", name
+                )
+                continue
+        return name, hook.module, config
+    return None
+
+
+def mail_ready() -> bool:
+    """Whether any transport can deliver a message right now.
+
+    The site endpoint uses it to hide "verify email / reset password" entries,
+    and the auth views use it to decide whether a token may be echoed back to a
+    local client: a configured mail hook counts exactly like an SMTP host.
+    """
+    return _mail_hook() is not None or bool(smtp_config().get("host"))
 
 
 def _deliver(to: str, subject: str, body: str) -> None:
-    """Hand one message to the mail server, raising on any failure."""
+    """Hand one message to the selected transport, raising on any failure."""
+    provider = _mail_hook()
+    if provider is not None:
+        _, module, config = provider
+        module.send_mail(config=config, to=to, subject=subject, body=body)
+        return
+
     config = smtp_config()
     if not config.get("host"):
         raise ApiError(
@@ -76,8 +133,8 @@ def send_mail(to: str, subject: str, body: str) -> bool:
     belong to, so failures are only logged here; the admin test action uses
     :func:`send_test_mail` when the caller needs to see the reason.
     """
-    if not smtp_ready():
-        current_app.logger.warning("SMTP is not configured, skip mail to %s", to)
+    if not mail_ready():
+        current_app.logger.warning("mail is not configured, skip mail to %s", to)
         return False
     try:
         _deliver(to, subject, body)
@@ -92,7 +149,7 @@ def send_test_mail(to: str) -> None:
     try:
         _deliver(
             to,
-            "SMTP 测试邮件",
+            "邮件测试",
             "这是一封来自 sapic 的测试邮件，收到即表示邮件配置可用。",
         )
     except ApiError:
