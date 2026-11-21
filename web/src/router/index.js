@@ -81,6 +81,12 @@ const routes = [
         component: () => import('@/views/UsersView.vue'),
         meta: { title: 'admin.users' },
       },
+      {
+        path: 'scheduler',
+        name: 'admin-scheduler',
+        component: () => import('@/views/AdminSchedulerView.vue'),
+        meta: { title: 'admin.scheduler' },
+      },
     ],
   },
   {

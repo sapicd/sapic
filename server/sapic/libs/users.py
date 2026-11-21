@@ -40,6 +40,10 @@ from .settings import get_setting
 
 logger = logging.getLogger(__name__)
 
+#: 可以登录、但不能上传图片的状态。待审核按 v1 语义放行登录，只冻结上传；
+#: 头像上传走同一口径，否则它就成了绕过限制的入口。
+UPLOAD_BLOCKED_STATUSES = (STATUS_REJECTED, STATUS_PENDING, STATUS_DISABLED)
+
 USERNAME_RE = re.compile(r"^[a-zA-Z][0-9a-zA-Z_]{3,31}$")
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 MIN_PASSWORD_LENGTH = 6
@@ -120,12 +124,10 @@ def authenticate(username: str, password: str) -> User:
         raise ApiError(
             "invalid username or password", ErrorCode.UNAUTHORIZED, 401
         )
-    #: 只有正常状态的账号能登录；待审核/已拒绝的账号即便密码正确也不放行。
-    if user.status == STATUS_PENDING:
-        raise ApiError("account is pending review", ErrorCode.FORBIDDEN, 403)
+    #: 待审核的账号可以登录（v1 语义），只是不能上传；只有拒绝/禁用才拦。
     if user.status == STATUS_REJECTED:
         raise ApiError("account was rejected", ErrorCode.FORBIDDEN, 403)
-    if user.status != STATUS_NORMAL:
+    if user.status not in (STATUS_NORMAL, STATUS_PENDING):
         raise ApiError("account is disabled", ErrorCode.FORBIDDEN, 403)
     return user
 
@@ -133,10 +135,19 @@ def authenticate(username: str, password: str) -> User:
 def change_password(user: User, new_password: str) -> User:
     validate_password(new_password)
     user.password_hash = generate_password_hash(new_password)
+    #: 从这一刻起密码是用户自己设的（OIDC 建号的随机密码不算）。
+    user.password_set = True
     #: Revoke all existing sessions.
     user.session_version = (user.session_version or 0) + 1
     user.updated_at = now()
-    user.save(only=[User.password_hash, User.session_version, User.updated_at])
+    user.save(
+        only=[
+            User.password_hash,
+            User.password_set,
+            User.session_version,
+            User.updated_at,
+        ]
+    )
     return user
 
 
@@ -153,11 +164,15 @@ def _identity_owner(issuer: str, subject: str) -> User | None:
     return None
 
 
-def bind_oidc_identity(user: User, issuer: str, subject: str) -> User:
+def bind_oidc_identity(
+    user: User, issuer: str, subject: str, display_name: str = ""
+) -> User:
     """Attach an OIDC identity to an existing account.
 
     An identity may only serve one account, so re-binding it to someone else is
-    rejected instead of silently stealing the login.
+    rejected instead of silently stealing the login. ``display_name`` is the
+    provider's nickname/username, kept only so the settings page can show which
+    upstream account is linked; the login itself never reads it.
     """
     issuer = normalize_issuer(issuer)
     subject = (subject or "").strip()[:255]
@@ -170,23 +185,89 @@ def bind_oidc_identity(user: User, issuer: str, subject: str) -> User:
 
     user.oidc_issuer = issuer
     user.oidc_subject = subject
+    user.oidc_display_name = (display_name or "").strip()[:64] or None
+    user.oidc_bound_at = now()
     user.updated_at = now()
-    user.save(only=[User.oidc_issuer, User.oidc_subject, User.updated_at])
+    user.save(
+        only=[
+            User.oidc_issuer,
+            User.oidc_subject,
+            User.oidc_display_name,
+            User.oidc_bound_at,
+            User.updated_at,
+        ]
+    )
+    return user
+
+
+def _refresh_oidc_profile(
+    user: User, display_name: str, email: str = "", email_verified: bool = False
+) -> User:
+    """Sync what the provider reports on every OIDC sign-in.
+
+    ``oidc_display_name`` always follows the provider (it describes the upstream
+    account, not the local profile). The local ``nickname``/``email`` are only
+    filled when empty: they belong to the site profile, and overwriting them on
+    each login would undo names or addresses the user chose here. An address
+    already used by another local account is never taken over.
+    """
+    name = (display_name or "").strip()[:64]
+    address = (email or "").strip().lower()[:128]
+    changed = []
+    if name and name != (user.oidc_display_name or ""):
+        user.oidc_display_name = name
+        changed.append(User.oidc_display_name)
+    if not user.nickname and name:
+        user.nickname = name
+        changed.append(User.nickname)
+    if (
+        address
+        and email_verified
+        and not user.email
+        and User.get_or_none(User.email == address) is None
+    ):
+        user.email = address
+        user.email_verified = True
+        changed.extend([User.email, User.email_verified])
+    if changed:
+        user.updated_at = now()
+        changed.append(User.updated_at)
+        user.save(only=changed)
     return user
 
 
 def unbind_oidc_identity(user: User) -> User:
-    """Drop the OIDC identity so the account falls back to its password."""
+    """Drop the OIDC identity so the account falls back to its password.
+
+    Only the identity columns are cleared; the account, the password hash, the
+    images and the tokens are untouched, so there is nothing to guard here.
+    """
     user.oidc_issuer = None
     user.oidc_subject = None
+    user.oidc_display_name = None
+    user.oidc_bound_at = None
     user.updated_at = now()
-    user.save(only=[User.oidc_issuer, User.oidc_subject, User.updated_at])
+    user.save(
+        only=[
+            User.oidc_issuer,
+            User.oidc_subject,
+            User.oidc_display_name,
+            User.oidc_bound_at,
+            User.updated_at,
+        ]
+    )
     return user
 
 
 def _oidc_username(hint: str) -> str:
-    """Derive a unique local username from the provider's claims."""
-    base = re.sub(r"[^0-9a-zA-Z_]", "", hint or "")[:28]
+    """Derive a unique local username from the provider's claims.
+
+    Usernames are stored lower-case (:func:`normalize_username`) and
+    ``authenticate`` lower-cases the submitted name before looking it up.
+    Keeping the provider's casing here made the row unreachable on a
+    case-sensitive database (PostgreSQL), so password login always failed.
+    """
+    base = normalize_username(re.sub(r"[^0-9a-zA-Z_]", "", hint or ""))[:28]
     if not base or not base[0].isalpha():
         base = "u%s" % base
     base = base.ljust(4, "_")
@@ -225,9 +306,14 @@ def resolve_oidc_user(
 
     user = _identity_owner(issuer, subject)
     if user is not None:
-        if user.status != STATUS_NORMAL:
+        #: 待审核同样可以登录；上传由 ``views/uploads.py`` 单独按状态拦截。
+        if user.status not in (STATUS_NORMAL, STATUS_PENDING):
             raise ApiError("account is not active", ErrorCode.FORBIDDEN, 403)
-        return user
+        #: Provider 的资料会变，登录时顺手同步：第三方显示名每次都跟上游走，
+        #: 本地昵称/邮箱只在为空时补，避免覆盖用户在本站改过的资料。
+        return _refresh_oidc_profile(
+            user, nickname or username, email, email_verified
+        )
 
     email = (email or "").strip().lower() or None
     if email_verified and email:
@@ -240,10 +326,10 @@ def resolve_oidc_user(
             and not local.oidc_issuer
             and not local.oidc_subject
         ):
-            if local.status != STATUS_NORMAL:
+            if local.status not in (STATUS_NORMAL, STATUS_PENDING):
                 raise ApiError("account is not active", ErrorCode.FORBIDDEN, 403)
             logger.info("oidc identity linked by email to user %s", local.username)
-            return bind_oidc_identity(local, issuer, subject)
+            return bind_oidc_identity(local, issuer, subject, nickname or username)
 
     if email and User.get_or_none(User.email == email):
         #: 邮箱已被本地账号占用时新建账号不抢这个地址，否则会撞唯一约束。
@@ -256,13 +342,17 @@ def resolve_oidc_user(
         user = User.create(
             username=_oidc_username(username or subject),
             email=email,
-            #: OIDC 账号没有本地密码，随机值让密码登录不可能成功。
+            #: OIDC 账号没有本地密码，随机值让密码登录不可能成功；标记为
+            #: ``password_set=False``，设置页才能提供「设置密码」而不是「修改」。
             password_hash=generate_password_hash(secrets.token_urlsafe(32)),
+            password_set=False,
             nickname=(nickname or username or "")[:64],
             status=status,
             labels=[],
             oidc_issuer=issuer,
             oidc_subject=subject,
+            oidc_display_name=(nickname or username or "")[:64] or None,
+            oidc_bound_at=now(),
             created_at=now(),
             updated_at=now(),
         )
@@ -485,6 +575,8 @@ def serialize_user(user: User, include_private: bool = False) -> dict:
     if include_private:
         data["email"] = user.email
         data["status_reason"] = user.status_reason or ""
+        #: 前端据此把「修改密码」换成「设置密码」、解绑时决定要不要问密码。
+        data["password_set"] = bool(user.password_set)
     return data
 
 
@@ -493,6 +585,7 @@ __all__ = [
     "STATUS_NORMAL",
     "STATUS_PENDING",
     "STATUS_REJECTED",
+    "UPLOAD_BLOCKED_STATUSES",
     "authenticate",
     "change_password",
     "create_user",

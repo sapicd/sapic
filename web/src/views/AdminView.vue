@@ -245,12 +245,6 @@ onMounted(loadSettings)
               <el-switch v-model="form.password_login" />
               <span class="form-suffix">{{ t('adminSite.passwordLoginHint') }}</span>
             </el-form-item>
-            <el-form-item :label="t('adminSite.externalBaseUrl')">
-              <el-input
-                v-model="form.external_base_url"
-                :placeholder="t('adminSite.externalBaseUrlPlaceholder')"
-              />
-            </el-form-item>
           </el-form>
         </el-tab-pane>
 

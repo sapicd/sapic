@@ -21,7 +21,10 @@
 | `HOOK_PKG_STORAGE_DIR` | `sapic_hookpkgstoragedir` | `data/hooks` | 第三方钩子包目录（`pip install --target` 目标），置空关闭后台安装 |
 | `HOOK_MARKET_URL` | `sapic_hookmarketurl` | 官方 list.json | 钩子市场数据源，可换镜像 |
 | `UPDATE_CHECK_URL` | `sapic_updatecheckurl` | 官方发布接口 | 版本检测数据源，置空即关闭（内网部署） |
-| `EXTERNAL_BASE_URL` | `sapic_external_base_url` | 空 | 给图片直链加前缀，空表示相对地址 |
+| `EXTERNAL_BASE_URL` | `sapic_external_base_url` | 空 | 给图片直链加前缀，空则按当前请求的域名补全 |
+| `SCHEDULER` | `sapic_scheduler` | `true` | 进程内跑后台任务（到期清理、审核扫描）；多 worker 用文件锁选主，关掉后回到「请求时兜底清理」 |
+| `SCHEDULER_PURGE_INTERVAL` | `sapic_scheduler_purge_interval` | `600` | 过期清理间隔（秒），最小 10 |
+| `SCHEDULER_REVIEW_INTERVAL` | `sapic_scheduler_review_interval` | `300` | 审核扫描间隔（秒），最小 10；没有启用的 `moderator` 钩子时这趟直接跳过 |
 
 排查环境变量是否写对时，直接打印最终生效的配置：
 

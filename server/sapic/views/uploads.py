@@ -23,13 +23,11 @@ from ..libs.images import (
     serialize_image,
     uploads_enabled,
 )
+from ..libs.users import UPLOAD_BLOCKED_STATUSES
 from ..models import Album
-from ..models.user import STATUS_DISABLED, STATUS_PENDING, STATUS_REJECTED
 from ..utils.web import ok
 
 bp = Blueprint("uploads", __name__)
-
-BLOCKED_STATUS = (STATUS_REJECTED, STATUS_PENDING, STATUS_DISABLED)
 
 
 @bp.post("/upload")
@@ -46,7 +44,7 @@ def upload():
             raise ApiError(
                 "anonymous upload is disabled", ErrorCode.FORBIDDEN, 403
             )
-    elif user.status in BLOCKED_STATUS:
+    elif user.status in UPLOAD_BLOCKED_STATUSES:
         raise ApiError("account cannot upload", ErrorCode.FORBIDDEN, 403)
 
     file = request.files.get("file")

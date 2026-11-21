@@ -27,6 +27,10 @@ class User(BaseModel):
     password_hash = CharField(max_length=255)
     nickname = CharField(max_length=64, default="")
     avatar = CharField(max_length=255, default="")
+    #: Whether the local password was chosen by the user. OIDC-only accounts get
+    #: a random hash nobody knows, so they are created with ``False`` and the
+    #: UI offers "set a password" instead of asking for the current one.
+    password_set = BooleanField(default=True)
     is_admin = BooleanField(default=False)
     status = IntegerField(default=STATUS_NORMAL)
     #: Why a registration was rejected; cleared when the account is accepted.
@@ -38,6 +42,10 @@ class User(BaseModel):
     #: Reserved for the passportd OIDC integration.
     oidc_issuer = CharField(max_length=255, null=True)
     oidc_subject = CharField(max_length=255, null=True)
+    #: What the provider called this identity and when it was linked; shown on
+    #: the settings page so the user can recognise the upstream account.
+    oidc_display_name = CharField(max_length=64, null=True)
+    oidc_bound_at = IntegerField(null=True)
     created_at = IntegerField(default=now)
     updated_at = IntegerField(default=now)
 

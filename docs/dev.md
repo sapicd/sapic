@@ -7,7 +7,7 @@ server/                 v2 backend (package sapic, local only, not on PyPI)
 ├── requirements/       three groups: base / dev / prod
 └── sapic/
     ├── __init__.py     create_app() factory
-    ├── cli.py          flask sa commands (upgrade / create-admin / purge-expired)
+    ├── cli.py          flask sa commands (upgrade / create-admin / purge-expired / review-pending / scheduler)
     ├── basis/          config, errors, constants, DB connection (no business deps)
     ├── libs/           shared base classes: auth / images / albums / storage / users / mail / settings / hook / ext / ui
     ├── utils/          common.py (plain helpers), web.py (needs a Flask context)

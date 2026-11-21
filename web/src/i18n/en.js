@@ -73,7 +73,7 @@ export default {
         title: 'Passport sign-in failed',
       },
       inactive: {
-        description: 'This account is pending review or disabled. Contact the administrator.',
+        description: 'This account was rejected or disabled. Contact the administrator.',
         title: 'Account restricted',
       },
       invalid: {
@@ -273,7 +273,9 @@ export default {
     bindConflict: 'This identity is bound to another account; unbind it there first',
     bindFailed: 'Binding failed, try again or contact the administrator',
     bound: 'Unified login bound',
+    boundAt: 'Linked {time}',
     boundTag: 'Bound',
+    linkedUid: 'UID {uid}',
     clearAvatar: 'Clear',
     currentPassword: 'Current password',
     currentPasswordRequired: 'Enter your current password',
@@ -310,6 +312,10 @@ export default {
     passwordHeader: 'Change password',
     passwordPrompt: 'Enter your password',
     passwordUpdated: 'Password updated',
+    setPassword: 'Set password',
+    setPasswordHeader: 'Set password',
+    setPasswordHint:
+      'Accounts created through unified login have no local password; the password set here is used for password login and confirming sensitive actions.',
     patIntro:
       'A personal access token lets PicGo, uPic, the CLI and other clients upload instead of using your password: send Authorization: Bearer <token>. It is shown only once and can be revoked at any time.',
     patTitle: 'Access tokens (PAT)',
@@ -355,6 +361,8 @@ export default {
     tokensLoadFailed: 'Failed to load tokens',
     unbind: 'Unbind',
     unbindFailed: 'Unbind failed',
+    unbindNeedPassword:
+      'This account has no local password yet; set one under "Password" before unbinding',
     unbindPrompt:
       'After unbinding this account can no longer sign in through the provider; enter your current password to confirm',
     unbindTitle: 'Unbind',
@@ -426,7 +434,7 @@ export default {
     emptyShares: 'No shared member yet',
     imageCount: 'Images',
     intro:
-      'Visibility is per album: an upload without an album lands in the default album, and a single image can override it on its detail page. A shared album is visible only to the members bound to it, and a private album becomes shared as soon as you add one.',
+      'Visibility is per album: uploads without an album go to the default album, and a single image can override it on its detail page. Shared albums are member-only; a private album becomes shared once you add a member.',
     isDefault: 'Default',
     isSystem: 'System',
     loadFailed: 'Failed to load albums',
@@ -527,6 +535,7 @@ export default {
     http: 'Request failed',
     network: 'Network error, check that the server is running',
     operation: 'Something went wrong',
+    requestId: ' (request id: {id})',
   },
   notFound: {
     backHome: 'Back to home',
@@ -542,6 +551,7 @@ export default {
     recheck: 'Check again',
     releasePage: 'Open release page',
     releasedAt: 'Released at',
+    scheduler: 'Scheduled jobs',
     site: 'Site settings',
     title: 'Admin',
     updateCheckDisabled: 'Update check disabled (sapic_updatecheckurl is empty)',
@@ -550,6 +560,42 @@ export default {
     users: 'Users',
     version: 'Version v{version}',
     versionInfo: 'Version information',
+  },
+  adminScheduler: {
+    disabledHint:
+      'sapic_scheduler=0 turns the background jobs off. Only the opportunistic expiry sweep on requests remains; set it back to 1 and restart to resume the schedule.',
+    failed: 'Failed (see logs)',
+    hours: '{n} h',
+    interval: 'Interval',
+    intervalHint:
+      'Intervals come from sapic_scheduler_purge_interval / sapic_scheduler_review_interval and apply after a restart.',
+    intro:
+      'Expiry purge and content moderation run inside APScheduler; among several workers, one wins the data/scheduler.lock file lock and does the scheduling.',
+    job: 'Job',
+    jobs: {
+      purge_expired: 'Purge expired images',
+      review_pending: 'Moderate unreviewed images',
+    },
+    lastRun: 'Last run',
+    loadFailed: 'Failed to load the scheduled jobs',
+    lockFile: 'Leader lock',
+    minutes: '{n} min',
+    never: 'Not yet',
+    nextRun: 'Next run',
+    pid: 'Process',
+    purged: '{n} purged',
+    result: 'Last result',
+    role_disabled: 'Disabled',
+    role_leader: 'Scheduling in this process',
+    role_standby: 'Scheduling in another process',
+    runFailed: 'Failed to run the job',
+    runNow: 'Run now',
+    scanned: '{scanned} scanned, {blocked} blocked, {failed} to retry',
+    seconds: '{n} s',
+    standbyHint:
+      'This request landed on a standby worker, so "Next run" is only maintained by the leader. "Run now" still works: both jobs are idempotent.',
+    state: 'State',
+    title: 'Scheduled jobs',
   },
   adminSite: {
     allowRegister: 'Open registration',
@@ -568,8 +614,6 @@ export default {
     expireDefaultUnit: 'days, 0 keeps images forever',
     expireMax: 'Expiry cap',
     expireMaxUnit: 'days, 0 means unlimited; once set, permanent images are no longer allowed and unspecified ones use the cap',
-    externalBaseUrl: 'Public base URL',
-    externalBaseUrlPlaceholder: 'e.g. https://img.example.com, used to build image links',
     fetchProxy: 'Download proxy',
     fetchProxyHint:
       'URL uploads are fetched server-side: only when a direct connection fails (timeout / connection error / unresolvable) does it fall back to this proxy, so reachable sources skip it; http(s) proxies and http://user:pass@host:port are supported',

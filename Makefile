@@ -21,7 +21,7 @@ P ?=
 export FLASK_APP
 
 .DEFAULT_GOAL := help
-.PHONY: help setup install-prod config upgrade create-admin test dev serve \
+.PHONY: help setup install-prod config upgrade create-admin test dev serve scheduler \
 	web-dev web-build docs clean ensure-pnpm docker compose-up
 
 help:
@@ -32,6 +32,7 @@ help:
 	@echo "后端（均在 $(SERVER_DIR)/ 下执行，本地包无需安装）"
 	@echo "  dev            启动开发服务器 (HOST=$(HOST) PORT=$(PORT)，改代码自动重载)"
 	@echo "  serve          gunicorn 前台运行 (WORKERS=$(WORKERS) -k gevent)"
+	@echo "  scheduler      前台跑后台任务（清理/审核；需先 sapic_scheduler=0 让 web 让位）"
 	@echo "  config         打印当前生效配置"
 	@echo "  upgrade        建表 / 增量迁移"
 	@echo "  create-admin   创建管理员 (U=$(U) P=密码)"
@@ -86,6 +87,10 @@ dev:
 
 serve:
 	cd $(SERVER_DIR) && $(PY) -m gunicorn "sapic:create_app()" -b $(HOST):$(PORT) -w $(WORKERS) -k gevent
+
+#: web 进程默认自己起调度器（文件锁选主）；要独立进程跑，先 sapic_scheduler=0。
+scheduler:
+	cd $(SERVER_DIR) && $(PY) -m flask sa scheduler
 
 web-dev: ensure-pnpm
 	cd web && $(PNPM) run dev

@@ -63,7 +63,6 @@ DEFAULTS = {
     "forbidden_username": "admin,root,sys,anonymous",
     #: 默认相册是上传的兜底归属，默认公开才能拿到可外链地址。
     "default_album_visibility": "public",
-    "external_base_url": "",
     "smtp": {},
     #: 钩子：启用状态（{name: bool}）、配置（{name: {key: value}}）与第三方
     #: 钩子模块名（[module]），由 /api/v2/hooks 系列接口写入，不走键白名单。

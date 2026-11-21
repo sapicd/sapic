@@ -26,6 +26,9 @@ def app(tmp_path):
             "HOOK_PKG_STORAGE_DIR": str(tmp_path / "hooks"),
             #: 日志同理：写到临时目录，别把 sys.log 落在仓库里。
             "LOG_DIR": str(tmp_path / "log"),
+            #: 后台线程不参与测试；需要时用例直接调 run_purge / run_review。
+            #: 关掉调度器也让 before_request 的过期清理兜底保持启用。
+            "SCHEDULER": False,
         }
     )
     with app.app_context():

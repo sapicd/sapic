@@ -34,6 +34,7 @@ from ..libs.settings import get_setting
 from ..libs.storage import hook_config
 from ..libs.user_settings import get_user_settings, set_user_settings
 from ..libs.users import (
+    UPLOAD_BLOCKED_STATUSES,
     authenticate,
     bind_oidc_identity,
     change_password,
@@ -50,6 +51,7 @@ from ..libs.users import (
 from ..models import Album, ApiToken, User
 from ..models.base import now
 from ..models.user import STATUS_DISABLED, STATUS_NORMAL, STATUS_PENDING
+from ..utils.common import mask_secret
 from ..utils.web import (
     clear_cookie_state,
     get_cookie_state,
@@ -215,7 +217,14 @@ def _with_flag(path: str, key: str, value: str) -> str:
     return "%s%s%s=%s" % (path, "&" if "?" in path else "?", key, value)
 
 
-def _finish_bind(name: str, issuer: str, subject: str, bind_uid: int, saved: dict):
+def _finish_bind(
+    name: str,
+    issuer: str,
+    subject: str,
+    bind_uid: int,
+    saved: dict,
+    display_name: str = "",
+):
     """Link the identity returned by the provider to the signed-in account."""
     user = current_user()
     if user is None or user.id != bind_uid:
@@ -223,7 +232,7 @@ def _finish_bind(name: str, issuer: str, subject: str, bind_uid: int, saved: dic
 
     target = _safe_next(saved.get("next"))
     try:
-        bind_oidc_identity(user, issuer, subject)
+        bind_oidc_identity(user, issuer, subject, display_name)
     except ApiError as exc:
         logger.warning("oidc bind rejected for %s: %s", name, exc.message)
         #: 身份已被别的账号占用时给独立标记，页面才能提示「先去那边解绑」，
@@ -315,7 +324,14 @@ def oidc_callback(name: str):
     subject = identity["subject"]
     bind_uid = saved.get("bind_uid")
     if bind_uid:
-        return _finish_bind(name, issuer, subject, bind_uid, saved)
+        return _finish_bind(
+            name,
+            issuer,
+            subject,
+            bind_uid,
+            saved,
+            identity["nickname"] or identity["username"],
+        )
 
     review = bool(get_setting("register_review", False))
     try:
@@ -332,8 +348,8 @@ def oidc_callback(name: str):
         logger.warning("oidc login rejected for %s: %s", name, exc.message)
         return redirect("/login?oidc=%s" % _oidc_failure_flag(exc))
 
-    #: 走审核的站点里，新号是待审核状态，不能直接发会话。
-    if user.status != STATUS_NORMAL:
+    #: 待审核同样发会话（可以登录看页面，只是不能上传）；拒绝/禁用才拒绝。
+    if user.status not in (STATUS_NORMAL, STATUS_PENDING):
         return redirect("/login?oidc=inactive")
     login_user(user)
     response = redirect(_safe_next(saved.get("next")))
@@ -353,16 +369,31 @@ def read_identities():
             continue
         namespace = ext.provider_issuer(hook.module, hook_config(name))
         manifest = manager.manifest(name) or {}
+        bound = bool(
+            user.oidc_subject
+            and namespace
+            and ext.normalize_issuer(user.oidc_issuer) == namespace
+        )
         item = {
             "name": name,
             "title": manifest.get("title") or name,
-            "bound": bool(
-                user.oidc_subject
-                and namespace
-                and ext.normalize_issuer(user.oidc_issuer) == namespace
-            ),
+            "bound": bound,
             "bind_url": url_for("auth.oidc_start", name=name, bind=1, next="/settings"),
         }
+        if bound:
+            #: 只回显绑定详情：第三方显示名、脱敏后的 subject（本地 UUID 很长，
+            #: 原样给前端既占宽度也没必要）、以及绑定时间。issuer 供排查用。
+            item.update(
+                {
+                    "display_name": user.oidc_display_name or "",
+                    #: 本地邮箱就是 provider 验证过（或建号时写的）那个地址，
+                    #: 比一串脱敏 subject 更能让人认出绑的是哪个账号。
+                    "email": user.email or "",
+                    "subject": mask_secret(user.oidc_subject),
+                    "issuer": user.oidc_issuer or "",
+                    "bound_at": user.oidc_bound_at,
+                }
+            )
         #: 钩子自带 i18n 键时前端优先用它翻译标题（缺译仍回落到 ``title``）。
         if manifest.get("title_key"):
             item["title_key"] = manifest["title_key"]
@@ -373,17 +404,17 @@ def read_identities():
 @bp.delete("/auth/identities/<name>")
 @login_required
 def unbind_identity(name: str):
-    """Unlink a provider after re-checking the password.
+    """Unlink a provider, re-checking the current password.
 
-    Requiring the password keeps OIDC-only accounts (random local password) from
-    locking themselves out by removing their only sign-in method.
+    Unbinding never deletes the local account: images, albums, tokens and the
+    password hash stay as they are, only the provider identity is dropped and
+    the account falls back to password login. Since the password is what keeps
+    the account reachable afterwards, every unbind has to prove it.
     """
     _oidc_hook(name)
     user = current_user()
     password = str(_payload().get("password") or "")
-    if not password or not check_password_hash(
-        user.password_hash or "", password
-    ):
+    if not password or not check_password_hash(user.password_hash or "", password):
         raise ApiError("password is incorrect", ErrorCode.FORBIDDEN, 403)
     unbind_oidc_identity(user)
     return ok({"unbound": True})
@@ -514,6 +545,9 @@ def confirm_email():
 @login_required
 def upload_avatar():
     """Store a cropped avatar in the user's default album."""
+    #: 头像也会落到默认相册，对待审核/拒绝/禁用账号与图床上传同一口径。
+    if g.user.status in UPLOAD_BLOCKED_STATUSES:
+        raise ApiError("account cannot upload", ErrorCode.FORBIDDEN, 403)
     file = request.files.get("file")
     if file is None or not file.filename:
         raise ApiError("file is required", ErrorCode.PARAM_ERROR)
@@ -556,11 +590,15 @@ def edit_settings():
 def update_password():
     data = _payload()
     user = g.user
-    if not check_password_hash(user.password_hash, data.get("old_password", "")):
+    #: OIDC 账号的密码是随机值，用户不可能知道，所以「设置密码」不校验旧密码。
+    if user.password_set and not check_password_hash(
+        user.password_hash, data.get("old_password", "")
+    ):
         raise ApiError("current password is incorrect", ErrorCode.FORBIDDEN, 403)
     change_password(user, data.get("new_password", ""))
     csrf = login_user(user)
-    return ok({"updated": True, "csrf": csrf})
+    #: 回传用户让前端立刻把「设置密码」切成「修改密码」，不必重新拉会话。
+    return ok({"updated": True, "csrf": csrf, "user": serialize_user(user, True)})
 
 
 def _serialize_token(row: ApiToken) -> dict:

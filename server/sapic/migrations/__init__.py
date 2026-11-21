@@ -24,7 +24,7 @@ from peewee import (
 from playhouse.migrate import SchemaMigrator, migrate
 
 from ..basis.db import db
-from ..models import ALL_MODELS, Album, Image, StorageBackend, User
+from ..models import ALL_MODELS, Album, Image, Setting, StorageBackend, User
 from ..models.base import BaseModel, JSONTextField, now
 from ..models.storage import SCOPE_SYSTEM, VISIBILITY_PUBLIC
 
@@ -282,6 +282,127 @@ def _v012_api_token_album() -> None:
     )
 
 
+def _v013_image_origin_url_retired() -> None:
+    """Placeholder for a version number that was used and withdrawn.
+
+    An earlier experiment added ``images.origin_url`` as version 13 and some
+    databases already recorded it. The column was removed, but the number stays
+    occupied: a no-op keeps fresh databases on the same version sequence and
+    makes the ``schema_version`` count match ``MIGRATIONS``. Never reuse it.
+    """
+
+
+def _v015_image_review() -> None:
+    """Add the moderation verdict written by ``moderator`` hooks.
+
+    ``review_state`` stays NULL for images no scan has reached, and existing
+    rows are deliberately **not** backfilled: an instance that enables a
+    moderator later should scan the library it already has instead of treating
+    everything as passed.
+
+    Numbered 14 on purpose: 13 was briefly shipped (and recorded in
+    ``schema_version``) by an earlier ``origin_url`` experiment, so reusing it
+    would leave the columns missing on those databases. Migration numbers are
+    never recycled.
+    """
+    columns = {column.name for column in db.get_columns("images")}
+    migrator = SchemaMigrator.from_database(db)
+    operations = []
+    for name, field in (
+        ("review_state", CharField(max_length=16, null=True)),
+        ("reviewed_at", IntegerField(null=True)),
+        ("review_note", CharField(max_length=255, null=True)),
+    ):
+        if name not in columns:
+            operations.append(migrator.add_column("images", name, field))
+    if operations:
+        migrate(*operations)
+    indexed = {_index_columns(index) for index in db.get_indexes("images")}
+    if ("review_state",) not in indexed:
+        migrate(migrator.add_index("images", ("review_state",), False))
+
+
+def _v014_drop_external_base_url_setting() -> None:
+    """Remove the retired admin setting ``external_base_url``.
+
+    The public address now has a single source, ``sapic_external_base_url``
+    (``EXTERNAL_BASE_URL``); the duplicate setting only fed the moderator
+    payload, so an instance that had it configured must move the value to the
+    environment variable. Deleting the row keeps it out of database dumps.
+    """
+    Setting.delete().where(Setting.key == "external_base_url").execute()
+
+
+def _v016_user_oidc_profile() -> None:
+    """Store what the provider said about a linked OIDC identity.
+
+    Both columns are informational: the account page shows the upstream display
+    name and when the link was made. Rows bound before this migration keep NULL
+    and simply show less detail -- nothing depends on the values.
+    """
+    columns = {column.name for column in db.get_columns("users")}
+    migrator = SchemaMigrator.from_database(db)
+    operations = []
+    for name, field in (
+        ("oidc_display_name", CharField(max_length=64, null=True)),
+        ("oidc_bound_at", IntegerField(null=True)),
+    ):
+        if name not in columns:
+            operations.append(migrator.add_column("users", name, field))
+    if operations:
+        migrate(*operations)
+
+
+def _v017_user_password_set() -> None:
+    """Track whether the local password is one the user actually knows.
+
+    OIDC accounts are created with a random hash, so asking for "the current
+    password" (unbind, change password) leaves them stuck. Existing rows with an
+    OIDC identity are backfilled as ``False``; the only way such an account could
+    have a known password is the reset-by-email flow, and asking those users to
+    set one more time is harmless.
+    """
+    columns = {column.name for column in db.get_columns("users")}
+    if "password_set" not in columns:
+        migrator = SchemaMigrator.from_database(db)
+        migrate(
+            migrator.add_column(
+                "users", "password_set", BooleanField(default=True)
+            )
+        )
+    db.execute_sql(
+        "UPDATE users SET password_set = %s "
+        "WHERE oidc_subject IS NOT NULL AND oidc_subject <> %s"
+        % (db.param, db.param),
+        (False, ""),
+    )
+
+
+def _v018_lowercase_usernames() -> None:
+    """Normalise usernames created by the OIDC flow.
+
+    Those rows kept the provider's casing. ``authenticate`` lower-cases the
+    submitted name before the lookup, so on a case-sensitive database
+    (PostgreSQL) the account was never found and password login failed. A
+    collision gets a numeric suffix instead of violating the unique column.
+    """
+    with db.atomic():
+        for user in list(User.select()):
+            lowered = (user.username or "").lower()
+            if lowered == user.username:
+                continue
+            candidate = lowered
+            index = 1
+            while User.get_or_none(
+                (User.username == candidate) & (User.id != user.id)
+            ):
+                index += 1
+                suffix = str(index)
+                candidate = "%s%s" % (lowered[: 32 - len(suffix)], suffix)
+            user.username = candidate
+            user.save(only=[User.username])
+
+
 MIGRATIONS = [
     (1, "initial", _v001_initial),
     (2, "album_ownership", _v002_album_ownership),
@@ -295,6 +416,12 @@ MIGRATIONS = [
     (10, "user_status_reason", _v010_user_status_reason),
     (11, "storage_visibility", _v011_storage_visibility),
     (12, "api_token_album", _v012_api_token_album),
+    (13, "image_origin_url_retired", _v013_image_origin_url_retired),
+    (14, "drop_external_base_url_setting", _v014_drop_external_base_url_setting),
+    (15, "image_review", _v015_image_review),
+    (16, "user_oidc_profile", _v016_user_oidc_profile),
+    (17, "user_password_set", _v017_user_password_set),
+    (18, "lowercase_usernames", _v018_lowercase_usernames),
 ]
 
 
@@ -304,22 +431,36 @@ def _ensure_connected() -> None:
 
 
 def upgrade(target: int | None = None) -> list[int]:
-    """Apply pending migrations, returning the versions applied."""
+    """Apply pending migrations, returning the versions applied.
+
+    A row counts as applied only when **both** its version and its name match:
+    a number that was once reused by a different migration (which happens when
+    an unreleased change is withdrawn and another one takes its place) must not
+    swallow the migration that owns the number today. Every function is
+    idempotent, so re-running a withdrawn placeholder is harmless.
+    """
     _ensure_connected()
     db.create_tables([SchemaVersion], safe=True)
-    applied = {row.version for row in SchemaVersion.select()}
+    applied = {row.version: row.name for row in SchemaVersion.select()}
     executed = []
     for version, name, func in MIGRATIONS:
-        if version in applied:
+        current = applied.get(version)
+        if current == name:
             continue
         if target is not None and version > target:
             break
         func()
-        try:
-            SchemaVersion.create(version=version, name=name, applied_at=now())
-        except IntegrityError:
-            #: Another worker recorded the same version first; nothing to do.
-            continue
+        if current is None:
+            try:
+                SchemaVersion.create(version=version, name=name, applied_at=now())
+            except IntegrityError:
+                #: Another worker recorded the same version first; nothing to do.
+                continue
+        else:
+            #: 号被历史迁移占用过：执行后把名字改成当前定义，下次按同名跳过。
+            SchemaVersion.update(name=name, applied_at=now()).where(
+                SchemaVersion.version == version
+            ).execute()
         executed.append(version)
     return executed
 

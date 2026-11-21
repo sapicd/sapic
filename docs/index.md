@@ -61,6 +61,7 @@ extend/index
 extend/contract
 extend/provider
 extend/storage
+extend/moderator
 extend/publishing
 ```
 

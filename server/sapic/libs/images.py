@@ -27,7 +27,7 @@ from urllib.request import (
 )
 from uuid import uuid4
 
-from flask import current_app, url_for
+from flask import current_app, has_request_context, url_for
 from peewee import JOIN, SQL, fn
 from werkzeug.utils import secure_filename
 
@@ -37,6 +37,7 @@ from ..models import Album, AlbumShare, Image, ImageBackend, StorageBackend
 from ..models.album import VISIBILITY_PUBLIC
 from ..models.base import now
 from ..models.image import (
+    REVIEW_BLOCK,
     STATUS_DELETED,
     STATUS_ENABLED,
     live_condition,
@@ -141,9 +142,20 @@ def upload_path_for(owner) -> str:
 
 
 def public_url(sha: str) -> str:
+    """Absolute ``/raw/<sha>`` link.
+
+    ``EXTERNAL_BASE_URL`` (CDN / fixed public host) wins; without it the current
+    request supplies scheme and host, so API clients such as PicGo get a URL
+    they can use as-is instead of a bare path. Only a background context with
+    neither can fall back to the relative path.
+    """
     path = url_for("public.image", sha=sha)
-    base = (current_app.config.get("EXTERNAL_BASE_URL") or "").rstrip("/")
-    return "%s%s" % (base, path) if base else path
+    base = (current_app.config.get("EXTERNAL_BASE_URL") or "").strip().rstrip("/")
+    if base:
+        return base + path
+    if has_request_context():
+        return url_for("public.image", sha=sha, _external=True)
+    return path
 
 
 def tag_condition(tag: str):
@@ -1122,6 +1134,9 @@ def can_view(user, image: Image) -> bool:
     if user is not None and (user.is_admin or image.owner_id == user.id):
         return True
 
+    #: 审核拦截（先发后审）对其他人立即隐藏；本人与管理员仍看得到，才能处理。
+    if image.review_state == REVIEW_BLOCK:
+        return False
     visibility = effective_visibility(image)
     if visibility == VISIBILITY_PUBLIC:
         return True
@@ -1141,10 +1156,16 @@ def effective_plaza(image: Image, album: Album | None = None) -> bool:
 
 
 def public_condition():
-    """Effective visibility is public (image override or album)."""
-    return (Image.visibility == VISIBILITY_PUBLIC) | (
-        Image.visibility.is_null()
-        & ((Image.album.is_null()) | (Album.visibility == VISIBILITY_PUBLIC))
+    """Effective visibility is public (image override or album) and not blocked."""
+    return (
+        (Image.visibility == VISIBILITY_PUBLIC)
+        | (
+            Image.visibility.is_null()
+            & ((Image.album.is_null()) | (Album.visibility == VISIBILITY_PUBLIC))
+        )
+    ) & (
+        #: ``NULL != 'block'`` 在三种数据库里都不成立，必须显式带上 NULL 分支。
+        Image.review_state.is_null() | (Image.review_state != REVIEW_BLOCK)
     )
 
 

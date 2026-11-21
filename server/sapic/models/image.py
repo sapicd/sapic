@@ -23,6 +23,14 @@ from .user import User
 STATUS_ENABLED = "enabled"
 STATUS_DELETED = "deleted"
 
+#: Moderation verdict of a ``moderator`` hook. ``NULL`` means "not reviewed
+#: yet"; ``running`` is the short claim window of one scan, so two workers
+#: never judge the same row; ``block`` hides the image until an administrator
+#: approves or purges it (the row itself is never deleted by a hook).
+REVIEW_RUNNING = "running"
+REVIEW_PASS = "pass"
+REVIEW_BLOCK = "block"
+
 
 class Image(BaseModel):
     id = AutoField()
@@ -52,6 +60,12 @@ class Image(BaseModel):
     tags = JSONTextField(null=True)
     #: External link registered without downloading; NULL for stored objects.
     source_url = CharField(max_length=1024, null=True)
+    #: Moderation verdict (see ``REVIEW_*``); NULL until a scan runs.
+    review_state = CharField(max_length=16, null=True)
+    #: When the verdict was written (also set on the claim of a scan).
+    reviewed_at = IntegerField(null=True)
+    #: Short reason quoted from the moderator hook (or the admin's decision).
+    review_note = CharField(max_length=255, null=True)
     created_at = IntegerField(default=now)
     updated_at = IntegerField(default=now)
     #: NULL means "never expires"; otherwise the unix ts when the image dies.
@@ -65,6 +79,9 @@ class Image(BaseModel):
             (("album", "created_at", "id"), False),
             (("status",), False),
             (("expire_at",), False),
+            #: The moderator scan filters on a NULL verdict; the index keeps it
+            #: from walking the whole table on every run.
+            (("review_state",), False),
         )
 
 

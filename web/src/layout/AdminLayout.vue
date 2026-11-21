@@ -14,6 +14,7 @@ const items = computed(() => [
   { name: 'admin-hooks', label: t('admin.hooks'), icon: 'Connection' },
   { name: 'admin-backends', label: t('admin.backends'), icon: 'FolderOpened' },
   { name: 'admin-users', label: t('admin.users'), icon: 'UserFilled' },
+  { name: 'admin-scheduler', label: t('admin.scheduler'), icon: 'Timer' },
 ])
 
 //: ``/admin`` 上的默认子路由没有命名，按「站点设置」高亮。
@@ -74,10 +75,19 @@ onMounted(() => loadVersion())
     <el-dialog v-model="versionDialog" :title="t('admin.versionInfo')" width="440px">
       <el-descriptions :column="1" border size="small">
         <el-descriptions-item :label="t('admin.current')">
-          v{{ version?.current || '—' }}
+          {{ version?.current ? `v${version.current}` : '—' }}
         </el-descriptions-item>
         <el-descriptions-item :label="t('admin.latest')">
-          {{ version?.latest || '—' }}
+          {{ version?.latest ? `v${version.latest}` : '—' }}
+          <el-tag
+            v-if="version?.has_update"
+            size="small"
+            type="danger"
+            effect="plain"
+            style="margin-left: 8px"
+          >
+            {{ t('admin.updatable') }}
+          </el-tag>
         </el-descriptions-item>
         <el-descriptions-item :label="t('admin.releasedAt')">
           {{ version?.released_at ? formatTime(version.released_at) : '—' }}
@@ -108,23 +118,50 @@ onMounted(() => loadVersion())
       </p>
 
       <template #footer>
-        <el-link
-          v-if="version?.url"
-          type="primary"
-          :underline="false"
-          :href="version.url"
-          target="_blank"
-          rel="noopener"
-        >
-          {{ t('admin.releasePage') }}
-        </el-link>
-        <el-button :loading="versionLoading" @click="loadVersion(true)">
-          {{ t('admin.recheck') }}
-        </el-button>
-        <el-button type="primary" @click="versionDialog = false">
-          {{ t('common.close') }}
-        </el-button>
+        <div class="version-footer">
+          <el-link
+            v-if="version?.url"
+            type="primary"
+            :underline="false"
+            :href="version.url"
+            target="_blank"
+            rel="noopener"
+          >
+            {{ t('admin.releasePage') }}
+          </el-link>
+          <span v-else />
+
+          <div class="version-footer__actions">
+            <el-button :loading="versionLoading" @click="loadVersion(true)">
+              {{ t('admin.recheck') }}
+            </el-button>
+            <el-button type="primary" @click="versionDialog = false">
+              {{ t('common.close') }}
+            </el-button>
+          </div>
+        </div>
       </template>
     </el-dialog>
   </div>
 </template>
+
+<style scoped>
+/*: 发布页链接靠左、按钮靠右，避免三个控件挤在右下角。 */
+.version-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.version-footer__actions {
+  display: flex;
+  align-items: center;
+}
+
+/*: 两个按钮之间只保留 Element 自带的间距，不叠加外层 gap。 */
+.version-footer__actions :deep(.el-button + .el-button) {
+  margin-left: 12px;
+}
+</style>

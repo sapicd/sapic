@@ -43,6 +43,12 @@ spec:
             #: SQLite 是库级写锁，多进程会互相抢锁；换 PostgreSQL 时改成多 worker。
             - name: WEB_CONCURRENCY
               value: "1"
+            #: 到期清理与审核扫描随容器内 gunicorn 起，多 worker 靠 data/ 下的文件锁
+            #: 选主。本清单是 replicas=1 + Recreate，所以每 Pod 一个调度者刚好。
+            #: 多副本（各 Pod 独立卷）会把调度器复制多份：设成 "0"，另起一个
+            #: `flask sa scheduler` 的独立 Deployment，或用 CronJob 跑 --once。
+            - name: sapic_scheduler
+              value: "1"
             #: 要外部 PostgreSQL 就打开这项（DSN 里含密码，注意别提交到仓库）。
             # - name: sapic_db_url
             #   value: "postgresql://user:pass@db-host:5432/sapic"

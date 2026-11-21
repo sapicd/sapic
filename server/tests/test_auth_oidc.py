@@ -1,14 +1,21 @@
 # -*- coding: utf-8 -*-
 """Passport (OIDC) login: the start/callback flow and the hook contract."""
 
+import io
 from json import dumps
 from urllib.parse import parse_qs, urlparse
 
 import pytest
 
 from sapic.libs.settings import set_setting
-from sapic.libs.users import bind_oidc_identity, create_user, resolve_oidc_user
-from sapic.models import User
+from sapic.libs.users import (
+    authenticate,
+    bind_oidc_identity,
+    change_password,
+    create_user,
+    resolve_oidc_user,
+)
+from sapic.models import Image, User
 
 CONFIG = {
     "issuer": "https://passport.example.com",
@@ -466,6 +473,162 @@ def test_bind_holds_when_the_configured_issuer_ends_with_a_slash(
     assert passport["bound"]
     #: 账号设置里的 Provider 名称同样带 i18n 键。
     assert passport["title_key"] == "hooks.passport.title"
+
+
+def test_identities_shows_the_linked_account_details(app, client, monkeypatch):
+    """绑定的第三方信息要能回显：显示名、脱敏 subject、绑定时间。"""
+    user_id = local_user(app)
+    enable_hook(app)
+    module = hook_module(app)
+    csrf = login(client)
+
+    _, state = start_flow(
+        client, monkeypatch, module, query="?bind=1&next=/settings"
+    )
+    identity(module, monkeypatch, subject="passport-user-1234", nickname="Carol")
+    client.get("/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state)
+
+    items = client.get("/api/v2/auth/identities").get_json()["data"]["items"]
+    passport = next(item for item in items if item["name"] == "passport")
+    assert passport["bound"] is True
+    assert passport["display_name"] == "Carol"
+    #: 本地邮箱能让人认出绑的是哪个账号，比一串脱敏 subject 有用。
+    assert passport["email"] == "carol@example.com"
+    #: 中间被遮掉、只留首尾：响应体里不该出现完整的 subject。
+    assert passport["subject"] == "pass" + "*" * 12 + "34"
+    assert passport["issuer"] == CONFIG["issuer"]
+    assert passport["bound_at"]
+
+    #: 解绑后详情一并清空，重新显示为「未绑定」。
+    response = client.delete(
+        "/api/v2/auth/identities/passport",
+        json={"password": "secret123"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 200
+    with app.app_context():
+        user = User.get_by_id(user_id)
+        assert user.oidc_bound_at is None
+        assert user.oidc_display_name is None
+
+
+def test_returning_login_refreshes_a_legacy_display_name(app, client, monkeypatch):
+    """加字段之前建立的绑定没有显示名：下次用 provider 登录时补上，不必解绑重绑。"""
+    user_id = local_user(app)
+    enable_hook(app)
+    module = hook_module(app)
+    with app.app_context():
+        bind_oidc_identity(User.get_by_id(user_id), CONFIG["issuer"], "u-7")
+        assert User.get_by_id(user_id).oidc_display_name is None
+
+    _, state = start_flow(client, monkeypatch, module)
+    identity(module, monkeypatch, subject="u-7", nickname="Carol New")
+    response = client.get(
+        "/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state
+    )
+    assert response.status_code in (302, 303)
+
+    with app.app_context():
+        assert User.get_by_id(user_id).oidc_display_name == "Carol New"
+
+
+def test_oidc_username_is_lowercased_so_password_login_works(app):
+    """provider 的用户名带大写时也按小写存，否则密码登录查不到这一行。"""
+    with app.app_context():
+        user = resolve_oidc_user(
+            CONFIG["issuer"], "u-11", username="PassportUID", nickname="Pat"
+        )
+        assert user.username == "passportuid"
+
+        change_password(user, "secret123")
+        assert authenticate("PassportUID", "secret123").id == user.id
+
+
+def test_unbind_keeps_the_account_and_its_images(app, client):
+    """解绑只摘掉身份、不删账号，所以名下有图片也直接放行。"""
+    user_id = local_user(app)
+    enable_hook(app)
+    csrf = login(client)
+    with app.app_context():
+        bind_oidc_identity(User.get_by_id(user_id), CONFIG["issuer"], "u-10")
+
+    uploaded = client.post(
+        "/api/v2/upload",
+        data={"file": (io.BytesIO(b"fake-image-bytes"), "photo.png")},
+        content_type="multipart/form-data",
+        headers={"X-CSRF-Token": csrf},
+    )
+    sha = uploaded.get_json()["data"]["image"]["sha"]
+
+    response = client.delete(
+        "/api/v2/auth/identities/passport",
+        json={"password": "secret123"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 200
+    with app.app_context():
+        user = User.get_by_id(user_id)
+        assert user.oidc_subject is None
+        assert Image.select().where(Image.sha == sha).exists()
+
+
+def test_returning_login_fills_an_empty_local_profile(app, client, monkeypatch):
+    """本地昵称/邮箱为空时，用 provider 的资料补全（只补空，不覆盖）。"""
+    user_id = local_user(app)
+    enable_hook(app)
+    module = hook_module(app)
+    with app.app_context():
+        user = User.get_by_id(user_id)
+        bind_oidc_identity(user, CONFIG["issuer"], "u-8")
+        user.nickname = ""
+        user.email = None
+        user.email_verified = False
+        user.save(only=[User.nickname, User.email, User.email_verified])
+
+    _, state = start_flow(client, monkeypatch, module)
+    identity(
+        module,
+        monkeypatch,
+        subject="u-8",
+        nickname="Carol New",
+        email="new@example.com",
+    )
+    client.get("/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state)
+
+    with app.app_context():
+        user = User.get_by_id(user_id)
+        assert user.nickname == "Carol New"
+        assert user.email == "new@example.com"
+        assert user.email_verified is True
+        #: 第三方显示名每次登录都跟随 provider。
+        assert user.oidc_display_name == "Carol New"
+
+
+def test_returning_login_keeps_profile_values_chosen_locally(app, client, monkeypatch):
+    """已填过的昵称/邮箱不被上游覆盖，只有第三方显示名跟着变。"""
+    user_id = local_user(app)
+    enable_hook(app)
+    module = hook_module(app)
+    with app.app_context():
+        bind_oidc_identity(
+            User.get_by_id(user_id), CONFIG["issuer"], "u-9", "Old Name"
+        )
+
+    _, state = start_flow(client, monkeypatch, module)
+    identity(
+        module,
+        monkeypatch,
+        subject="u-9",
+        nickname="Upstream Name",
+        email="upstream@example.com",
+    )
+    client.get("/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state)
+
+    with app.app_context():
+        user = User.get_by_id(user_id)
+        assert user.nickname == "carol"
+        assert user.email == "carol@example.com"
+        assert user.oidc_display_name == "Upstream Name"
 
 
 def test_bind_reports_an_identity_bound_to_another_account(app, client, monkeypatch):

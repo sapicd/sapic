@@ -16,6 +16,10 @@
   --app-surface-strong: rgba(255, 255, 255, 0.82);
   --app-surface-soft: rgba(255, 255, 255, 0.38);
   --app-border: rgba(255, 255, 255, 0.55);
+  /*: 玻璃面板描边：比 --app-border 更实。backdrop-filter 的模糊快照在面板最外
+      1px 会混进暗色，Chrome 上表现为顶部断断续续的点状黑线；描边不透明度低了
+      盖不住（55% 白只滤掉一半），所以面板边单独用这个更实的白。 */
+  --app-glass-edge: rgba(255, 255, 255, 0.9);
   --app-divider: rgba(16, 24, 40, 0.08);
   --app-blur: saturate(160%) blur(16px);
 
@@ -659,11 +663,21 @@ a {
 
 .upload-item {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
   border-radius: var(--app-radius-sm);
   background: var(--app-surface);
+}
+
+/*: 失败原因独占一行，长错误（带请求 ID）也能换行显示完。 */
+.upload-item__error {
+  flex: 1 1 100%;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--el-color-danger);
+  word-break: break-word;
 }
 
 .upload-item__name {
@@ -702,7 +716,7 @@ a {
   padding: 10px 14px 10px 10px;
   border-radius: var(--app-radius);
   background: var(--app-surface);
-  border: 1px solid var(--app-border);
+  border: 1px solid var(--app-glass-edge);
   backdrop-filter: var(--app-blur);
   box-shadow: var(--app-shadow-sm);
 }
@@ -1146,7 +1160,7 @@ a {
   overflow: hidden;
   border-radius: var(--app-radius);
   background: var(--app-surface);
-  border: 1px solid var(--app-border);
+  border: 1px solid var(--app-glass-edge);
   backdrop-filter: var(--app-blur);
   box-shadow: var(--app-shadow-sm);
   transition: transform 0.25s, box-shadow 0.25s;
@@ -1183,7 +1197,7 @@ a {
   padding: 10px 14px;
   border-radius: var(--app-radius);
   background: var(--app-surface);
-  border: 1px solid var(--app-border);
+  border: 1px solid var(--app-glass-edge);
   backdrop-filter: var(--app-blur);
 }
 
@@ -1324,7 +1338,7 @@ a {
   border-radius: var(--app-radius);
   overflow: hidden;
   background: var(--app-surface);
-  border: 1px solid var(--app-border);
+  border: 1px solid var(--app-glass-edge);
   padding: 10px;
 }
 
@@ -1450,7 +1464,7 @@ a {
    Element Plus 质感覆盖
    ============================================================ */
 .el-card {
-  border: 1px solid var(--app-border);
+  border: 1px solid var(--app-glass-edge);
   border-radius: var(--app-radius);
   background: var(--app-surface);
   backdrop-filter: var(--app-blur);
@@ -1570,7 +1584,7 @@ a {
 .el-dropdown__popper,
 .el-select__popper {
   border-radius: 14px;
-  border: 1px solid var(--app-border);
+  border: 1px solid var(--app-glass-edge);
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: var(--app-blur);
   box-shadow: var(--app-shadow);
@@ -1596,7 +1610,7 @@ a {
 
 .el-alert {
   border-radius: 14px;
-  border: 1px solid var(--app-border);
+  border: 1px solid var(--app-glass-edge);
   background: var(--app-surface);
   backdrop-filter: var(--app-blur);
 }
@@ -1767,7 +1781,7 @@ a {
   padding: 12px;
   border-radius: var(--app-radius);
   background: var(--app-surface);
-  border: 1px solid var(--app-border);
+  border: 1px solid var(--app-glass-edge);
   backdrop-filter: var(--app-blur);
 }
 

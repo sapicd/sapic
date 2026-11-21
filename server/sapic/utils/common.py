@@ -186,6 +186,19 @@ def host_allowed(host: str, patterns) -> bool:
     return False
 
 
+def mask_secret(value: str, head: int = 4, tail: int = 2) -> str:
+    """Hide the middle of a long identifier so the UI can echo it safely.
+
+    OIDC subjects are opaque UUID-ish strings: showing the head and tail is
+    enough for a user to recognise the linked account, and the hidden middle is
+    useless to anyone reading a response body.
+    """
+    text = str(value or "")
+    if len(text) <= head + tail:
+        return text
+    return text[:head] + "*" * (len(text) - head - tail) + text[-tail:]
+
+
 #: 对外请求代理：``urllib`` 只支持 http/https 代理，socks 会被忽略。
 PROXY_SCHEMES = ("http", "https")
 

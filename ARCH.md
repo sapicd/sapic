@@ -216,10 +216,14 @@ server/sapic/
   `DELETE /hooks/import/<module>?purge=1` 连同包文件一起删除。市场列表只是数据源，
   钩子加载始终以 `hooks_imported` + 目录扫描为准。
 - **扩展点契约集中在 `libs/ext.py`**：`__catalog__` 决定 kind（`auth`→provider、
-  `upload`→driver、`processor`→processor、`mail`→mail，其余为纯界面钩子），必需函数缺失时清单里的
-  `warnings` 会点明。认证流程（`views/auth`）、存储解析（`libs/storage`）、
+  `upload`→driver、`processor`→processor、`moderator`→moderator、`mail`→mail，其余为纯界面钩子），
+  必需函数缺失时清单里的 `warnings` 会点明。认证流程（`views/auth`）、存储解析（`libs/storage`）、
   后台接口都问它，不再各自 `getattr` 判断，第三方 Provider/驱动因此无需改核心代码。
   契约细节见 `docs/extend/`。
+- 内容审核（`moderator`）是**先发后审**：`flask sa review-pending` 扫描 `review_state IS NULL`
+  的图，每行原子抢占后才调 `review_image`，结论写 `review_state`（`pass` / `block`，失败留空重试）。
+  `block` 只让 `can_view` 与 `public_condition` 挡住公开口径，记录与文件都保留；管理员通过
+  `views/review.py` 的接口放行，或 `purge_image` 物理删除（与过期清理同一条路径）。
 - 内置钩子（`up2qiniu` / `up2upyun` / `up2github` / `up2gitee` / `passport` / `sendcloud` / `pic2webp`）用到的
   SDK 属基本能力，统一放在 `server/requirements/base.txt`；第三方钩子作为独立 pip 包自带依赖，
   代码里仍用 `try/except ImportError` 兜底给出「请安装 X」的提示。

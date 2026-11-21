@@ -35,7 +35,7 @@ HIDDEN_ENDPOINTS = {
 
 #: 整块不进文档的蓝图：管理员接口（站点设置 / 用户 / 存储后端）与钩子插件接口这一版
 #: 不对外提供文档，连路由也不列。等它们稳定后再从集合里移除，并在 ``OPERATIONS`` 里补描述。
-HIDDEN_BLUEPRINTS = {"settings", "users", "backends", "hooks"}
+HIDDEN_BLUEPRINTS = {"settings", "users", "backends", "hooks", "review", "scheduler"}
 
 
 # --------------------------------------------------------------------- schemas
@@ -368,7 +368,7 @@ OPERATIONS: dict[str, dict] = {
         "tag": "认证",
         "auth": "none",
         "status": 201,
-        "description": "关闭注册或 `register_review` 打开时行为不同：后者建号后是待审核状态。",
+        "description": "关闭注册或 `register_review` 打开时行为不同：后者建号后是待审核状态（可以登录，但暂时不能上传）。",
         "body": _json_body(
             {
                 "username": _STRING,
@@ -386,7 +386,7 @@ OPERATIONS: dict[str, dict] = {
         "auth": "none",
         "body": _json_body({"username": _STRING, "password": _STRING}, ("username", "password")),
         "data": _ref("LoginPayload"),
-        "errors": {401: "用户名或密码错误", 403: "账号待审核/已禁用/未开放密码登录"},
+        "errors": {401: "用户名或密码错误", 403: "账号已拒绝/已禁用/未开放密码登录"},
     },
     "auth.logout": {
         "summary": "退出登录",
@@ -423,6 +423,13 @@ OPERATIONS: dict[str, dict] = {
                             "name": _STRING,
                             "title": _STRING,
                             "bound": _BOOL,
+                            #: 仅 ``bound=true`` 时返回：第三方显示名、脱敏后的
+                            #: subject、issuer 与绑定时间。
+                            "display_name": _STRING,
+                            "email": _STRING,
+                            "subject": _STRING,
+                            "issuer": _STRING,
+                            "bound_at": _INT,
                         },
                     }
                 )
@@ -433,6 +440,7 @@ OPERATIONS: dict[str, dict] = {
         "summary": "解绑第三方身份",
         "tag": "认证",
         "auth": "login",
+        "description": "只移除该 provider 的绑定，不删除账号；图片、相册与令牌保持不变，所以有图片也能直接解绑。",
         "path": {"name": "Provider 名"},
         "body": _json_body({"password": _STRING}, ("password",)),
         "errors": {400: "该身份未绑定", 403: "密码错误"},
@@ -526,7 +534,10 @@ OPERATIONS: dict[str, dict] = {
         "summary": "修改密码",
         "tag": "认证",
         "auth": "login",
-        "description": "成功后吊销其它会话，并给当前会话发新 CSRF。",
+        "description": (
+            "统一登录建号、尚未设置本地密码的账号不校验 old_password，用于首次设置密码；"
+            "成功后吊销其它会话，并给当前会话发新 CSRF。"
+        ),
         "body": _json_body({"old_password": _STRING, "new_password": _STRING}),
         "data": {"type": "object", "properties": {"updated": _BOOL, "csrf": _STRING}},
         "errors": {403: "当前密码不正确"},
@@ -866,9 +877,9 @@ TRANSLATIONS_EN: dict[str, str] = {
     "修改资料": "Update profile",
     "健康检查": "Health check",
     "公开标识，`/raw/<sha>` 用它": "Public identifier, used by `/raw/<sha>`",
-    "关闭注册或 `register_review` 打开时行为不同：后者建号后是待审核状态。": (
+    "关闭注册或 `register_review` 打开时行为不同：后者建号后是待审核状态（可以登录，但暂时不能上传）。": (
         "Behaviour depends on the registration switches: with `register_review` on, new accounts "
-        "start as pending review."
+        "start as pending review (they can sign in, but cannot upload yet)."
     ),
     "其中一张不存在或不属于当前账号": "One of them is missing or not owned by this account",
     "写操作要带回 `X-CSRF-Token` 头（仅 Cookie 会话需要）": (
@@ -928,12 +939,19 @@ TRANSLATIONS_EN: dict[str, str] = {
     "广场": "Plaza",
     "当前会话": "Current session",
     "当前密码不正确": "The current password is incorrect",
+    "只移除该 provider 的绑定，不删除账号；图片、相册与令牌保持不变，所以有图片也能直接解绑。": (
+        "Only the provider binding is removed; the account, its images, albums and tokens stay "
+        "as they are, so unbinding works even while images remain."
+    ),
     "必须提交当前密码；名下还有未删除的图片时直接 409，管理员不能自删。": (
         "The current password is required; returns 409 while undeleted images remain, and admins "
         "cannot delete themselves."
     ),
+    "统一登录建号、尚未设置本地密码的账号不校验 old_password，用于首次设置密码；"
     "成功后吊销其它会话，并给当前会话发新 CSRF。": (
-        "On success the other sessions are revoked and the current one receives a new CSRF token."
+        "Accounts created through unified login that have not set a local password skip the "
+        "old_password check, which is how they set one for the first time; on success the other "
+        "sessions are revoked and the current one receives a new CSRF token."
     ),
     "成员用户 ID": "Member user ID",
     "批量修改属性": "Batch update attributes",
@@ -1003,8 +1021,8 @@ TRANSLATIONS_EN: dict[str, str] = {
     "账号不可用、关闭了匿名上传，或站点已冻结上传": (
         "Account unavailable, anonymous upload disabled, or uploads are frozen"
     ),
-    "账号待审核/已禁用/未开放密码登录": (
-        "Account pending review / disabled / password login not enabled"
+    "账号已拒绝/已禁用/未开放密码登录": (
+        "Account rejected / disabled / password login not enabled"
     ),
     "超过 2 MB": "Larger than 2 MB",
     "超过单文件大小上限": "Exceeds the per-file size limit",

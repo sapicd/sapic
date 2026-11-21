@@ -190,7 +190,7 @@ def test_private_backend_relays_a_signed_read(app, client, driver, monkeypatch):
     image = upload(client, csrf)
     sha = image["sha"]
     #: 私有桶的直链匿名访问会 403，公开图也只能走 sapic。
-    assert image["src"] == "/raw/%s" % sha
+    assert image["src"] == "http://localhost/raw/%s" % sha
 
     seen = {}
     remote = FakeRemote()
@@ -252,7 +252,7 @@ def test_failed_private_replica_falls_back(app, client, driver, monkeypatch):
 
     detail = client.get("/api/v2/images/%s" % sha).get_json()["data"]
     #: 最高优先级副本在私有桶里，不能借用下一个副本的直链。
-    assert detail["image"]["src"] == "/raw/%s" % sha
+    assert detail["image"]["src"] == "http://localhost/raw/%s" % sha
 
     def failing_open(target, headers=None, allow_private=False):
         raise ApiError("bucket is down")

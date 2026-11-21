@@ -90,6 +90,17 @@ class BaseConfig:
     ALLOW_REGISTER: bool = True
     ALLOW_ANONYMOUS_UPLOAD: bool = False
 
+    #: Background jobs (expired-image purge + moderation scan). Several workers
+    #: race for one file lock under ``data/``, so only one of them lives the
+    #: schedule and no Redis/queue is needed. Set ``sapic_scheduler=0`` when a
+    #: standalone ``flask sa scheduler`` process runs them instead.
+    SCHEDULER: bool = True
+    #: Seconds between two expiry sweeps (10 minutes).
+    SCHEDULER_PURGE_INTERVAL: int = 600
+    #: Seconds between two moderation scans (5 minutes); a run without an
+    #: enabled moderator hook returns immediately.
+    SCHEDULER_REVIEW_INTERVAL: int = 300
+
 
 class DevConfig(BaseConfig):
     """Development defaults: debug on, verbose logging."""
@@ -188,6 +199,15 @@ def _check_config_value(cfg: dict) -> None:
     assert (
         isinstance(cfg["SESSION_TTL"], int) and cfg["SESSION_TTL"] >= 60
     ), "SESSION_TTL must be at least 60 seconds"
+    for key in ("SCHEDULER_PURGE_INTERVAL", "SCHEDULER_REVIEW_INTERVAL"):
+        #: 下限 10s：0/负数会让调度器忙循环，几乎等于死循环。
+        #: 缺键时跳过，方便只带少数字段的调用方复用这个校验。
+        value = cfg.get(key)
+        if value is None:
+            continue
+        assert (
+            isinstance(value, int) and value >= 10
+        ), "%s must be at least 10 seconds" % key
 
     #: 不再强制生产替换：默认值本身足够长，单机自用开箱即用（少一步必填配置）。
     #: 它是公开串——公网多用户站点仍建议用 sapic_secretkey 换成自己的，

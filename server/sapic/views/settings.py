@@ -24,7 +24,6 @@ _SMTP_FIELDS = {"host", "port", "user", "password", "from", "tls"}
 
 #: Editable string settings.
 _STR_KEYS = {
-    "external_base_url",
     "forbidden_username",
     "login_notice",
     "site_announcement",

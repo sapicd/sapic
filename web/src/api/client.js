@@ -8,11 +8,13 @@ let csrfToken = ''
 let unauthorizedHandler = null
 
 export class ApiError extends Error {
-  constructor(message, code, status) {
+  constructor(message, code, status, requestId = '') {
     super(message)
     this.name = 'ApiError'
     this.code = code
     this.status = status
+    //: 后端每个响应都带 request_id，5xx 时展示出来才能对着 sys.log 查原因。
+    this.requestId = requestId
   }
 }
 
@@ -69,6 +71,7 @@ async function request(method, path, options = {}) {
       payload?.message || response.statusText || t('errors.http'),
       payload?.code || 'HTTP_ERROR',
       response.status,
+      payload?.request_id || response.headers.get('X-Request-Id') || '',
     )
   }
   return payload ? payload.data : null
@@ -84,8 +87,13 @@ export const api = {
 
 export function errorMessage(error, fallback = t('errors.operation')) {
   //: ApiError.message 保留后端英文原文（排查用），展示前按当前语言转换。
-  if (error instanceof ApiError) {
-    return localizeMessage(error.message, error.code) || fallback
+  const message =
+    error instanceof ApiError
+      ? localizeMessage(error.message, error.code) || fallback
+      : localizeMessage(error?.message) || fallback
+  //: 服务端 5xx 的原因只会写在 sys.log 里，附上请求 ID 才能对上那一行。
+  if (error instanceof ApiError && error.requestId && error.status >= 500) {
+    return `${message}${t('errors.requestId', { id: error.requestId })}`
   }
-  return localizeMessage(error?.message) || fallback
+  return message
 }

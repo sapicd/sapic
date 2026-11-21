@@ -212,12 +212,40 @@ def test_register_review_and_reserved_username(app, client):
     assert response.status_code == 201
     assert response.get_json()["data"]["user"]["status"] == -1
 
-    #: 待审核账号不能登录，否则「审核」形同虚设。
-    denied = guest.post(
+    #: 待审核账号可以登录（v1 语义），但不能上传图片。
+    allowed = guest.post(
         "/api/v2/auth/login",
         json={"username": "bobby", "password": "secret123"},
     )
-    assert denied.status_code == 403
+    assert allowed.status_code == 200
+    data = allowed.get_json()["data"]
+    assert data["user"]["status"] == -1
+
+    blocked = guest.post(
+        "/api/v2/upload",
+        data={"file": (io.BytesIO(b"fake-image-bytes"), "photo.png")},
+        content_type="multipart/form-data",
+        headers={"X-CSRF-Token": data["csrf"]},
+    )
+    assert blocked.status_code == 403
+    assert "cannot upload" in blocked.get_json()["message"]
+
+    #: 头像也落到默认相册，同一口径一起拦，避免成为绕过入口。
+    avatar = guest.post(
+        "/api/v2/auth/avatar",
+        data={"file": (io.BytesIO(b"fake-image-bytes"), "avatar.png")},
+        content_type="multipart/form-data",
+        headers={"X-CSRF-Token": data["csrf"]},
+    )
+    assert avatar.status_code == 403
+
+    #: 导入外链同样算新增图片。
+    imported = guest.post(
+        "/api/v2/images/import",
+        json={"items": ["https://example.com/a.png"]},
+        headers={"X-CSRF-Token": data["csrf"]},
+    )
+    assert imported.status_code == 403
 
 
 def smtp_block(**overrides):

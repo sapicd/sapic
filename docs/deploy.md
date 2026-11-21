@@ -339,11 +339,48 @@ systemctl restart sapic        # incremental migrations run at startup
 - 健康检查：`GET /api/v2/health` → `{"status": "ok|degraded", "version", "database"}`，
   数据库不通返回 503。
 - 日志：只记**应用日志**，同时写文件与 stdout（systemd 下 `journalctl -u sapic -f`）。
-  文件在 `sapic_log_dir`（默认 `<server>/data/log`）下的 `sys.log`，按 10 MB × 5 轮转；
-  多 worker 下各进程各自轮转，量大时交给 logrotate。**不记访问日志**：gunicorn 没开，容器里的
-  nginx 也默认 `access_log off;`，要记录下来就设 `SAPIC_NGINX_ACCESS_LOG=1`（见「容器与编排」）。
-  日志级别用 `sapic_loglevel` 调；把 `sapic_log_dir` 置空则只保留 stdout/stderr。
+  文件在 `sapic_log_dir`（默认 `<server>/data/log`）下的 `sys.log`，按天轮转、保留 10 天
+  （归档名如 `sys.log.20261121`）；多 worker 下各进程各自轮转，量大时交给 logrotate。
+  行格式与其它服务一致，方便统一采集：`[ INFO ] 2026-11-21 09:09:41 images.py:735 消息`；
+  请求内的记录在消息前多一个 `rid=<X-Request-Id>`，可与前端报错里的请求 ID 对上。
+  **不记访问日志**：gunicorn 没开，容器里的 nginx 也默认 `access_log off;`，要记录下来就设
+  `SAPIC_NGINX_ACCESS_LOG=1`（见「容器与编排」）。日志级别用 `sapic_loglevel` 调；
+  把 `sapic_log_dir` 置空则只保留 stdout/stderr。
 - 每个请求都会带 `X-Request-Id`（也可由上游传入），排查时用它串日志。
+
+### 后台任务（到期清理与审核扫描）
+
+两类后台任务由进程内 APScheduler 驱动，随服务启动，**不需要 cron**：
+
+| 任务 | 默认间隔 | 作用 |
+| --- | --- | --- |
+| 过期清理 | 600s（`sapic_scheduler_purge_interval`） | 删除到期图片的对象与元数据 |
+| 审核扫描 | 300s（`sapic_scheduler_review_interval`） | 调 `moderator` 钩子判定未审的图；无此钩子时直接跳过 |
+
+- **多 worker 选主**：每个 worker 启动时抢 `server/data/scheduler.lock` 的文件锁（`flock`），
+  只有抢到的进程跑调度，其余跳过，所以 `gunicorn -w 4` 不会跑四份。
+- **多副本**：各 Pod 有独立数据卷时锁不共享，会各自跑一份。调度任务本身幂等
+  （清理按行、审核按行原子抢占），重复执行只是浪费；要严格单点就在 web 端设
+  `sapic_scheduler=0`，另起一个 `flask sa scheduler` 的独立 Deployment / systemd 服务。
+- **独立进程跑**（web 让位）：
+
+  ```bash
+  # web 侧：sapic_scheduler=0
+  cd /srv/sapic/server && ../.venv/bin/flask sa scheduler   # 前台常驻，日志进 sys.log
+  ```
+- 一次性执行（k8s CronJob 等）：
+
+  ```bash
+  cd /srv/sapic/server && ../.venv/bin/flask sa scheduler --once
+  ```
+- **后台可观测**：管理员在「后台管理 → 定时任务」看当前调度者、两个任务的间隔/下次运行/上次结果，
+  也可以「立即执行」一次（同步执行、批量很小，不会等太久）。多 worker 下这一页显示的是
+  **处理该请求的进程**：落在待命进程时会标「其他进程调度中」，手动执行仍然有效。
+- 审核命中只把图片**隐藏**（`review_state=block`），记录与文件都还在；管理员在
+  `GET /api/v2/review?state=block` 里复核，`POST /api/v2/review/<sha>` 用
+  `approve` 恢复或 `purge` 物理删除。
+- 钩子需要能拿到图片地址时，先配 `sapic_external_base_url`（扫描把 `external_base_url + /raw/<sha>`
+  交给钩子）。契约见[内容审核](extend/moderator.md)。
 
 ## 常见问题
 

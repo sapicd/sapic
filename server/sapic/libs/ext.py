@@ -26,6 +26,12 @@ Recognised catalogues:
 ``processor``
     A stream processor (:data:`PROCESSOR_FUNCS`) that may rewrite the uploaded
     bytes before they are stored.
+``moderator``
+    A content reviewer (:data:`MODERATOR_FUNCS`) that returns a verdict for one
+    stored image (sexual content, violence, ...). It never runs inside the
+    upload request: a maintenance scan claims unpublished rows, asks every
+    enabled moderator and persists the verdict. ``block`` only hides the image
+    (``review_state``) -- deleting the row stays an administrator's decision.
 ``mail``
     A mail transport (:data:`MAIL_FUNCS`) that takes over from the built-in
     SMTP client while it reports itself configured; the readiness check is an
@@ -45,12 +51,14 @@ logger = logging.getLogger(__name__)
 CATALOG_AUTH = "auth"
 CATALOG_UPLOAD = "upload"
 CATALOG_PROCESSOR = "processor"
+CATALOG_MODERATOR = "moderator"
 CATALOG_MAIL = "mail"
 
 #: Extension kinds reported by :func:`kind_of` (a catalogue, plus ``ui``).
 KIND_PROVIDER = "provider"
 KIND_DRIVER = "driver"
 KIND_PROCESSOR = "processor"
+KIND_MODERATOR = "moderator"
 KIND_MAIL = "mail"
 KIND_UI = "ui"
 
@@ -70,6 +78,13 @@ DRIVER_READ_FUNC = "upimg_url"
 
 #: Required by ``processor``: rewrite the payload before it is stored.
 PROCESSOR_FUNCS = ("upimg_stream_processor",)
+
+#: Required by ``moderator``: judge one stored image. The function receives
+#: ``image`` (a plain dict, see :mod:`sapic.libs.review`) and its own ``config``,
+#: and returns ``{code, verdict, message}``: ``code`` 0 means "judged",
+#: ``verdict`` is ``pass`` or ``block``, anything else is retried by the next
+#: scan. It must not delete or edit the row itself -- that is the caller's job.
+MODERATOR_FUNCS = ("review_image",)
 
 #: Required by ``mail``: deliver one plain-text message (``config=``, ``to=``,
 #: ``subject=``, ``body=``), raising ``ValueError`` when delivery fails.
@@ -121,6 +136,13 @@ def is_processor(module) -> bool:
     )
 
 
+def is_moderator(module) -> bool:
+    """Whether the module satisfies the content moderation contract."""
+    return catalog_of(module) == CATALOG_MODERATOR and not missing_callables(
+        module, MODERATOR_FUNCS
+    )
+
+
 def is_mailer(module) -> bool:
     """Whether the module satisfies the mail transport contract."""
     return catalog_of(module) == CATALOG_MAIL and not missing_callables(
@@ -155,6 +177,8 @@ def kind_of(module) -> str:
         return KIND_DRIVER
     if catalog == CATALOG_PROCESSOR:
         return KIND_PROCESSOR
+    if catalog == CATALOG_MODERATOR:
+        return KIND_MODERATOR
     if catalog == CATALOG_MAIL:
         return KIND_MAIL
     return KIND_UI
@@ -184,6 +208,11 @@ def warnings_of(module) -> list[str]:
         problems += [
             "processor is missing required function: %s" % name
             for name in missing_callables(module, PROCESSOR_FUNCS)
+        ]
+    elif catalog == CATALOG_MODERATOR:
+        problems += [
+            "moderator is missing required function: %s" % name
+            for name in missing_callables(module, MODERATOR_FUNCS)
         ]
     elif catalog == CATALOG_MAIL:
         problems += [

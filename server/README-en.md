@@ -37,7 +37,7 @@ Values are resolved in this order: configuration class defaults (`basis/conf.py`
 | `sapic_secretkey` | Web application secret (at least 14 bytes); **optional**, an empty value falls back to the built-in default (a public string, replace it for public multi-user deployments) | built-in random string |
 | `sapic_maxupload` | Upper bound for the whole upload request (MB, mapped to `MAX_CONTENT_LENGTH`); must exceed the per-file image/video limits configured for the site | `25` |
 | `sapic_storagedir` | Local storage directory | `data/upload` |
-| `sapic_external_base_url` | Public base URL used to build image links | empty (relative URLs) |
+| `sapic_external_base_url` | Public base URL used to build image links | empty (derived from the request host) |
 | `sapic_proxyfix` | Whether to trust proxy headers | off |
 
 There are also `sapic_session_ttl` (session lifetime, 7 days by default), `sapic_loglevel`

@@ -36,7 +36,7 @@ v1 代码已从仓库移除（历史代码看 git tag）。v1 → v2 的功能�
 │   │   │   ├── errors.py ApiError / ErrorCode / 错误处理注册
 │   │   │   ├── log.py    日志：只记应用日志到 sys.log（不记访问日志）
 │   │   │   └── vars.py   常量：BASE_DIR / ENV_PREFIX / LOG_LEVEL_TYPE / 会话与文档地址
-│   │   ├── libs/         通用基类、接口类与功能封装（auth/images/albums/storage/users/mail/settings）
+│   │   ├── libs/         通用基类、接口类与功能封装（auth/images/albums/storage/users/mail/settings/review/scheduler）
 │   │   │   ├── auth.py   会话 / PAT / CSRF 与权限装饰器
 │   │   │   ├── hook.py   HookManager：清单 / 插槽 / 动作 / 数据集
 │   │   │   ├── media.py  文件头解析：宽高探测 + EXIF/XMP 剥离（零依赖）
@@ -46,7 +46,7 @@ v1 代码已从仓库移除（历史代码看 git tag）。v1 → v2 的功能�
 │   │   ├── utils/
 │   │   │   ├── common.py 纯工具函数（不依赖 Flask 上下文，如游标编解码）
 │   │   │   └── web.py    Web 工具（依赖 Flask 上下文：响应信封、分页）
-│   │   ├── views/        Flask 蓝图与路由（auth/settings/users/backends/uploads/images/albums/plaza/site/health/public/hooks/userscript）
+│   │   ├── views/        Flask 蓝图与路由（auth/settings/users/backends/uploads/images/albums/plaza/site/health/public/hooks/review/userscript）
 │   │   ├── models/       Peewee 模型（BaseModel）
 │   │   ├── migrations/   Peewee 迁移框架（flask sa 命令入口）
 │   │   └── hooks/        内置钩子，一个 .py 即一个插件（up2local 等）
@@ -89,6 +89,7 @@ make upgrade          # 手动兜底：建表 / 增量迁移（启动时已自�
 make create-admin     # 创建管理员，需 U=admin P='密码'
 make dev              # 开发服务器 0.0.0.0:9514 (flask run --reload，改代码自动重启)
 make serve            # gunicorn 前台运行 (WORKERS=4 -k gevent)
+make scheduler        # 前台跑后台任务（清理/审核）；web 端需 sapic_scheduler=0 让位
 make test             # 后端 pytest
 make web-dev          # 前端开发服务器 127.0.0.1:5173（/api 与 /raw/ 代理到 9514）
 make web-build        # 前端构建到 web/dist
@@ -96,6 +97,29 @@ make clean            # 清理缓存与构建产物
 ```
 
 变量可覆盖：`make dev PORT=8080`、`make serve WORKERS=8`。`make` 无参数即打印帮助。
+
+## 后台任务（APScheduler）★
+
+到期清理与内容审核扫描**不在请求里跑**，由 `libs/scheduler.py` 的进程内 APScheduler 驱动，
+默认随服务启动（`sapic_scheduler=1`）：
+
+- **多 worker 选主**：每个 worker 抢 `data/scheduler.lock` 的 `flock`，只有抢到的进程调度，
+  所以 `gunicorn -w 4` 只跑一份；没有 Redis/队列参与。
+- **job 自己开 app context**，异常只记日志（`run_purge` / `run_review` 返回"这轮没做事"），
+  绝不让后台异常把调度器打死。
+- **新增后台任务**在 `_build_scheduler` 里注册 `add_job(..., max_instances=1, coalesce=True)`，
+  写清 `misfire_grace_time`；不要再往 `before_request` 塞重活/外部调用。
+- **独立进程**：web 端 `sapic_scheduler=0`，跑 `flask sa scheduler`（前台常驻）或
+  `flask sa scheduler --once`（CronJob/一次性）；CLI 与 web 抢同一把锁，不会跑两份。
+- 关掉调度器（`sapic_scheduler=0` 且不跑 CLI）时，`create_app` 才注册 `before_request`
+  的过期清理兜底（节流与批量在 `libs/images.sweep_expired`）。
+- 测试里 conftest 设 `SCHEDULER=False`（不起线程、保留兜底），用例直接调
+  `run_purge(app)` / `run_review(app)` 断言。
+- **后台可视**：「后台管理 → 定时任务」（`views/scheduler.py` + `AdminSchedulerView.vue`，
+  `GET /api/v2/scheduler`、`POST /api/v2/scheduler/run/<job>`，仅管理员）。它展示的是**当前 worker**
+  的角色（`leader` / `standby` / `disabled`）与 `_last_runs` 的进程内结果；手动执行不经过调度器，
+  直接同步跑一次 `run_job`，因为请求可能落在待命 worker 上，而两个任务都幂等。新增后台任务要
+  同时出现在 `JOB_IDS` 与前端 `adminScheduler.jobs.*`。
 
 `make dev` 自带 `sapic_env=dev`（DEBUG + 详细日志）。`SECRET_KEY` 有内置默认值，**不强制**
 生产配置（空值按默认处理）；它是公开串，公网多用户部署建议用 `sapic_secretkey` 换掉，
@@ -292,7 +316,11 @@ ShareX 等的逐项配置见 `docs/usage.md`。**不要再为老客户端补第�
 - `password_login`（默认开）关闭后 `views/auth.py` 的登录与注册接口直接 403，登录页只渲染统一登录入口
 - 统一登录（OIDC）：`passport` 钩子提供 provider 能力，`views/auth.py` 负责发起/回调与绑定，
   `libs/users.py` 的 `resolve_oidc_user` 处理「已绑定 → 登录 / 双方邮箱均已验证 → 自动关联 / 否则按
-  provider 信息建号」（新用户主要入口）；解绑需校验当前密码，避免 OIDC 专用账号锁死自己
+  provider 信息建号」（新用户主要入口）；解绑需校验当前密码，且**名下有未删除的图片时直接 409**
+（`libs/users.unbind_oidc_identity` 里查 `status=enabled` 的图片数，与自助注销同一口径），删干净后才允许解绑。
+  **已绑定账号每次 OIDC 登录都会同步资料**（`_refresh_oidc_profile`）：`oidc_display_name` 始终跟随
+  provider，本地 `nickname`/`email` 只在为空时补（不覆盖用户在本站改过的值），已被别的本地账号占用的
+  邮箱不会被抢过来；这些字段只用于设置页展示绑定信息，登录判定只看 `oidc_issuer`/`oidc_subject`
 - 邮箱验证：注册自动寄令牌，`POST /api/v2/auth/email/verify` 重发、`POST /api/v2/auth/email/confirm`
   提交令牌后置 `email_verified=True`；改邮箱会重置为未验证，且 `resolve_oidc_user` 要求本地已验证
 - 后台是**一个入口 + 一个壳**：顶部导航只有「后台管理」，进入后由 `layout/AdminLayout.vue`
@@ -442,7 +470,7 @@ ShareX 等的逐项配置见 `docs/usage.md`。**不要再为老客户端补第�
 __version__ = "0.4.0"
 __author__ = "staugur"
 __description__ = "将图片保存到本地目录"
-__catalog__ = "upload"      # 归类：auth / upload / processor / mail
+__catalog__ = "upload"      # 归类：auth / upload / processor / moderator / mail
 __state__ = "enabled"       # enabled / disabled
 ```
 
@@ -472,6 +500,11 @@ __state__ = "enabled"       # enabled / disabled
   报告配置是否完整）在配置完整时优先于内置 SMTP：判定与投递顺序只在 `libs/mail.py`，`views/site.py`
   的 `mail_enabled`、后台测试邮件与全部业务邮件都用它；发信只走一条通道，失败不重试另一条
   （避免同一封邮件发两次）。内置实现是 `hooks/sendcloud.py`（纯文本走 API 的 `plain` 字段）
+- `moderator` 类钩子（`__catalog__="moderator"` + `review_image(image, config=None)`，返回
+  `{code, verdict, message}`）只做内容审核：**先发后审**，由 `flask sa review-pending` 扫描
+  `review_state IS NULL` 的图，**不在上传路径里**；`block` 只写 `review_state`（不删行、不删对象），
+  管理员走 `/api/v2/review` 放行或 `purge` 物理删除。不要在钩子里自己改库/删对象，
+  判定合并与状态回写只在 `libs/review.py`
 - `config_schema` / `actions` / `data_sources` / `slots` 全部经 `sapic/libs/ui.py` 的
   `clean_*` 清洗：未知类型/键被丢弃、`href` 仅允许 `http(s)` 与站内 `/`、
   `action` 必须声明于 manifest，否则被静默忽略（防 XSS / 越权）

@@ -20,7 +20,7 @@ from ..basis.errors import ApiError, ErrorCode
 from ..basis.vars import SESSION_COOKIE_NAME
 from ..models import ApiToken, User
 from ..models.base import now
-from ..models.user import STATUS_NORMAL
+from ..models.user import STATUS_NORMAL, STATUS_PENDING
 from ..utils.web import clear_cookie_state, get_cookie_state, set_cookie_state
 
 TOKEN_PREFIX = "sp_"
@@ -121,8 +121,8 @@ def resolve_pat(token: str) -> tuple[User, list[str], ApiToken] | None:
     if row.expires_at is not None and row.expires_at <= now():
         return None
     user = row.owner
-    #: 待审核/已拒绝/已禁用的账号一律不放行，令牌与登录态同一口径。
-    if user is None or user.status != STATUS_NORMAL:
+    #: 已拒绝/已禁用的账号一律不放行；待审核仍可登录（只是不能上传）。
+    if user is None or user.status not in (STATUS_NORMAL, STATUS_PENDING):
         return None
     moment = now()
     if row.last_used_at is None or moment - int(row.last_used_at) >= TOUCH_INTERVAL:
@@ -181,8 +181,8 @@ def _load_current_user() -> None:
         return
 
     user = User.get_or_none(User.id == uid)
-    if user is None or user.status != STATUS_NORMAL:
-        #: 停用、待审核、已拒绝的账号都不再持有有效会话。
+    if user is None or user.status not in (STATUS_NORMAL, STATUS_PENDING):
+        #: 停用、已拒绝的账号都不再持有有效会话；待审核仍可登录（只是不能上传）。
         g.login_state_cleared = True
         return
     if int(user.session_version or 0) != version:

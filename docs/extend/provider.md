@@ -53,7 +53,7 @@ GET /api/v2/auth/oidc/<name>/callback?code=...&state=...
   需先去那边解绑）与 `identity=error`（其他原因）。
 - 登录失败的回跳标记：`denied`（用户在 Provider 拒绝）、`provider`（与 Provider 对话失败，
   如令牌交换被拒、userinfo 报错）、`error`（钩子抛了非 `ValueError` 异常）、
-  `invalid`（claims 缺 `subject`）、`unlinked`（该身份没绑定本地账号）、`inactive`（账号待审核/被禁用）。
+  `invalid`（claims 缺 `subject`）、`unlinked`（该身份没绑定本地账号）、`inactive`（账号已拒绝/被禁用）。
 - 解绑：`DELETE /api/v2/auth/identities/<name>`，请求体带当前密码。
   要求密码是为了防止只有第三方登录的账号把自己锁在门外。
 - 登录页按钮由钩子自己在 `login.after_form` 插槽里声明，所以每个 Provider 的文案/图标
@@ -61,11 +61,11 @@ GET /api/v2/auth/oidc/<name>/callback?code=...&state=...
 
 账号解析顺序（`sapic/libs/users.py` 的 `resolve_oidc_user`）：
 
-1. `(issuer, subject)` 已绑定 → 直接登录（账号非正常状态则拒绝）；
+1. `(issuer, subject)` 已绑定 → 直接登录（账号已拒绝/禁用则拒绝，待审核可以登录）；
 2. Provider 声明邮箱已验证、且本地同邮箱账号本身也验证过、且该账号还没绑过任何身份 →
    自动关联；
 3. 否则按 Provider 信息**新建本地账号**（`register_review` 开启时落到待审核，
-   不直接发会话），并创建默认相册。
+   仍然发会话、可以登录，只是不能上传），并创建默认相册。
 
 ## 最小可用示例
 

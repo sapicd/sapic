@@ -98,6 +98,8 @@ export const useSessionStore = defineStore('session', {
       const data = await api.put('/auth/password', { json: payload })
       this.csrf = data?.csrf || this.csrf
       setCsrfToken(this.csrf)
+      //: 首次「设置密码」后后端把 password_set 置真，界面要立刻跟着变。
+      if (data?.user) this.user = data.user
       return data
     },
 

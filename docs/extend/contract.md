@@ -14,8 +14,9 @@ __state__ = "enabled"          # initial state; "disabled" means off by default
 
 `__hookname__`、`__appversion__` 也可选，会原样出现在 `GET /api/v2/hooks` 的元数据里。
 
-`__catalog__` 决定**扩展类型**，只有四个值有专门契约：`auth`（登录 Provider）、`upload`（存储驱动）、
-`processor`（字节流后处理）、`mail`（邮件通道）；其他值或留空都按纯界面钩子处理（清单里的 `kind` 为 `ui`）。
+`__catalog__` 决定**扩展类型**，只有五个值有专门契约：`auth`（登录 Provider）、`upload`（存储驱动）、
+`processor`（字节流后处理）、`moderator`（内容审核，见[内容审核](moderator.md)）、`mail`（邮件通道）；
+其他值或留空都按纯界面钩子处理（清单里的 `kind` 为 `ui`）。
 声明的类型与模块实际导出的函数对不上时，`warnings` 里会列出缺失的函数名。
 
 ## 清单：`hook_manifest()`

@@ -72,7 +72,7 @@ export default {
         title: 'Passport 登录失败',
       },
       inactive: {
-        description: '该账号待审核或已被禁用，请联系管理员处理。',
+        description: '该账号已被拒绝或禁用，请联系管理员处理。',
         title: '账号状态受限',
       },
       invalid: {
@@ -265,7 +265,9 @@ export default {
     bindConflict: '该身份已绑定到另一个账号，请先在那个账号解除绑定',
     bindFailed: '绑定失败，请重试或联系管理员',
     bound: '统一登录已绑定',
+    boundAt: '绑定于 {time}',
     boundTag: '已绑定',
+    linkedUid: 'UID {uid}',
     clearAvatar: '清除',
     currentPassword: '当前密码',
     currentPasswordRequired: '请输入当前密码',
@@ -301,6 +303,10 @@ export default {
     passwordFailed: '修改密码失败',
     passwordHeader: '修改密码',
     passwordPrompt: '请输入密码',
+    setPassword: '设置密码',
+    setPasswordHeader: '设置密码',
+    setPasswordHint:
+      '统一登录创建的账号没有可用的本地密码；这里设置的密码用于密码登录和敏感操作确认。',
     passwordUpdated: '密码已更新',
     patIntro:
       '访问令牌（Personal Access Token）用于 PicGo、uPic、CLI 等客户端代替密码调用上传 API：请求头携带 Authorization: Bearer <令牌>，令牌只在创建时显示一次，可随时撤销。',
@@ -346,6 +352,7 @@ export default {
     tokensLoadFailed: '加载令牌失败',
     unbind: '解除绑定',
     unbindFailed: '解除绑定失败',
+    unbindNeedPassword: '当前账号还没有本地密码，请先在「密码」中设置后再解绑',
     unbindPrompt: '解除后该账号无法再通过统一登录进入，请输入当前密码确认',
     unbindTitle: '解除绑定',
     unbound: '已解除绑定',
@@ -413,7 +420,7 @@ export default {
     emptyShares: '还没有共享成员',
     imageCount: '图片数',
     intro:
-      '图片可见性以相册为单位；上传时未指定相册的图片会进入「默认相册」，单张图片可在详情页覆盖。「共享」相册只对你在「共享」里绑定的成员可见，私有相册添加成员后会自动变成共享。',
+      '可见性按相册设置：未指定相册的上传进入「默认相册」，单图可在详情页覆盖；「共享」相册仅成员可见，私有相册加成员后自动变成共享。',
     isDefault: '默认',
     isSystem: '系统',
     loadFailed: '加载相册失败',
@@ -513,6 +520,7 @@ export default {
     http: '请求失败',
     network: '网络异常，请确认后端服务已启动',
     operation: '操作失败',
+    requestId: '（请求 ID：{id}）',
   },
   notFound: {
     backHome: '返回首页',
@@ -528,6 +536,7 @@ export default {
     recheck: '重新检查',
     releasePage: '打开发布页',
     releasedAt: '发布时间',
+    scheduler: '定时任务',
     site: '站点设置',
     title: '后台管理',
     updateCheckDisabled: '未启用更新检测（sapic_updatecheckurl 为空）',
@@ -536,6 +545,42 @@ export default {
     users: '用户管理',
     version: '版本 v{version}',
     versionInfo: '版本信息',
+  },
+  adminScheduler: {
+    disabledHint:
+      'sapic_scheduler=0 已关闭后台任务；此时只有请求触发的过期清理兜底，改回 1 并重启后恢复调度。',
+    failed: '执行失败（详见日志）',
+    hours: '{n} 小时',
+    interval: '间隔',
+    intervalHint:
+      '间隔由 sapic_scheduler_purge_interval / sapic_scheduler_review_interval 控制，改完重启生效。',
+    intro:
+      '到期清理与内容审核由进程内 APScheduler 执行；多 worker 通过 data/scheduler.lock 选主，只有一个进程真正调度。',
+    job: '任务',
+    jobs: {
+      purge_expired: '清理过期图片',
+      review_pending: '审核未处理图片',
+    },
+    lastRun: '上次运行',
+    loadFailed: '加载定时任务失败',
+    lockFile: '选主锁',
+    minutes: '{n} 分钟',
+    never: '尚未运行',
+    nextRun: '下次运行',
+    pid: '进程',
+    purged: '已清理 {n} 张',
+    result: '上次结果',
+    role_disabled: '已关闭',
+    role_leader: '本进程调度中',
+    role_standby: '其他进程调度中',
+    runFailed: '执行任务失败',
+    runNow: '立即执行',
+    scanned: '扫描 {scanned} 张，拦截 {blocked}，待重试 {failed}',
+    seconds: '{n} 秒',
+    standbyHint:
+      '当前请求落在待命进程上，「下次运行」只由负责调度的进程维护；「立即执行」仍然有效（两个任务都幂等）。',
+    state: '状态',
+    title: '定时任务',
   },
   adminSite: {
     allowRegister: '开放注册',
@@ -554,8 +599,6 @@ export default {
     expireDefaultUnit: '天，0 表示永久保留',
     expireMax: '有效期上限',
     expireMaxUnit: '天，0 表示不限制；设置后不再允许永久图片，未指定时按上限',
-    externalBaseUrl: '外部访问地址',
-    externalBaseUrlPlaceholder: '如 https://img.example.com，用于拼接图片外链',
     fetchProxy: '下载代理',
     fetchProxyHint:
       '网址上传由服务端抓取，直连失败（超时 / 连接错误 / 解析不了）后才走该代理兜底，能直连的源不绕路；支持 http(s) 代理与 http://user:pass@host:port',

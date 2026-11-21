@@ -103,6 +103,16 @@ def test_public_image_links_to_the_backend_domain(app, client, tmp_path):
     assert listing[0]["src"] == image["src"]
 
 
+def test_configured_base_url_wins_over_the_request_host(app, client):
+    """``sapic_external_base_url`` (CDN / fixed public host) still takes over."""
+    app.config["EXTERNAL_BASE_URL"] = "https://img.example.com/"
+    csrf = register_and_login(client)
+    sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
+
+    detail = client.get("/api/v2/images/%s" % sha).get_json()["data"]
+    assert detail["image"]["src"] == "https://img.example.com/raw/%s" % sha
+
+
 def test_public_image_with_remote_replica_redirects(app, client):
     csrf = register_and_login(client)
     sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
@@ -143,7 +153,8 @@ def test_highest_priority_replica_decides_the_link(app, client):
 
     detail = client.get("/api/v2/images/%s" % sha).get_json()["data"]
     #: 主副本是本地（无直链），不能跳到次优先级副本的直链。
-    assert detail["image"]["src"] == "/raw/%s" % sha
+    #: 没有配置对外地址时用当前请求的域名补全，客户端拿到的必须是完整 URL。
+    assert detail["image"]["src"] == "http://localhost/raw/%s" % sha
     assert client.get("/raw/%s" % sha).status_code == 200
 
 
@@ -156,7 +167,7 @@ def test_private_image_stays_behind_the_sapic_endpoint(app, client):
         image.save(only=[Image.visibility])
 
     detail = client.get("/api/v2/images/%s" % sha).get_json()["data"]
-    assert detail["image"]["src"] == "/raw/%s" % sha
+    assert detail["image"]["src"] == "http://localhost/raw/%s" % sha
 
     assert app.test_client().get("/raw/%s" % sha).status_code == 403
 
@@ -245,12 +256,12 @@ def test_listing_serves_thumbnails_from_the_backend_suffix(app, client, tmp_path
 
 
 def test_thumbnail_is_skipped_without_a_direct_link(app, client):
-    """No domain means ``src`` is ``/raw/<sha>``: a suffix there would 404."""
+    """No domain means ``src`` points at ``/raw/<sha>``: a suffix there would 404."""
     csrf = register_and_login(client)
     sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
 
     listing = client.get("/api/v2/images").get_json()["data"]["items"][0]
-    assert listing["src"] == "/raw/%s" % sha
+    assert listing["src"] == "http://localhost/raw/%s" % sha
     assert listing["thumb"] is None
 
 
@@ -265,7 +276,7 @@ def test_private_and_video_images_have_no_thumbnail(app, client, tmp_path):
         image.save(only=[Image.visibility])
 
     listing = client.get("/api/v2/images").get_json()["data"]["items"][0]
-    assert listing["src"] == "/raw/%s" % sha
+    assert listing["src"] == "http://localhost/raw/%s" % sha
     assert listing["thumb"] is None
 
     with app.app_context():

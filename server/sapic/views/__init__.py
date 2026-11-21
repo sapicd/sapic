@@ -23,6 +23,8 @@ def register_blueprints(app) -> None:
     from .images import bp as images_bp
     from .plaza import bp as plaza_bp
     from .public import bp as public_bp
+    from .review import bp as review_bp
+    from .scheduler import bp as scheduler_bp
     from .settings import bp as settings_bp
     from .site import bp as site_bp
     from .uploads import bp as uploads_bp
@@ -38,9 +40,11 @@ def register_blueprints(app) -> None:
         images_bp,
         albums_bp,
         plaza_bp,
+        review_bp,
         settings_bp,
         backends_bp,
         hooks_bp,
+        scheduler_bp,
         users_bp,
         userscript_bp,
     ):

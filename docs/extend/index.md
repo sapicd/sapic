@@ -3,7 +3,7 @@
 sapic 的插件叫**钩子（hook）**：一个 Python 模块或包，被核心按需加载，
 用它自己声明的清单描述界面与能力。核心不认识任何插件名，只认契约。
 
-## 四种扩展类型
+## 扩展类型
 
 扩展类型由 `__catalog__` 声明，契约判断集中在 `sapic/libs/ext.py`
 （认证流程、存储解析、后台接口都问它，不各自 `getattr`）：
@@ -14,6 +14,7 @@ sapic 的插件叫**钩子（hook）**：一个 Python 模块或包，被核心�
 | `upload` | `driver` | `upimg_save`（`upimg_delete` 可选，私有桶还要 `upimg_url`） | 对象存储驱动 | `libs/storage.py` 的上传/副本/删除 |
 | `processor` | `processor` | `upimg_stream_processor` | 上传前改写数据 | `libs/images.process_stream` |
 | `mail` | `mail` | `send_mail`（`mail_ready` 可选，报告配置是否完整） | 邮件发送通道 | `libs/mail.py`（配置完整时优先于 SMTP） |
+| `moderator` | `moderator` | `review_image` | 内容审核（鉴黄等）：先发后审，**只拦不删** | `libs/review.py` 的扫描（`flask sa review-pending`） |
 | 其它/未声明 | `ui` | — | 只提供界面块与动作 | `libs/hook.py` 的插槽/动作/数据集 |
 
 清单里的 `kind` 与 `warnings` 由核心计算：`warnings` 会点明「声明了 upload 却缺
@@ -30,7 +31,8 @@ sapic 的插件叫**钩子（hook）**：一个 Python 模块或包，被核心�
    后台钩子页据此渲染表单（`PUT /api/v2/hooks/config/<name>`）。
 5. **调用**：认证/存储/后处理按契约进入热路径；界面块、动作、数据集按前端请求触发。
    处理器（`upimg_stream_processor`）还会拿到自己的 `config`（如 `pic2webp` 的 `quality`），
-   存储驱动则通过 `backend=` 取合并后的配置。
+   存储驱动则通过 `backend=` 取合并后的配置。审核（`review_image`）**不在请求路径里**，
+   由 `flask sa review-pending` 扫描时调用，见[内容审核](moderator.md)。
 
 钩子热重载：`POST /api/v2/hooks/reload` 立即重建快照；平时每隔
 `HOOK_RELOAD_TIME` 按「源文件 mtime + 已登记模块列表」决定是否换快照，
@@ -89,6 +91,7 @@ curl -X POST http://127.0.0.1:9514/api/v2/hooks/reload -H 'X-CSRF-Token: <csrf>'
 | 登录 Provider | `passport.py`（OIDC） | `oidc_authorize_url` / `oidc_exchange`，登录按钮插槽 |
 | 上传后处理 | `pic2webp.py` | `upimg_stream_processor` 与 processor 配置 |
 | 邮件通道 | `sendcloud.py`（HTTP API） | `send_mail` / `mail_ready`，配置完整时接管 SMTP |
+| 内容审核 | 无内置，见[内容审核](moderator.md)的最小实现 | `review_image` 返回值与管理员队列 |
 | 纯界面钩子 | 无内置，看本节 20 行样例 | 节点词表与动作返回值 |
 
 ## 安装第三方包

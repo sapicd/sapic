@@ -29,6 +29,7 @@ def create_app(config: dict | None = None) -> Flask:
     from .libs.auth import init_app as init_auth
     from .libs.hook import init_app as init_hooks
     from .libs.images import sweep_expired
+    from .libs.scheduler import init_app as init_scheduler
     from .libs.storage import sync_backends
     from .migrations import auto_upgrade
     from .views import register_blueprints
@@ -57,15 +58,20 @@ def create_app(config: dict | None = None) -> Flask:
     register_blueprints(app)
     register_error_handlers(app)
     app.cli.add_command(sa_cli)
+    #: 到期清理与审核扫描由进程内 APScheduler 驱动；多 worker 靠文件锁选主，
+    #: 只有抢到锁的那个进程真正跑（见 libs/scheduler.py）。
+    init_scheduler(app)
 
     @app.before_request
     def _request_id():
         g.request_id = request.headers.get("X-Request-Id") or uuid4().hex[:16]
 
-    @app.before_request
-    def _purge_expired_images():
-        #: 到期图片的兜底清理：没有 cron 也能落地，节流与批大小在 libs 内。
-        sweep_expired()
+    if not app.config.get("SCHEDULER"):
+        #: 关掉调度器时的兜底（老部署/单进程开发也能清理到期图片）：
+        #: 节流与批大小在 libs/images.py，每个进程独立计数。
+        @app.before_request
+        def _purge_expired_images():
+            sweep_expired()
 
     @app.after_request
     def _attach_request_id(response):

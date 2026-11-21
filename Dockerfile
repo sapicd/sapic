@@ -17,9 +17,13 @@ RUN pnpm run build
 # ---- 2. 运行镜像 ------------------------------------------------------------
 FROM python:3.12-slim
 
+#: 后台任务（到期清理 + 审核扫描）由进程内 APScheduler 驱动，随 gunicorn worker
+#: 启动；多 worker 用 data/scheduler.lock 选主，所以单容器不需要额外的调度进程。
+#: 想让独立进程/单独容器来跑，就设 sapic_scheduler=0 并执行 flask sa scheduler。
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     sapic_env=prod \
+    sapic_scheduler=1 \
     SAPIC_HTTP_PORT=80
 
 RUN apt-get update \

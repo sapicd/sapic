@@ -263,8 +263,21 @@ async function loadAlbums() {
   }
 }
 
+//: 失败原因记在条目上：toast 几秒就没了，列表里还得能看见为什么没传上去。
+function failUpload(item, error) {
+  const reason =
+    error?.code === 'FORBIDDEN' && !session.authenticated
+      ? t('upload.anonymousForbidden')
+      : errorMessage(error)
+  item.status = 'fail'
+  item.error = reason
+  ElMessage.error(t('upload.uploadFailed', { name: item.name, message: reason }))
+  return 'fail'
+}
+
 async function uploadOne(item) {
   item.status = 'uploading'
+  item.error = ''
   const form = new FormData()
   form.append('file', item.raw)
   const target = item.albumId || albumId.value
@@ -276,20 +289,15 @@ async function uploadOne(item) {
     if (data?.image) uploaded.value.unshift(data.image)
     item.status = 'success'
     item.percentage = 100
-    return true
+    return 'ok'
   } catch (error) {
-    item.status = 'fail'
-    if (error?.code === 'FORBIDDEN' && !session.authenticated) {
-      ElMessage.error(t('upload.anonymousForbidden'))
-    } else {
-      ElMessage.error(t('upload.uploadFailed', { name: item.name, message: errorMessage(error) }))
-    }
-    return false
+    return failUpload(item, error)
   }
 }
 
 async function uploadRemote(item) {
   item.status = 'uploading'
+  item.error = ''
   const form = new FormData()
   form.append('url', item.url)
   if (albumId.value) form.append('album_id', String(albumId.value))
@@ -299,15 +307,9 @@ async function uploadRemote(item) {
     const data = await api.post('/upload', { form })
     if (data?.image) uploaded.value.unshift(data.image)
     item.status = 'success'
-    return true
+    return 'ok'
   } catch (error) {
-    item.status = 'fail'
-    if (error?.code === 'FORBIDDEN' && !session.authenticated) {
-      ElMessage.error(t('upload.anonymousForbidden'))
-    } else {
-      ElMessage.error(t('upload.uploadFailed', { name: item.name, message: errorMessage(error) }))
-    }
-    return false
+    return failUpload(item, error)
   }
 }
 
@@ -327,19 +329,18 @@ async function startUpload() {
   let done = 0
   try {
     //: 逐个上传，避免一次并发全部请求把后端与带宽打满。
+    //: 成功的从队列里移走，失败的留在列表里（原因写在条目上）。
     for (const item of pendingFiles) {
-      if (await uploadOne(item)) {
-        const index = fileList.value.indexOf(item)
-        if (index >= 0) fileList.value.splice(index, 1)
-        done += 1
-      }
+      if ((await uploadOne(item)) !== 'ok') continue
+      const index = fileList.value.indexOf(item)
+      if (index >= 0) fileList.value.splice(index, 1)
+      done += 1
     }
     for (const item of pendingUrls) {
-      if (await uploadRemote(item)) {
-        const index = urlList.value.indexOf(item)
-        if (index >= 0) urlList.value.splice(index, 1)
-        done += 1
-      }
+      if ((await uploadRemote(item)) !== 'ok') continue
+      const index = urlList.value.indexOf(item)
+      if (index >= 0) urlList.value.splice(index, 1)
+      done += 1
     }
   } finally {
     uploading.value = false
@@ -483,6 +484,7 @@ onBeforeUnmount(() => {
           <span class="upload-item__status">
             {{ statusText[file.status] || '' }}
           </span>
+          <span v-if="file.error" class="upload-item__error">{{ file.error }}</span>
           <el-button
             link
             type="danger"
@@ -503,6 +505,7 @@ onBeforeUnmount(() => {
         <span class="upload-item__status">
           {{ statusText[item.status] || '' }}
         </span>
+        <span v-if="item.error" class="upload-item__error">{{ item.error }}</span>
         <el-button
           link
           type="danger"

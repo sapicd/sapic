@@ -32,9 +32,10 @@ TRUE_VALUES = ("1", "true", "yes", "on")
 #: Legal log levels; the annotation is the single source of truth.
 LOG_LEVEL_TYPE = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
-#: Log file rotation: 10 MB per file, five rotations kept (50 MB per stream).
-LOG_FILE_MAX_BYTES = 10 * 1024 * 1024
-LOG_FILE_BACKUP_COUNT = 5
+#: Log file rotation: one file per day, the last 10 days are kept.
+LOG_FILE_BACKUPS = 10
+#: Rotated file suffix, e.g. ``sys.log.20261121``.
+LOG_FILE_SUFFIX = "%Y%m%d"
 
 #: Session cookie name; part of the app identity, never per-deployment.
 SESSION_COOKIE_NAME = "sapic_sid"

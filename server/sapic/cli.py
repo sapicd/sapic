@@ -3,8 +3,11 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
+
 import click
-from flask.cli import AppGroup
+from flask import current_app
+from flask.cli import AppGroup, with_appcontext
 from werkzeug.security import generate_password_hash
 
 from .basis.db import db
@@ -37,6 +40,104 @@ def purge_expired_command(limit):
         db.connect()
     removed = purge_expired(limit)
     click.echo("purged expired images: %d" % removed)
+
+
+@sa_cli.command("scheduler")
+@click.option("--once", is_flag=True, help="run both jobs once and exit")
+@with_appcontext
+def scheduler_command(once):
+    """Run expiry purge and moderation scan on a schedule (foreground).
+
+    The web workers start the same schedule themselves unless
+    ``sapic_scheduler=0``; use this command when you prefer a dedicated
+    process (systemd / a second container). Both sides take the same file lock,
+    so only one of them leads.
+    """
+    from apscheduler.schedulers.blocking import BlockingScheduler
+
+    from .libs.scheduler import (
+        acquire_lock,
+        release_lock,
+        run_purge,
+        run_review,
+    )
+
+    app = current_app._get_current_object()
+    if db.is_closed():
+        db.connect()
+
+    if once:
+        reviewed = run_review(app)
+        removed = run_purge(app)
+        click.echo(
+            "reviewed %(scanned)d image(s): %(passed)d passed, %(blocked)d blocked, "
+            "%(failed)d to retry; purged %(removed)d expired"
+            % dict(reviewed, removed=removed)
+        )
+        return
+
+    if not acquire_lock():
+        raise click.ClickException(
+            "another scheduler is running (data/scheduler.lock); "
+            "set sapic_scheduler=0 on the web workers first"
+        )
+    purge_interval = int(app.config["SCHEDULER_PURGE_INTERVAL"])
+    review_interval = int(app.config["SCHEDULER_REVIEW_INTERVAL"])
+    scheduler = BlockingScheduler()
+    scheduler.add_job(
+        run_purge,
+        "interval",
+        seconds=purge_interval,
+        args=[app],
+        id="purge_expired",
+        coalesce=True,
+        max_instances=1,
+        next_run_time=datetime.now() + timedelta(seconds=5),
+    )
+    scheduler.add_job(
+        run_review,
+        "interval",
+        seconds=review_interval,
+        args=[app],
+        id="review_pending",
+        coalesce=True,
+        max_instances=1,
+        next_run_time=datetime.now() + timedelta(seconds=10),
+    )
+    click.echo(
+        "scheduler running: purge every %ss, review every %ss (ctrl-c to stop)"
+        % (purge_interval, review_interval)
+    )
+    try:
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        pass
+    finally:
+        release_lock()
+
+
+@sa_cli.command("review-pending")
+@click.option("-n", "--limit", default=50, show_default=True, help="max images per run")
+@with_appcontext
+def review_pending_command(limit):
+    """Judge unreviewed images with the enabled moderator hooks.
+
+    Designed for cron: every run claims a small batch, so a slow moderation API
+    never competes with uploads. A ``block`` verdict only hides the image; an
+    administrator approves or purges it from the admin API.
+    """
+    from .libs.review import moderator_names, review_pending
+
+    if db.is_closed():
+        db.connect()
+    if not moderator_names():
+        click.echo("no enabled moderator hook, nothing to review")
+        return
+    counts = review_pending(limit)
+    click.echo(
+        "reviewed %(scanned)d image(s): %(passed)d passed, %(blocked)d blocked, "
+        "%(failed)d to retry" % counts
+    )
 
 
 @sa_cli.command("create-admin")

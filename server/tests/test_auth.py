@@ -380,7 +380,7 @@ def test_upload_avatar_stores_the_image_in_the_default_album(app, client):
     )
     assert response.status_code == 201, response.get_json()
     data = response.get_json()["data"]
-    assert data["avatar"].startswith("/raw/")
+    assert data["avatar"].startswith("http://localhost/raw/")
     assert data["user"]["avatar"] == data["avatar"]
 
     with app.app_context():

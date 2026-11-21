@@ -34,7 +34,7 @@ python -m pip install -r server/requirements/dev.txt && (cd web && pnpm install)
 | `sapic_secretkey` | Web 应用密钥（≥14 字节）；**可选**，空值用内置默认值（公开串，公网多用户建议替换） | 内置随机串 |
 | `sapic_maxupload` | 整个上传请求的上限（MB，映射 `MAX_CONTENT_LENGTH`），要大于站点里图片/视频的单文件上限 | `25` |
 | `sapic_storagedir` | 本地存储目录 | `data/upload` |
-| `sapic_external_base_url` | 对外访问根地址，用于拼接图片外链 | 空（相对地址） |
+| `sapic_external_base_url` | 对外访问根地址，用于拼接图片外链 | 空（按请求域名补全） |
 | `sapic_proxyfix` | 是否信任代理标头 | 关闭 |
 
 另有 `sapic_session_ttl`（会话有效期，默认 7 天）、`sapic_loglevel`（默认 `INFO`）、

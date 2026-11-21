@@ -251,8 +251,8 @@ msgid "空"
 msgstr "Empty"
 
 #: ../../config.md
-msgid "给图片直链加前缀，空表示相对地址"
-msgstr "Prefix for image direct links; empty means relative URLs"
+msgid "给图片直链加前缀，空则按当前请求的域名补全"
+msgstr "Prefix for image links; empty derives it from the current request's host"
 
 #: ../../config.md:25
 msgid "排查环境变量是否写对时，直接打印最终生效的配置："

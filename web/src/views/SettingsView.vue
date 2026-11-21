@@ -386,11 +386,33 @@ function identityTitle(item) {
   return hookText(item.name, 'title', item.title, item.title_key)
 }
 
+//: 已绑定的第三方账号：优先显示人能认出来的信息；都没有时才露出 provider
+//: 地址与 UID（老绑定可能既没有昵称也没有邮箱）。
+function identityMeta(item) {
+  if (!item?.bound) return []
+  const parts = []
+  if (item.display_name) parts.push({ key: 'name', text: item.display_name })
+  if (item.email) parts.push({ key: 'email', text: item.email })
+  if (!parts.length) {
+    if (item.issuer) parts.push({ key: 'issuer', text: item.issuer })
+    if (item.subject) {
+      parts.push({ key: 'uid', text: t('settings.linkedUid', { uid: item.subject }) })
+    }
+  }
+  return parts
+}
+
 function bindIdentity(item) {
   window.location.href = item.bind_url
 }
 
 async function unbindIdentity(item) {
+  if (!session.user?.password_set) {
+    //: 解绑要提交当前密码；统一登录建号的账号还没有可用的本地密码，先去设一个。
+    ElMessage.warning(t('settings.unbindNeedPassword'))
+    switchSection('password')
+    return
+  }
   let password = ''
   try {
     const { value } = await ElMessageBox.prompt(
@@ -635,16 +657,22 @@ onMounted(() => {
       </el-card>
 
       <el-card v-else-if="activeSection === 'password'">
-        <template #header>{{ t('settings.passwordHeader') }}</template>
+        <template #header>
+          {{ session.user?.password_set ? t('settings.passwordHeader') : t('settings.setPasswordHeader') }}
+        </template>
+        <p v-if="!session.user?.password_set" class="hint">
+          {{ t('settings.setPasswordHint') }}
+        </p>
         <el-form class="side-main__form" label-position="top">
-          <el-form-item :label="t('settings.currentPassword')">
+          <!-- 统一登录建号时密码是随机值，用户不知道，所以不要求旧密码。 -->
+          <el-form-item v-if="session.user?.password_set" :label="t('settings.currentPassword')">
             <el-input v-model="password.old_password" type="password" show-password />
           </el-form-item>
           <el-form-item :label="t('settings.newPassword')">
             <el-input v-model="password.new_password" type="password" show-password />
           </el-form-item>
           <el-button type="primary" :loading="changing" @click="changePassword">
-            {{ t('settings.updatePassword') }}
+            {{ session.user?.password_set ? t('settings.updatePassword') : t('settings.setPassword') }}
           </el-button>
         </el-form>
       </el-card>
@@ -670,9 +698,9 @@ onMounted(() => {
           size="small"
           class="token-table"
         >
-          <el-table-column prop="name" :label="t('common.name')" min-width="90" show-overflow-tooltip />
+          <el-table-column prop="name" :label="t('common.name')" min-width="180" show-overflow-tooltip />
           <el-table-column prop="prefix" :label="t('settings.prefix')" width="92" />
-          <el-table-column :label="t('settings.permission')" min-width="92">
+          <el-table-column :label="t('settings.permission')" width="120">
             <template #default="{ row }">
               <el-tag
                 v-for="scope in row.scopes || []"
@@ -685,7 +713,7 @@ onMounted(() => {
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column :label="t('upload.defaultAlbum')" min-width="96" show-overflow-tooltip>
+          <el-table-column :label="t('upload.defaultAlbum')" width="112" show-overflow-tooltip>
             <template #default="{ row }">
               <span v-if="row.album_name">{{ row.album_name }}</span>
               <el-text v-else type="info" size="small">{{ t('settings.followDefault') }}</el-text>
@@ -699,14 +727,14 @@ onMounted(() => {
               {{ formatShortTime(row.last_used_at) }}
             </template>
           </el-table-column>
-          <el-table-column :label="t('common.status')" width="70">
+          <el-table-column :label="t('common.status')" width="72">
             <template #default="{ row }">
               <el-tag size="small" :type="row.revoked ? 'info' : 'success'">
                 {{ row.revoked ? t('settings.statusRevoked') : t('settings.statusActive') }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column :label="t('common.actions')" width="72" align="right">
+          <el-table-column :label="t('common.actions')" min-width="88" align="right">
             <template #default="{ row }">
               <el-button
                 link
@@ -729,18 +757,19 @@ onMounted(() => {
         <p class="hint">
           {{ t('settings.oidcIntro') }}
         </p>
-        <div
-          v-for="item in identities"
-          :key="item.name"
-          style="
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--el-border-color-lighter);
-          "
-        >
-          <span style="flex: 1">{{ identityTitle(item) }}</span>
+        <div v-for="item in identities" :key="item.name" class="identity-row">
+          <div class="identity-row__main">
+            <span>{{ identityTitle(item) }}</span>
+            <span
+              v-if="item.bound && (identityMeta(item).length || item.bound_at)"
+              class="identity-meta"
+            >
+              <span v-for="part in identityMeta(item)" :key="part.key">{{ part.text }}</span>
+              <span v-if="item.bound_at">
+                {{ t('settings.boundAt', { time: formatTime(item.bound_at) }) }}
+              </span>
+            </span>
+          </div>
           <el-tag size="small" :type="item.bound ? 'success' : 'info'">
             {{ item.bound ? t('settings.boundTag') : t('settings.unboundTag') }}
           </el-tag>
@@ -873,3 +902,41 @@ onMounted(() => {
     </el-dialog>
   </div>
 </template>
+
+<style scoped>
+.identity-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.identity-row__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/*: 已绑定信息：显示名 / 脱敏 subject / 绑定时间，用 · 分隔。 */
+.identity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 10px;
+  font-size: 12px;
+  color: var(--app-text-muted);
+}
+
+.identity-meta > * + *::before {
+  content: '·';
+  margin-right: 8px;
+  color: var(--el-text-color-placeholder);
+}
+
+.identity-meta code {
+  font-size: 12px;
+}
+</style>

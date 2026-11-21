@@ -22,6 +22,7 @@ from ..libs.images import (
     visible_query,
 )
 from ..libs.storage import replica_link
+from ..libs.users import UPLOAD_BLOCKED_STATUSES
 from ..models import Album, Image
 from ..models.base import now
 from ..models.image import live_condition
@@ -165,6 +166,9 @@ def import_external():
     if not uploads_enabled():
         raise ApiError("upload is disabled", ErrorCode.FORBIDDEN, 403)
     require_scope(SCOPE_UPLOAD)
+    #: 与 /upload、头像上传同一口径：待审核/拒绝/禁用的账号不能新增图片。
+    if g.user.status in UPLOAD_BLOCKED_STATUSES:
+        raise ApiError("account cannot upload", ErrorCode.FORBIDDEN, 403)
     data = request.get_json(silent=True) or {}
     raw = data.get("items")
     if isinstance(raw, str):
