@@ -479,12 +479,9 @@ class _PinnedHTTPSHandler(HTTPSHandler):
         self._addresses = addresses
 
     def https_open(self, req):
-        return self.do_open(
-            self._connection,
-            req,
-            context=self._context,
-            check_hostname=self._check_hostname,
-        )
+        #: 与标准库保持一致：``check_hostname`` 在 ``__init__`` 里已经落到
+        #: context 上，这里只传 context（``HTTPSHandler`` 并没有同名属性）。
+        return self.do_open(self._connection, req, context=self._context)
 
     def _connection(self, host, **kwargs):
         return _PinnedHTTPSConnection(host, self._addresses, **kwargs)

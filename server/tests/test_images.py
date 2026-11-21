@@ -965,6 +965,24 @@ def test_pinned_https_keeps_the_name_for_sni(monkeypatch):
     assert connection._context.names == ["pbs.example.com"]
 
 
+def test_pinned_https_handler_opens(monkeypatch):
+    """handler 只把 context 交给 ``do_open``：标准库没有 ``_check_hostname`` 属性。"""
+    handler = images._PinnedHTTPSHandler(["93.184.216.34"])
+    captured = {}
+
+    def fake_do_open(connection, req, **kwargs):
+        captured["connection"] = connection
+        captured.update(kwargs)
+        return "response"
+
+    monkeypatch.setattr(handler, "do_open", fake_do_open)
+
+    assert handler.https_open(object()) == "response"
+    assert captured["context"] is handler._context
+    connection = captured["connection"]("pbs.example.com")
+    assert isinstance(connection, images._PinnedHTTPSConnection)
+
+
 class _FakeRemoteResponse:
     """Minimal stand-in for the streamed response of a URL fetch."""
 
