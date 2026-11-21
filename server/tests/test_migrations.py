@@ -31,6 +31,7 @@ def test_create_app_migrates_on_boot(tmp_path):
             "DATABASE_URL": "sqlite:///%s" % (tmp_path / "boot.db"),
             "TESTING": True,
             "SECRET_KEY": "test-secret",
+            "LOG_DIR": str(tmp_path / "log"),
         }
     )
     with app.app_context():

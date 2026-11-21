@@ -24,6 +24,7 @@ def create_app(config: dict | None = None) -> Flask:
     from .basis.conf import load_config
     from .basis.db import init_app as init_db
     from .basis.errors import register_error_handlers
+    from .basis.log import init_app as init_log
     from .cli import sa_cli
     from .libs.auth import init_app as init_auth
     from .libs.hook import init_app as init_hooks
@@ -41,6 +42,7 @@ def create_app(config: dict | None = None) -> Flask:
         raise RuntimeError("DATABASE_URL is required (config: sapic_db_url)")
 
     app.logger.setLevel(getattr(logging, app.config.get("LOG_LEVEL", "INFO")))
+    init_log(app)
 
     if app.config.get("PROXY_FIX"):
         app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)

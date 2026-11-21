@@ -70,6 +70,8 @@ class BaseConfig:
     #: Trust ``X-Forwarded-*`` headers from a reverse proxy.
     PROXY_FIX: bool = False
     LOG_LEVEL: LOG_LEVEL_TYPE = "INFO"
+    #: Log directory holding ``sys.log``; empty keeps standard error only.
+    LOG_DIR: str = join(DATA_DIR, "log")
 
     #: Directory holding extra hook packages (``pip install --target`` target and
     #: an extra hook scan path); empty disables web installation entirely.
@@ -216,6 +218,9 @@ def load_config(overrides: dict | None = None) -> dict:
     #: 第三方钩子包目录会被写进 ``sys.path``，相对路径必须先按 ``server/`` 归一。
     if config["HOOK_PKG_STORAGE_DIR"]:
         config["HOOK_PKG_STORAGE_DIR"] = _absolute(config["HOOK_PKG_STORAGE_DIR"])
+    #: 日志目录同理：留空表示不写文件，只走标准错误。
+    if config["LOG_DIR"]:
+        config["LOG_DIR"] = _absolute(config["LOG_DIR"])
     config["EXTERNAL_BASE_URL"] = config["EXTERNAL_BASE_URL"].rstrip("/")
     config["LOG_LEVEL"] = config["LOG_LEVEL"].upper()
 

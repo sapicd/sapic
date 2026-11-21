@@ -102,7 +102,7 @@ Environment=FLASK_APP=sapic
 Environment=sapic_env=production
 # or keep config in server/.cfg so secrets stay out of the unit file
 ExecStart=/srv/sapic/.venv/bin/python -m gunicorn "sapic:create_app()" \
-          -b 127.0.0.1:9514 -w 4 -k gevent --timeout 60 --access-logfile - --error-logfile -
+          -b 127.0.0.1:9514 -w 4 -k gevent --timeout 60 --error-logfile -
 Restart=always
 RestartSec=3
 
@@ -205,6 +205,10 @@ server {
 不需要再单独部署前端。容器内监听端口默认 `80`，可用 `SAPIC_HTTP_PORT` 改：`docker/nginx.conf`
 是带端口占位符的模板，由 entrypoint 渲染到 `/etc/nginx/conf.d/default.conf`，健康检查也会跟着走
 同一个端口。`docker-compose.yml` 只把宿主的 `SAPIC_PORT`（默认 `80`）映射到容器 `80`。
+
+容器里的 nginx **默认不记访问日志**（`access_log off;`，同样由 entrypoint 渲染），日志只留应用那份；
+需要访问记录时加 `-e SAPIC_NGINX_ACCESS_LOG=1`，访客请求会经 `/var/log/nginx/access.log`
+（镜像里软链到 stdout）出现在 `docker logs` 里。
 
 ```bash
 docker build -t sapic:local .
@@ -334,7 +338,11 @@ systemctl restart sapic        # incremental migrations run at startup
 
 - 健康检查：`GET /api/v2/health` → `{"status": "ok|degraded", "version", "database"}`，
   数据库不通返回 503。
-- 日志：默认输出到 stdout（systemd 下 `journalctl -u sapic -f`）；日志级别用 `sapic_loglevel` 调。
+- 日志：只记**应用日志**，同时写文件与 stdout（systemd 下 `journalctl -u sapic -f`）。
+  文件在 `sapic_log_dir`（默认 `<server>/data/log`）下的 `sys.log`，按 10 MB × 5 轮转；
+  多 worker 下各进程各自轮转，量大时交给 logrotate。**不记访问日志**：gunicorn 没开，容器里的
+  nginx 也默认 `access_log off;`，要记录下来就设 `SAPIC_NGINX_ACCESS_LOG=1`（见「容器与编排」）。
+  日志级别用 `sapic_loglevel` 调；把 `sapic_log_dir` 置空则只保留 stdout/stderr。
 - 每个请求都会带 `X-Request-Id`（也可由上游传入），排查时用它串日志。
 
 ## 常见问题

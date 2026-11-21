@@ -34,6 +34,7 @@ v1 代码已从仓库移除（历史代码看 git tag）。v1 → v2 的功能�
 │   │   │   ├── conf.py   配置类 BaseConfig/DevConfig/ProdConfig + load_config()
 │   │   │   ├── db.py     Peewee 数据库连接封装
 │   │   │   ├── errors.py ApiError / ErrorCode / 错误处理注册
+│   │   │   ├── log.py    日志：只记应用日志到 sys.log（不记访问日志）
 │   │   │   └── vars.py   常量：BASE_DIR / ENV_PREFIX / LOG_LEVEL_TYPE / 会话与文档地址
 │   │   ├── libs/         通用基类、接口类与功能封装（auth/images/albums/storage/users/mail/settings）
 │   │   │   ├── auth.py   会话 / PAT / CSRF 与权限装饰器

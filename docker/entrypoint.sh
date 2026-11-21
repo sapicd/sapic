@@ -25,8 +25,15 @@ if [ "${HTTP_PORT}" -lt 1 ] || [ "${HTTP_PORT}" -gt 65535 ]; then
     echo "[sapic] SAPIC_HTTP_PORT out of range (1-65535): ${HTTP_PORT}" >&2
     exit 1
 fi
-sed "s|__LISTEN_PORT__|${HTTP_PORT}|g" /etc/nginx/sapic.conf.template \
-    > /etc/nginx/conf.d/default.conf
+#: nginx 访问日志默认关闭：容器日志只留应用日志（sys.log 与 stderr）。需要访问记录时
+#: 设 SAPIC_NGINX_ACCESS_LOG=1，nginx 写 /var/log/nginx/access.log（镜像里软链到 stdout）。
+case "$(printf '%s' "${SAPIC_NGINX_ACCESS_LOG:-0}" | tr '[:upper:]' '[:lower:]')" in
+    1 | true | yes | on) NGINX_ACCESS_LOG="access_log /var/log/nginx/access.log;" ;;
+    *) NGINX_ACCESS_LOG="access_log off;" ;;
+esac
+sed -e "s|__LISTEN_PORT__|${HTTP_PORT}|g" \
+    -e "s|__ACCESS_LOG__|${NGINX_ACCESS_LOG}|g" \
+    /etc/nginx/sapic.conf.template > /etc/nginx/conf.d/default.conf
 
 cd /app/server
 echo "[sapic] starting gunicorn with ${WORKERS} workers"
@@ -35,7 +42,6 @@ gunicorn "sapic:create_app()" \
     --workers "${WORKERS}" \
     --worker-class gevent \
     --timeout 60 \
-    --access-logfile - \
     --error-logfile - &
 GUNICORN_PID=$!
 

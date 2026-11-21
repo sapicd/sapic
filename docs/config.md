@@ -17,6 +17,7 @@
 | `SESSION_TTL` | `sapic_session_ttl` | `604800` | 会话有效期（秒），最小 60 |
 | `PROXY_FIX` | `sapic_proxyfix` | `false` | 信任 `X-Forwarded-*` |
 | `LOG_LEVEL` | `sapic_loglevel` | `INFO` | `DEBUG` / `INFO` / `WARNING` / `ERROR` |
+| `LOG_DIR` | `sapic_log_dir` | `<server>/data/log` | 应用日志 `sys.log` 所在目录；置空只输出到标准错误 |
 | `HOOK_PKG_STORAGE_DIR` | `sapic_hookpkgstoragedir` | `data/hooks` | 第三方钩子包目录（`pip install --target` 目标），置空关闭后台安装 |
 | `HOOK_MARKET_URL` | `sapic_hookmarketurl` | 官方 list.json | 钩子市场数据源，可换镜像 |
 | `UPDATE_CHECK_URL` | `sapic_updatecheckurl` | 官方发布接口 | 版本检测数据源，置空即关闭（内网部署） |

@@ -24,6 +24,8 @@ def app(tmp_path):
             "STORAGE_DIR": str(tmp_path / "upload"),
             #: 第三方钩子包目录也要隔离，避免用例往仓库的 data/ 里写文件。
             "HOOK_PKG_STORAGE_DIR": str(tmp_path / "hooks"),
+            #: 日志同理：写到临时目录，别把 sys.log 落在仓库里。
+            "LOG_DIR": str(tmp_path / "log"),
         }
     )
     with app.app_context():

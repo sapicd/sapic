@@ -38,8 +38,9 @@ COPY server/ /app/server/
 COPY tools/ /app/tools/
 COPY --from=web /app/web/dist /app/web/dist
 
-#: nginx 配置是模板（含端口占位符），由 entrypoint 按 SAPIC_HTTP_PORT 渲染到
-#: /etc/nginx/conf.d/default.conf；镜像里不放成品 conf，端口才不写死。
+#: nginx 配置是模板（端口与访问日志开关都是占位符），由 entrypoint 按 SAPIC_HTTP_PORT /
+#: SAPIC_NGINX_ACCESS_LOG 渲染到 /etc/nginx/conf.d/default.conf；镜像里不放成品 conf，
+#: 端口才不写死。访问日志默认关，开启时写 /var/log/nginx/access.log（软链到 stdout）。
 COPY docker/nginx.conf /etc/nginx/sapic.conf.template
 COPY docker/entrypoint.sh /usr/local/bin/sapic-entrypoint
 RUN chmod 0755 /usr/local/bin/sapic-entrypoint \
