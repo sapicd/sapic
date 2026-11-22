@@ -1096,11 +1096,18 @@ a {
 }
 
 .node-field__label {
-  flex: 0 0 120px;
+  /*: 120px 装不下「又拍云 ClientSecret」这类混排标签，放宽到 160px；
+      英文标签更长（Qiniu moderation endpoint），按 <html lang> 再放宽，
+      i18n 切换语言时会同步设置 lang，宽度即时跟着变。 */
+  flex: 0 0 160px;
   text-align: right;
   font-size: 14px;
   line-height: 32px;
   color: var(--el-text-color-regular);
+}
+
+:root[lang='en'] .node-field__label {
+  flex-basis: 200px;
 }
 
 .node-field__label.is-required::before {
