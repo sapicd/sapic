@@ -71,6 +71,7 @@ _BOOL_KEYS = {
     "plaza_enabled",
     "storage_replica",
     "register_review",
+    "review_auto_purge",
     "upload_enabled",
 }
 

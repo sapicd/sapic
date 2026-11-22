@@ -30,13 +30,13 @@ def review_image(image, config=None) -> dict:
 | `width` / `height` / `is_video` | 尺寸与是否视频（视频同样送审，由钩子自己决定跳过） |
 | `owner_id` / `album_id` / `created_at` | 归属与上传时间；匿名上传的 `owner_id` 为 `null` |
 | `src` | 站内路径 `/raw/<sha>` |
-| `url` | 绝对地址，**只有**配置了 `sapic_external_base_url` 时才非空（多数内容安全 API 接受图片 URL） |
+| `url` | 绝对地址：优先 `sapic_external_base_url + /raw/<sha>`，否则用登记的外链或公开副本直链（多数内容安全 API 接受图片 URL） |
 
 `config` 是该钩子自己的配置（`hooks_config[<name>]`），字段由 `hook_manifest()` 的
 `config_schema` 声明，与其他钩子一致。
 
-> 需要字节不想配 `sapic_external_base_url` 时，可以在钩子里按自己的存储配置直接读对象；
-> 核心只保证 `url` 在配置齐全时可用。
+> 私有图（单图或继承相册）不会进入审核队列，交给钩子的只有公开可见的图片。
+> 三种地址都拿不到时 `url` 仍可能为空，钩子应返回「判不了」让下一轮重试，别猜 `pass`。
 
 ## 返回
 
@@ -99,8 +99,14 @@ def review_image(image, config=None) -> dict:
 | --- | --- | --- |
 | GET | `/api/v2/review?state=block` | 队列列表，`state` = `block`（默认）/ `pass` / `pending` / `all`，支持 `page` / `page_size` |
 | POST | `/api/v2/review/<sha>` | `{"action": "approve", "note": "误判"}` 恢复公开；`{"action": "block"}` 维持拦截；`{"action": "purge"}` **物理删除**（副本与行一起消失，不可恢复） |
+| POST | `/api/v2/review/batch` | `{"action": "approve\|block\|purge", "shas": ["..."]}` 批量处理，单次上限 100 张，按 sha 去重；返回 `{"action": ..., "affected": n}` |
 
 `purge` 与过期清理走同一条路径（`libs/images.purge_image`），sha 不会被复用。
+后台「审核队列」页（`/admin/review`）把这张队列可视化，支持逐张与批量放行/删除。
+
+站点设置 `review_auto_purge`（默认关）打开后，扫描判定为 `block` 的图片会**立即被 purge**
+（副本与行一起删除），不进队列等人复核。这是不可逆操作，误判无法放行挽回，只在能接受
+直接删除的部署里开启；默认关闭时 `block` 只隐藏，由管理员在队列里看过再决定。
 
 ## 最小实现
 
@@ -129,7 +135,7 @@ def hook_manifest():
 def review_image(image, config=None):
     config = config or {}
     if not image.get("url"):
-        #: 没有对外地址时判不了，交给下一轮（管理员应先配 sapic_external_base_url）。
+        #: 没有对外地址时判不了，交给下一轮（核心已尝试外链与公开副本直链）。
         return {"code": 1, "message": "image url is not configured"}
     if image.get("is_video"):
         return {"code": 0, "verdict": "pass"}

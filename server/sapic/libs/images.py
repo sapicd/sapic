@@ -1164,15 +1164,17 @@ def effective_plaza(image: Image, album: Album | None = None) -> bool:
     return bool(album.plaza) if album is not None else False
 
 
+def public_visibility_condition():
+    """Effective visibility is public (image override or album)."""
+    return (Image.visibility == VISIBILITY_PUBLIC) | (
+        Image.visibility.is_null()
+        & ((Image.album.is_null()) | (Album.visibility == VISIBILITY_PUBLIC))
+    )
+
+
 def public_condition():
     """Effective visibility is public (image override or album) and not blocked."""
-    return (
-        (Image.visibility == VISIBILITY_PUBLIC)
-        | (
-            Image.visibility.is_null()
-            & ((Image.album.is_null()) | (Album.visibility == VISIBILITY_PUBLIC))
-        )
-    ) & (
+    return public_visibility_condition() & (
         #: ``NULL != 'block'`` 在三种数据库里都不成立，必须显式带上 NULL 分支。
         Image.review_state.is_null() | (Image.review_state != REVIEW_BLOCK)
     )

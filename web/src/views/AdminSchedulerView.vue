@@ -72,6 +72,7 @@ function resultText(job) {
   return t('adminScheduler.scanned', {
     scanned: result.scanned ?? 0,
     blocked: result.blocked ?? 0,
+    purged: result.purged ?? 0,
     failed: result.failed ?? 0,
   })
 }
@@ -115,6 +116,7 @@ async function runNow(row) {
         t('adminScheduler.scanned', {
           scanned: review.scanned ?? 0,
           blocked: review.blocked ?? 0,
+          purged: review.purged ?? 0,
           failed: review.failed ?? 0,
         }),
       )

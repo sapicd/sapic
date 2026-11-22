@@ -116,8 +116,9 @@ def review_pending_command(limit):
     """Judge unreviewed images with the enabled moderator hooks.
 
     Designed for cron: every run claims a small batch, so a slow moderation API
-    never competes with uploads. A ``block`` verdict only hides the image; an
-    administrator approves or purges it from the admin API.
+    never competes with uploads. A ``block`` verdict hides the image unless the
+    ``review_auto_purge`` site setting is on, in which case the row and its
+    replicas are removed immediately.
     """
     from .libs.review import moderator_names, review_pending
 
@@ -129,7 +130,7 @@ def review_pending_command(limit):
     counts = review_pending(limit)
     click.echo(
         "reviewed %(scanned)d image(s): %(passed)d passed, %(blocked)d blocked, "
-        "%(failed)d to retry" % counts
+        "%(purged)d auto-purged, %(failed)d to retry" % counts
     )
 
 

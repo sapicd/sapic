@@ -398,11 +398,12 @@ systemctl restart sapic        # incremental migrations run at startup
 - **后台可观测**：管理员在「后台管理 → 定时任务」看当前调度者、各任务的间隔/下次运行/上次结果，
   也可以「立即执行」一次（同步执行、批量很小，不会等太久）。多 worker 下这一页显示的是
   **处理该请求的进程**：落在待命进程时会标「其他进程调度中」，手动执行仍然有效。
-- 审核命中只把图片**隐藏**（`review_state=block`），记录与文件都还在；管理员在
-  `GET /api/v2/review?state=block` 里复核，`POST /api/v2/review/<sha>` 用
-  `approve` 恢复或 `purge` 物理删除。
-- 钩子需要能拿到图片地址时，先配 `sapic_external_base_url`（扫描把 `external_base_url + /raw/<sha>`
-  交给钩子）。契约见[内容审核](extend/moderator.md)。
+- 审核命中默认只把图片**隐藏**（`review_state=block`），记录与文件都还在；管理员在后台
+  「审核队列」页（`/admin/review`）复核，逐张或批量（`POST /api/v2/review/batch`）用
+  `approve` 恢复或 `purge` 物理删除。站点设置 `review_auto_purge`（默认关）打开后，
+  判为 `block` 会立即 purge、不再进队列等人复核；不可逆，误判无法挽回，按需开启。
+- 审核只扫公开可见图片；钩子拿到的 `url` 优先是 `external_base_url + /raw/<sha>`，未配置时回退到
+  登记外链或公开副本直链。契约见[内容审核](extend/moderator.md)。
 
 ## 常见问题
 

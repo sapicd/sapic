@@ -8,8 +8,12 @@ from peewee import JOIN
 
 from sapic.libs.images import public_condition
 from sapic.libs.review import review_pending
+from sapic.libs.settings import set_setting
+from sapic.libs.storage import replicas_for
 from sapic.models import Album
+from sapic.models.album import VISIBILITY_PRIVATE
 from sapic.models.image import REVIEW_BLOCK, REVIEW_PASS, Image
+from sapic.models.storage import ImageBackend
 from sapic.models.user import User
 
 
@@ -84,7 +88,7 @@ def test_scan_blocks_and_hides_from_others(app, client, monkeypatch):
 
     with app.app_context():
         counts = review_pending()
-    assert counts == {"scanned": 1, "passed": 0, "blocked": 1, "failed": 0}
+    assert counts == {"scanned": 1, "passed": 0, "blocked": 1, "purged": 0, "failed": 0}
 
     with app.app_context():
         image = Image.get(Image.sha == sha)
@@ -130,7 +134,7 @@ def test_failed_verdict_is_retried(app, client, monkeypatch):
 
 
 def test_payload_hands_the_hook_a_public_url(app, client, monkeypatch):
-    #: 对外地址只有 ``sapic_external_base_url`` 一个来源。
+    #: 配了对外基址时优先用它拼 /raw，而不是副本直链。
     monkeypatch.setitem(app.config, "EXTERNAL_BASE_URL", "https://img.example.com")
     csrf = register_and_login(client)
     sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
@@ -143,6 +147,91 @@ def test_payload_hands_the_hook_a_public_url(app, client, monkeypatch):
     assert payload["sha"] == sha
     assert payload["src"] == "/raw/%s" % sha
     assert payload["url"] == "https://img.example.com/raw/%s" % sha
+
+
+def test_payload_falls_back_to_public_replica_url(app, client, monkeypatch):
+    monkeypatch.setitem(app.config, "EXTERNAL_BASE_URL", "")
+    csrf = register_and_login(client)
+    sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
+    with app.app_context():
+        image = Image.get(Image.sha == sha)
+        replica = replicas_for(image)[0]
+        replica.url = "https://cdn.example.test/files/photo.png"
+        replica.save(only=[ImageBackend.url])
+    manager = use_manager(monkeypatch, verdict="pass")
+
+    with app.app_context():
+        review_pending()
+
+    assert manager.calls[0]["url"] == "https://cdn.example.test/files/photo.png"
+    assert manager.calls[0]["src"] == "/raw/%s" % sha
+
+
+def test_payload_skips_local_replica_and_uses_public_one(app, client, monkeypatch):
+    #: 双副本（up2local 在前 + 公开桶在后）：第一个副本只有 /raw 相对路径，
+    #: 必须跳过它，拿到后面公开桶的 http 直链，否则审核服务商抓不到图。
+    monkeypatch.setitem(app.config, "EXTERNAL_BASE_URL", "")
+    from sapic.models.storage import StorageBackend
+
+    csrf = register_and_login(client)
+    sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
+    with app.app_context():
+        image = Image.get(Image.sha == sha)
+        local = replicas_for(image)[0]
+        local.url = "/raw/%s" % sha
+        local.save(only=[ImageBackend.url])
+        cdn_backend = StorageBackend.create(
+            name="cdn-review-test", hook_name="up2upyun",
+            visibility="public", priority=200,
+        )
+        ImageBackend.create(
+            image=image,
+            backend=cdn_backend,
+            url="https://cdn.example.test/files/photo.png",
+            state="ok",
+        )
+    manager = use_manager(monkeypatch, verdict="pass")
+
+    with app.app_context():
+        review_pending()
+
+    assert manager.calls[0]["url"] == "https://cdn.example.test/files/photo.png"
+
+
+def test_private_image_is_not_moderated(app, client, monkeypatch):
+    csrf = register_and_login(client)
+    sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
+    with app.app_context():
+        image = Image.get(Image.sha == sha)
+        image.visibility = VISIBILITY_PRIVATE
+        image.save(only=[Image.visibility])
+    manager = use_manager(monkeypatch, verdict="block")
+
+    with app.app_context():
+        counts = review_pending()
+
+    assert counts == {"scanned": 0, "passed": 0, "blocked": 0, "purged": 0, "failed": 0}
+    assert manager.calls == []
+    with app.app_context():
+        assert Image.get(Image.sha == sha).review_state is None
+
+
+def test_private_album_is_not_moderated(app, client, monkeypatch):
+    csrf = register_and_login(client)
+    sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
+    with app.app_context():
+        image = Image.get(Image.sha == sha)
+        image.album.visibility = VISIBILITY_PRIVATE
+        image.album.save(only=[Album.visibility])
+    manager = use_manager(monkeypatch, verdict="block")
+
+    with app.app_context():
+        counts = review_pending()
+
+    assert counts["scanned"] == 0
+    assert manager.calls == []
+    with app.app_context():
+        assert Image.get(Image.sha == sha).review_state is None
 
 
 def test_public_condition_skips_blocked_images(app, client, monkeypatch):
@@ -217,6 +306,70 @@ def test_review_queue_requires_admin(client):
     csrf = register_and_login(client)
     response = client.get("/api/v2/review", headers={"X-CSRF-Token": csrf})
     assert response.status_code == 403
+
+
+def test_admin_queue_filters_by_pass_state(app, client, monkeypatch):
+    csrf = register_and_login(client)
+    sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
+    use_manager(monkeypatch, verdict="pass")
+    with app.app_context():
+        review_pending()
+    promote_admin(app)
+
+    passed = client.get("/api/v2/review?state=pass")
+    assert passed.status_code == 200, passed.get_json()
+    data = passed.get_json()["data"]
+    assert data["total"] == 1
+    assert data["items"][0]["sha"] == sha
+    assert data["items"][0]["review_state"] == REVIEW_PASS
+
+    #: 同一张图不该出现在 block 队列。
+    blocked = client.get("/api/v2/review?state=block")
+    assert blocked.status_code == 200
+    assert blocked.get_json()["data"]["total"] == 0
+
+
+def test_auto_purge_removes_blocked_images(app, client, monkeypatch):
+    csrf = register_and_login(client)
+    sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
+    use_manager(monkeypatch, verdict="block", message="nsfw")
+    with app.app_context():
+        set_setting("review_auto_purge", True)
+        counts = review_pending()
+
+    assert counts["purged"] == 1
+    assert counts["blocked"] == 0
+    with app.app_context():
+        assert Image.get_or_none(Image.sha == sha) is None
+
+
+def test_batch_decisions(app, client, monkeypatch):
+    csrf = register_and_login(client)
+    shas = [
+        upload(client, csrf, filename="a.png").get_json()["data"]["image"]["sha"],
+        upload(client, csrf, filename="b.png").get_json()["data"]["image"]["sha"],
+    ]
+    promote_admin(app)
+    headers = {"X-CSRF-Token": csrf}
+
+    response = client.post(
+        "/api/v2/review/batch",
+        json={"action": "approve", "shas": shas},
+        headers=headers,
+    )
+    assert response.status_code == 200, response.get_json()
+    assert response.get_json()["data"]["affected"] == 2
+
+    response = client.post(
+        "/api/v2/review/batch",
+        json={"action": "purge", "shas": [shas[0], "missing-sha"]},
+        headers=headers,
+    )
+    assert response.status_code == 200, response.get_json()
+    assert response.get_json()["data"]["affected"] == 1
+    with app.app_context():
+        assert Image.get_or_none(Image.sha == shas[0]) is None
+        assert Image.get(Image.sha == shas[1]).review_state == REVIEW_PASS
 
 
 def test_cli_reports_when_no_moderator_is_enabled(app):

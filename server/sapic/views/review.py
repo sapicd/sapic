@@ -28,6 +28,8 @@ STATES = ("block", "pass", "pending", "all")
 
 #: Admin decisions; ``approve`` writes ``pass`` so the column stays a verdict.
 ACTIONS = {"approve": REVIEW_PASS, "block": REVIEW_BLOCK}
+#: Upper bound for one batch action; the UI sends the current page's selection.
+MAX_BATCH = 100
 
 
 @bp.get("/review")
@@ -41,7 +43,9 @@ def list_review():
     if state == "pending":
         query = query.where(Image.review_state.is_null())
     elif state != "all":
-        query = query.where(Image.review_state == ACTIONS[state])
+        #: ``state`` 就是 ``review_state`` 的列值（block/pass），直接匹配；
+        #: 不要走 ``ACTIONS``（它的键是动作 approve/block，不是状态）。
+        query = query.where(Image.review_state == state)
 
     serialize, prefetch = album_serializer()
 
@@ -66,6 +70,36 @@ def list_review():
             prefetch=prefetch,
         )
     )
+
+
+@bp.post("/review/batch")
+@admin_required
+def batch_decide():
+    """Apply one decision to a selection; per-image failures are skipped."""
+    payload = request.get_json(silent=True) or {}
+    action = str(payload.get("action") or "").strip().lower()
+    if action not in set(ACTIONS) | {"purge"}:
+        raise ApiError("invalid action", ErrorCode.PARAM_ERROR)
+    raw = payload.get("shas")
+    if not isinstance(raw, list) or not raw or len(raw) > MAX_BATCH:
+        raise ApiError("invalid shas", ErrorCode.PARAM_ERROR)
+    shas = list(dict.fromkeys(str(item).strip() for item in raw if str(item).strip()))
+    if not shas:
+        raise ApiError("invalid shas", ErrorCode.PARAM_ERROR)
+
+    affected = 0
+    for sha in shas:
+        image = Image.get_or_none((Image.sha == sha) & live_condition())
+        if image is None:
+            continue
+        if action == "purge":
+            purge_image(image)
+        else:
+            image.review_state = ACTIONS[action]
+            image.reviewed_at = now()
+            image.save(only=[Image.review_state, Image.reviewed_at])
+        affected += 1
+    return ok({"action": action, "affected": affected})
 
 
 @bp.post("/review/<sha>")

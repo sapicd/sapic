@@ -1,12 +1,17 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import { api, errorMessage } from '@/api/client'
 import HookSlot from '@/components/hook/HookSlot.vue'
-import { t } from '@/i18n'
+import { t, locale } from '@/i18n'
 import { useSiteStore } from '@/stores/site'
 
 const site = useSiteStore()
+
+//: label 宽度按最长标签定，中文「审核拦截时即删除」、英文「Purge on moderation
+//: block」都不折行；演示账号区域默认收起，需要配置时再展开。
+const labelWidth = computed(() => (locale.value === 'en' ? '220px' : '140px'))
+const demoOpen = ref([])
 
 //: 先给 smtp 一个空壳，加载失败时表单绑定也不会炸。
 const form = ref({
@@ -89,7 +94,7 @@ onMounted(loadSettings)
 
       <el-tabs v-model="tab">
         <el-tab-pane :label="t('adminSite.tabSite')" name="site">
-          <el-form label-width="120px">
+          <el-form :label-width="labelWidth">
             <el-form-item :label="t('adminSite.siteName')">
               <el-input v-model="form.site_name" maxlength="64" />
             </el-form-item>
@@ -152,7 +157,7 @@ onMounted(loadSettings)
         </el-tab-pane>
 
         <el-tab-pane :label="t('adminSite.tabUpload')" name="upload">
-          <el-form label-width="140px">
+          <el-form :label-width="labelWidth">
             <el-form-item :label="t('adminSite.uploadEnabled')">
               <el-switch v-model="form.upload_enabled" />
               <span class="form-suffix">{{ t('adminSite.uploadEnabledHint') }}</span>
@@ -221,7 +226,7 @@ onMounted(loadSettings)
         </el-tab-pane>
 
         <el-tab-pane :label="t('adminSite.tabSystem')" name="system">
-          <el-form label-width="120px">
+          <el-form :label-width="labelWidth">
             <el-form-item :label="t('adminSite.plaza')">
               <el-switch v-model="form.plaza_enabled" />
               <span class="form-suffix">{{ t('adminSite.plazaHint') }}</span>
@@ -235,6 +240,10 @@ onMounted(loadSettings)
               <el-switch v-model="form.register_review" />
               <span class="form-suffix">{{ t('adminSite.registerReviewHint') }}</span>
             </el-form-item>
+            <el-form-item :label="t('adminSite.reviewAutoPurge')">
+              <el-switch v-model="form.review_auto_purge" />
+              <span class="form-suffix">{{ t('adminSite.reviewAutoPurgeHint') }}</span>
+            </el-form-item>
             <el-form-item :label="t('adminSite.forbiddenUsername')">
               <el-input
                 v-model="form.forbidden_username"
@@ -245,36 +254,38 @@ onMounted(loadSettings)
               <el-switch v-model="form.password_login" />
               <span class="form-suffix">{{ t('adminSite.passwordLoginHint') }}</span>
             </el-form-item>
-            <el-divider content-position="left">
-              {{ t('adminSite.demoTitle') }}
-            </el-divider>
-            <el-form-item :label="t('adminSite.demoEnabled')">
-              <el-switch v-model="form.demo_rotate_enabled" />
-              <span class="form-suffix">{{ t('adminSite.demoEnabledHint') }}</span>
-            </el-form-item>
-            <el-form-item :label="t('adminSite.demoUsername')">
-              <el-input
-                v-model="form.demo_rotate_username"
-                :placeholder="t('adminSite.demoUsernamePlaceholder')"
-              />
-            </el-form-item>
-            <el-form-item :label="t('adminSite.demoPassword')">
-              <el-input
-                v-model="form.demo_rotate_password"
-                type="password"
-                show-password
-                :placeholder="t('adminSite.demoPasswordPlaceholder')"
-              />
-            </el-form-item>
-            <el-form-item :label="t('adminSite.demoInterval')">
-              <el-input-number
-                v-model="form.demo_rotate_interval"
-                :min="60"
-                :max="86400"
-                :step="60"
-              />
-              <span class="form-suffix">{{ t('adminSite.demoIntervalHint') }}</span>
-            </el-form-item>
+            <!--: 演示账号是低频配置，手风琴默认收起，不让它把系统页撑长。 -->
+            <el-collapse v-model="demoOpen" class="demo-collapse">
+              <el-collapse-item :title="t('adminSite.demoTitle')" name="demo">
+                <el-form-item :label="t('adminSite.demoEnabled')">
+                  <el-switch v-model="form.demo_rotate_enabled" />
+                  <span class="form-suffix">{{ t('adminSite.demoEnabledHint') }}</span>
+                </el-form-item>
+                <el-form-item :label="t('adminSite.demoUsername')">
+                  <el-input
+                    v-model="form.demo_rotate_username"
+                    :placeholder="t('adminSite.demoUsernamePlaceholder')"
+                  />
+                </el-form-item>
+                <el-form-item :label="t('adminSite.demoPassword')">
+                  <el-input
+                    v-model="form.demo_rotate_password"
+                    type="password"
+                    show-password
+                    :placeholder="t('adminSite.demoPasswordPlaceholder')"
+                  />
+                </el-form-item>
+                <el-form-item :label="t('adminSite.demoInterval')">
+                  <el-input-number
+                    v-model="form.demo_rotate_interval"
+                    :min="60"
+                    :max="86400"
+                    :step="60"
+                  />
+                  <span class="form-suffix">{{ t('adminSite.demoIntervalHint') }}</span>
+                </el-form-item>
+              </el-collapse-item>
+            </el-collapse>
           </el-form>
         </el-tab-pane>
 
@@ -287,7 +298,7 @@ onMounted(loadSettings)
             :title="t('adminSite.mailAlertTitle')"
             :description="t('adminSite.mailAlertDesc')"
           />
-          <el-form label-width="120px">
+          <el-form :label-width="labelWidth">
             <el-form-item :label="t('adminSite.smtpHost')">
               <el-input
                 v-model="form.smtp.host"

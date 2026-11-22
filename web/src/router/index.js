@@ -87,6 +87,12 @@ const routes = [
         component: () => import('@/views/AdminSchedulerView.vue'),
         meta: { title: 'admin.scheduler' },
       },
+      {
+        path: 'review',
+        name: 'admin-review',
+        component: () => import('@/views/ReviewView.vue'),
+        meta: { title: 'admin.review' },
+      },
     ],
   },
   {

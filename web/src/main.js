@@ -11,6 +11,7 @@ import {
   Link,
   Menu,
   Picture,
+  PictureFilled,
   Search,
   Setting,
   Switch,
@@ -19,6 +20,7 @@ import {
   UploadFilled,
   User,
   UserFilled,
+  VideoCamera,
   View,
 } from '@element-plus/icons-vue'
 import { createPinia } from 'pinia'
@@ -43,6 +45,7 @@ const GLOBAL_ICONS = [
   Link,
   Menu,
   Picture,
+  PictureFilled,
   Search,
   Setting,
   Switch,

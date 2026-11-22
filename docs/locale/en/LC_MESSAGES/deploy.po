@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sapic 2.0.0-pre\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-22 12:13+0800\n"
+"POT-Creation-Date: 2026-11-22 15:58+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -78,7 +78,10 @@ msgid "依赖"
 msgstr "Dependencies"
 
 #: ../../deploy.md
-msgid "`server/requirements/prod.txt`（离线可用 `base.txt` + gunicorn/gevent）"
+#, fuzzy
+msgid ""
+"`server/requirements/prod.txt`（离线可用 `base.txt` + "
+"gunicorn/gevent/setproctitle）"
 msgstr ""
 "`server/requirements/prod.txt` (offline, `base.txt` + gunicorn/gevent is "
 "enough)"
@@ -99,7 +102,7 @@ msgstr "23+, pnpm 8 (`packageManager: pnpm@8.14.1`)"
 msgid "只在构建前端时用到"
 msgstr "Only needed to build the front end"
 
-#: ../../deploy.md ../../deploy.md:279
+#: ../../deploy.md ../../deploy.md:284
 msgid "数据库"
 msgstr "Database"
 
@@ -161,24 +164,25 @@ msgstr ""
 " the environment variables and **values are taken literally** (do not "
 "quote them):"
 
-#: ../../deploy.md:61
+#: ../../deploy.md:62
 msgid ""
 "`sapic_secretkey` 是**可选**的：容器部署不传时，entrypoint 首次启动会在数据目录生成 32 字节随机值 "
 "并一直复用（默认 `$SAPIC_SECRET_FILE`，即 "
 "`/app/server/data/secret_key`），所以只要挂好数据卷就不用手配。 非容器部署（直接 gunicorn / `make "
 "serve`）不传仍用内置默认密钥，公网多用户站点建议显式配置 `sapic_secretkey=<openssl rand -hex "
 "32>`——它是公开串，读过源码的人能伪造会话 Cookie。 手动换掉密钥等于吊销全部会话。"
-msgstr "`sapic_secretkey` is **optional**: the container entrypoint generates a "
+msgstr ""
+"`sapic_secretkey` is **optional**: the container entrypoint generates a "
 "32-byte random value in the data directory on first start and keeps "
 "reusing it (default `$SAPIC_SECRET_FILE`, i.e. "
-"`/app/server/data/secret_key`), so a mounted data volume is all you need. "
-"Non-container deployments (bare gunicorn / `make serve`) still fall back "
-"to the built-in key; on a public multi-user site set "
+"`/app/server/data/secret_key`), so a mounted data volume is all you need."
+" Non-container deployments (bare gunicorn / `make serve`) still fall back"
+" to the built-in key; on a public multi-user site set "
 "`sapic_secretkey=<openssl rand -hex 32>` explicitly — it is a public "
 "string, and anyone who has read the source can forge session cookies. "
 "Replacing the key revokes every session."
 
-#: ../../deploy.md:67
+#: ../../deploy.md:68
 msgid ""
 "全部配置项的默认值与含义见[配置](config.md)的进程级配置表；站点级设置（站点名、上传白名单与大小、 "
 "注册审核、SMTP、钩子开关等）存在数据库的 `settings` 表里，进后台 `/admin/setting` 维护。"
@@ -188,38 +192,38 @@ msgstr ""
 "allowlist and sizes, registration review, SMTP, hook switches …) live in "
 "the `settings` table and are maintained under `/admin/setting`."
 
-#: ../../deploy.md:70
+#: ../../deploy.md:71
 msgid "初始化数据库与管理员"
 msgstr "Initialise the database and an administrator"
 
-#: ../../deploy.md:82
+#: ../../deploy.md:83
 msgid "`flask` 命令需要 `FLASK_APP=sapic`：Makefile 会自动导出，手工执行（含容器里）时请显式带上。"
 msgstr ""
 "The `flask` commands need `FLASK_APP=sapic`: the Makefile exports it "
 "automatically, but pass it explicitly when running by hand (including "
 "inside containers)."
 
-#: ../../deploy.md:84
+#: ../../deploy.md:85
 msgid "启动后端"
 msgstr "Start the backend"
 
-#: ../../deploy.md:86
+#: ../../deploy.md:87
 msgid "前台试跑（确认能起来再交给 systemd）："
 msgstr "Run it in the foreground first (hand it over to systemd once it works):"
 
-#: ../../deploy.md:93
+#: ../../deploy.md:94
 msgid "systemd 单元示例 `/etc/systemd/system/sapic.service`："
 msgstr "Example systemd unit `/etc/systemd/system/sapic.service`:"
 
-#: ../../deploy.md:120
+#: ../../deploy.md:121
 msgid "nginx 站点"
 msgstr "The nginx site"
 
-#: ../../deploy.md:166
+#: ../../deploy.md:167
 msgid "关键点："
 msgstr "Key points:"
 
-#: ../../deploy.md:168
+#: ../../deploy.md:169
 msgid ""
 "`sapic_proxyfix=1`（或环境变量）必须开：Flask 侧据此信任 `X-Forwarded-Proto/Host`，否则 "
 "`request.is_secure` 为假，登录 Cookie 不会带 `Secure`，回调地址也可能拼错。"
@@ -228,7 +232,7 @@ msgstr ""
 "trusts `X-Forwarded-Proto/Host`. Without it `request.is_secure` is false,"
 " the session cookie loses `Secure`, and callback URLs may be built wrong."
 
-#: ../../deploy.md:170
+#: ../../deploy.md:171
 msgid ""
 "上面的示例是 **nginx 自己终止 TLS**，所以 `X-Forwarded-Proto $scheme` 是对的。如果 nginx "
 "前面还有一层 Traefik / WAF / 云负载均衡负责 TLS，`$scheme` 恒为 `http`，必须改成透传， 否则会把外层的 "
@@ -240,14 +244,14 @@ msgstr ""
 "the header through instead, or the outer `https` gets overwritten (the "
 "container `docker/nginx.conf` already does this with a `map`):"
 
-#: ../../deploy.md:183
+#: ../../deploy.md:184
 msgid "**前后端同源**：`/api`、`/raw/` 与静态资源必须在同一个域名/端口下，Cookie 会话才生效。"
 msgstr ""
 "**Same origin for the front end and the API**: `/api`, `/raw/` and the "
 "static assets must be served from the same domain and port for cookie "
 "sessions to work."
 
-#: ../../deploy.md:184
+#: ../../deploy.md:185
 msgid ""
 "想用 CDN 或独立图片域名时，配 `sapic_external_base_url=https://cdn.example.com`， "
 "`/raw` 链接会带该前缀。"
@@ -256,7 +260,7 @@ msgstr ""
 "`sapic_external_base_url=https://cdn.example.com` and `/raw` links get "
 "that prefix."
 
-#: ../../deploy.md:186
+#: ../../deploy.md:187
 msgid ""
 "**上传上限是三层取最小值**：nginx 的 `client_max_body_size`、进程级 `sapic_maxupload` （映射 "
 "`MAX_CONTENT_LENGTH`）、站点设置里按媒体类型的单文件上限 （`upload_image_max_size` / "
@@ -269,7 +273,7 @@ msgstr ""
 "adds overhead, so keep the process-level limit slightly above the site "
 "limit."
 
-#: ../../deploy.md:190
+#: ../../deploy.md:191
 msgid ""
 "**防盗链**：用户可在「个性化」里为自己的公开图开启 Referer 校验，拦截发生在 `/raw/`， nginx 只要原样转发 "
 "`Referer`（默认就转发），不要清空它。图片走存储直链（存储后端配了加速域名、 或图片是外链登记）时 sapic 不在链路上，需要在 "
@@ -282,83 +286,87 @@ msgstr ""
 "with an acceleration domain, or an image registered as an external link) "
 "sapic is not in the path, so the CDN / static server needs the same rule:"
 
-#: ../../deploy.md:202
+#: ../../deploy.md:203
 msgid "阿里云 OSS / 腾讯云 COS 在控制台「防盗链」里配同一份白名单，并显式选择是否允许空 Referer。"
 msgstr ""
 "Configure the same allowlist under hotlink protection in the Aliyun OSS /"
 " Tencent COS console, and choose explicitly whether an empty Referer is "
 "allowed."
 
-#: ../../deploy.md:204
+#: ../../deploy.md:205
 msgid "容器与编排"
 msgstr "Containers and orchestration"
 
-#: ../../deploy.md:206
+#: ../../deploy.md:207
 msgid ""
 "镜像内已经包含 gunicorn + nginx（nginx 托管 `web/dist`，只把 `/api`、`/raw` 两条前缀反代给后端； "
 "油猴脚本在 `/api/v2/userscript.user.js` 下，因此不需要单独开 location），默认监听 80 端口， "
 "不需要再单独部署前端。三个进程（gunicorn、`flask sa scheduler`、nginx）由 supervisor 统管， "
 "entrypoint 只负责生成密钥、渲染 nginx 配置并跑一次 `flask sa upgrade`：web worker 固定 "
 "`sapic_scheduler=0`，后台任务由同容器里的独立调度进程执行，worker 重启不影响定时任务。 容器内监听端口默认 "
-"`80`，可用 `SAPIC_HTTP_PORT` 改：`docker/nginx.conf` 是完整 nginx 主配置模板（端口、worker 数是占位符），由 entrypoint "
-"渲染到 `/etc/nginx/nginx.conf`，健康检查也会跟着走同一个端口。`docker-compose.yml` 只把宿主的 "
-"`SAPIC_PORT`（默认 `80`）映射到容器 `80`。"
-msgstr "The image already contains gunicorn and nginx (nginx serves `web/dist` and "
-"proxies only the `/api` and `/raw` prefixes to the backend; the userscript "
-"lives under `/api/v2/userscript.user.js`, so no extra location is needed) "
-"and listens on port 80, so there is no separate front-end deployment. "
-"Supervisor manages all three processes (gunicorn, `flask sa scheduler` and "
-"nginx); the entrypoint only generates the secret, renders the nginx config "
-"and runs `flask sa upgrade` once: the web workers pin `sapic_scheduler=0`, "
-"so the background jobs run in the standalone scheduler process inside the "
-"same container and a worker restart never interrupts them. The container "
-"port defaults to `80` and can be changed with `SAPIC_HTTP_PORT`: "
-"`docker/nginx.conf` is now a complete main-config template (port and worker "
-"count are placeholders) that the entrypoint renders to "
-"`/etc/nginx/nginx.conf`; the health check follows the same port. "
-"`docker-compose.yml` only maps the host `SAPIC_PORT` (default `80`) to container `80`."
+"`80`，可用 `SAPIC_HTTP_PORT` 改：`docker/nginx.conf` 是完整 nginx 主配置模板（端口、worker"
+" 数是占位符），由 entrypoint 渲染到 `/etc/nginx/nginx.conf`，健康检查也会跟着走同一个端口。`docker-"
+"compose.yml` 只把宿主的 `SAPIC_PORT`（默认 `80`）映射到容器 `80`。"
+msgstr ""
+"The image already contains gunicorn and nginx (nginx serves `web/dist` "
+"and proxies only the `/api` and `/raw` prefixes to the backend; the "
+"userscript lives under `/api/v2/userscript.user.js`, so no extra location"
+" is needed) and listens on port 80, so there is no separate front-end "
+"deployment. Supervisor manages all three processes (gunicorn, `flask sa "
+"scheduler` and nginx); the entrypoint only generates the secret, renders "
+"the nginx config and runs `flask sa upgrade` once: the web workers pin "
+"`sapic_scheduler=0`, so the background jobs run in the standalone "
+"scheduler process inside the same container and a worker restart never "
+"interrupts them. The container port defaults to `80` and can be changed "
+"with `SAPIC_HTTP_PORT`: `docker/nginx.conf` is now a complete main-config"
+" template (port and worker count are placeholders) that the entrypoint "
+"renders to `/etc/nginx/nginx.conf`; the health check follows the same "
+"port. `docker-compose.yml` only maps the host `SAPIC_PORT` (default `80`)"
+" to container `80`."
 
-#: ../../deploy.md:215
+#: ../../deploy.md:217
 msgid ""
-"gunicorn 的 worker 数由 `sapic_workers` 控制（默认 4，SQLite 建议 1），nginx 的 worker 数由容器变量 "
-"`SAPIC_NGINX_WORKERS` 控制（默认 `auto`，按 CPU 核数；填正整数可固定）。两者都在模板/配置里， "
+"gunicorn 的 worker 数由 `sapic_workers` 控制（默认 4，SQLite 建议 1），nginx 的 worker "
+"数由容器变量 `SAPIC_NGINX_WORKERS` 控制（默认 `auto`，按 CPU 核数；填正整数可固定）。两者都在模板/配置里， "
 "容器启动时一次渲染完成，不再改镜像自带的 nginx 配置。"
 msgstr ""
-"The gunicorn worker count comes from `sapic_workers` (default 4; use 1 with "
-"SQLite), while the nginx worker count is set by the container variable "
-"`SAPIC_NGINX_WORKERS` (default `auto`, one per CPU; set a positive integer to "
-"pin it). Both live in the template/config and are rendered once at container "
-"startup; the image's own nginx config is no longer modified."
+"The gunicorn worker count comes from `sapic_workers` (default 4; use 1 "
+"with SQLite), while the nginx worker count is set by the container "
+"variable `SAPIC_NGINX_WORKERS` (default `auto`, one per CPU; set a "
+"positive integer to pin it). Both live in the template/config and are "
+"rendered once at container startup; the image's own nginx config is no "
+"longer modified."
 
-#: ../../deploy.md:215
+#: ../../deploy.md:221
 msgid ""
-"容器里的 nginx **访问日志和错误日志都关掉**（`access_log off;` / `error_log /dev/null crit;`）， "
-"日志只留应用那份；进程存活与崩溃仍由 supervisor 管理。"
+"容器里的 nginx **访问日志和错误日志都关掉**（`access_log off;` / `error_log /dev/null "
+"crit;`）， 日志只留应用那份；进程存活与崩溃仍由 supervisor 管理。"
 msgstr ""
 "The nginx inside the container **disables both access and error logs** "
 "(`access_log off;` / `error_log /dev/null crit;`), leaving only the "
 "application log; supervisor still manages process liveness and crashes."
 
-#: ../../deploy.md:228
+#: ../../deploy.md:233
 msgid ""
 "密钥不用给：entrypoint 会在数据卷里生成并复用。想自己掌控就加一行 `-e sapic_secretkey=\"$(openssl "
 "rand -hex 32)\"`（换掉会吊销现有会话）。"
-msgstr "You do not have to supply a key: the entrypoint generates one in the data "
-"volume and keeps reusing it. To manage it yourself add a line `-e "
+msgstr ""
+"You do not have to supply a key: the entrypoint generates one in the data"
+" volume and keeps reusing it. To manage it yourself add a line `-e "
 "sapic_secretkey=\"$(openssl rand -hex 32)\"` (replacing it revokes "
 "existing sessions)."
 
-#: ../../deploy.md:231
+#: ../../deploy.md:236
 msgid "`docker compose up -d` 就是上面那个单容器 + SQLite 的形态："
 msgstr "`docker compose up -d` is exactly that single container + SQLite shape:"
 
-#: ../../deploy.md:239
+#: ../../deploy.md:244
 msgid "要 PostgreSQL（多进程/多副本）时在 compose 的 `environment` 里加一行，compose 里不带数据库服务："
 msgstr ""
 "For PostgreSQL (multiple processes / replicas) add one line to the "
 "compose `environment`; compose ships no database service:"
 
-#: ../../deploy.md:245
+#: ../../deploy.md:250
 msgid ""
 "`docker-compose.yml` 用 SQLite（库文件在 `sapic-data` 卷里）并把 worker 限成 "
 "1，配置全部走环境变量 （只列必需项，其余用默认值）；`kube-sapic.yaml` 只有 Deployment + Service "
@@ -383,11 +391,11 @@ msgstr ""
 " only the required settings; add environment variables for anything else "
 "— see [Configuration](config.md)."
 
-#: ../../deploy.md:253
+#: ../../deploy.md:258
 msgid "要点："
 msgstr "Key points:"
 
-#: ../../deploy.md:255
+#: ../../deploy.md:260
 msgid ""
 "**唯一必须挂载的路径**是 `/app/server/data`：SQLite 数据库、上传文件（`upload/`）与后台安装的 "
 "第三方钩子包（`hooks/`）都在这里；不挂卷等于每次重建容器丢数据。"
@@ -397,31 +405,33 @@ msgstr ""
 " admin (`hooks/`) all live there; without a volume every container "
 "rebuild loses data."
 
-#: ../../deploy.md:257
+#: ../../deploy.md:262
 msgid "容器内 `sapic_proxyfix=true` 必须开启（compose 与 k8s 已配），否则日志与限流拿到的是 127.0.0.1。"
 msgstr ""
 "Inside the container `sapic_proxyfix=true` must be on (compose and k8s "
 "already set it), otherwise logs and rate limiting see 127.0.0.1."
 
-#: ../../deploy.md:258
+#: ../../deploy.md:263
 msgid "健康检查统一用 `GET /api/v2/health`：数据库不通返回 503。"
 msgstr ""
 "Use `GET /api/v2/health` for health checks: it returns 503 when the "
 "database is unreachable."
 
-#: ../../deploy.md:259
+#: ../../deploy.md:264
 msgid ""
 "容器内三个进程由 supervisor 管（配置 `docker/supervisord.conf` → "
 "`/etc/supervisord.conf`， socket `/run/supervisord.sock`）：`docker exec "
 "sapic supervisorctl status` 看状态， `supervisorctl restart scheduler` "
 "只重启调度进程、不动 web；`ps -ef`（`procps`）也能看进程。"
-msgstr "Supervisor manages the three processes inside the container (config "
+msgstr ""
+"Supervisor manages the three processes inside the container (config "
 "`docker/supervisord.conf` → `/etc/supervisord.conf`, socket "
 "`/run/supervisord.sock`): `docker exec sapic supervisorctl status` shows "
-"their state, `supervisorctl restart scheduler` restarts only the scheduler "
-"and leaves web alone, and `ps -ef` (from `procps`) lists them too."
+"their state, `supervisorctl restart scheduler` restarts only the "
+"scheduler and leaves web alone, and `ps -ef` (from `procps`) lists them "
+"too."
 
-#: ../../deploy.md:262
+#: ../../deploy.md:267
 msgid ""
 "上传上限有三层，改大小时一起改：nginx `client_max_body_size`（容器内 32m）、 "
 "`sapic_maxupload`（25）、后台 `upload_image_max_size` / "
@@ -431,14 +441,14 @@ msgstr ""
 "`client_max_body_size` (32m in the image), `sapic_maxupload` (25) and the"
 " admin `upload_image_max_size` / `upload_video_max_size`."
 
-#: ../../deploy.md:264
+#: ../../deploy.md:269
 msgid "本地磁盘存储只能单副本（`Recreate` 策略）；要多副本必须换成对象存储类钩子并给 `/app/server/data` 配 RWX 卷。"
 msgstr ""
 "Local disk storage only supports a single replica (`Recreate` strategy); "
 "multiple replicas require an object-storage hook and an RWX volume for "
 "`/app/server/data`."
 
-#: ../../deploy.md:266
+#: ../../deploy.md:271
 msgid ""
 "外层 HTTPS 交给宿主机反代或集群外的网关（`kube-sapic.yaml` 只开 NodePort，没有 Ingress）， 并把 "
 "`sapic_external_base_url` 设成对外地址，否则图片直链与审核邮件里的登录链接会是内网地址。 反代/Ingress "
@@ -453,7 +463,7 @@ msgstr ""
 "32m; when switching to an Ingress, remember `nginx.ingress.kubernetes.io"
 "/proxy-body-size`."
 
-#: ../../deploy.md:270
+#: ../../deploy.md:275
 msgid ""
 "前面再套一层 Traefik / WAF 时不用改配置：容器内 nginx 用 `map` **透传**上游的 `X-Forwarded-"
 "Proto`，不会再把 `https` 覆盖成 `http`（OIDC 回调地址与会话 Cookie 的 `Secure` "
@@ -468,7 +478,7 @@ msgstr ""
 "has to rewrite it, use `sapic_external_base_url` for link generation and "
 "verify the OIDC callback separately."
 
-#: ../../deploy.md:274
+#: ../../deploy.md:279
 msgid ""
 "WAF 常见坑：`/api/v2/health` 要放行（否则探针被拦会反复重启）、`/raw/*` 关掉响应体检测 "
 "（二进制图片会拖慢甚至误杀）、`/api/v2/hooks/*` 放宽超时（后台装钩子会跑 pip 几十秒）、 请求体上限不小于 32m（取值链是"
@@ -481,14 +491,14 @@ msgstr ""
 " at least 32m (the chain is WAF ≥ nginx 32m > `sapic_maxupload` 25M > the"
 " site per-file limit)."
 
-#: ../../deploy.md:277
+#: ../../deploy.md:282
 msgid "升级：拉新镜像重启即可，启动时自动执行数据库迁移（迁移幂等，多 worker 并发有重试保护）。"
 msgstr ""
 "Upgrading: pull the new image and restart; database migrations run "
 "automatically at startup (they are idempotent and concurrent workers "
 "retry safely)."
 
-#: ../../deploy.md:290
+#: ../../deploy.md:295
 msgid ""
 "迁移在应用启动时**自动执行**（多 worker 并发启动有锁冲突重试 + 迁移幂等，安全）； `flask sa upgrade` "
 "只作运维兜底。"
@@ -497,31 +507,31 @@ msgstr ""
 "workers retry on lock conflicts and every migration is idempotent, so it "
 "is safe); `flask sa upgrade` is only the operational fallback."
 
-#: ../../deploy.md:292
+#: ../../deploy.md:297
 msgid "MySQL 的 DDL 不支持事务，所以每个迁移都写成可重复执行；升级失败先看日志再手工重跑即可。"
 msgstr ""
 "MySQL DDL is not transactional, so every migration is written to be re-"
 "runnable; if an upgrade fails, read the log and run it again by hand."
 
-#: ../../deploy.md:293
+#: ../../deploy.md:298
 msgid "SQLite 适合单机小流量；多 worker 写并发下容易 `database is locked`，生产建议 PostgreSQL/MySQL。"
 msgstr ""
 "SQLite suits a single machine with light traffic; under concurrent writes"
 " from several workers it easily hits `database is locked`, so use "
 "PostgreSQL/MySQL in production."
 
-#: ../../deploy.md:295
+#: ../../deploy.md:300
 msgid "首次使用"
 msgstr "First steps"
 
-#: ../../deploy.md:297
+#: ../../deploy.md:302
 msgid "用管理员账号登录后台，`/admin/setting` 填站点名/背景/公告，按需打开或关闭注册、匿名上传、图片广场。"
 msgstr ""
 "Sign in to the admin with the administrator account, fill in site name / "
 "background / announcement under `/admin/setting`, and enable or disable "
 "registration, anonymous uploads and the image plaza as needed."
 
-#: ../../deploy.md:298
+#: ../../deploy.md:303
 msgid ""
 "上传白名单 `upload_allowed_ext`、图片大小 `upload_image_max_size`（默认 10M）、 视频大小 "
 "`upload_video_max_size`（默认 20M）、视频开关 `allow_video` 在后台「站点设置」， 与进程级 "
@@ -534,7 +544,7 @@ msgstr ""
 "together with the process-level `sapic_maxupload` (25M for the whole "
 "request) — both must be raised to upload big files."
 
-#: ../../deploy.md:301
+#: ../../deploy.md:306
 msgid ""
 "图片有效期：`image_expire_default_days`（未指定时的默认寿命）与 `image_expire_max_days` "
 "（单图上限）在后台「站点设置 → 上传」配置，单位天，`0` 表示永久 / 不限制；设了上限后不再允许 "
@@ -550,7 +560,7 @@ msgstr ""
 "sa purge-expired` (run in the application directory with the deployment "
 "Python)."
 
-#: ../../deploy.md:305
+#: ../../deploy.md:310
 msgid ""
 "邮件（注册验证、找回密码）在后台配置 SMTP，或启用 `sendcloud` 等 `mail` 类钩子并填好 API 凭据 （配置完整时优先于 "
 "SMTP）；不配也能用，但相关功能不可用。 端口决定传输方式：465/994 走隐式 SSL（不勾 STARTTLS），587 勾 "
@@ -564,7 +574,7 @@ msgstr ""
 "587 uses STARTTLS, 25 is usually not needed. Aliyun / Tencent enterprise "
 "mail uses 465 with an authorisation code (not the login password)."
 
-#: ../../deploy.md:309
+#: ../../deploy.md:314
 msgid ""
 "统一登录（OIDC）：`/admin/hooks` 启用 `passport`，填 `issuer` / `client_id` / "
 "`client_secret`； 在 Passport 侧登记回调地址 "
@@ -580,7 +590,7 @@ msgstr ""
 "name. Once `password_login` is off only single sign-on works, so bind the"
 " administrator account to OIDC first."
 
-#: ../../deploy.md:313
+#: ../../deploy.md:318
 msgid ""
 "存储后端：`up2local` 默认启用并自动创建 `local` 后端（写到 `STORAGE_DIR`）。要用云存储： ① 对应 SDK 已随"
 " `base.txt` 安装，无需额外操作（第三方钩子才要自己装依赖）； ② `/admin/hooks` "
@@ -600,48 +610,48 @@ msgstr ""
 " from the backend holding their replica, so a backend that still has "
 "replicas cannot be disabled or deleted."
 
-#: ../../deploy.md:320
+#: ../../deploy.md:325
 msgid "各配置项的完整清单见[配置](config.md)。"
 msgstr "The full list of options is in [Configuration](config.md)."
 
-#: ../../deploy.md:322
+#: ../../deploy.md:327
 msgid "升级、备份与回滚"
 msgstr "Upgrades, backups and rollback"
 
-#: ../../deploy.md:324
+#: ../../deploy.md:329
 msgid "升级："
 msgstr "Upgrading:"
 
-#: ../../deploy.md:333
+#: ../../deploy.md:338
 msgid "备份："
 msgstr "Backups:"
 
-#: ../../deploy.md:335
+#: ../../deploy.md:340
 msgid "数据库：`pg_dump` / `mysqldump` / 直接拷 `sapic.db`（先停服务或 `sqlite3 .backup`）。"
 msgstr ""
 "Database: `pg_dump` / `mysqldump` / copy `sapic.db` (stop the service "
 "first, or use `sqlite3 .backup`)."
 
-#: ../../deploy.md:336
+#: ../../deploy.md:341
 msgid "本地图片：`STORAGE_DIR` 整个目录。"
 msgstr "Local images: the whole `STORAGE_DIR` directory."
 
-#: ../../deploy.md:337
+#: ../../deploy.md:342
 msgid "`server/.cfg`（密钥与 DSN）。"
 msgstr "`server/.cfg` (secret and DSN)."
 
-#: ../../deploy.md:339
+#: ../../deploy.md:344
 msgid "回滚：迁移幂等但不支持自动回退，回滚代码前先备份数据库；结构不兼容的版本需手工降级数据。"
 msgstr ""
 "Rollback: migrations are idempotent but have no automatic downgrade, so "
 "back up the database before rolling back the code; versions with "
 "incompatible schemas need a manual data downgrade."
 
-#: ../../deploy.md:341
+#: ../../deploy.md:346
 msgid "从 v1 升级"
 msgstr "Upgrading from v1"
 
-#: ../../deploy.md:343
+#: ../../deploy.md:348
 msgid ""
 "数据迁移（Redis → 关系库、文件走存储驱动重传、保留原 `sha`）是独立的一次性操作，完整参数、 云存储采纳规则与客户端改配置都在[从 "
 "v1 迁移数据](migrate-v1.md)。"
@@ -651,17 +661,17 @@ msgstr ""
 "full options, cloud-storage adoption rules and client changes are in "
 "[Migrating data from v1](migrate-v1.md)."
 
-#: ../../deploy.md:346
+#: ../../deploy.md:351
 msgid "这里只强调顺序：**先迁数据、再切流量**，迁移期间停掉 v1 的写入。"
 msgstr ""
 "Only the order matters here: **migrate the data first, then move "
 "traffic**, and stop v1 writes during the migration."
 
-#: ../../deploy.md:348
+#: ../../deploy.md:353
 msgid "观测"
 msgstr "Observability"
 
-#: ../../deploy.md:350
+#: ../../deploy.md:355
 #, python-brace-format
 msgid ""
 "健康检查：`GET /api/v2/health` → `{\"status\": \"ok|degraded\", \"version\", "
@@ -671,41 +681,42 @@ msgstr ""
 "\"version\", \"database\"}`; it returns 503 when the database is "
 "unreachable."
 
-#: ../../deploy.md:352
+#: ../../deploy.md:357
 msgid ""
 "日志：只记**应用日志**，同时写文件与 stdout（systemd 下 `journalctl -u sapic -f`）。 文件在 "
 "`sapic_log_dir`（默认 `<server>/data/log`）下的 `sys.log`，按天轮转、保留 10 天 （归档名如 "
 "`sys.log.20261121`）；多 worker 下各进程各自轮转，量大时交给 logrotate。 "
 "行格式与其它服务一致，方便统一采集：`[ INFO ] 2026-11-21 09:09:41 images.py:735 消息`； "
 "请求内的记录在消息前多一个 `rid=<X-Request-Id>`，可与前端报错里的请求 ID 对上。 **不记访问日志**：gunicorn "
-"没开，容器里的 nginx 也关掉了访问与错误日志。日志级别用 "
-"`sapic_loglevel` 调； 把 "
-"`sapic_log_dir` 置空则只保留 stdout/stderr。"
-msgstr "Logging: only the **application log** is kept, written to a file and to "
+"没开，容器里的 nginx 也关掉了访问与错误日志。日志级别用 `sapic_loglevel` 调； 把 `sapic_log_dir` "
+"置空则只保留 stdout/stderr。"
+msgstr ""
+"Logging: only the **application log** is kept, written to a file and to "
 "stdout (`journalctl -u sapic -f` under systemd). The file is `sys.log` "
 "under `sapic_log_dir` (default `<server>/data/log`), rotated daily and "
 "kept for 10 days (archives look like `sys.log.20261121`); each worker "
-"rotates its own copy, so hand large volumes to logrotate. Lines follow the "
-"usual format for easy collection: `[ INFO ] 2026-11-21 09:09:41 "
-"images.py:735 message`; records inside a request carry a "
-"`rid=<X-Request-Id>` prefix so they match the request id shown in the "
-"front end. **No access log**: gunicorn does not log them and the container "
-"nginx disables both access and error logs. Use `sapic_loglevel` to "
-"change the level; leaving `sapic_log_dir` empty keeps stdout/stderr only."
+"rotates its own copy, so hand large volumes to logrotate. Lines follow "
+"the usual format for easy collection: `[ INFO ] 2026-11-21 09:09:41 "
+"images.py:735 message`; records inside a request carry a `rid=<X-Request-"
+"Id>` prefix so they match the request id shown in the front end. **No "
+"access log**: gunicorn does not log them and the container nginx disables"
+" both access and error logs. Use `sapic_loglevel` to change the level; "
+"leaving `sapic_log_dir` empty keeps stdout/stderr only."
 
-#: ../../deploy.md:360
+#: ../../deploy.md:365
 msgid "每个请求都会带 `X-Request-Id`（也可由上游传入），排查时用它串日志。"
 msgstr ""
 "Every request carries `X-Request-Id` (it can also be passed in from "
 "upstream); use it to follow a request through the logs."
 
-#: ../../deploy.md:362
+#: ../../deploy.md:367
 msgid "后台任务（到期清理、审核扫描与演示账号改密）"
 msgstr "Background jobs (expiry purge, moderation scan and demo password rotation)"
 
-#: ../../deploy.md:364
+#: ../../deploy.md:369
 msgid "后台任务由进程内 APScheduler 驱动，随服务启动，**不需要 cron**："
-msgstr "The background jobs are driven by an in-process APScheduler that starts "
+msgstr ""
+"The background jobs are driven by an in-process APScheduler that starts "
 "with the service — **no cron needed**:"
 
 #: ../../deploy.md:25
@@ -742,8 +753,9 @@ msgstr "300s (`sapic_scheduler_review_interval`)"
 
 #: ../../deploy.md:25
 msgid "调 `moderator` 钩子判定未审的图；无此钩子时直接跳过"
-msgstr "Ask the `moderator` hook about unreviewed images; skipped entirely when no "
-"such hook is enabled"
+msgstr ""
+"Ask the `moderator` hook about unreviewed images; skipped entirely when "
+"no such hook is enabled"
 
 #: ../../deploy.md:25
 msgid "演示账号改密"
@@ -751,88 +763,103 @@ msgstr "Demo password rotation"
 
 #: ../../deploy.md:25
 msgid "60s 检查，实际间隔看后台设置 `demo_rotate_interval`"
-msgstr "Checked every 60s; the real interval comes from the admin setting "
+msgstr ""
+"Checked every 60s; the real interval comes from the admin setting "
 "`demo_rotate_interval`"
 
 #: ../../deploy.md:25
 msgid "把指定账号的密码重置回配置值；未开启时直接跳过"
-msgstr "Reset the given account's password back to the configured value; skipped "
+msgstr ""
+"Reset the given account's password back to the configured value; skipped "
 "when not enabled"
 
-#: ../../deploy.md:372
+#: ../../deploy.md:377
 msgid ""
 "**多 worker 选主**：每个 worker 启动时抢 `server/data/scheduler.lock` "
 "的文件锁（`flock`）， 只有抢到的进程跑调度，其余跳过，所以 `gunicorn -w 4` 不会跑四份。"
-msgstr "**Leader election among workers**: every worker tries to lock the "
+msgstr ""
+"**Leader election among workers**: every worker tries to lock the "
 "`server/data/scheduler.lock` file (`flock`) at startup, the winner runs "
 "the schedule and the rest skip it, so `gunicorn -w 4` does not run four "
 "copies."
 
-#: ../../deploy.md:374
+#: ../../deploy.md:379
 msgid ""
 "**多副本**：各 Pod 有独立数据卷时锁不共享，会各自跑一份。调度任务本身幂等 "
 "（清理按行、审核按行原子抢占），重复执行只是浪费；要严格单点就在 web 端设 `sapic_scheduler=0`，另起一个 `flask "
 "sa scheduler` 的独立 Deployment / systemd 服务。"
-msgstr "**Several replicas**: pods with separate data volumes do not share the "
+msgstr ""
+"**Several replicas**: pods with separate data volumes do not share the "
 "lock and each run one copy. The jobs are idempotent (purge works row by "
 "row, moderation claims rows atomically), so a duplicate run only wastes "
 "work; for a strict single leader set `sapic_scheduler=0` on the web side "
 "and run `flask sa scheduler` as a separate Deployment / systemd unit."
 
-#: ../../deploy.md:377
+#: ../../deploy.md:382
 msgid "**独立进程跑**（web 让位）："
 msgstr "**Run it as its own process** (web steps aside):"
 
-#: ../../deploy.md:384
+#: ../../deploy.md:389
 msgid ""
 "**容器镜像默认就是这个形态**：supervisor 拉起独立的 `flask sa scheduler`，web worker 固定 "
-"`sapic_scheduler=0`（`Dockerfile` 与 `docker/supervisord.conf`），所以不需要额外服务，也别在编排里把 "
-"`sapic_scheduler` 改回 1。此时「定时任务」页的调度者显示为 `external`。"
-msgstr "**The container image already works this way**: supervisor starts a "
+"`sapic_scheduler=0`（`Dockerfile` 与 "
+"`docker/supervisord.conf`），所以不需要额外服务，也别在编排里把 `sapic_scheduler` 改回 "
+"1。此时「定时任务」页的调度者显示为 `external`。"
+msgstr ""
+"**The container image already works this way**: supervisor starts a "
 "standalone `flask sa scheduler` and the web workers pin "
-"`sapic_scheduler=0` (set in `Dockerfile` and `docker/supervisord.conf`), so no extra service is needed — "
-"and do not flip `sapic_scheduler` back to 1 in your manifests. The "
-"scheduler page reports this leader as `external`."
+"`sapic_scheduler=0` (set in `Dockerfile` and `docker/supervisord.conf`), "
+"so no extra service is needed — and do not flip `sapic_scheduler` back to"
+" 1 in your manifests. The scheduler page reports this leader as "
+"`external`."
 
-#: ../../deploy.md:388
+#: ../../deploy.md:393
 msgid "一次性执行（k8s CronJob 等）："
 msgstr "Run once (k8s CronJob and friends):"
 
-#: ../../deploy.md:393
+#: ../../deploy.md:398
 msgid ""
 "**后台可观测**：管理员在「后台管理 → 定时任务」看当前调度者、各任务的间隔/下次运行/上次结果， "
 "也可以「立即执行」一次（同步执行、批量很小，不会等太久）。多 worker 下这一页显示的是 "
 "**处理该请求的进程**：落在待命进程时会标「其他进程调度中」，手动执行仍然有效。"
-msgstr "**Visible in the admin area**: the scheduler page shows the current "
+msgstr ""
+"**Visible in the admin area**: the scheduler page shows the current "
 "scheduler, each job's interval / next run / last result, and a run-now "
-"button (executed synchronously with a small batch, so the request returns "
-"quickly). With several workers the page describes **the process that "
-"handled the request**: a standby says “scheduling in another process”, and "
-"run-now still works."
+"button (executed synchronously with a small batch, so the request returns"
+" quickly). With several workers the page describes **the process that "
+"handled the request**: a standby says “scheduling in another process”, "
+"and run-now still works."
 
-#: ../../deploy.md:396
+#: ../../deploy.md:401
 msgid ""
-"审核命中只把图片**隐藏**（`review_state=block`），记录与文件都还在；管理员在 `GET "
-"/api/v2/review?state=block` 里复核，`POST /api/v2/review/<sha>` 用 `approve` "
-"恢复或 `purge` 物理删除。"
-msgstr "A moderation hit only **hides** the image (`review_state=block`); the row "
-"and the file stay. Admins review the queue with `GET "
-"/api/v2/review?state=block` and use `approve` or `purge` on `POST "
-"/api/v2/review/<sha>`."
+"审核命中默认只把图片**隐藏**（`review_state=block`），记录与文件都还在；管理员在后台 "
+"「审核队列」页（`/admin/review`）复核，逐张或批量（`POST /api/v2/review/batch`）用 `approve` "
+"恢复或 `purge` 物理删除。站点设置 `review_auto_purge`（默认关）打开后， 判为 `block` 会立即 "
+"purge、不再进队列等人复核；不可逆，误判无法挽回，按需开启。"
+msgstr ""
+"A moderation hit by default only **hides** the image (`review_state=block`); "
+"the row and the file stay. Admins review it in the admin Review queue page "
+"(`/admin/review`) and restore with `approve` or physically delete with "
+"`purge`, one by one or in bulk (`POST /api/v2/review/batch`). With the site "
+"setting `review_auto_purge` on (off by default), a `block` is purged "
+"immediately and never enters the queue — irreversible, so enable it only if "
+"you accept that a false positive cannot be undone."
 
-#: ../../deploy.md:399
+#: ../../deploy.md:405
 msgid ""
-"钩子需要能拿到图片地址时，先配 `sapic_external_base_url`（扫描把 `external_base_url + "
-"/raw/<sha>` 交给钩子）。契约见[内容审核](extend/moderator.md)。"
-msgstr "When a hook needs the image address, configure `sapic_external_base_url` "
-"first (the scan hands `external_base_url + /raw/<sha>` to the hook). The "
-"contract is in [content moderation](extend/moderator.md)."
+"审核只扫公开可见图片；钩子拿到的 `url` 优先是 `external_base_url + /raw/<sha>`，未配置时回退到 "
+"登记外链或公开副本直链。契约见[内容审核](extend/moderator.md)。"
+msgstr ""
+"Only publicly visible images are moderated. The hook's `url` is "
+"`external_base_url + /raw/<sha>` when configured; otherwise it falls back"
+" to a registered external link or a public replica URL. See [content "
+"moderation](extend/moderator.md)."
 
-#: ../../deploy.md:402
+#: ../../deploy.md:408
 msgid "常见问题"
 msgstr "Troubleshooting"
 
-#: ../../deploy.md:404
+#: ../../deploy.md:410
 msgid "启动失败、登录掉线、上传 413、`/raw` 404、钩子装不上等症状统一归到[常见问题](faq.md)， 本页只讲「怎么装起来」。"
 msgstr ""
 "Startup failures, lost sessions, upload 413s, `/raw` 404s and hooks that "

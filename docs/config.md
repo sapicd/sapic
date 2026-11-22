@@ -49,6 +49,7 @@ cd server && ../.venv/bin/python -c "import json; from sapic.basis.conf import l
 | 有效期 | `image_expire_default_days`、`image_expire_max_days`（0 表示不启用规则） |
 | 存储 | `storage_replica`（多副本）、`allow_user_backends`、`user_backend_limit` |
 | 注册与账号 | `allow_register`、`register_review`、`password_login`、`forbidden_username`、`default_album_visibility` |
+| 审核 | `review_auto_purge`（默认关；开则 moderator 判 `block` 立即删除，不进审核队列，误判不可挽回） |
 | 演示账号 | `demo_rotate_enabled`、`demo_rotate_username`、`demo_rotate_password`、`demo_rotate_interval`（秒，60～86400） |
 | 广场 | `plaza_enabled`（默认关） |
 | 邮件 | `smtp`（`{host, port, user, password, from, tls}`，`tls` 表示 STARTTLS；端口 465/994 自动走隐式 SSL，不要勾 `tls`）。启用并配好 `mail` 类钩子（如 `sendcloud`）时优先走钩子，SMTP 只作兜底 |

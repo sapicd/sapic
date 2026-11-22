@@ -515,8 +515,12 @@ __state__ = "enabled"       # enabled / disabled
   （避免同一封邮件发两次）。内置实现是 `hooks/sendcloud.py`（纯文本走 API 的 `plain` 字段）
 - `moderator` 类钩子（`__catalog__="moderator"` + `review_image(image, config=None)`，返回
   `{code, verdict, message}`）只做内容审核：**先发后审**，由 `flask sa review-pending` 扫描
-  `review_state IS NULL` 的图，**不在上传路径里**；`block` 只写 `review_state`（不删行、不删对象），
-  管理员走 `/api/v2/review` 放行或 `purge` 物理删除。不要在钩子里自己改库/删对象，
+  `review_state IS NULL` 的**公开图**（私有图不送审，第三方也拿不到鉴权直链），**不在上传路径里**；
+  `image["url"]` 优先 `sapic_external_base_url + /raw/<sha>`，未配置时回退到外链或公开副本直链；
+  `block` 只写 `review_state`（不删行、不删对象），本人与管理员仍可看。管理员在后台「审核队列」页
+  （`/admin/review`，`views/review.py` + `web/src/views/ReviewView.vue`）复核，逐张或批量
+  （`POST /api/v2/review/batch`）放行或 `purge` 物理删除。站点设置 `review_auto_purge`（默认关）
+  打开后，判为 `block` 会立即 purge、不进队列——不可逆，误判无法挽回。不要在钩子里自己改库/删对象，
   判定合并与状态回写只在 `libs/review.py`
 - `config_schema` / `actions` / `data_sources` / `slots` 全部经 `sapic/libs/ui.py` 的
   `clean_*` 清洗：未知类型/键被丢弃、`href` 仅允许 `http(s)` 与站内 `/`、

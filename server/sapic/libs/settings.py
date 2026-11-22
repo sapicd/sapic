@@ -54,6 +54,8 @@ DEFAULTS = {
     #: 系统
     "allow_register": True,
     "register_review": False,
+    #: 审核钩子判 block 后直接物理删除；默认关闭，先隐藏让管理员复核，避免误判不可逆。
+    "review_auto_purge": False,
     #: 关闭后只允许 OIDC 等外部身份登录，本地注册与密码登录一并停用。
     "password_login": True,
     #: 是否允许用户使用自己定义的存储后端（scope=user）。默认关：v2 目前只开放

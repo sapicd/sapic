@@ -15,7 +15,9 @@ from __future__ import annotations
 import logging
 
 from flask import current_app
+from peewee import JOIN
 
+from ..models import Album
 from ..models.base import now
 from ..models.image import (
     REVIEW_BLOCK,
@@ -26,6 +28,9 @@ from ..models.image import (
 )
 from . import ext
 from .hook import get_hook_manager
+from .images import public_visibility_condition, purge_image
+from .settings import get_setting
+from .storage import public_src, replicas_for
 
 logger = logging.getLogger(__name__)
 
@@ -51,16 +56,23 @@ def moderator_names() -> list[str]:
 
 
 def pending_query(limit: int = REVIEW_BATCH):
-    """Oldest images without a verdict, plus abandoned claims."""
+    """Oldest public images without a verdict, plus abandoned claims.
+
+    Private images are never sent to a moderator: the content-safety service
+    cannot fetch an authenticated ``/raw`` link, and paying to judge content
+    the public cannot see is pointless.
+    """
     stale = now() - STALE_CLAIM
     return (
         Image.select(Image)
+        .join(Album, JOIN.LEFT_OUTER, on=(Image.album == Album.id))
         .where(
+            public_visibility_condition(),
             (Image.status == STATUS_ENABLED)
             & (
                 Image.review_state.is_null()
                 | ((Image.review_state == REVIEW_RUNNING) & (Image.reviewed_at < stale))
-            )
+            ),
         )
         .order_by(Image.created_at, Image.id)
         .limit(limit)
@@ -92,14 +104,27 @@ def _claim(image: Image) -> bool:
 def image_payload(image: Image) -> dict:
     """Metadata handed to a moderator; deliberately not the ORM row.
 
-    ``url`` is only filled when ``EXTERNAL_BASE_URL`` (``sapic_external_base_url``)
-    is configured, since that is the address the site is reachable at from the
-    outside. A hook that needs the bytes can GET ``url`` (most content-safety
-    APIs accept an image URL) or return "no verdict" and let an operator
-    configure the address first.
+    ``url`` is an address a third-party reviewer can actually fetch: the
+    configured ``EXTERNAL_BASE_URL`` + ``/raw/<sha>`` first, then a registered
+    external link or the top public replica's direct URL. Private images never
+    reach this function (see :func:`pending_query`), so no authenticated route
+    is handed out.
     """
     base = str(current_app.config.get("EXTERNAL_BASE_URL") or "").rstrip("/")
     src = "/raw/%s" % image.sha
+    url = base + src if base else ""
+    if not url and image.source_url:
+        url = image.source_url
+    if not url:
+        #: 多副本（如 up2local + 公开桶）按优先级排序，第一个可能是本地
+        #: ``/raw/<sha>`` 相对路径——不能因此放弃，逐个找带 http 直链的公开副本。
+        for replica in replicas_for(image):
+            candidate = public_src(replica) or ""
+            if candidate.startswith(("http://", "https://")):
+                url = candidate
+                break
+    if url and not url.startswith(("http://", "https://")):
+        url = ""
     return {
         "id": image.id,
         "sha": image.sha,
@@ -114,7 +139,7 @@ def image_payload(image: Image) -> dict:
         "album_id": image.album_id,
         "created_at": image.created_at,
         "src": src,
-        "url": base + src if base else "",
+        "url": url,
     }
 
 
@@ -160,7 +185,8 @@ def judge(image: Image) -> tuple[str | None, str]:
 
 def review_pending(limit: int = REVIEW_BATCH) -> dict:
     """Judge up to ``limit`` images; returns counters for the CLI output."""
-    counts = {"scanned": 0, "passed": 0, "blocked": 0, "failed": 0}
+    counts = {"scanned": 0, "passed": 0, "blocked": 0, "purged": 0, "failed": 0}
+    auto_purge = bool(get_setting("review_auto_purge"))
     for candidate in list(pending_query(limit)):
         if not _claim(candidate):
             continue
@@ -177,6 +203,21 @@ def review_pending(limit: int = REVIEW_BATCH) -> dict:
                 review_state=None, reviewed_at=None, review_note=note or None
             ).where(Image.id == candidate.id).execute()
             counts["failed"] += 1
+            continue
+        if verdict == REVIEW_BLOCK and auto_purge:
+            #: 后台策略打开时直接物理删除；失败则退回普通 block，保留复核机会。
+            try:
+                purge_image(candidate)
+            except Exception:
+                logger.exception("auto-purge failed for image %s", candidate.sha)
+                Image.update(
+                    review_state=verdict,
+                    reviewed_at=now(),
+                    review_note=(note + " (auto-purge failed)")[:NOTE_MAX] or None,
+                ).where(Image.id == candidate.id).execute()
+                counts["blocked"] += 1
+            else:
+                counts["purged"] += 1
             continue
         Image.update(
             review_state=verdict, reviewed_at=now(), review_note=note or None

@@ -15,6 +15,7 @@ const items = computed(() => [
   { name: 'admin-backends', label: t('admin.backends'), icon: 'FolderOpened' },
   { name: 'admin-users', label: t('admin.users'), icon: 'UserFilled' },
   { name: 'admin-scheduler', label: t('admin.scheduler'), icon: 'Timer' },
+  { name: 'admin-review', label: t('admin.review'), icon: 'PictureFilled' },
 ])
 
 //: ``/admin`` 上的默认子路由没有命名，按「站点设置」高亮。
