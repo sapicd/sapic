@@ -85,8 +85,10 @@ test:
 dev:
 	cd $(SERVER_DIR) && sapic_env=dev $(PY) -m flask run --host $(HOST) --port $(PORT) --reload
 
+#: -n sapic：ps 里 master/worker 显示为 `gunicorn: master [sapic]` / `worker [sapic]`，
+#: 依赖 prod.txt 里的 setproctitle；没装时 gunicorn 只把它写进 pidfile，不影响启动。
 serve:
-	cd $(SERVER_DIR) && $(PY) -m gunicorn "sapic:create_app()" -b $(HOST):$(PORT) -w $(WORKERS) -k gevent
+	cd $(SERVER_DIR) && $(PY) -m gunicorn "sapic:create_app()" -b $(HOST):$(PORT) -w $(WORKERS) -k gevent -n sapic
 
 #: web 进程默认自己起调度器（文件锁选主）；要独立进程跑，先 sapic_scheduler=0。
 scheduler:

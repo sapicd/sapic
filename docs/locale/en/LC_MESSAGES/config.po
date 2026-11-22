@@ -128,6 +128,24 @@ msgid "整个请求的硬上限（MB）→ `MAX_CONTENT_LENGTH`"
 msgstr "Hard limit for the whole request (MB) → `MAX_CONTENT_LENGTH`"
 
 #: ../../config.md
+msgid "`WORKERS`"
+msgstr "`WORKERS`"
+
+#: ../../config.md
+msgid "`sapic_workers`"
+msgstr "`sapic_workers`"
+
+#: ../../config.md
+msgid "`4`"
+msgstr "`4`"
+
+#: ../../config.md
+msgid "gunicorn worker 数（最小 1），容器由 `sapicd.py` 读取；SQLite 建议 1，PostgreSQL/MySQL 可调大"
+msgstr ""
+"Number of gunicorn workers (minimum 1), read by the container's `sapicd.py`; "
+"use 1 with SQLite and raise it with PostgreSQL/MySQL."
+
+#: ../../config.md
 msgid "`STORAGE_DIR`"
 msgstr "`STORAGE_DIR`"
 

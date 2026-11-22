@@ -24,7 +24,8 @@ services:
       #: 后台任务由镜像内 supervisor 拉起的独立进程（flask sa scheduler）执行，
       #: web worker 固定不参与；不用设 sapic_scheduler，也不需要额外的调度服务。
       #: SQLite 是库级写锁，多进程会互相抢锁；要并发就换 PostgreSQL。
-      WEB_CONCURRENCY: "1"
+      sapic_workers: "1"
+      #: nginx worker 数默认 auto；要固定可加 SAPIC_NGINX_WORKERS: "2"。
     volumes:
       #: 库文件、上传文件、第三方钩子包都在这里，不挂卷等于重建即丢数据。
       - sapic-data:/app/server/data

@@ -24,8 +24,8 @@ fi
 export sapic_env="${sapic_env:-prod}"
 
 #: 容器内 nginx 的监听端口：默认 80，便于和宿主/外层反代保持同一约定；
-#: 需要在非 root 端口或同 Pod 多容器共存时改它，镜像里的 nginx.conf 是模板，
-#: 占位符在这里替换后再落到 conf.d，避免把端口写死进镜像。
+#: 需要在非 root 端口或同 Pod 多容器共存时改它。仓库里的 docker/nginx.conf 是
+#: 完整主配置模板，占位符在这里替换后写到 /etc/nginx/nginx.conf。
 HTTP_PORT="${SAPIC_HTTP_PORT:-80}"
 case "${HTTP_PORT}" in
     '' | *[!0-9]*)
@@ -37,15 +37,30 @@ if [ "${HTTP_PORT}" -lt 1 ] || [ "${HTTP_PORT}" -gt 65535 ]; then
     echo "[sapic] SAPIC_HTTP_PORT out of range (1-65535): ${HTTP_PORT}" >&2
     exit 1
 fi
-#: nginx 访问日志默认关闭：容器日志只留应用日志（sys.log 与 stderr）。需要访问记录时
-#: 设 SAPIC_NGINX_ACCESS_LOG=1，nginx 写 /var/log/nginx/access.log（镜像里软链到 stdout）。
-case "$(printf '%s' "${SAPIC_NGINX_ACCESS_LOG:-0}" | tr '[:upper:]' '[:lower:]')" in
-    1 | true | yes | on) NGINX_ACCESS_LOG="access_log /var/log/nginx/access.log;" ;;
-    *) NGINX_ACCESS_LOG="access_log off;" ;;
+#: nginx worker 数：默认 auto（按 CPU 核数），设正整数可固定；和 sapic_workers
+#: 是两件事——前者管静态资源/反代，后者管 gunicorn 应用 worker。这里只做校验，
+#: 模板里的 __NGINX_WORKERS__ 由下面的渲染一起替换。
+NGINX_WORKERS="${SAPIC_NGINX_WORKERS:-auto}"
+case "${NGINX_WORKERS}" in
+    auto) ;;
+    '' | *[!0-9]*)
+        echo "[sapic] SAPIC_NGINX_WORKERS must be 'auto' or a positive number, got '${NGINX_WORKERS}'" >&2
+        exit 1
+        ;;
 esac
-sed -e "s|__LISTEN_PORT__|${HTTP_PORT}|g" \
-    -e "s|__ACCESS_LOG__|${NGINX_ACCESS_LOG}|g" \
-    /etc/nginx/sapic.conf.template > /etc/nginx/conf.d/default.conf
+if [ "${NGINX_WORKERS}" != "auto" ] && [ "${NGINX_WORKERS}" -lt 1 ]; then
+    echo "[sapic] SAPIC_NGINX_WORKERS must be at least 1" >&2
+    exit 1
+fi
+
+#: nginx 的访问日志与错误日志都在模板里关掉，容器日志只留应用自身输出。
+sed -e "s|__NGINX_WORKERS__|${NGINX_WORKERS}|g" \
+    -e "s|__LISTEN_PORT__|${HTTP_PORT}|g" \
+    /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+if grep -q '__[A-Z_]*__' /etc/nginx/nginx.conf; then
+    echo "[sapic] unresolved placeholder in /etc/nginx/nginx.conf" >&2
+    exit 1
+fi
 
 cd /app/server
 #: 迁移先在这里同步跑一遍：supervisor 里的 web 与 scheduler 是两个进程，若都靠

@@ -17,7 +17,7 @@ nginx ─┬─ /         → web/dist (Vue 3 SPA, static files + SPA fallback)
 | 组件 | 要求 | 说明 |
 | --- | --- | --- |
 | Python | 3.10+ | 后端只跑在 `server/`，包 `sapic` 是本地包，**不要** `pip install` 它 |
-| 依赖 | `server/requirements/prod.txt`（离线可用 `base.txt` + gunicorn/gevent） | 装在仓库根的 `.venv/` |
+| 依赖 | `server/requirements/prod.txt`（离线可用 `base.txt` + gunicorn/gevent/setproctitle） | 装在仓库根的 `.venv/` |
 | Node.js | 23+，pnpm 8（`packageManager: pnpm@8.14.1`） | 只在构建前端时用到 |
 | 数据库 | PostgreSQL / MySQL 5.7+ / SQLite | 多 worker、多实例建议 PostgreSQL 或 MySQL |
 | nginx | 任意版本 | 反代 + 静态站点，需要支持 `try_files` |
@@ -55,6 +55,7 @@ sapic_db_url=postgresql://sapic:password@127.0.0.1:5432/sapic
 sapic_storagedir=/data/sapic/upload
 sapic_proxyfix=1
 sapic_loglevel=INFO
+sapic_workers=1
 sapic_session_ttl=604800
 ```
 
@@ -87,7 +88,7 @@ FLASK_APP=sapic ../.venv/bin/python -m flask sa create-admin -u admin -p 'passwo
 
 ```bash
 cd /srv/sapic/server
-../.venv/bin/python -m gunicorn "sapic:create_app()" -b 127.0.0.1:9514 -w 4 -k gevent
+../.venv/bin/python -m gunicorn "sapic:create_app()" -b 127.0.0.1:9514 -w 4 -k gevent --name sapic
 ```
 
 systemd 单元示例 `/etc/systemd/system/sapic.service`：
@@ -105,7 +106,7 @@ Environment=FLASK_APP=sapic
 Environment=sapic_env=production
 # or keep config in server/.cfg so secrets stay out of the unit file
 ExecStart=/srv/sapic/.venv/bin/python -m gunicorn "sapic:create_app()" \
-          -b 127.0.0.1:9514 -w 4 -k gevent --timeout 60 --error-logfile -
+          -b 127.0.0.1:9514 -w 4 -k gevent --name sapic --timeout 60 --error-logfile -
 Restart=always
 RestartSec=3
 
@@ -209,12 +210,16 @@ server {
 entrypoint 只负责生成密钥、渲染 nginx 配置并跑一次 `flask sa upgrade`：web worker 固定
 `sapic_scheduler=0`，后台任务由同容器里的独立调度进程执行，worker 重启不影响定时任务。
 容器内监听端口默认 `80`，可用 `SAPIC_HTTP_PORT` 改：`docker/nginx.conf`
-是带端口占位符的模板，由 entrypoint 渲染到 `/etc/nginx/conf.d/default.conf`，健康检查也会跟着走
-同一个端口。`docker-compose.yml` 只把宿主的 `SAPIC_PORT`（默认 `80`）映射到容器 `80`。
+是完整 nginx 主配置模板（端口、worker 数是占位符），由 entrypoint 渲染到
+`/etc/nginx/nginx.conf`，健康检查也会跟着走同一个端口。`docker-compose.yml` 只把宿主的
+`SAPIC_PORT`（默认 `80`）映射到容器 `80`。
 
-容器里的 nginx **默认不记访问日志**（`access_log off;`，同样由 entrypoint 渲染），日志只留应用那份；
-需要访问记录时加 `-e SAPIC_NGINX_ACCESS_LOG=1`，访客请求会经 `/var/log/nginx/access.log`
-（镜像里软链到 stdout）出现在 `docker logs` 里。
+gunicorn 的 worker 数由 `sapic_workers` 控制（默认 4，SQLite 建议 1），nginx 的 worker 数由容器变量
+`SAPIC_NGINX_WORKERS` 控制（默认 `auto`，按 CPU 核数；填正整数可固定）。两者都在模板/配置里，
+容器启动时一次渲染完成，不再改镜像自带的 nginx 配置。
+
+容器里的 nginx **访问日志和错误日志都关掉**（`access_log off;` / `error_log /dev/null crit;`），
+日志只留应用那份；进程存活与崩溃仍由 supervisor 管理。
 
 ```bash
 docker build -t sapic:local .
@@ -354,8 +359,8 @@ systemctl restart sapic        # incremental migrations run at startup
   （归档名如 `sys.log.20261121`）；多 worker 下各进程各自轮转，量大时交给 logrotate。
   行格式与其它服务一致，方便统一采集：`[ INFO ] 2026-11-21 09:09:41 images.py:735 消息`；
   请求内的记录在消息前多一个 `rid=<X-Request-Id>`，可与前端报错里的请求 ID 对上。
-  **不记访问日志**：gunicorn 没开，容器里的 nginx 也默认 `access_log off;`，要记录下来就设
-  `SAPIC_NGINX_ACCESS_LOG=1`（见「容器与编排」）。日志级别用 `sapic_loglevel` 调；
+  **不记访问日志**：gunicorn 没开，容器里的 nginx 也关掉了访问与错误日志。日志级别用
+  `sapic_loglevel` 调；
   把 `sapic_log_dir` 置空则只保留 stdout/stderr。
 - 每个请求都会带 `X-Request-Id`（也可由上游传入），排查时用它串日志。
 
@@ -382,7 +387,7 @@ systemctl restart sapic        # incremental migrations run at startup
   ```
 
   **容器镜像默认就是这个形态**：supervisor 拉起独立的 `flask sa scheduler`，web worker 固定
-  `sapic_scheduler=0`（`docker/sapic-web`），所以不需要额外服务，也别在编排里把
+  `sapic_scheduler=0`（`Dockerfile` 与 `docker/supervisord.conf`），所以不需要额外服务，也别在编排里把
   `sapic_scheduler` 改回 1。此时「定时任务」页的调度者显示为 `external`。
 
 - 一次性执行（k8s CronJob 等）：

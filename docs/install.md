@@ -14,7 +14,7 @@
 | 数据库 | PostgreSQL / MySQL / SQLite | 由 `sapic_db_url` 指定，默认 SQLite（`server/data/sapic.db`） |
 
 依赖由 `server/requirements/` 管理：`base.txt`（运行时，含内置钩子用到的 requests / Pillow /
-七牛 / 又拍云 SDK）、`dev.txt`（base + 测试）、`prod.txt`（base + gunicorn + gevent）。
+七牛 / 又拍云 SDK）、`dev.txt`（base + 测试）、`prod.txt`（base + gunicorn + gevent + setproctitle）。
 第三方钩子是独立的 pip 包，自带自己的依赖。
 
 ## 源码运行
@@ -51,7 +51,7 @@ python3 -m venv .venv && ./.venv/bin/python -m pip install -r server/requirement
 
 ```bash
 ./.venv/bin/python -m pip install -r server/requirements/prod.txt
-cd server && ../.venv/bin/python -m gunicorn "sapic:create_app()" -b 127.0.0.1:9514 -w 4 -k gevent
+cd server && ../.venv/bin/python -m gunicorn "sapic:create_app()" -b 127.0.0.1:9514 -w 4 -k gevent --name sapic
 ```
 
 systemd 单元、nginx 站点（含 `sapic_proxyfix` 与 TLS 透传）、容器与集群编排、数据库选择见

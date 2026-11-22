@@ -2,6 +2,10 @@
 
 gunicorn==26.2.0
 gevent==26.9.0
+#: gunicorn 的 --name 只有在装了 setproctitle 时才真的改写进程标题；没装时它只在
+#: pidfile 上生效，ps 里仍是 `python3.12 -m gunicorn ...`。装上后 master / worker
+#: 分别是 `gunicorn: master [sapic]` / `gunicorn: worker [sapic]`，容器内外一眼能认。
+setproctitle==1.3.8
 #: gunicorn 的 gevent worker（workers/ggevent.py）在导入时就 `from packaging.version
 #: import parse`，但 gunicorn 自己没把它声明成依赖；只在装了 dev.txt 的环境里会顺带
 #: 有它，生产镜像按 prod.txt 装就会缺，导致 `class uri 'gevent' invalid or not found`。

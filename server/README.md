@@ -66,7 +66,7 @@ flask run --host 0.0.0.0 --port 9514
 生产环境使用 gunicorn：
 
 ```bash
-gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent
+gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent --name sapic
 ```
 
 ## API 概览

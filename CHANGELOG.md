@@ -60,8 +60,7 @@
 - 容器：多阶段 Dockerfile 内置前端与 nginx，另有 `docker-compose.yml`（单容器 + SQLite）与
   `kube-sapic.yaml`（单副本 Deployment + Service）；镜像内由 supervisor 统管 gunicorn、
   独立调度进程与 nginx，worker 重启不影响定时任务，`supervisorctl status` 可查三个进程。
-- 日志：应用日志写 `sys.log`（按天轮转、保留 10 天）并同时输出 stdout，**不再记访问日志**
-  （需要时用 `SAPIC_NGINX_ACCESS_LOG=1` 打开容器内 nginx 的访问日志）。
+- 日志：应用日志写 `sys.log`（按天轮转、保留 10 天）并同时输出 stdout；nginx 的访问与错误日志均关闭。
 - `GET /api/v2/health` 健康检查（数据库不通返回 503）；后台可检测新版本。
 - 个人设置（油猴开关、背景图与透明度）、按用户配置的防盗链。
 

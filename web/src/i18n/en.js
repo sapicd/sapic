@@ -565,7 +565,7 @@ export default {
   },
   adminScheduler: {
     disabledHint:
-      'No scheduler process found (the web side has sapic_scheduler=0 and no flask sa scheduler is running): only the opportunistic expiry sweep on requests remains. In the container check that the sapic-scheduler process is alive; elsewhere set it back to 1 and restart, or run a scheduler process.',
+      'No scheduler process found (the web side has sapic_scheduler=0 and no flask sa scheduler is running): only the opportunistic expiry sweep on requests remains. In the container check that the flask sa scheduler process is alive; elsewhere set it back to 1 and restart, or run a scheduler process.',
     failed: 'Failed (see logs)',
     hours: '{n} h',
     interval: 'Interval',

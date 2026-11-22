@@ -115,8 +115,9 @@ APScheduler 驱动，默认随服务启动（`sapic_scheduler=1`）：
 - **独立进程**：web 端 `sapic_scheduler=0`，跑 `flask sa scheduler`（前台常驻）或
   `flask sa scheduler --once`（CronJob/一次性）；CLI 与 web 抢同一把锁，不会跑两份。
 - **容器镜像就是这种形态**（`docker/supervisord.conf` → `/etc/supervisord.conf`）：supervisor
-  统管 gunicorn（`docker/sapic-web`，固定 `sapic_scheduler=0`）、`flask sa scheduler`
-  （`docker/sapic-scheduler`）与 nginx 三个进程，entrypoint 只做密钥/nginx 配置与一次
+  直接起 gunicorn（加载 `server/sapicd.py`；`sapic_scheduler=0` 由 Dockerfile/supervisor 固定）、
+  `python -m flask sa scheduler` 与 nginx 三个进程，不再经过 shell wrapper；nginx 主配置由
+  `docker/nginx.conf` 模板渲染（访问/错误日志均关闭），entrypoint 只做密钥/nginx 配置与一次
   `flask sa upgrade` 就 `exec supervisord`。配置落在 supervisorctl 的默认搜索路径上，
   容器里 `supervisorctl status` / `restart scheduler` 直接可用。调度因此不随 worker 滚动
   重启而中断，后台页面固定显示 `external`（锁文件里的 pid 活着，见 `external_leader()`）。

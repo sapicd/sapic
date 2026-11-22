@@ -62,6 +62,9 @@ class BaseConfig:
     #: Whole-request limit, in MB. Must stay above the site's per-type limits
     #: (``upload_video_max_size`` 默认 20）: multipart 有额外开销，留一点余量。
     MAX_UPLOAD: int = 25
+    #: Gunicorn worker processes. The container's ``sapicd.py`` reads this value;
+    #: keep it at 1 with SQLite (database-level write lock).
+    WORKERS: int = 4
     #: Local storage root; relative paths are resolved against ``server/``.
     STORAGE_DIR: str = join(DATA_DIR, "upload")
     #: Public base URL prepended to image links, empty means relative.
@@ -184,9 +187,9 @@ def _check_config_value(cfg: dict) -> None:
     """Validate the config mapping, raising ``AssertionError`` when invalid.
 
     Checks ``LOG_LEVEL`` against :data:`sapic.basis.vars.LOG_LEVEL_TYPE`, the
-    positive-integer options (``MAX_UPLOAD`` / ``SESSION_TTL``), the secret key
-    length (the built-in default is accepted on purpose) and the absolute
-    ``STORAGE_DIR``.
+    positive-integer options (``MAX_UPLOAD`` / ``WORKERS`` / ``SESSION_TTL``),
+    the secret key length (the built-in default is accepted on purpose) and the
+    absolute ``STORAGE_DIR``.
     """
     assert isinstance(cfg, dict), "Config must be a dict"
 
@@ -196,6 +199,11 @@ def _check_config_value(cfg: dict) -> None:
     assert (
         isinstance(cfg["MAX_UPLOAD"], int) and cfg["MAX_UPLOAD"] >= 1
     ), "MAX_UPLOAD must be a positive integer"
+    workers = cfg.get("WORKERS")
+    if workers is not None:
+        assert (
+            isinstance(workers, int) and workers >= 1
+        ), "WORKERS must be a positive integer"
     assert (
         isinstance(cfg["SESSION_TTL"], int) and cfg["SESSION_TTL"] >= 60
     ), "SESSION_TTL must be at least 60 seconds"

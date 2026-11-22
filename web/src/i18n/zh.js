@@ -550,7 +550,7 @@ export default {
   },
   adminScheduler: {
     disabledHint:
-      '没检测到调度进程（web 端 sapic_scheduler=0，且没有 flask sa scheduler 在跑）：此时只有请求触发的过期清理兜底。容器里请确认 sapic-scheduler 进程活着，其它部署改回 1 并重启或另起调度进程。',
+      '没检测到调度进程（web 端 sapic_scheduler=0，且没有 flask sa scheduler 在跑）：此时只有请求触发的过期清理兜底。容器里请确认 flask sa scheduler 进程活着，其它部署改回 1 并重启或另起调度进程。',
     failed: '执行失败（详见日志）',
     hours: '{n} 小时',
     interval: '间隔',

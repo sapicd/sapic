@@ -8,7 +8,7 @@ from sapic.basis.vars import DEFAULT_SECRET_KEY
 def _isolate(monkeypatch, tmp_path):
     """只读环境变量与默认值，避免开发机上的 server/.cfg 影响断言。"""
     monkeypatch.setattr(conf, "CFG_FILE", str(tmp_path / "absent.cfg"))
-    for name in ("sapic_db_url", "sapic_storagedir", "sapic_secretkey"):
+    for name in ("sapic_db_url", "sapic_storagedir", "sapic_secretkey", "sapic_workers"):
         monkeypatch.delenv(name, raising=False)
 
 
@@ -49,3 +49,18 @@ def test_configured_secret_key_is_kept(monkeypatch, tmp_path):
     monkeypatch.setenv("sapic_secretkey", "x" * 32)
 
     assert conf.load_config()["SECRET_KEY"] == "x" * 32
+
+
+def test_worker_count_from_config(monkeypatch, tmp_path):
+    """gunicorn worker 数走统一配置，非法值直接拒绝。"""
+    _isolate(monkeypatch, tmp_path)
+    monkeypatch.setenv("sapic_env", "production")
+
+    assert conf.load_config()["WORKERS"] == 4
+
+    monkeypatch.setenv("sapic_workers", "2")
+    assert conf.load_config()["WORKERS"] == 2
+
+    monkeypatch.setenv("sapic_workers", "0")
+    with pytest.raises(AssertionError):
+        conf.load_config()

@@ -13,6 +13,7 @@
 | `SECRET_KEY` | `sapic_secretkey` | 内置随机串 | Cookie 签名密钥，≥ 14 字节；可选。容器镜像不传时 entrypoint 会生成并持久化到数据目录（`SAPIC_SECRET_FILE`）；非容器部署空值仍用内置公开串，公网多用户建议替换 |
 | `DATABASE_URL` | `sapic_db_url` | `sqlite:///<server>/data/sapic.db` | `postgresql://` / `mysql://` / `sqlite:///` |
 | `MAX_UPLOAD` | `sapic_maxupload` | `25` | 整个请求的硬上限（MB）→ `MAX_CONTENT_LENGTH` |
+| `WORKERS` | `sapic_workers` | `4` | gunicorn worker 数（最小 1），容器由 `sapicd.py` 读取；SQLite 建议 1，PostgreSQL/MySQL 可调大 |
 | `STORAGE_DIR` | `sapic_storagedir` | `<server>/data/upload` | 本地存储根目录，相对路径按 `server/` 归一 |
 | `SESSION_TTL` | `sapic_session_ttl` | `604800` | 会话有效期（秒），最小 60 |
 | `PROXY_FIX` | `sapic_proxyfix` | `false` | 信任 `X-Forwarded-*` |

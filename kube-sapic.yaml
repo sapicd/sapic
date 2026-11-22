@@ -42,8 +42,9 @@ spec:
             - name: sapic_proxyfix
               value: "true"
             #: SQLite 是库级写锁，多进程会互相抢锁；换 PostgreSQL 时改成多 worker。
-            - name: WEB_CONCURRENCY
+            - name: sapic_workers
               value: "1"
+            #: nginx worker 数默认 auto；要固定可加 SAPIC_NGINX_WORKERS。
             #: 后台任务由镜像内 supervisor 拉起的独立进程（flask sa scheduler）执行，
             #: web worker 固定不参与，这里不用设 sapic_scheduler。多副本（各 Pod 独立
             #: 卷）会各有一份调度，任务幂等；要严格单点就改用 CronJob 跑 `--once`。

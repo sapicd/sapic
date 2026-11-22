@@ -21,6 +21,7 @@ FROM python:3.12-slim
 #: `flask sa scheduler` 负责；web worker 固定 sapic_scheduler=0，不在进程内抢锁。
 #: 这样 worker 滚动重启不会打断调度，后台页面也能稳定看到同一个调度者。
 #: FLASK_APP 供 entrypoint 的 `flask sa upgrade` 与调度进程使用（镜像里不走 Makefile）。
+#: gunicorn 参数集中在 server/sapicd.py，由 supervisor 直接传给 gunicorn。
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLASK_APP=sapic \
@@ -46,22 +47,18 @@ COPY server/ /app/server/
 COPY tools/ /app/tools/
 COPY --from=web /app/web/dist /app/web/dist
 
-#: nginx 配置是模板（端口与访问日志开关都是占位符），由 entrypoint 按 SAPIC_HTTP_PORT /
-#: SAPIC_NGINX_ACCESS_LOG 渲染到 /etc/nginx/conf.d/default.conf；镜像里不放成品 conf，
-#: 端口才不写死。访问日志默认关，开启时写 /var/log/nginx/access.log（软链到 stdout）。
-COPY docker/nginx.conf /etc/nginx/sapic.conf.template
+#: nginx 用仓库里的完整主配置模板：worker 数、端口是占位符，由 entrypoint 按
+#: SAPIC_NGINX_WORKERS / SAPIC_HTTP_PORT 渲染到 /etc/nginx/nginx.conf。
+#: nginx 自身的访问/错误日志都关掉，不再依赖镜像自带配置或日志软链。
+COPY docker/nginx.conf /etc/nginx/nginx.conf.template
 COPY docker/entrypoint.sh /usr/local/bin/sapic-entrypoint
-#: supervisor 统管 web / scheduler / nginx；两个 wrapper 因为 supervisord 不展开
-#: $VAR（WEB_CONCURRENCY 要留给 shell 处理）。配置落在 /etc/supervisord.conf：这是
-#: supervisorctl 默认搜索的路径之一，容器里不用带 -c 就能直接 `supervisorctl status`。
-COPY docker/sapic-web docker/sapic-scheduler /usr/local/bin/
+#: supervisor 统管 web / scheduler / nginx：web 直接跑 gunicorn 并加载
+#: server/sapicd.py，scheduler 直接跑 `python -m flask sa scheduler`，
+#: 都不再经过 shell wrapper。配置落在 /etc/supervisord.conf：这是 supervisorctl
+#: 默认搜索的路径之一，容器里不用带 -c 就能直接 `supervisorctl status`。
 COPY docker/supervisord.conf /etc/supervisord.conf
 RUN chmod 0755 /usr/local/bin/sapic-entrypoint \
-        /usr/local/bin/sapic-web /usr/local/bin/sapic-scheduler \
-    && rm -f /etc/nginx/sites-enabled/default \
-    && mkdir -p /app/server/data \
-    && ln -sf /dev/stdout /var/log/nginx/access.log \
-    && ln -sf /dev/stderr /var/log/nginx/error.log
+    && mkdir -p /app/server/data
 
 #: 数据库（默认 SQLite）、上传文件与第三方钩子包都在这里，务必挂卷。
 VOLUME ["/app/server/data"]
