@@ -3,9 +3,22 @@
 # tini -g 负责把容器信号广播给整个进程组，这里只维护两个子进程的生命周期。
 set -euo pipefail
 
+#: 未显式传 sapic_secretkey 时生成一次随机密钥并留在数据卷里：容器重启、
+#: 多副本共用一个卷时都沿用同一把；删掉它等于吊销全部会话（Cookie 用它对内容
+#: 签名）。显式传了环境变量的部署不受影响。
+SECRET_FILE="${SAPIC_SECRET_FILE:-/app/server/data/secret_key}"
 if [ -z "${sapic_secretkey:-}" ]; then
-    echo "[sapic] sapic_secretkey is required (env or server/.cfg)" >&2
-    exit 1
+    if [ -s "${SECRET_FILE}" ]; then
+        sapic_secretkey="$(cat "${SECRET_FILE}")"
+    else
+        sapic_secretkey="$(od -An -tx1 -N32 /dev/urandom | tr -d ' \n')"
+        mkdir -p "$(dirname "${SECRET_FILE}")"
+        if ! (umask 077 && printf '%s\n' "${sapic_secretkey}" > "${SECRET_FILE}") 2>/dev/null; then
+            echo "[sapic] warning: cannot write ${SECRET_FILE}, sessions will be revoked on restart" >&2
+        fi
+        echo "[sapic] generated sapic_secretkey (${SECRET_FILE})"
+    fi
+    export sapic_secretkey
 fi
 
 export sapic_env="${sapic_env:-prod}"

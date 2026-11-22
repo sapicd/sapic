@@ -58,8 +58,11 @@ sapic_loglevel=INFO
 sapic_session_ttl=604800
 ```
 
-`sapic_secretkey` 是**可选**的：不写就用内置默认密钥。但它是公开串，公网多用户站点建议加一行
-`sapic_secretkey=<openssl rand -hex 32>`，否则读过源码的人能伪造会话 Cookie。
+`sapic_secretkey` 是**可选**的：容器部署不传时，entrypoint 首次启动会在数据目录生成 32 字节随机值
+并一直复用（默认 `$SAPIC_SECRET_FILE`，即 `/app/server/data/secret_key`），所以只要挂好数据卷就不用手配。
+非容器部署（直接 gunicorn / `make serve`）不传仍用内置默认密钥，公网多用户站点建议显式配置
+`sapic_secretkey=<openssl rand -hex 32>`——它是公开串，读过源码的人能伪造会话 Cookie。
+手动换掉密钥等于吊销全部会话。
 
 全部配置项的默认值与含义见[配置](config.md)的进程级配置表；站点级设置（站点名、上传白名单与大小、
 注册审核、SMTP、钩子开关等）存在数据库的 `settings` 表里，进后台 `/admin/setting` 维护。
@@ -219,13 +222,15 @@ docker run -d --name sapic -p 80:80 \
     sapic:local
 ```
 
-公网多用户建议再加一行 `-e sapic_secretkey="$(openssl rand -hex 32)"`。
+密钥不用给：entrypoint 会在数据卷里生成并复用。想自己掌控就加一行
+`-e sapic_secretkey="$(openssl rand -hex 32)"`（换掉会吊销现有会话）。
 
 `docker compose up -d` 就是上面那个单容器 + SQLite 的形态：
 
 ```bash
 SAPIC_BASE_URL='https://sapic.example.com' docker compose up -d
-# to replace the built-in secret, prefix the command: SAPIC_SECRET_KEY="$(openssl rand -hex 32)"
+# the entrypoint generates and reuses a random secret in the data volume;
+# set SAPIC_SECRET_KEY="$(openssl rand -hex 32)" only to manage it yourself
 ```
 
 要 PostgreSQL（多进程/多副本）时在 compose 的 `environment` 里加一行，compose 里不带数据库服务：

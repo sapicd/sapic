@@ -412,8 +412,10 @@ def clean_actions(actions):
         seen.add(name)
         item = {"name": _text(name, 64),
                 "label": _text(action.get("label") or name)}
-        if action.get("scope"):
-            item["scope"] = _text(action["scope"], 32)
+        scope = _text(action.get("scope") or "", 32)
+        #: 只认这两个值；拼错的一律丢弃，后端按管理员处理（见 views/hooks.py）。
+        if scope in ("user", "admin"):
+            item["scope"] = scope
         if action.get("with_form"):
             item["with_form"] = True
         if action.get("confirm"):

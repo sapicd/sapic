@@ -78,6 +78,17 @@ def create_app(config: dict | None = None) -> Flask:
         response.headers["X-Request-Id"] = getattr(g, "request_id", "")
         return response
 
+    @app.after_request
+    def _security_headers(response):
+        #: 对所有响应都成立的三项；CSP 不在这里统一加：Swagger UI 从 CDN 取
+        #: 脚本、前端构建产物里也有内联样式，全局策略会把它们一起挡掉。
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault(
+            "Referrer-Policy", "strict-origin-when-cross-origin"
+        )
+        return response
+
     @app.get("/")
     def index():
         return {

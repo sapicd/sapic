@@ -10,7 +10,7 @@
 | 配置项 | 环境变量 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | `ENV` | `sapic_env` | `production` | `dev` 启用开发默认值（DEBUG、内置密钥） |
-| `SECRET_KEY` | `sapic_secretkey` | 内置随机串 | Cookie 签名密钥，≥ 14 字节；可选，空值用默认（公开串，公网多用户建议替换） |
+| `SECRET_KEY` | `sapic_secretkey` | 内置随机串 | Cookie 签名密钥，≥ 14 字节；可选。容器镜像不传时 entrypoint 会生成并持久化到数据目录（`SAPIC_SECRET_FILE`）；非容器部署空值仍用内置公开串，公网多用户建议替换 |
 | `DATABASE_URL` | `sapic_db_url` | `sqlite:///<server>/data/sapic.db` | `postgresql://` / `mysql://` / `sqlite:///` |
 | `MAX_UPLOAD` | `sapic_maxupload` | `25` | 整个请求的硬上限（MB）→ `MAX_CONTENT_LENGTH` |
 | `STORAGE_DIR` | `sapic_storagedir` | `<server>/data/upload` | 本地存储根目录，相对路径按 `server/` 归一 |
@@ -66,6 +66,9 @@ cd server && ../.venv/bin/python -c "import json; from sapic.basis.conf import l
   想限制「每天能传多少」要另立语义。
 - `image_expire_max_days` 一旦大于 0，就不允许再创建永久图片，未指定时按上限处理。
 - `allow_video` 关掉后视频后缀直接拒收；后缀白名单仍是第一道门。
+- `upload_allowed_ext` 默认**不含 `svg`**：SVG 能在同源执行脚本，只有明确加回才允许上传
+  （本地上传、头像与外链导入同一口径），并且 `/raw/<sha>` 对 SVG 一律返回
+  `Content-Disposition: attachment` + `application/octet-stream`，不会在站点源下渲染。
 - `password_login` 关掉后本地登录与注册接口直接 403，只剩统一登录入口。
 - `site_announcement`（全站公告）只解析三种排版：`**加粗**`、`[文字](https://链接)`、
   空行分段（单换行也换行）。链接只认 `http(s)://` 与 `mailto:`，其余写法按原文显示；

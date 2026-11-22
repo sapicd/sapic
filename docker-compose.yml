@@ -12,7 +12,8 @@ services:
     ports:
       - "${SAPIC_PORT:-80}:80"
     environment:
-      #: 可选：不设就用内置默认密钥（够长，单机自用足够）；公网多用户建议换成自己的。
+      #: 可选：留空则 entrypoint 首次启动在数据卷里生成随机密钥并一直复用；
+      #: 想自己掌控（或换掉旧密钥）就设 SAPIC_SECRET_KEY，换掉会吊销全部会话。
       sapic_secretkey: "${SAPIC_SECRET_KEY:-}"
       #: 不设 sapic_db_url：默认就是数据卷里的 SQLite（/app/server/data/sapic.db）。
       #: 要换 PostgreSQL 加一行 sapic_db_url: "postgresql://user:pass@host:5432/sapic"。

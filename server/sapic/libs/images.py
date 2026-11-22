@@ -932,6 +932,10 @@ def create_image(
     suffix = f".{ext}" if ext else ""
     if suffix not in IMAGE_EXTS and suffix not in VIDEO_EXTS:
         raise ApiError("unsupported file type", ErrorCode.PARAM_ERROR)
+    #: SVG 能在同源执行脚本：默认白名单不含它，只有管理员显式加回
+    #: ``upload_allowed_ext`` 才允许落盘（头像等其它入口也走这里）。
+    if suffix == ".svg" and suffix not in allowed_suffixes():
+        raise ApiError("file type is not allowed", ErrorCode.PARAM_ERROR)
     if not stream:
         raise ApiError("empty file", ErrorCode.PARAM_ERROR)
 
@@ -958,12 +962,13 @@ def create_image(
 
     result = save_object(primary, sha, object_name, stream, upload_path)
     if result.get("code") != 0:
-        raise ApiError(
-            "storage save failed: %s"
-            % (result.get("message") or result.get("msg") or "unknown error"),
-            ErrorCode.SERVICE_UNAVAILABLE,
-            503,
+        #: 驱动的异常可能带本机路径或桶名，只进日志；响应给通用消息。
+        logger.warning(
+            "storage save failed for %s: %s",
+            object_name,
+            result.get("message") or result.get("msg") or "unknown error",
         )
+        raise ApiError("storage save failed", ErrorCode.SERVICE_UNAVAILABLE, 503)
 
     #: 权限以相册为维度，任何图片都必须有归属相册。
     album = album if album is not None else resolve_album(owner)
@@ -1095,6 +1100,10 @@ def create_external_image(
         name = "external"
     mime = guess_type(name)[0] or guess_type(parsed.path)[0] or ""
     suffix = splitext(name)[-1].lower()
+    #: 登记外链和本地上传同一口径：站点白名单之外的格式（默认含 SVG）不收录。
+    allowed = allowed_suffixes()
+    if allowed and suffix and suffix not in allowed:
+        raise ApiError("file type is not allowed", ErrorCode.PARAM_ERROR)
 
     if owner is not None and Image.get_or_none(
         (Image.owner == owner)

@@ -31,7 +31,8 @@ spec:
             - name: http
               containerPort: 80
           env:
-            #: 可选：不设就用内置默认密钥；公网多用户建议换成自己的（openssl rand -hex 32）。
+            #: 可选：留空则 entrypoint 首次启动在 hostPath 数据目录生成随机密钥并复用；
+            #: 想自己掌控就取消注释并填 openssl rand -hex 32 的结果（换掉会吊销会话）。
             # - name: sapic_secretkey
             #   value: "replace-with-a-random-32-byte-secret"
             #: 图片直链前缀，必须是集群外可达地址。

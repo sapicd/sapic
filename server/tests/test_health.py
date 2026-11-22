@@ -16,6 +16,16 @@ def test_health_ok(client):
     assert response.headers.get("X-Request-Id")
 
 
+def test_security_headers_are_present(client):
+    """所有响应都带基础安全头；CSP 留给外层反代按站点定制。"""
+    response = client.get("/api/v2/health")
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert (
+        response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
+    )
+
+
 def test_root_index(client):
     response = client.get("/")
     assert response.status_code == 200

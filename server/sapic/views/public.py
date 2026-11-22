@@ -12,6 +12,7 @@ signs a temporary read address (``upimg_url``) and sapic relays the body.
 from __future__ import annotations
 
 import logging
+from os.path import splitext
 
 from flask import (
     Blueprint,
@@ -65,6 +66,31 @@ def _denied():
     response = Response(status=403, content_type="text/plain; charset=utf-8")
     response.headers["Cache-Control"] = "no-store"
     return response
+
+
+def _is_svg(row) -> bool:
+    """Whether these bytes are SVG, the one image format that runs scripts."""
+    if (row.mime or "").lower() == "image/svg+xml":
+        return True
+    return splitext(row.filename or "")[-1].lower() == ".svg"
+
+
+def _as_download(response):
+    """Serve a scriptable payload as a download, never inline on this origin.
+
+    Browsers execute ``<script>`` inside a same-origin SVG document, so an
+    upload that predates the default whitelist change (or a site that put
+    ``svg`` back) must not be rendered here. ``nosniff`` keeps the browser from
+    guessing its way back to an image type.
+    """
+    response.headers["Content-Type"] = "application/octet-stream"
+    response.headers["Content-Disposition"] = "attachment"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+def _served(response, svg: bool):
+    return _as_download(response) if svg else response
 
 
 def _body(response):
@@ -148,6 +174,8 @@ def image(sha: str):
         raise ApiError("permission denied", ErrorCode.FORBIDDEN, 403)
 
     public = effective_visibility(row) == VISIBILITY_PUBLIC
+    #: SVG 不能在本站源下当文档渲染，否则其中的脚本会以同源身份执行。
+    svg = _is_svg(row)
     #: 防盗链只对公开图生效：私有图已经过 can_view，且跨站引用带不上会话 Cookie。
     verdict = hotlink_verdict(row, public)
     if verdict == HOTLINK_BLOCK:
@@ -159,14 +187,19 @@ def image(sha: str):
             return redirect(row.source_url)
         #: 源站字节没人校验过，只按图片/视频类型转发（见 ``_media_type``）。
         return _cached(
-            _proxy(row.source_url, row.mime, media_only=True), public=False
+            _served(
+                _proxy(row.source_url, row.mime, media_only=True), svg
+            ),
+            public=False,
         )
     replicas = replicas_for(row)
     #: 本地副本最便宜：Range 与缓存都由 send_file 处理，不必走网络。
     for replica in replicas:
         path = local_path(replica)
         if path is not None:
-            return _cached(send_file(path, conditional=True), public, protected)
+            return _cached(
+                _served(send_file(path, conditional=True), svg), public, protected
+            )
 
     #: 远程副本按优先级尝试，某个失败就换下一个（旧实现失败即 404）。
     #: 公开桶：公开图直接 302 到直链；私有图由 sapic 转发隐藏源站。
@@ -183,7 +216,7 @@ def image(sha: str):
                 continue
             response = _relay(signed["url"], row.mime, signed["headers"])
         if response is not None:
-            return _cached(response, public=False)
+            return _cached(_served(response, svg), public=False)
 
     raise ApiError("image data is unavailable", ErrorCode.NOT_FOUND, 404)
 

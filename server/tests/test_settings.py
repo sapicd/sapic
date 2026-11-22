@@ -163,6 +163,55 @@ def test_upload_respects_site_limits(app, client):
     assert too_big.status_code == 413
 
 
+SVG_PAYLOAD = (
+    b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
+)
+
+
+def test_svg_needs_an_explicit_whitelist_and_is_never_served_inline(app, client):
+    """SVG 默认不收；即使管理员加回白名单，/raw 也只给下载，不在同源渲染。"""
+    csrf = register_and_login(client)
+    promote_admin(app)
+    headers = {"X-CSRF-Token": csrf}
+
+    def upload():
+        return client.post(
+            "/api/v2/upload",
+            data={"file": (io.BytesIO(SVG_PAYLOAD), "evil.svg")},
+            content_type="multipart/form-data",
+            headers=headers,
+        )
+
+    blocked = upload()
+    assert blocked.status_code == 400
+    assert blocked.get_json()["code"] == "PARAM_ERROR"
+
+    imported = client.post(
+        "/api/v2/images/import",
+        json={"items": ["https://example.com/evil.svg"]},
+        headers=headers,
+    )
+    assert imported.status_code == 200
+    assert imported.get_json()["data"]["failed"][0]["message"] == (
+        "file type is not allowed"
+    )
+
+    client.put(
+        "/api/v2/settings",
+        json={"upload_allowed_ext": "jpg,png,svg"},
+        headers=headers,
+    )
+    allowed = upload()
+    assert allowed.status_code == 201, allowed.get_json()
+    sha = allowed.get_json()["data"]["image"]["sha"]
+
+    raw = client.get("/raw/%s" % sha)
+    assert raw.status_code == 200
+    assert raw.headers["Content-Type"] == "application/octet-stream"
+    assert raw.headers["Content-Disposition"] == "attachment"
+    assert raw.headers["X-Content-Type-Options"] == "nosniff"
+
+
 def test_upload_limits_are_per_media_type(app, client):
     """图片与视频各有上限：视频可以比图片大，但同样会被阈值拦住。"""
     mb = 1024 * 1024

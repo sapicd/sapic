@@ -30,7 +30,9 @@ DEFAULTS = {
     "upload_enabled": True,
     "allow_anonymous_upload": False,
     "upload_notice": "",
-    "upload_allowed_ext": "jpg,jpeg,png,gif,webp,bmp,ico,svg,mp4,webm,mov",
+    #: SVG 默认不在白名单：它能在同源执行脚本，只有管理员明确加回才允许上传，
+    #: 且 /raw 会强制以附件下载（见 views/public.py）。
+    "upload_allowed_ext": "jpg,jpeg,png,gif,webp,bmp,ico,mp4,webm,mov",
     #: 单文件大小上限（MB），按媒体类型分开：视频通常比图片大。
     "upload_image_max_size": 10,
     "upload_video_max_size": 20,

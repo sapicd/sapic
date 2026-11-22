@@ -391,8 +391,9 @@ def run_action(name, action):
     meta = declared.get(action)
     if meta is None:
         abort(404)
-    #: 动作的 scope 由 manifest 声明；后台动作（探测目录、校验密钥）只给管理员。
-    if meta.get("scope") == "admin" and not _is_admin():
+    #: 默认按管理员处理：只有显式声明 ``scope="user"`` 的动作才对普通用户开放，
+    #: 第三方钩子漏写 scope 时不会意外暴露给所有人。
+    if meta.get("scope") != "user" and not _is_admin():
         abort(403)
     payload = request.get_json(silent=True) or {}
     result = manager.action(name, action, payload=payload, context=None)
