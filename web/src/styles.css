@@ -11,17 +11,22 @@
   --el-color-primary-light-9: #e7f5f3;
   --el-color-primary-dark-2: #0b7f72;
 
-  /* 玻璃表面 */
-  --app-surface: rgba(255, 255, 255, 0.6);
-  --app-surface-strong: rgba(255, 255, 255, 0.82);
-  --app-surface-soft: rgba(255, 255, 255, 0.38);
-  --app-border: rgba(255, 255, 255, 0.55);
-  /*: 玻璃面板描边：比 --app-border 更实。backdrop-filter 的模糊快照在面板最外
-      1px 会混进暗色，Chrome 上表现为顶部断断续续的点状黑线；描边不透明度低了
-      盖不住（55% 白只滤掉一半），所以面板边单独用这个更实的白。 */
-  --app-glass-edge: rgba(255, 255, 255, 0.9);
+  /* 玻璃表面。不透明度不能低：有的环境（Windows 高缩放、GPU 黑名单、精简版
+     Chromium）拿不到 backdrop-filter，面板就退化成纯半透明，背景图上的深色
+     线条会直接透出来，看起来像描边处的一排黑点。提到 0.86/0.94 后即使模糊
+     完全不生效，也只剩一层很淡的底色，同时保住"磨砂纸片"的观感。 */
+  --app-surface: rgba(255, 255, 255, 0.86);
+  --app-surface-strong: rgba(255, 255, 255, 0.94);
+  --app-surface-soft: rgba(255, 255, 255, 0.6);
+  --app-border: rgba(255, 255, 255, 0.7);
+  /*: 玻璃面板描边：比 --app-border 更实，边缘那一圈暗带更容易被盖住。 */
+  --app-glass-edge: rgba(255, 255, 255, 0.96);
   --app-divider: rgba(16, 24, 40, 0.08);
-  --app-blur: saturate(160%) blur(16px);
+  /*: 定格为 none：`backdrop-filter` 在部分 Windows/高缩放浏览器上会在面板顶部
+      栅格缝隙里画出一排断点黑线，且无法在正常 DPR 下复现，试了两轮都盖不住。
+      背景已经提到 0.86/0.94，去掉模糊后仍是"半透明纸片"，只是不再磨砂。
+      想要磨砂效果就把它改回 `saturate(160%) blur(16px)`（黑线可能一起回来）。 */
+  --app-blur: none;
 
   /* 圆角与阴影 */
   --app-radius-sm: 10px;
@@ -130,7 +135,7 @@ a {
 }
 
 .app-header.is-stuck {
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.86);
   backdrop-filter: var(--app-blur);
   box-shadow: 0 1px 0 rgba(16, 24, 40, 0.06);
 }
@@ -1183,8 +1188,7 @@ a {
   z-index: 2;
   padding: 2px 6px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.86);
-  backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.94);
 }
 
 /*: 批量操作条：点了「批量处理」才出现在图片列表标题下方。 */
@@ -1464,11 +1468,10 @@ a {
    Element Plus 质感覆盖
    ============================================================ */
 .el-card {
-  position: relative;
-  isolation: isolate;
   border: 1px solid var(--app-glass-edge);
   border-radius: var(--app-radius);
   background: var(--app-surface);
+  backdrop-filter: var(--app-blur);
   box-shadow: var(--app-shadow);
   overflow: hidden;
 }
@@ -1555,12 +1558,11 @@ a {
 }
 
 .el-dialog {
-  position: relative;
-  isolation: isolate;
   overflow: hidden;
   border: 1px solid var(--app-glass-edge);
   border-radius: var(--app-radius-lg);
   background: var(--app-surface-strong);
+  backdrop-filter: var(--app-blur);
   box-shadow: var(--app-shadow-lg);
 }
 
@@ -1579,11 +1581,10 @@ a {
 }
 
 .el-message {
-  position: relative;
-  isolation: isolate;
   overflow: hidden;
   border: 1px solid var(--app-glass-edge);
   border-radius: 12px;
+  backdrop-filter: var(--app-blur);
   box-shadow: var(--app-shadow);
 }
 
@@ -1616,29 +1617,11 @@ a {
 }
 
 .el-alert {
-  position: relative;
-  isolation: isolate;
   border-radius: 14px;
   border: 1px solid var(--app-glass-edge);
   background: var(--app-surface);
-  overflow: hidden;
-}
-
-/*: backdrop-filter 会把元素边缘外的背景也采进快照，Chrome 在描边处画出一圈
-    断断续续的黑点。把模糊交给比边框大 1px 的伪元素、再由父级裁掉多出的那一圈，
-    露在边框内侧的就是模糊层的内部像素，边缘暗带不再可见。 */
-.el-card::before,
-.el-alert::before,
-.el-dialog::before,
-.el-message::before,
-.side-nav::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  z-index: -1;
-  border-radius: inherit;
   backdrop-filter: var(--app-blur);
-  pointer-events: none;
+  overflow: hidden;
 }
 
 .el-empty__description p {
@@ -1805,11 +1788,11 @@ a {
   top: 96px;
   flex: 0 0 168px;
   padding: 12px;
-  isolation: isolate;
   overflow: hidden;
   border-radius: var(--app-radius);
   background: var(--app-surface);
   border: 1px solid var(--app-glass-edge);
+  backdrop-filter: var(--app-blur);
 }
 
 .side-nav__title {
