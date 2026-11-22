@@ -245,6 +245,36 @@ onMounted(loadSettings)
               <el-switch v-model="form.password_login" />
               <span class="form-suffix">{{ t('adminSite.passwordLoginHint') }}</span>
             </el-form-item>
+            <el-divider content-position="left">
+              {{ t('adminSite.demoTitle') }}
+            </el-divider>
+            <el-form-item :label="t('adminSite.demoEnabled')">
+              <el-switch v-model="form.demo_rotate_enabled" />
+              <span class="form-suffix">{{ t('adminSite.demoEnabledHint') }}</span>
+            </el-form-item>
+            <el-form-item :label="t('adminSite.demoUsername')">
+              <el-input
+                v-model="form.demo_rotate_username"
+                :placeholder="t('adminSite.demoUsernamePlaceholder')"
+              />
+            </el-form-item>
+            <el-form-item :label="t('adminSite.demoPassword')">
+              <el-input
+                v-model="form.demo_rotate_password"
+                type="password"
+                show-password
+                :placeholder="t('adminSite.demoPasswordPlaceholder')"
+              />
+            </el-form-item>
+            <el-form-item :label="t('adminSite.demoInterval')">
+              <el-input-number
+                v-model="form.demo_rotate_interval"
+                :min="60"
+                :max="86400"
+                :step="60"
+              />
+              <span class="form-suffix">{{ t('adminSite.demoIntervalHint') }}</span>
+            </el-form-item>
           </el-form>
         </el-tab-pane>
 

@@ -11,6 +11,7 @@ from ..libs import release
 from ..libs.auth import admin_required
 from ..libs.mail import SMTP_DEFAULTS, mail_ready, send_test_mail
 from ..libs.settings import DEFAULTS, get_setting, set_setting
+from ..libs.users import normalize_username, validate_password
 from ..utils.common import parse_proxy_url
 from ..utils.web import ok
 
@@ -20,10 +21,14 @@ bp = Blueprint("settings", __name__)
 #: 读取设置时也用它替换真实密码，密钥永远不会出现在响应里。
 SMTP_PASSWORD_MASK = "********"
 
+#: 演示账号密码同理：读取时只回掩码，回传掩码表示不改。
+DEMO_PASSWORD_MASK = "********"
+
 _SMTP_FIELDS = {"host", "port", "user", "password", "from", "tls"}
 
 #: Editable string settings.
 _STR_KEYS = {
+    "demo_rotate_username",
     "forbidden_username",
     "login_notice",
     "site_announcement",
@@ -52,6 +57,8 @@ _INT_KEYS = {
     #: 0 表示不启用（永久 / 不限制上限）。
     "image_expire_default_days": (0, 3650),
     "image_expire_max_days": (0, 3650),
+    #: 演示账号轮换间隔（秒）：最短一分钟，最长一天。
+    "demo_rotate_interval": (60, 86400),
 }
 
 _BOOL_KEYS = {
@@ -59,6 +66,7 @@ _BOOL_KEYS = {
     "allow_register",
     "allow_user_backends",
     "allow_video",
+    "demo_rotate_enabled",
     "password_login",
     "plaza_enabled",
     "storage_replica",
@@ -85,6 +93,8 @@ def _smtp_payload() -> dict:
 def _payload_of_settings() -> dict:
     items = {key: get_setting(key) for key in DEFAULTS}
     items["smtp"] = _smtp_payload()
+    if items.get("demo_rotate_password"):
+        items["demo_rotate_password"] = DEMO_PASSWORD_MASK
     return {"items": items, "editable": EDITABLE_KEYS}
 
 
@@ -147,11 +157,26 @@ def _clean(key: str, value):
     if key == "smtp":
         return _clean_smtp(value)
 
+    if key == "demo_rotate_password":
+        if not isinstance(value, str):
+            raise ApiError(
+                "demo_rotate_password must be a string", ErrorCode.PARAM_ERROR
+            )
+        value = value.strip()
+        #: 掩码原样回传表示不改密码，否则前端每次保存都会把它清空。
+        if value == DEMO_PASSWORD_MASK:
+            return str(get_setting("demo_rotate_password") or "")
+        if not value:
+            return ""
+        return validate_password(value)[:128]
+
     if key in _STR_KEYS:
         if not isinstance(value, str):
             raise ApiError("%s must be a string" % key, ErrorCode.PARAM_ERROR)
         if key == "upload_fetch_proxy":
             return _clean_proxy(value)
+        if key == "demo_rotate_username":
+            return normalize_username(value)
         return value.strip()[:500]
 
     if key in _INT_KEYS:

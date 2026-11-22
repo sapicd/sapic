@@ -163,6 +163,48 @@ def test_upload_respects_site_limits(app, client):
     assert too_big.status_code == 413
 
 
+def test_demo_rotate_password_is_masked(app, client):
+    """读取只回掩码；掩码原样回传表示不改，用户名按登录规则转小写。"""
+    csrf = register_and_login(client)
+    promote_admin(app)
+    headers = {"X-CSRF-Token": csrf}
+
+    client.put(
+        "/api/v2/settings",
+        json={
+            "demo_rotate_enabled": True,
+            "demo_rotate_username": "DemoUser",
+            "demo_rotate_password": "secret123",
+            "demo_rotate_interval": 600,
+        },
+        headers=headers,
+    )
+    items = client.get("/api/v2/settings").get_json()["data"]["items"]
+    assert items["demo_rotate_password"] == "********"
+    assert items["demo_rotate_username"] == "demouser"
+    assert items["demo_rotate_interval"] == 600
+
+    client.put(
+        "/api/v2/settings",
+        json={"demo_rotate_password": "********"},
+        headers=headers,
+    )
+    with app.app_context():
+        assert get_setting("demo_rotate_password") == "secret123"
+
+
+def test_demo_rotate_password_must_meet_the_minimum(app, client):
+    csrf = register_and_login(client)
+    promote_admin(app)
+    response = client.put(
+        "/api/v2/settings",
+        json={"demo_rotate_password": "short"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 400
+    assert response.get_json()["code"] == "PARAM_ERROR"
+
+
 SVG_PAYLOAD = (
     b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
 )

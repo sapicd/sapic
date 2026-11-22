@@ -30,6 +30,8 @@ from ..basis.vars import DATA_DIR
 from ..models.base import now
 from .images import purge_expired
 from .review import moderator_names, review_pending
+from .settings import get_setting
+from .users import rotate_demo_password
 
 try:  # pragma: no cover - POSIX everywhere sapic is deployed
     import fcntl
@@ -42,9 +44,14 @@ LOCK_NAME = "scheduler.lock"
 #: First run fires shortly after boot: migrations and hook loading come first.
 FIRST_PURGE_DELAY = 10
 FIRST_REVIEW_DELAY = 30
+FIRST_DEMO_ROTATE_DELAY = 60
+
+#: 演示账号改密只在这个周期上"看一眼"：真正的时间间隔从站点设置读，
+#: 这样后台改完不用重启调度器（多 worker 只有 leader 在跑）。
+DEMO_ROTATE_TICK = 60
 
 #: Job ids in display order; the admin page labels them by id.
-JOB_IDS = ("purge_expired", "review_pending")
+JOB_IDS = ("purge_expired", "review_pending", "demo_rotate")
 
 _handle = None
 _lock_guard = Lock()
@@ -52,6 +59,8 @@ _scheduler: BackgroundScheduler | None = None
 #: Last result per job, process-local (the leader is the only one scheduling).
 _last_runs: dict[str, dict] = {}
 _last_guard = Lock()
+#: When the demo password was last checked on this process; 0 means "on boot".
+_demo_last_run = 0
 
 
 def lock_path() -> Path:
@@ -141,6 +150,37 @@ def run_review(app: Flask) -> dict:
         return counts
 
 
+def run_demo_rotate(app: Flask, force: bool = False) -> dict:
+    """Reset the demo account's password, at most once per configured interval.
+
+    The trigger ticks every :data:`DEMO_ROTATE_TICK` seconds and this function
+    decides whether the interval elapsed, so editing the settings in the admin
+    UI takes effect without restarting the scheduler. ``force`` skips that
+    throttle for the "run now" button.
+    """
+    global _demo_last_run
+    with app.app_context():
+        try:
+            if not get_setting("demo_rotate_enabled"):
+                return {"rotated": False, "reason": "disabled"}
+            interval = max(
+                int(get_setting("demo_rotate_interval") or 3600), DEMO_ROTATE_TICK
+            )
+            if not force and now() - _demo_last_run < interval:
+                return {"rotated": False, "reason": "not due"}
+            _demo_last_run = now()
+            result = rotate_demo_password(
+                get_setting("demo_rotate_username"),
+                get_setting("demo_rotate_password"),
+            )
+        except Exception:
+            logger.exception("scheduled demo password rotation failed")
+            _record("demo_rotate", False, None)
+            return {"rotated": False, "reason": "error"}
+        _record("demo_rotate", True, result)
+        return result
+
+
 def run_job(app: Flask, job_id: str, limit: int | None = None) -> dict:
     """Run one job synchronously (the admin page's "run now" button).
 
@@ -153,25 +193,32 @@ def run_job(app: Flask, job_id: str, limit: int | None = None) -> dict:
         return {"job": job_id, "removed": run_purge(app, limit)}
     if job_id == "review_pending":
         return {"job": job_id, "review": run_review(app)}
+    if job_id == "demo_rotate":
+        #: 手动执行不看间隔，管理员点一次就应该真的检查一遍。
+        return {"job": job_id, "demo": run_demo_rotate(app, force=True)}
     raise KeyError(job_id)
 
 
 def status(app: Flask) -> dict:
     """Snapshot for the admin page: role of this worker, schedule and last run."""
     enabled = bool(app.config.get("SCHEDULER"))
-    intervals = {
-        "purge_expired": int(app.config.get("SCHEDULER_PURGE_INTERVAL") or 600),
-        "review_pending": int(app.config.get("SCHEDULER_REVIEW_INTERVAL") or 300),
-    }
+    intervals = {job_id: interval for job_id, _f, interval, _d in job_specs(app)}
+    #: demo 任务按分钟 tick，展示给管理员的是真正的轮换间隔（来自站点设置）。
+    intervals["demo_rotate"] = max(
+        int(get_setting("demo_rotate_interval") or intervals["demo_rotate"]),
+        intervals["demo_rotate"],
+    )
     jobs = []
     for job_id in JOB_IDS:
         job = _scheduler.get_job(job_id) if _scheduler is not None else None
+        #: demo 的 trigger 只是检查周期，展示的间隔由设置决定。
+        use_trigger = job is not None and job_id != "demo_rotate"
         jobs.append(
             {
                 "id": job_id,
                 "interval": (
                     int(job.trigger.interval.total_seconds())
-                    if job is not None
+                    if use_trigger
                     else intervals[job_id]
                 ),
                 "next_run_at": (
@@ -195,33 +242,48 @@ def status(app: Flask) -> dict:
     }
 
 
+def job_specs(app: Flask) -> tuple[tuple[str, object, int, int], ...]:
+    """Job table shared by the in-process scheduler and ``flask sa scheduler``.
+
+    Each entry is ``(id, callable, interval_seconds, first_delay_seconds)``.
+    """
+    return (
+        (
+            "purge_expired",
+            run_purge,
+            int(app.config.get("SCHEDULER_PURGE_INTERVAL") or 600),
+            FIRST_PURGE_DELAY,
+        ),
+        (
+            "review_pending",
+            run_review,
+            int(app.config.get("SCHEDULER_REVIEW_INTERVAL") or 300),
+            FIRST_REVIEW_DELAY,
+        ),
+        (
+            "demo_rotate",
+            run_demo_rotate,
+            DEMO_ROTATE_TICK,
+            FIRST_DEMO_ROTATE_DELAY,
+        ),
+    )
+
+
 def _build_scheduler(app: Flask) -> BackgroundScheduler:
-    purge_interval = int(app.config.get("SCHEDULER_PURGE_INTERVAL") or 600)
-    review_interval = int(app.config.get("SCHEDULER_REVIEW_INTERVAL") or 300)
     scheduler = BackgroundScheduler(daemon=True)
-    scheduler.add_job(
-        run_purge,
-        "interval",
-        seconds=purge_interval,
-        args=[app],
-        id="purge_expired",
-        max_instances=1,
-        #: 进程被挂起/机器休眠后只补跑一次，不把积压的任务全部执行一遍。
-        coalesce=True,
-        misfire_grace_time=max(purge_interval, 60),
-        next_run_time=datetime.now() + timedelta(seconds=FIRST_PURGE_DELAY),
-    )
-    scheduler.add_job(
-        run_review,
-        "interval",
-        seconds=review_interval,
-        args=[app],
-        id="review_pending",
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=max(review_interval, 60),
-        next_run_time=datetime.now() + timedelta(seconds=FIRST_REVIEW_DELAY),
-    )
+    for job_id, func, interval, delay in job_specs(app):
+        scheduler.add_job(
+            func,
+            "interval",
+            seconds=interval,
+            args=[app],
+            id=job_id,
+            max_instances=1,
+            #: 进程被挂起/机器休眠后只补跑一次，不把积压的任务全部执行一遍。
+            coalesce=True,
+            misfire_grace_time=max(interval, 60),
+            next_run_time=datetime.now() + timedelta(seconds=delay),
+        )
     return scheduler
 
 
@@ -247,9 +309,10 @@ def init_app(app: Flask) -> BackgroundScheduler | None:
     _scheduler = scheduler
     atexit.register(stop)
     logger.info(
-        "scheduler started: purge every %ss, review every %ss",
+        "scheduler started: purge every %ss, review every %ss, demo rotate every %ss",
         app.config.get("SCHEDULER_PURGE_INTERVAL"),
         app.config.get("SCHEDULER_REVIEW_INTERVAL"),
+        DEMO_ROTATE_TICK,
     )
     return scheduler
 

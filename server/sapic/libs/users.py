@@ -151,6 +151,30 @@ def change_password(user: User, new_password: str) -> User:
     return user
 
 
+def rotate_demo_password(username: str, password: str) -> dict:
+    """Reset the configured demo account's password.
+
+    Every skip is normal: the switch may be off, the account may be gone, the
+    password may already match, or the target may be an administrator (rotating
+    that one from a setting could lock the operator out). Only the password,
+    sessions and API tokens are touched; images and albums stay.
+    """
+    name = normalize_username(username or "")
+    if not name or not password:
+        return {"rotated": False, "reason": "not configured"}
+    user = User.get_or_none(User.username == name)
+    if user is None:
+        return {"rotated": False, "reason": "user not found"}
+    if user.is_admin:
+        return {"rotated": False, "reason": "admin account"}
+    if check_password_hash(user.password_hash or "", password):
+        return {"rotated": False, "reason": "already current"}
+    change_password(user, password)
+    #: 旧 PAT 按 token 哈希校验，改密不会让它们失效，所以一并吊销。
+    ApiToken.delete().where(ApiToken.owner == user).execute()
+    return {"rotated": True, "reason": "rotated"}
+
+
 def _identity_owner(issuer: str, subject: str) -> User | None:
     """Account already holding this identity, if any.
 

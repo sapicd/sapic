@@ -6,7 +6,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+from werkzeug.security import check_password_hash
+
 from sapic.libs import scheduler
+from sapic.libs.settings import set_setting
+from sapic.libs.users import create_user
+from sapic.models import ApiToken, User
 from sapic.models.image import Image
 
 
@@ -41,9 +46,13 @@ def test_scheduler_does_not_start_inside_tests(app):
     assert scheduler._scheduler is None
 
 
-def test_build_registers_the_two_jobs(app):
+def test_build_registers_all_jobs(app):
     built = scheduler._build_scheduler(app)
-    assert {job.id for job in built.get_jobs()} == {"purge_expired", "review_pending"}
+    assert {job.id for job in built.get_jobs()} == {
+        "purge_expired",
+        "review_pending",
+        "demo_rotate",
+    }
     assert built.running is False
 
 
@@ -117,8 +126,12 @@ def test_status_api_lists_the_jobs(app, client):
     data = response.get_json()["data"]
     #: conftest 关掉了调度器，所以这个 worker 是 disabled 而不是 standby。
     assert data["role"] == "disabled"
-    assert [job["id"] for job in data["jobs"]] == ["purge_expired", "review_pending"]
-    assert [job["interval"] for job in data["jobs"]] == [600, 300]
+    assert [job["id"] for job in data["jobs"]] == [
+        "purge_expired",
+        "review_pending",
+        "demo_rotate",
+    ]
+    assert [job["interval"] for job in data["jobs"]] == [600, 300, 3600]
     assert all(job["next_run_at"] is None for job in data["jobs"])
 
 
@@ -171,6 +184,78 @@ def test_run_now_rejects_an_unknown_job(app, client):
         headers={"X-CSRF-Token": csrf},
     )
     assert response.status_code == 404
+
+
+def configure_demo(app, username="demo01", password="newsecret", interval=3600):
+    with app.app_context():
+        set_setting("demo_rotate_enabled", True)
+        set_setting("demo_rotate_username", username)
+        set_setting("demo_rotate_password", password)
+        set_setting("demo_rotate_interval", interval)
+
+
+def test_demo_rotation_is_off_by_default(app):
+    assert scheduler.run_demo_rotate(app, force=True) == {
+        "rotated": False,
+        "reason": "disabled",
+    }
+
+
+def test_demo_rotation_resets_the_password(app, client, monkeypatch):
+    """到点改密：新密码生效、会话版本 +1、旧 PAT 一并吊销。"""
+    monkeypatch.setattr(scheduler, "_demo_last_run", 0)
+    register_and_login(client)
+    with app.app_context():
+        user = create_user("demo01", "oldsecret")
+        ApiToken.create(
+            owner=user, name="cli", token_hash="hash-demo", prefix="sapic_abc"
+        )
+        before = user.session_version
+
+    configure_demo(app)
+    assert scheduler.run_demo_rotate(app, force=True) == {
+        "rotated": True,
+        "reason": "rotated",
+    }
+    with app.app_context():
+        user = User.get(User.username == "demo01")
+        assert check_password_hash(user.password_hash, "newsecret")
+        assert user.session_version == before + 1
+        assert ApiToken.select().where(ApiToken.owner == user).count() == 0
+
+    #: 已经是目标密码时不重复写库、也不重复吊销会话。
+    assert scheduler.run_demo_rotate(app, force=True) == {
+        "rotated": False,
+        "reason": "already current",
+    }
+    with app.app_context():
+        assert User.get(User.username == "demo01").session_version == before + 1
+
+
+def test_demo_rotation_skips_admins_and_missing_users(app, monkeypatch):
+    monkeypatch.setattr(scheduler, "_demo_last_run", 0)
+    with app.app_context():
+        create_user("alice", "secret123")
+    promote_admin(app)
+
+    configure_demo(app, username="alice")
+    assert scheduler.run_demo_rotate(app, force=True)["reason"] == "admin account"
+
+    configure_demo(app, username="ghost")
+    assert scheduler.run_demo_rotate(app, force=True)["reason"] == "user not found"
+
+    configure_demo(app, username="", password="")
+    assert scheduler.run_demo_rotate(app, force=True)["reason"] == "not configured"
+
+
+def test_demo_rotation_waits_for_the_interval(app, monkeypatch):
+    monkeypatch.setattr(scheduler, "_demo_last_run", 0)
+    with app.app_context():
+        create_user("demo01", "oldsecret")
+    configure_demo(app, interval=3600)
+    assert scheduler.run_demo_rotate(app, force=True)["reason"] == "rotated"
+    #: 刚跑过，非强制调用要等下一个间隔。
+    assert scheduler.run_demo_rotate(app)["reason"] == "not due"
 
 
 def test_cli_runs_both_jobs_once(app, client):

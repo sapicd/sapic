@@ -35,6 +35,22 @@ function intervalText(seconds) {
   return t('adminScheduler.seconds', { n: value })
 }
 
+//: 后端返回的 reason 是稳定的英文枚举，这里映射到文案键。
+const DEMO_REASONS = {
+  rotated: 'rotated',
+  'already current': 'alreadyCurrent',
+  'user not found': 'userNotFound',
+  'admin account': 'admin',
+  'not configured': 'notConfigured',
+  disabled: 'disabled',
+  'not due': 'notDue',
+  error: 'error',
+}
+
+function demoText(reason) {
+  return t(`adminScheduler.demo.${DEMO_REASONS[reason] || 'error'}`)
+}
+
 function resultText(job) {
   const last = job.last_run
   if (!last) return t('adminScheduler.never')
@@ -42,6 +58,9 @@ function resultText(job) {
   const result = last.result || {}
   if (job.id === 'purge_expired') {
     return t('adminScheduler.purged', { n: result.removed ?? 0 })
+  }
+  if (job.id === 'demo_rotate') {
+    return demoText(result.reason)
   }
   return t('adminScheduler.scanned', {
     scanned: result.scanned ?? 0,
@@ -78,6 +97,8 @@ async function runNow(row) {
     const data = await api.post(`/scheduler/run/${row.id}`)
     if (row.id === 'purge_expired') {
       ElMessage.success(t('adminScheduler.purged', { n: data?.removed ?? 0 }))
+    } else if (row.id === 'demo_rotate') {
+      ElMessage.success(demoText(data?.demo?.reason))
     } else {
       const review = data?.review || {}
       ElMessage.success(

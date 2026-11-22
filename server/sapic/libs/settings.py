@@ -65,6 +65,14 @@ DEFAULTS = {
     "forbidden_username": "admin,root,sys,anonymous",
     #: 默认相册是上传的兜底归属，默认公开才能拿到可外链地址。
     "default_album_visibility": "public",
+    #: 演示账号轮换：定时把指定本地账号的密码重置回这里配置的值，防止访客把
+    #: demo 账号的密码改掉。默认关闭；用户名或密码为空时不执行，账号不存在或
+    #: 是管理员时跳过（避免把后台锁死）。只改密码与会话，不创建账号。
+    "demo_rotate_enabled": False,
+    "demo_rotate_username": "",
+    "demo_rotate_password": "",
+    #: 轮换间隔（秒）：调度器每分钟检查一次，到点才真正改密。
+    "demo_rotate_interval": 3600,
     "smtp": {},
     #: 钩子：启用状态（{name: bool}）、配置（{name: {key: value}}）与第三方
     #: 钩子模块名（[module]），由 /api/v2/hooks 系列接口写入，不走键白名单。

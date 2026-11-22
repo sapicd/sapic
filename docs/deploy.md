@@ -353,14 +353,15 @@ systemctl restart sapic        # incremental migrations run at startup
   把 `sapic_log_dir` 置空则只保留 stdout/stderr。
 - 每个请求都会带 `X-Request-Id`（也可由上游传入），排查时用它串日志。
 
-### 后台任务（到期清理与审核扫描）
+### 后台任务（到期清理、审核扫描与演示账号改密）
 
-两类后台任务由进程内 APScheduler 驱动，随服务启动，**不需要 cron**：
+后台任务由进程内 APScheduler 驱动，随服务启动，**不需要 cron**：
 
 | 任务 | 默认间隔 | 作用 |
 | --- | --- | --- |
 | 过期清理 | 600s（`sapic_scheduler_purge_interval`） | 删除到期图片的对象与元数据 |
 | 审核扫描 | 300s（`sapic_scheduler_review_interval`） | 调 `moderator` 钩子判定未审的图；无此钩子时直接跳过 |
+| 演示账号改密 | 60s 检查，实际间隔看后台设置 `demo_rotate_interval` | 把指定账号的密码重置回配置值；未开启时直接跳过 |
 
 - **多 worker 选主**：每个 worker 启动时抢 `server/data/scheduler.lock` 的文件锁（`flock`），
   只有抢到的进程跑调度，其余跳过，所以 `gunicorn -w 4` 不会跑四份。
@@ -378,7 +379,7 @@ systemctl restart sapic        # incremental migrations run at startup
   ```bash
   cd /srv/sapic/server && ../.venv/bin/flask sa scheduler --once
   ```
-- **后台可观测**：管理员在「后台管理 → 定时任务」看当前调度者、两个任务的间隔/下次运行/上次结果，
+- **后台可观测**：管理员在「后台管理 → 定时任务」看当前调度者、各任务的间隔/下次运行/上次结果，
   也可以「立即执行」一次（同步执行、批量很小，不会等太久）。多 worker 下这一页显示的是
   **处理该请求的进程**：落在待命进程时会标「其他进程调度中」，手动执行仍然有效。
 - 审核命中只把图片**隐藏**（`review_state=block`），记录与文件都还在；管理员在

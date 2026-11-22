@@ -100,26 +100,29 @@ make clean            # 清理缓存与构建产物
 
 ## 后台任务（APScheduler）★
 
-到期清理与内容审核扫描**不在请求里跑**，由 `libs/scheduler.py` 的进程内 APScheduler 驱动，
-默认随服务启动（`sapic_scheduler=1`）：
+到期清理、内容审核扫描与演示账号改密**不在请求里跑**，由 `libs/scheduler.py` 的进程内
+APScheduler 驱动，默认随服务启动（`sapic_scheduler=1`）：
 
 - **多 worker 选主**：每个 worker 抢 `data/scheduler.lock` 的 `flock`，只有抢到的进程调度，
   所以 `gunicorn -w 4` 只跑一份；没有 Redis/队列参与。
-- **job 自己开 app context**，异常只记日志（`run_purge` / `run_review` 返回"这轮没做事"），
-  绝不让后台异常把调度器打死。
-- **新增后台任务**在 `_build_scheduler` 里注册 `add_job(..., max_instances=1, coalesce=True)`，
-  写清 `misfire_grace_time`；不要再往 `before_request` 塞重活/外部调用。
+- **job 自己开 app context**，异常只记日志（`run_purge` / `run_review` / `run_demo_rotate`
+  返回"这轮没做事"），绝不让后台异常把调度器打死。
+- **新增后台任务**在 `job_specs()` 里加一行（id、函数、间隔、首次延迟），web 与 CLI 共用这张表；
+  任务本身仍需 `max_instances=1`、`coalesce=True`，不要再往 `before_request` 塞重活/外部调用。
+- **示例：演示账号改密**（`run_demo_rotate`）。trigger 每分钟 tick，真正的间隔读站点设置
+  `demo_rotate_interval`，所以后台改完立即生效（多 worker 也只有 leader 在跑，没有跨进程状态）。
+  用户名/密码/开关都在后台设置里，密码读取只回掩码；目标账号不存在或是管理员时跳过。
 - **独立进程**：web 端 `sapic_scheduler=0`，跑 `flask sa scheduler`（前台常驻）或
   `flask sa scheduler --once`（CronJob/一次性）；CLI 与 web 抢同一把锁，不会跑两份。
 - 关掉调度器（`sapic_scheduler=0` 且不跑 CLI）时，`create_app` 才注册 `before_request`
   的过期清理兜底（节流与批量在 `libs/images.sweep_expired`）。
 - 测试里 conftest 设 `SCHEDULER=False`（不起线程、保留兜底），用例直接调
-  `run_purge(app)` / `run_review(app)` 断言。
+  `run_purge(app)` / `run_review(app)` / `run_demo_rotate(app, force=True)` 断言。
 - **后台可视**：「后台管理 → 定时任务」（`views/scheduler.py` + `AdminSchedulerView.vue`，
   `GET /api/v2/scheduler`、`POST /api/v2/scheduler/run/<job>`，仅管理员）。它展示的是**当前 worker**
   的角色（`leader` / `standby` / `disabled`）与 `_last_runs` 的进程内结果；手动执行不经过调度器，
-  直接同步跑一次 `run_job`，因为请求可能落在待命 worker 上，而两个任务都幂等。新增后台任务要
-  同时出现在 `JOB_IDS` 与前端 `adminScheduler.jobs.*`。
+  直接同步跑一次 `run_job`，因为请求可能落在待命 worker 上，而这些任务都幂等。新增后台任务要
+  同时出现在 `job_specs()`、`JOB_IDS` 与前端 `adminScheduler.jobs.*`。
 
 `make dev` 自带 `sapic_env=dev`（DEBUG + 详细日志）。`SECRET_KEY` 有内置默认值，**不强制**
 生产配置（空值按默认处理）；它是公开串，公网多用户部署建议用 `sapic_secretkey` 换掉，

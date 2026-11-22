@@ -22,7 +22,7 @@
 | `HOOK_MARKET_URL` | `sapic_hookmarketurl` | 官方 list.json | 钩子市场数据源，可换镜像 |
 | `UPDATE_CHECK_URL` | `sapic_updatecheckurl` | 官方发布接口 | 版本检测数据源，置空即关闭（内网部署） |
 | `EXTERNAL_BASE_URL` | `sapic_external_base_url` | 空 | 给图片直链加前缀，空则按当前请求的域名补全 |
-| `SCHEDULER` | `sapic_scheduler` | `true` | 进程内跑后台任务（到期清理、审核扫描）；多 worker 用文件锁选主，关掉后回到「请求时兜底清理」 |
+| `SCHEDULER` | `sapic_scheduler` | `true` | 进程内跑后台任务（到期清理、审核扫描、演示账号改密）；多 worker 用文件锁选主，关掉后回到「请求时兜底清理」 |
 | `SCHEDULER_PURGE_INTERVAL` | `sapic_scheduler_purge_interval` | `600` | 过期清理间隔（秒），最小 10 |
 | `SCHEDULER_REVIEW_INTERVAL` | `sapic_scheduler_review_interval` | `300` | 审核扫描间隔（秒），最小 10；没有启用的 `moderator` 钩子时这趟直接跳过 |
 
@@ -48,6 +48,7 @@ cd server && ../.venv/bin/python -c "import json; from sapic.basis.conf import l
 | 有效期 | `image_expire_default_days`、`image_expire_max_days`（0 表示不启用规则） |
 | 存储 | `storage_replica`（多副本）、`allow_user_backends`、`user_backend_limit` |
 | 注册与账号 | `allow_register`、`register_review`、`password_login`、`forbidden_username`、`default_album_visibility` |
+| 演示账号 | `demo_rotate_enabled`、`demo_rotate_username`、`demo_rotate_password`、`demo_rotate_interval`（秒，60～86400） |
 | 广场 | `plaza_enabled`（默认关） |
 | 邮件 | `smtp`（`{host, port, user, password, from, tls}`，`tls` 表示 STARTTLS；端口 465/994 自动走隐式 SSL，不要勾 `tls`）。启用并配好 `mail` 类钩子（如 `sendcloud`）时优先走钩子，SMTP 只作兜底 |
 | 钩子 | `hooks_state`、`hooks_config`、`hooks_imported`（由钩子接口写入，不走键白名单） |
@@ -70,6 +71,10 @@ cd server && ../.venv/bin/python -c "import json; from sapic.basis.conf import l
   （本地上传、头像与外链导入同一口径），并且 `/raw/<sha>` 对 SVG 一律返回
   `Content-Disposition: attachment` + `application/octet-stream`，不会在站点源下渲染。
 - `password_login` 关掉后本地登录与注册接口直接 403，只剩统一登录入口。
+- 演示账号轮换只在开关打开、用户名和密码都填了时生效：调度器按 `demo_rotate_interval`
+  把该本地账号的密码重置回配置值（登录名统一转小写），同时吊销它的会话与 PAT。
+  账号不存在、或目标恰好是管理员时跳过——后者是为了避免把后台锁死。它不会创建账号；
+  密码读取只回掩码，把掩码原样回传表示不改。
 - `site_announcement`（全站公告）只解析三种排版：`**加粗**`、`[文字](https://链接)`、
   空行分段（单换行也换行）。链接只认 `http(s)://` 与 `mailto:`，其余写法按原文显示；
   它是纯文本语法，**不执行任何 HTML 标签**（前端用节点构造渲染，没有 `v-html`）。

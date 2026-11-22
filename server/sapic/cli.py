@@ -43,10 +43,10 @@ def purge_expired_command(limit):
 
 
 @sa_cli.command("scheduler")
-@click.option("--once", is_flag=True, help="run both jobs once and exit")
+@click.option("--once", is_flag=True, help="run every job once and exit")
 @with_appcontext
 def scheduler_command(once):
-    """Run expiry purge and moderation scan on a schedule (foreground).
+    """Run expiry purge, moderation scan and demo rotation (foreground).
 
     The web workers start the same schedule themselves unless
     ``sapic_scheduler=0``; use this command when you prefer a dedicated
@@ -57,7 +57,9 @@ def scheduler_command(once):
 
     from .libs.scheduler import (
         acquire_lock,
+        job_specs,
         release_lock,
+        run_demo_rotate,
         run_purge,
         run_review,
     )
@@ -69,10 +71,11 @@ def scheduler_command(once):
     if once:
         reviewed = run_review(app)
         removed = run_purge(app)
+        rotated = run_demo_rotate(app, force=True)
         click.echo(
             "reviewed %(scanned)d image(s): %(passed)d passed, %(blocked)d blocked, "
-            "%(failed)d to retry; purged %(removed)d expired"
-            % dict(reviewed, removed=removed)
+            "%(failed)d to retry; purged %(removed)d expired; demo %(demo)s"
+            % dict(reviewed, removed=removed, demo=rotated.get("reason", "skipped"))
         )
         return
 
@@ -81,32 +84,22 @@ def scheduler_command(once):
             "another scheduler is running (data/scheduler.lock); "
             "set sapic_scheduler=0 on the web workers first"
         )
-    purge_interval = int(app.config["SCHEDULER_PURGE_INTERVAL"])
-    review_interval = int(app.config["SCHEDULER_REVIEW_INTERVAL"])
     scheduler = BlockingScheduler()
-    scheduler.add_job(
-        run_purge,
-        "interval",
-        seconds=purge_interval,
-        args=[app],
-        id="purge_expired",
-        coalesce=True,
-        max_instances=1,
-        next_run_time=datetime.now() + timedelta(seconds=5),
-    )
-    scheduler.add_job(
-        run_review,
-        "interval",
-        seconds=review_interval,
-        args=[app],
-        id="review_pending",
-        coalesce=True,
-        max_instances=1,
-        next_run_time=datetime.now() + timedelta(seconds=10),
-    )
+    specs = job_specs(app)
+    for job_id, func, interval, delay in specs:
+        scheduler.add_job(
+            func,
+            "interval",
+            seconds=interval,
+            args=[app],
+            id=job_id,
+            coalesce=True,
+            max_instances=1,
+            next_run_time=datetime.now() + timedelta(seconds=delay),
+        )
     click.echo(
-        "scheduler running: purge every %ss, review every %ss (ctrl-c to stop)"
-        % (purge_interval, review_interval)
+        "scheduler running: %s (ctrl-c to stop)"
+        % ", ".join("%s every %ss" % (job_id, interval) for job_id, _f, interval, _d in specs)
     )
     try:
         scheduler.start()
