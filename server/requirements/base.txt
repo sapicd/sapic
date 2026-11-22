@@ -12,7 +12,8 @@ peewee==4.5.3
 psycopg[binary]==3.3.6
 PyMySQL==1.2.3
 PyJWT==2.15.1
-pillow==13.0.0
+#: 13.0 起要求 Python >=3.11，而项目的下限是 3.10，所以停在 12.x。
+pillow==12.3.0
 qiniu==7.15.0
 upyun==2.5.5
 requests==2.34.2
