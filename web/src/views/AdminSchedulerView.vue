@@ -6,7 +6,12 @@ import { t } from '@/i18n'
 import { formatTime } from '@/utils/format'
 
 //: 角色标签随语言切换，用 computed 包一层。
-const ROLE_TYPE = { leader: 'success', standby: 'warning', disabled: 'info' }
+const ROLE_TYPE = {
+  leader: 'success',
+  external: 'success',
+  standby: 'warning',
+  disabled: 'info',
+}
 
 const status = ref(null)
 const loading = ref(false)
@@ -23,6 +28,7 @@ const roleMeta = computed(() => {
 const roleHint = computed(() => {
   const role = status.value?.role
   if (role === 'standby') return t('adminScheduler.standbyHint')
+  if (role === 'external') return t('adminScheduler.externalHint')
   if (role === 'disabled') return t('adminScheduler.disabledHint')
   return ''
 })

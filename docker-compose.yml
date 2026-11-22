@@ -21,9 +21,8 @@ services:
       sapic_external_base_url: "${SAPIC_BASE_URL:-http://localhost}"
       #: 容器内 nginx 在前面，不信任 X-Forwarded-* 会拿到 127.0.0.1。
       sapic_proxyfix: "true"
-      #: 到期清理与审核扫描随容器内的 gunicorn 起（文件锁选主，无需额外服务）。
-      #: 交给独立容器跑时改成 "0"，再起一个 `flask sa scheduler` 的服务。
-      sapic_scheduler: "1"
+      #: 后台任务由镜像内 supervisor 拉起的独立进程（flask sa scheduler）执行，
+      #: web worker 固定不参与；不用设 sapic_scheduler，也不需要额外的调度服务。
       #: SQLite 是库级写锁，多进程会互相抢锁；要并发就换 PostgreSQL。
       WEB_CONCURRENCY: "1"
     volumes:

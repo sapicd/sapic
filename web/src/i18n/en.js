@@ -565,7 +565,7 @@ export default {
   },
   adminScheduler: {
     disabledHint:
-      'sapic_scheduler=0 turns the background jobs off. Only the opportunistic expiry sweep on requests remains; set it back to 1 and restart to resume the schedule.',
+      'No scheduler process found (the web side has sapic_scheduler=0 and no flask sa scheduler is running): only the opportunistic expiry sweep on requests remains. In the container check that the sapic-scheduler process is alive; elsewhere set it back to 1 and restart, or run a scheduler process.',
     failed: 'Failed (see logs)',
     hours: '{n} h',
     interval: 'Interval',
@@ -582,7 +582,7 @@ export default {
       userNotFound: 'User not found, skipped',
     },
     intro:
-      'Expiry purge and content moderation run inside APScheduler; among several workers, one wins the data/scheduler.lock file lock and does the scheduling.',
+      'Expiry purge and content moderation run inside APScheduler; web workers and any standalone scheduler process race for the data/scheduler.lock file lock, and only one of them does the scheduling.',
     job: 'Job',
     jobs: {
       demo_rotate: 'Reset the demo password',
@@ -599,8 +599,11 @@ export default {
     purged: '{n} purged',
     result: 'Last result',
     role_disabled: 'Disabled',
+    role_external: 'Running in a separate process',
     role_leader: 'Scheduling in this process',
     role_standby: 'Scheduling in another process',
+    externalHint:
+      'The scheduler runs in a separate container process (flask sa scheduler); intervals come from the settings, and "Last result" stays empty here — check that process log.',
     runFailed: 'Failed to run the job',
     runNow: 'Run now',
     scanned: '{scanned} scanned, {blocked} blocked, {failed} to retry',

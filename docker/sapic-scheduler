@@ -1,0 +1,12 @@
+#!/bin/bash
+# 容器内的独立调度进程：到期清理、审核扫描与演示账号改密。
+# entrypoint 已经先跑过 `flask sa upgrade`，这里直接起前台调度器；
+# 它和 web 抢同一把 data/scheduler.lock，所以两种部署方式不会各跑一份。
+set -euo pipefail
+
+cd /app/server
+#: create_app 也会读 sapic_scheduler：调成 0 让它不要在 CLI 进程里再起一份线程调度，
+#: 调度只由下面的 BlockingScheduler 负责（两者抢的是同一把 data/scheduler.lock）。
+export sapic_scheduler=0
+
+exec flask sa scheduler

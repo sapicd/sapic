@@ -114,13 +114,19 @@ APScheduler 驱动，默认随服务启动（`sapic_scheduler=1`）：
   用户名/密码/开关都在后台设置里，密码读取只回掩码；目标账号不存在或是管理员时跳过。
 - **独立进程**：web 端 `sapic_scheduler=0`，跑 `flask sa scheduler`（前台常驻）或
   `flask sa scheduler --once`（CronJob/一次性）；CLI 与 web 抢同一把锁，不会跑两份。
+- **容器镜像就是这种形态**（`docker/supervisord.conf` → `/etc/supervisord.conf`）：supervisor
+  统管 gunicorn（`docker/sapic-web`，固定 `sapic_scheduler=0`）、`flask sa scheduler`
+  （`docker/sapic-scheduler`）与 nginx 三个进程，entrypoint 只做密钥/nginx 配置与一次
+  `flask sa upgrade` 就 `exec supervisord`。配置落在 supervisorctl 的默认搜索路径上，
+  容器里 `supervisorctl status` / `restart scheduler` 直接可用。调度因此不随 worker 滚动
+  重启而中断，后台页面固定显示 `external`（锁文件里的 pid 活着，见 `external_leader()`）。
 - 关掉调度器（`sapic_scheduler=0` 且不跑 CLI）时，`create_app` 才注册 `before_request`
   的过期清理兜底（节流与批量在 `libs/images.sweep_expired`）。
 - 测试里 conftest 设 `SCHEDULER=False`（不起线程、保留兜底），用例直接调
   `run_purge(app)` / `run_review(app)` / `run_demo_rotate(app, force=True)` 断言。
 - **后台可视**：「后台管理 → 定时任务」（`views/scheduler.py` + `AdminSchedulerView.vue`，
   `GET /api/v2/scheduler`、`POST /api/v2/scheduler/run/<job>`，仅管理员）。它展示的是**当前 worker**
-  的角色（`leader` / `standby` / `disabled`）与 `_last_runs` 的进程内结果；手动执行不经过调度器，
+  的角色（`leader` / `standby` / `external` / `disabled`）与 `_last_runs` 的进程内结果；手动执行不经过调度器，
   直接同步跑一次 `run_job`，因为请求可能落在待命 worker 上，而这些任务都幂等。新增后台任务要
   同时出现在 `job_specs()`、`JOB_IDS` 与前端 `adminScheduler.jobs.*`。
 

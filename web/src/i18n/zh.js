@@ -550,7 +550,7 @@ export default {
   },
   adminScheduler: {
     disabledHint:
-      'sapic_scheduler=0 已关闭后台任务；此时只有请求触发的过期清理兜底，改回 1 并重启后恢复调度。',
+      '没检测到调度进程（web 端 sapic_scheduler=0，且没有 flask sa scheduler 在跑）：此时只有请求触发的过期清理兜底。容器里请确认 sapic-scheduler 进程活着，其它部署改回 1 并重启或另起调度进程。',
     failed: '执行失败（详见日志）',
     hours: '{n} 小时',
     interval: '间隔',
@@ -567,7 +567,7 @@ export default {
       userNotFound: '用户不存在，已跳过',
     },
     intro:
-      '到期清理与内容审核由进程内 APScheduler 执行；多 worker 通过 data/scheduler.lock 选主，只有一个进程真正调度。',
+      '到期清理与内容审核由 APScheduler 执行；web worker 与独立调度进程通过 data/scheduler.lock 选主，只有一个进程真正调度。',
     job: '任务',
     jobs: {
       demo_rotate: '重置演示账号密码',
@@ -584,8 +584,11 @@ export default {
     purged: '已清理 {n} 张',
     result: '上次结果',
     role_disabled: '已关闭',
+    role_external: '独立进程调度中',
     role_leader: '本进程调度中',
     role_standby: '其他进程调度中',
+    externalHint:
+      '调度器在容器里的独立进程（flask sa scheduler）中运行，本进程不参与；间隔与「上次结果」来自本进程，运行情况请看该进程日志。',
     runFailed: '执行任务失败',
     runNow: '立即执行',
     scanned: '扫描 {scanned} 张，拦截 {blocked}，待重试 {failed}',

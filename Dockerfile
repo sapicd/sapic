@@ -17,18 +17,22 @@ RUN pnpm run build
 # ---- 2. 运行镜像 ------------------------------------------------------------
 FROM python:3.12-slim
 
-#: 后台任务（到期清理 + 审核扫描）由进程内 APScheduler 驱动，随 gunicorn worker
-#: 启动；多 worker 用 data/scheduler.lock 选主，所以单容器不需要额外的调度进程。
-#: 想让独立进程/单独容器来跑，就设 sapic_scheduler=0 并执行 flask sa scheduler。
+#: 后台任务（到期清理 / 审核扫描 / 演示账号改密）由 supervisor 拉起的独立进程
+#: `flask sa scheduler` 负责；web worker 固定 sapic_scheduler=0，不在进程内抢锁。
+#: 这样 worker 滚动重启不会打断调度，后台页面也能稳定看到同一个调度者。
+#: FLASK_APP 供 entrypoint 的 `flask sa upgrade` 与调度进程使用（镜像里不走 Makefile）。
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    FLASK_APP=sapic \
     sapic_env=prod \
-    sapic_scheduler=1 \
+    sapic_scheduler=0 \
     SAPIC_HTTP_PORT=80
 
+#: procps 只提供 ps / top 等排查工具：supervisor 管着 web / scheduler / nginx 三个进程，
+#: 容器里 `docker exec sapic ps -ef` 能直接看出谁在跑、调度进程是否存活。
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        ca-certificates curl nginx tini \
+        ca-certificates curl nginx procps supervisor tini \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -47,7 +51,13 @@ COPY --from=web /app/web/dist /app/web/dist
 #: 端口才不写死。访问日志默认关，开启时写 /var/log/nginx/access.log（软链到 stdout）。
 COPY docker/nginx.conf /etc/nginx/sapic.conf.template
 COPY docker/entrypoint.sh /usr/local/bin/sapic-entrypoint
+#: supervisor 统管 web / scheduler / nginx；两个 wrapper 因为 supervisord 不展开
+#: $VAR（WEB_CONCURRENCY 要留给 shell 处理）。配置落在 /etc/supervisord.conf：这是
+#: supervisorctl 默认搜索的路径之一，容器里不用带 -c 就能直接 `supervisorctl status`。
+COPY docker/sapic-web docker/sapic-scheduler /usr/local/bin/
+COPY docker/supervisord.conf /etc/supervisord.conf
 RUN chmod 0755 /usr/local/bin/sapic-entrypoint \
+        /usr/local/bin/sapic-web /usr/local/bin/sapic-scheduler \
     && rm -f /etc/nginx/sites-enabled/default \
     && mkdir -p /app/server/data \
     && ln -sf /dev/stdout /var/log/nginx/access.log \

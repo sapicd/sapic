@@ -114,6 +114,33 @@ def release_lock() -> None:
         _handle = None
 
 
+def _pid_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    return True
+
+
+def external_leader() -> int | None:
+    """PID of a scheduler process running outside this one, when it is alive.
+
+    The container image runs ``flask sa scheduler`` under supervisor and tells
+    the web workers ``sapic_scheduler=0``, so there is no local scheduler to
+    report. ``acquire_lock`` writes the leader pid into the lock file; trusting
+    it lets the admin page say "external" instead of "disabled".
+    """
+    try:
+        pid = int(lock_path().read_text(encoding="utf-8").strip() or 0)
+    except (OSError, ValueError):
+        return None
+    if pid == os.getpid() or not _pid_alive(pid):
+        return None
+    return pid
+
+
 def _record(job_id: str, ok: bool, result) -> None:
     """Keep the latest outcome for the admin page (process-local, best effort)."""
     with _last_guard:
@@ -229,14 +256,21 @@ def status(app: Flask) -> dict:
                 "last_run": _last_runs.get(job_id),
             }
         )
+    leader_pid = None
     if _scheduler is not None:
         role = "leader"
+    elif enabled:
+        role = "standby"
     else:
-        role = "standby" if enabled else "disabled"
+        #: 容器里由 supervisor 起独立的 `flask sa scheduler`，web 端看不到它；
+        #: 锁文件里的 pid 还活着就说明调度在跑，别让页面误报"已关闭"。
+        leader_pid = external_leader()
+        role = "external" if leader_pid else "disabled"
     return {
         "enabled": enabled,
         "role": role,
         "pid": os.getpid(),
+        "leader_pid": leader_pid,
         "lock": str(lock_path()),
         "jobs": jobs,
     }

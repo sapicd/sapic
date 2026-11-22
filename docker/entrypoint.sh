@@ -1,6 +1,6 @@
 #!/bin/bash
-# 单容器启动：gunicorn（127.0.0.1:9514） + nginx（默认 :80，可用 SAPIC_HTTP_PORT 改）。
-# tini -g 负责把容器信号广播给整个进程组，这里只维护两个子进程的生命周期。
+# 单容器启动：初始化密钥与 nginx 配置，跑一次迁移，然后交给 supervisor 统管
+# gunicorn（127.0.0.1:9514）、独立调度进程与 nginx（默认 :80）。
 set -euo pipefail
 
 #: 未显式传 sapic_secretkey 时生成一次随机密钥并留在数据卷里：容器重启、
@@ -22,7 +22,6 @@ if [ -z "${sapic_secretkey:-}" ]; then
 fi
 
 export sapic_env="${sapic_env:-prod}"
-WORKERS="${WEB_CONCURRENCY:-4}"
 
 #: 容器内 nginx 的监听端口：默认 80，便于和宿主/外层反代保持同一约定；
 #: 需要在非 root 端口或同 Pod 多容器共存时改它，镜像里的 nginx.conf 是模板，
@@ -49,31 +48,13 @@ sed -e "s|__LISTEN_PORT__|${HTTP_PORT}|g" \
     /etc/nginx/sapic.conf.template > /etc/nginx/conf.d/default.conf
 
 cd /app/server
-echo "[sapic] starting gunicorn with ${WORKERS} workers"
-gunicorn "sapic:create_app()" \
-    --bind 127.0.0.1:9514 \
-    --workers "${WORKERS}" \
-    --worker-class gevent \
-    --timeout 60 \
-    --error-logfile - &
-GUNICORN_PID=$!
+#: 迁移先在这里同步跑一遍：supervisor 里的 web 与 scheduler 是两个进程，若都靠
+#: create_app 的自动迁移，同时启动时会在同一个库上撞车。失败就直接退出，比
+#: 两个子进程各报一次错好排查。
+echo "[sapic] applying migrations"
+flask sa upgrade
 
-NGINX_PID=""
-term() {
-    kill -TERM "${GUNICORN_PID}" ${NGINX_PID:+"${NGINX_PID}"} 2>/dev/null || true
-    wait "${GUNICORN_PID}" 2>/dev/null || true
-}
-trap term TERM INT
-
-#: 启动期等一会儿：数据库连不上时 gunicorn 会直接退出，早失败比 502 好排查。
-sleep 2
-if ! kill -0 "${GUNICORN_PID}" 2>/dev/null; then
-    echo "[sapic] gunicorn exited during startup, check sapic_db_url / sapic_secretkey" >&2
-    exit 1
-fi
-
-echo "[sapic] starting nginx on :${HTTP_PORT}"
-nginx -g 'daemon off;' &
-NGINX_PID=$!
-
-wait "${NGINX_PID}"
+#: 交给 supervisor 统管三个进程（web / scheduler / nginx）；tini -g 负责把容器
+#: 信号广播给整个进程组，supervisord 再有序停子进程。
+echo "[sapic] starting supervisord (web + scheduler + nginx on :${HTTP_PORT})"
+exec supervisord -c /etc/supervisord.conf -n
