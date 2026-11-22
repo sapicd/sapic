@@ -1464,10 +1464,11 @@ a {
    Element Plus 质感覆盖
    ============================================================ */
 .el-card {
+  position: relative;
+  isolation: isolate;
   border: 1px solid var(--app-glass-edge);
   border-radius: var(--app-radius);
   background: var(--app-surface);
-  backdrop-filter: var(--app-blur);
   box-shadow: var(--app-shadow);
   overflow: hidden;
 }
@@ -1554,9 +1555,12 @@ a {
 }
 
 .el-dialog {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid var(--app-glass-edge);
   border-radius: var(--app-radius-lg);
   background: var(--app-surface-strong);
-  backdrop-filter: var(--app-blur);
   box-shadow: var(--app-shadow-lg);
 }
 
@@ -1575,8 +1579,11 @@ a {
 }
 
 .el-message {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid var(--app-glass-edge);
   border-radius: 12px;
-  backdrop-filter: var(--app-blur);
   box-shadow: var(--app-shadow);
 }
 
@@ -1609,10 +1616,29 @@ a {
 }
 
 .el-alert {
+  position: relative;
+  isolation: isolate;
   border-radius: 14px;
   border: 1px solid var(--app-glass-edge);
   background: var(--app-surface);
+  overflow: hidden;
+}
+
+/*: backdrop-filter 会把元素边缘外的背景也采进快照，Chrome 在描边处画出一圈
+    断断续续的黑点。把模糊交给比边框大 1px 的伪元素、再由父级裁掉多出的那一圈，
+    露在边框内侧的就是模糊层的内部像素，边缘暗带不再可见。 */
+.el-card::before,
+.el-alert::before,
+.el-dialog::before,
+.el-message::before,
+.side-nav::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
   backdrop-filter: var(--app-blur);
+  pointer-events: none;
 }
 
 .el-empty__description p {
@@ -1779,10 +1805,11 @@ a {
   top: 96px;
   flex: 0 0 168px;
   padding: 12px;
+  isolation: isolate;
+  overflow: hidden;
   border-radius: var(--app-radius);
   background: var(--app-surface);
   border: 1px solid var(--app-glass-edge);
-  backdrop-filter: var(--app-blur);
 }
 
 .side-nav__title {
