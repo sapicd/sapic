@@ -121,6 +121,9 @@ APScheduler 驱动，默认随服务启动（`sapic_scheduler=1`）：
   `flask sa upgrade` 就 `exec supervisord`。配置落在 supervisorctl 的默认搜索路径上，
   容器里 `supervisorctl status` / `restart scheduler` 直接可用。调度因此不随 worker 滚动
   重启而中断，后台页面固定显示 `external`（锁文件里的 pid 活着，见 `external_leader()`）。
+- **跨进程结果**：每次任务执行把结果原子写到 `data/scheduler-status.json`（临时文件 +
+  `os.replace`，无需读锁）；web 在 `external` 时只在该文件的 pid 与锁文件一致时回显「上次结果」，
+  「下次运行」仍只有 APScheduler 进程自己知道，页面显示 `-`。测试不写这个文件。
 - 关掉调度器（`sapic_scheduler=0` 且不跑 CLI）时，`create_app` 才注册 `before_request`
   的过期清理兜底（节流与批量在 `libs/images.sweep_expired`）。
 - 测试里 conftest 设 `SCHEDULER=False`（不起线程、保留兜底），用例直接调

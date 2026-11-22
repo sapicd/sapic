@@ -25,10 +25,11 @@ const roleMeta = computed(() => {
   }
 })
 
+const isExternal = computed(() => status.value?.role === 'external')
+
 const roleHint = computed(() => {
   const role = status.value?.role
   if (role === 'standby') return t('adminScheduler.standbyHint')
-  if (role === 'external') return t('adminScheduler.externalHint')
   if (role === 'disabled') return t('adminScheduler.disabledHint')
   return ''
 })
@@ -75,12 +76,15 @@ function resultText(job) {
   })
 }
 
+//: 下次运行时间只在 APScheduler 进程内可见；上次结果由调度进程写共享文件、后端回显。
+const externalDash = (value) => (isExternal.value ? '-' : value)
+
 const rows = computed(() =>
   (status.value?.jobs || []).map((job) => ({
     ...job,
     title: t(`adminScheduler.jobs.${job.id}`),
     intervalText: intervalText(job.interval),
-    nextText: job.next_run_at ? formatTime(job.next_run_at) : '-',
+    nextText: externalDash(job.next_run_at ? formatTime(job.next_run_at) : '-'),
     lastText: job.last_run?.at ? formatTime(job.last_run.at) : '-',
     resultText: resultText(job),
   })),
@@ -168,7 +172,9 @@ onMounted(load)
           <template #default="{ row }">{{ row.intervalText }}</template>
         </el-table-column>
         <el-table-column :label="t('adminScheduler.nextRun')" min-width="150">
-          <template #default="{ row }">{{ row.nextText }}</template>
+          <template #default="{ row }">
+            <span :class="{ 'scheduler-cell--muted': isExternal }">{{ row.nextText }}</span>
+          </template>
         </el-table-column>
         <el-table-column :label="t('adminScheduler.lastRun')" min-width="150">
           <template #default="{ row }">{{ row.lastText }}</template>
@@ -202,5 +208,9 @@ onMounted(load)
 <style scoped>
 .scheduler-result--failed {
   color: var(--el-color-danger);
+}
+
+.scheduler-cell--muted {
+  color: var(--el-text-color-placeholder);
 }
 </style>

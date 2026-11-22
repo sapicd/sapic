@@ -61,7 +61,7 @@ docker compose up -d
 
 ## 文档
 
-线上文档：<https://sapic.rtfd.vip>　本地构建：`pip install -r docs/requirements.txt` 后
+线上文档：中文 <https://sapic.readthedocs.io/zh-cn/latest/>　英文 <https://sapic.readthedocs.io/en/latest/>　本地构建：`pip install -r docs/requirements.txt` 后
 `cd docs && python -m sphinx -b html . _build/html`（产物在 `docs/_build/html`）。
 文档**中英双语**：中文是源语言，英文译文在 `docs/locale/en`，`cd docs && make html-en` 本地预览英文站。
 

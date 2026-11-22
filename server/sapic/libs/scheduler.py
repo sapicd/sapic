@@ -17,14 +17,16 @@ is logged instead of killing the schedule.
 from __future__ import annotations
 
 import atexit
+import json
 import logging
 import os
+import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 from threading import Lock
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from flask import Flask
+from flask import Flask, current_app
 
 from ..basis.vars import DATA_DIR
 from ..models.base import now
@@ -41,6 +43,9 @@ except ImportError:  # pragma: no cover - Windows development machines
 logger = logging.getLogger(__name__)
 
 LOCK_NAME = "scheduler.lock"
+#: Cross-process snapshot of the last job results. Only the PID that holds the
+#: lock is trusted by readers, so a dead scheduler's stale file is ignored.
+STATUS_FILE = Path(DATA_DIR) / "scheduler-status.json"
 #: First run fires shortly after boot: migrations and hook loading come first.
 FIRST_PURGE_DELAY = 10
 FIRST_REVIEW_DELAY = 30
@@ -141,10 +146,49 @@ def external_leader() -> int | None:
     return pid
 
 
+def _write_shared_status() -> None:
+    """Publish the last-run snapshot atomically so other workers can read it.
+
+    A temp file in the same directory plus ``os.replace`` means readers never
+    see a partial JSON document; no read lock is needed.
+    """
+    payload = {"pid": os.getpid(), "at": now(), "runs": dict(_last_runs)}
+    STATUS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(
+        prefix="scheduler-status-", suffix=".json", dir=STATUS_FILE.parent
+    )
+    tmp = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fp:
+            json.dump(payload, fp)
+        os.replace(tmp, STATUS_FILE)
+    except Exception:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
+def _read_shared_status() -> dict | None:
+    """Return the published snapshot, or ``None`` when absent/corrupt."""
+    try:
+        data = json.loads(STATUS_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
 def _record(job_id: str, ok: bool, result) -> None:
-    """Keep the latest outcome for the admin page (process-local, best effort)."""
+    """Keep the latest outcome for the admin page, process-local and shared."""
     with _last_guard:
         _last_runs[job_id] = {"at": now(), "ok": ok, "result": result}
+    try:
+        testing = current_app.config.get("TESTING")
+    except RuntimeError:
+        testing = True
+    if not testing:
+        try:
+            _write_shared_status()
+        except Exception:
+            logger.exception("cannot publish scheduler status snapshot")
 
 
 def run_purge(app: Flask, limit: int | None = None) -> int:
@@ -235,11 +279,27 @@ def status(app: Flask) -> dict:
         int(get_setting("demo_rotate_interval") or intervals["demo_rotate"]),
         intervals["demo_rotate"],
     )
+    leader_pid = None
+    if _scheduler is not None:
+        role = "leader"
+    elif enabled:
+        role = "standby"
+    else:
+        #: 容器里由 supervisor 起独立的 `flask sa scheduler`，web 端看不到它；
+        #: 锁文件里的 pid 还活着就说明调度在跑，别让页面误报"已关闭"。
+        leader_pid = external_leader()
+        role = "external" if leader_pid else "disabled"
+    #: 独立进程的结果从共享快照读；pid 不匹配说明文件是上一个调度进程留下的。
+    shared = _read_shared_status() if role == "external" else None
+
     jobs = []
     for job_id in JOB_IDS:
         job = _scheduler.get_job(job_id) if _scheduler is not None else None
         #: demo 的 trigger 只是检查周期，展示的间隔由设置决定。
         use_trigger = job is not None and job_id != "demo_rotate"
+        last_run = _last_runs.get(job_id)
+        if last_run is None and shared is not None and shared.get("pid") == leader_pid:
+            last_run = (shared.get("runs") or {}).get(job_id)
         jobs.append(
             {
                 "id": job_id,
@@ -253,19 +313,9 @@ def status(app: Flask) -> dict:
                     if job is not None and job.next_run_time is not None
                     else None
                 ),
-                "last_run": _last_runs.get(job_id),
+                "last_run": last_run,
             }
         )
-    leader_pid = None
-    if _scheduler is not None:
-        role = "leader"
-    elif enabled:
-        role = "standby"
-    else:
-        #: 容器里由 supervisor 起独立的 `flask sa scheduler`，web 端看不到它；
-        #: 锁文件里的 pid 还活着就说明调度在跑，别让页面误报"已关闭"。
-        leader_pid = external_leader()
-        role = "external" if leader_pid else "disabled"
     return {
         "enabled": enabled,
         "role": role,

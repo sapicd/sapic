@@ -587,8 +587,6 @@ export default {
     role_external: '独立进程调度中',
     role_leader: '本进程调度中',
     role_standby: '其他进程调度中',
-    externalHint:
-      '调度器在容器里的独立进程（flask sa scheduler）中运行，本进程不参与；间隔与「上次结果」来自本进程，运行情况请看该进程日志。',
     runFailed: '执行任务失败',
     runNow: '立即执行',
     scanned: '扫描 {scanned} 张，拦截 {blocked}，待重试 {failed}',

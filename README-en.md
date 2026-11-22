@@ -72,7 +72,7 @@ Full installation, reverse proxy, container and cluster deployment, and the v1 d
 
 ## Documentation
 
-Online docs: <https://sapic.rtfd.vip>. To build them locally, run
+Online docs: Chinese <https://sapic.readthedocs.io/zh-cn/latest/> · English <https://sapic.readthedocs.io/en/latest/>. To build them locally, run
 `pip install -r docs/requirements.txt` and then `cd docs && python -m sphinx -b html . _build/html`
 (output in `docs/_build/html`). The docs are **bilingual**: Chinese is the source language and the
 English translation lives in `docs/locale/en` — preview it with `cd docs && make html-en`.

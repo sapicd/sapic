@@ -2,6 +2,8 @@
 """Background jobs: what the scheduler runs and how the leader is elected."""
 
 import io
+import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -133,6 +135,55 @@ def test_status_api_lists_the_jobs(app, client):
     ]
     assert [job["interval"] for job in data["jobs"]] == [600, 300, 3600]
     assert all(job["next_run_at"] is None for job in data["jobs"])
+
+
+def test_external_status_reads_the_shared_last_run(app, monkeypatch, tmp_path):
+    status_file = tmp_path / "scheduler-status.json"
+    monkeypatch.setattr(scheduler, "STATUS_FILE", status_file)
+    monkeypatch.setattr(scheduler, "_last_runs", {})
+    status_file.write_text(
+        json.dumps(
+            {
+                "pid": 424242,
+                "at": 1,
+                "runs": {
+                    "purge_expired": {"at": 1, "ok": True, "result": {"removed": 7}}
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(scheduler, "external_leader", lambda: 424242)
+    monkeypatch.setitem(app.config, "SCHEDULER", False)
+
+    with app.app_context():
+        data = scheduler.status(app)
+    purge = next(job for job in data["jobs"] if job["id"] == "purge_expired")
+    assert data["role"] == "external"
+    assert purge["last_run"]["result"] == {"removed": 7}
+    assert purge["next_run_at"] is None
+
+    #: 锁文件换了进程但状态文件没更新时，旧结果不能冒充当前调度进程的。
+    monkeypatch.setattr(scheduler, "external_leader", lambda: 999999)
+    with app.app_context():
+        data = scheduler.status(app)
+    purge = next(job for job in data["jobs"] if job["id"] == "purge_expired")
+    assert purge["last_run"] is None
+
+
+def test_record_publishes_an_atomic_snapshot(app, monkeypatch, tmp_path):
+    status_file = tmp_path / "scheduler-status.json"
+    monkeypatch.setattr(scheduler, "STATUS_FILE", status_file)
+    monkeypatch.setattr(scheduler, "_last_runs", {})
+    monkeypatch.setitem(app.config, "TESTING", False)
+
+    with app.app_context():
+        scheduler._record("purge_expired", True, {"removed": 3})
+
+    payload = json.loads(status_file.read_text(encoding="utf-8"))
+    assert payload["pid"] == os.getpid()
+    assert payload["runs"]["purge_expired"]["result"] == {"removed": 3}
+    assert list(tmp_path.glob("scheduler-status-*.json")) == []
 
 
 def test_run_now_purges_and_records_the_result(app, client):

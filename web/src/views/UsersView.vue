@@ -276,7 +276,7 @@ onMounted(() => loadUsers(1))
         <el-table-column :label="t('users.columnRegisteredAt')" width="162">
           <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
         </el-table-column>
-        <el-table-column :label="t('users.columnActions')" width="200" align="right">
+        <el-table-column :label="t('users.columnActions')" width="200" align="left">
           <template #default="{ row }">
             <template v-if="!isSelf(row)">
               <template v-if="row.status === -1">

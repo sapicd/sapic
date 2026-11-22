@@ -602,8 +602,6 @@ export default {
     role_external: 'Running in a separate process',
     role_leader: 'Scheduling in this process',
     role_standby: 'Scheduling in another process',
-    externalHint:
-      'The scheduler runs in a separate container process (flask sa scheduler); intervals come from the settings, and "Last result" stays empty here — check that process log.',
     runFailed: 'Failed to run the job',
     runNow: 'Run now',
     scanned: '{scanned} scanned, {blocked} blocked, {failed} to retry',
