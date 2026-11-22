@@ -108,14 +108,16 @@ async function confirmDeleteAccount() {
   deleting.value = true
   try {
     await session.deleteAccount(deletePassword.value)
-    deleteDialog.value = false
-    ElMessage.success(t('settings.accountDeleted'))
-    router.push({ name: 'home' })
   } catch (error) {
     ElMessage.error(errorMessage(error, t('settings.deleteAccountFailed')))
+    return
   } finally {
     deleting.value = false
   }
+  //: 账号已经删了，后面的提示与跳转不能再被 try 包住：路由出错会误报"注销失败"。
+  deleteDialog.value = false
+  ElMessage.success(t('settings.accountDeleted'))
+  router.push({ name: 'upload' })
 }
 
 //: 个性化设置（/auth/settings）：油猴脚本开关、个人背景图与防盗链。
