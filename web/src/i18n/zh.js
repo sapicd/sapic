@@ -92,6 +92,8 @@ export default {
     password: '密码',
     passwordDisabledDesc: '请使用下方统一登录方式进入，如有问题请联系管理员',
     passwordDisabledTitle: '本站已关闭密码登录',
+    passwordHint: '至少 6 位字符',
+    passwordPlaceholder: '请输入密码',
     registerDisabledDesc: '请通过统一登录进入；还没有账号请联系管理员',
     registerDisabledTitle: '本站已关闭账号注册',
     registerFailed: '注册失败',

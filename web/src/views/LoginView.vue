@@ -81,12 +81,17 @@ async function submit() {
       />
       <el-form v-else label-position="top" @submit.prevent="submit">
         <el-form-item :label="t('auth.username')">
-          <el-input v-model="form.username" autocomplete="username" />
+          <el-input
+            v-model="form.username"
+            autocomplete="username"
+            :placeholder="t('auth.usernamePlaceholder')"
+          />
         </el-form-item>
         <el-form-item :label="t('auth.password')">
           <el-input
             v-model="form.password"
             type="password"
+            :placeholder="t('auth.passwordPlaceholder')"
             show-password
             autocomplete="current-password"
             @keyup.enter="submit"

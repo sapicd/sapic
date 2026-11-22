@@ -94,6 +94,8 @@ export default {
     password: 'Password',
     passwordDisabledDesc: 'Use the unified login below; contact the administrator if it fails',
     passwordDisabledTitle: 'Password sign-in is disabled',
+    passwordHint: 'At least 6 characters',
+    passwordPlaceholder: 'Enter your password',
     registerDisabledDesc: 'Use the unified login; contact the administrator for an account',
     registerDisabledTitle: 'Registration is disabled',
     registerFailed: 'Sign-up failed',

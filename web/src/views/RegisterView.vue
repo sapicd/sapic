@@ -58,6 +58,7 @@ async function submit() {
             v-model="form.password"
             type="password"
             show-password
+            :placeholder="t('auth.passwordHint')"
             @keyup.enter="submit"
           />
         </el-form-item>
