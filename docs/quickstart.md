@@ -9,7 +9,8 @@
 docker compose up -d          # single container + SQLite; maps host port 80 into the container
 ```
 
-镜像里已经包含 gunicorn + nginx + 构建好的前端，浏览器打开 `http://<服务器IP>/` 就是站点。
+镜像里已经包含构建好的前端、nginx、gunicorn 与独立的调度进程（supervisor 统管，见
+[容器与编排](deploy.md)），浏览器打开 `http://<服务器IP>/` 就是站点。
 SQLite 库、上传文件与第三方钩子都在 `sapic-data` 卷里，删容器不丢数据。
 
 换成自己的域名、并换掉内置密钥：

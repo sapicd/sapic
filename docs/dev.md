@@ -9,13 +9,14 @@ server/                 v2 backend (package sapic, local only, not on PyPI)
     ├── __init__.py     create_app() factory
     ├── cli.py          flask sa commands (upgrade / create-admin / purge-expired / review-pending / scheduler)
     ├── basis/          config, errors, constants, DB connection (no business deps)
-    ├── libs/           shared base classes: auth / images / albums / storage / users / mail / settings / hook / ext / ui
+    ├── libs/           shared base classes: auth / images / albums / storage / users / mail / settings / review / scheduler / hook / openapi / ui
     ├── utils/          common.py (plain helpers), web.py (needs a Flask context)
     ├── views/          blueprints and routes, thin wrappers
     ├── models/         Peewee models
     ├── migrations/     idempotent migrations, run at startup
     └── hooks/          built-in hooks; one .py is one plugin
-web/                    v2 front end (Vue 3 + Vite + Element Plus)
+web/                    v2 front end (Vue 3 + Vite + Element Plus), UI copy in src/i18n (zh / en)
+docker/                 container files: entrypoint, nginx / supervisord configs, web & scheduler wrappers
 docs/                   these docs (Sphinx + MyST)
 tools/                  v1 -> v2 data migration script
 ```

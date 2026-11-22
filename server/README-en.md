@@ -57,6 +57,8 @@ export FLASK_APP=sapic
 flask sa upgrade          # create tables / incremental migrations (already run at startup)
 flask sa create-admin -u admin -p 123456
 flask sa purge-expired    # purge expired images manually (requests also sweep them, throttled)
+flask sa review-pending   # run one moderation scan (needs a moderator hook)
+flask sa scheduler        # foreground scheduler process (set sapic_scheduler=0 on the web side)
 ```
 
 ## Running

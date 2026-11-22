@@ -103,12 +103,14 @@ server/sapic/
 | 写操作鉴权 | Cookie 会话需 `X-CSRF-Token`；PAT 按 scope（`read`/`upload`/`write`/`admin`）限制 |
 
 主要端点：`auth/*`（登录、注册、OIDC、PAT、邮箱）、`uploads`、`images`、`albums`（含 shares）、
-`plaza`、`settings`（管理员）、`users`（管理员）、`hooks`（管理员的动作与数据集）、
+`plaza`、`settings`（管理员）、`users`（管理员）、`review`（管理员，审核队列）、
+`scheduler`（管理员，定时任务状态）、`hooks`（管理员的动作与数据集）、
 `site`（公开站点信息）、`health`。完整清单见 `server/README.md`。
 
-`message` 固定英文原文，界面文案由前端 `web/src/api/messages.js` 映射成中文（界面本身不做多语言）。
-该词典以「后端消息原文」为键，另有若干 ``%`` 拼接的模板规则与 `ErrorCode` 级兜底，所以**新增或修改
-后端 `ApiError` 文案时要同步这个文件**，否则界面只能显示按 `code` 兜底的中文（丢失细节，但不会漏英文）。
+`message` 固定英文原文，界面文案由前端 `web/src/i18n`（`zh.js` / `en.js`）提供；后端消息还要经
+`web/src/api/messages.js` 映射（英文界面直接用原文）。该词典以「后端消息原文」为键，另有若干 ``%``
+拼接的模板规则与 `ErrorCode` 级兜底，所以**新增或修改后端 `ApiError` 文案时要同步这个文件**，
+否则界面只能显示按 `code` 兜底的中文（丢失细节，但不会漏英文）。
 
 ## 5. 数据模型
 

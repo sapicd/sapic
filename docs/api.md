@@ -154,7 +154,7 @@ curl -X POST "https://your.site/api/v2/upload" \
 | 图片 | `/images*`、`/plaza` | 个人图库的查询与维护；广场是匿名曝光渠道 |
 | 相册 | `/albums*` | 相册与共享授权（成员、权限、有效期） |
 | 存储 | `/backends`（admin）、`/me/backends` | 系统后端；用户自己的后端（`allow_user_backends` 开启时生效） |
-| 运维 | `/settings*`、`/users`（admin） | 站点设置、版本检测、用户审核与禁用 |
+| 运维 | `/settings*`、`/users`、`/review*`、`/scheduler*`（后三个 admin） | 站点设置、版本检测、用户与注册审核、内容审核队列、定时任务状态与手动执行 |
 | 直链 | `/raw/<sha>`、`/i/<sha>` | 已发布图片的公开地址（根路径，不在 `/api/v2` 下） |
 | 文档 | `/docs`（Swagger 页面）、`/openapi.json`（OpenAPI 源） | 即 `GET /api/v2/docs` 与 `GET /api/v2/openapi.json`，见文首「在线文档」 |
 

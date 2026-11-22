@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Project-Id-Version: sapic 2.0.0-pre\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-20 19:20+0800\n"
+"POT-Creation-Date: 2026-11-22 12:13+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -170,9 +170,9 @@ msgid ""
 "SendCloud 邮件通道；第三方包通过钩子体系接入，后台可安装、启停、配置。"
 msgstr ""
 "**Extensions**: built-in local / Qiniu / Upyun / GitHub / Gitee drivers, "
-"WebP post-processing, Passport OIDC login and a SendCloud mail transport; "
-"third-party packages plug in through hooks and can be installed, toggled "
-"and configured in the admin."
+"WebP post-processing, Passport OIDC login and a SendCloud mail transport;"
+" third-party packages plug in through hooks and can be installed, toggled"
+" and configured in the admin."
 
 #: ../../intro.md:33
 msgid "**广场**：可选（默认关闭）的公开曝光渠道，与权限无关，只有主动发布的公开图片会进入。"
@@ -181,26 +181,41 @@ msgstr ""
 "independent of permissions — only images explicitly published as public "
 "get listed."
 
-#: ../../intro.md:35
+#: ../../intro.md:34
+msgid ""
+"**内容审核**：`moderator` 钩子由后台定时扫描未审图片，命中即隐藏并进审核队列（`/api/v2/review`）， "
+"管理员可复核恢复或物理删除；没有审核钩子时这趟直接跳过。"
+msgstr "**Content moderation**: the `moderator` hook scans unreviewed images in "
+"the background; a hit hides the image and puts it into the review queue "
+"(`/api/v2/review`), where an admin can restore or delete it. The round is "
+"skipped when no moderation hook is enabled."
+
+#: ../../intro.md:36
+msgid "**界面**：中英双语切换（顶栏常驻），第三方钩子声明的字段文案随界面语言切换； 后端 `message` 固定英文原文，由前端词典映射。"
+msgstr "**UI**: a Chinese/English switch (always in the header), and the fields "
+"declared by third-party hooks follow the UI language; the backend "
+"`message` stays English and is mapped by the front-end dictionary."
+
+#: ../../intro.md:39
 msgid "不打算做的"
 msgstr "Not planned"
 
-#: ../../intro.md:37
+#: ../../intro.md:41
 msgid "个人 RSS（`/feed`）：匿名聚合出口会泄露「某用户有哪些图、何时上传」。"
 msgstr ""
 "Per-user RSS (`/feed`): an anonymous aggregation endpoint would leak "
 "which images a user has and when they were uploaded."
 
-#: ../../intro.md:38
+#: ../../intro.md:42
 msgid ""
 "`sendmail` 钩子、`token` 钩子、`/api/extendpoint`：分别被内置 SMTP / `mail` "
 "类钩子（`sendcloud`）、 PAT、声明式动作取代。"
 msgstr ""
-"The `sendmail` hook, the `token` hook and `/api/extendpoint`: replaced by "
-"the built-in SMTP support / a `mail` catalogue hook (`sendcloud`), PATs and "
-"declarative actions."
+"The `sendmail` hook, the `token` hook and `/api/extendpoint`: replaced by"
+" the built-in SMTP support / a `mail` catalogue hook (`sendcloud`), PATs "
+"and declarative actions."
 
-#: ../../intro.md:40
+#: ../../intro.md:44
 msgid ""
 "v1 的 `/api/upload` 兼容层：维护双份上传语义的成本高于让客户端改一次配置， PicGo / uPic / Typora "
 "等按[快捷上传](usage.md) 指向 `/api/v2/upload` 即可。"
@@ -210,13 +225,7 @@ msgstr ""
 "PicGo / uPic / Typora at `/api/v2/upload` as shown in [Quick "
 "upload](usage.md)."
 
-#: ../../intro.md:42
-msgid "前端多语言（界面固定中文，后端消息固定英文、由前端映射）。"
-msgstr ""
-"A multilingual front end (the UI is Chinese-only; backend messages are "
-"always English and mapped by the front end)."
-
-#: ../../intro.md:44
+#: ../../intro.md:47
 msgid ""
 "想先跑起来看效果见[快速开始](quickstart.md)；架构细节见 `ARCH.md`，从 v1 迁移数据见 [从 v1 "
 "迁移数据](migrate-v1.md)。"
@@ -224,4 +233,11 @@ msgstr ""
 "To see it running first, read [Quick start](quickstart.md); architecture "
 "details are in `ARCH.md` and migrating from v1 is in [Migrating data from"
 " v1](migrate-v1.md)."
+
+#~ msgid "前端多语言（界面固定中文，后端消息固定英文、由前端映射）。"
+#~ msgstr ""
+#~ "A multilingual front end (the UI "
+#~ "is Chinese-only; backend messages are"
+#~ " always English and mapped by the "
+#~ "front end)."
 

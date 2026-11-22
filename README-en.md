@@ -8,9 +8,9 @@ pip package can add a new object store or identity provider without touching the
 [![Actions Status: ci](https://github.com/sapicd/sapic/workflows/ci/badge.svg)](https://github.com/sapicd/sapic/actions?query=workflow%3A%22build+and+test%22)
 [![codecov](https://codecov.io/gh/sapicd/sapic/branch/master/graph/badge.svg)](https://codecov.io/gh/sapicd/sapic)
 ![Last Release](https://img.shields.io/github/release/sapicd/sapic.svg?style=flat-square)
-![Version](https://img.shields.io/badge/version-2.0.0--pre.1-orange.svg?style=flat-square)
+![Version](https://img.shields.io/badge/version-2.0.0--pre-orange.svg?style=flat-square)
 
-> **Current version `2.0.0-pre.1` (the v2 rewrite)**
+> **Current version `2.0.0-pre` (the v2 rewrite)**
 >
 > The backend is now an API-only Flask app (Peewee + a relational database, no Redis), and the front end
 > is a standalone Vue 3 app. The v1 sources are no longer shipped in this repository (see the git tags).

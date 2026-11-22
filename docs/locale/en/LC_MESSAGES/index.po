@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Project-Id-Version: sapic 2.0.0-pre\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-18 20:06+0800\n"
+"POT-Creation-Date: 2026-11-22 12:13+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -31,7 +31,7 @@ msgstr "Using sapic"
 msgid "开发"
 msgstr "Development"
 
-#: ../../index.md:67
+#: ../../index.md:68
 msgid "参考"
 msgstr "Reference"
 
@@ -45,23 +45,26 @@ msgstr "sapic"
 
 #: ../../index.md:9
 msgid ""
-"sapic 是一个自建图床：后端是 API-only 的 Flask 应用（`server/`，包名 `sapic`）， 前端是独立的 Vue 3 +"
-" Vite 应用（`web/`），元数据存关系库（Peewee + PostgreSQL / MySQL / SQLite），不需要 Redis。"
+"sapic 是一个自建图床：后端是 API-only 的 Flask 应用（`server/`，包名 `sapic`）， 前端是独立的 Vue 3"
+" + Vite 应用（`web/`），元数据存关系库（Peewee + PostgreSQL / MySQL / SQLite），不需要 "
+"Redis。"
 msgstr ""
 "sapic is a self-hosted image host: the backend is an API-only Flask "
 "application (`server/`, package name `sapic`) and the front end is a "
-"separate Vue 3 + Vite application (`web/`). Metadata lives in a relational "
-"database (Peewee + PostgreSQL / MySQL / SQLite); Redis is not required."
+"separate Vue 3 + Vite application (`web/`). Metadata lives in a "
+"relational database (Peewee + PostgreSQL / MySQL / SQLite); Redis is not "
+"required."
 
 #: ../../index.md:12
 msgid ""
 "**存储后端和登录方式都是扩展点**：一个第三方 pip 包声明 `__catalog__` 并实现约定的函数， 就能作为存储驱动或登录 "
 "Provider 接入，核心代码不需要改动。这部分契约见 [扩展开发](extend/index.md)。"
 msgstr ""
-"**Storage backends and login methods are both extension points**: a third-"
-"party pip package that declares `__catalog__` and implements the agreed "
-"functions becomes a storage driver or login provider, without touching the "
-"core. The contract is in [Extension development](extend/index.md)."
+"**Storage backends and login methods are both extension points**: a "
+"third-party pip package that declares `__catalog__` and implements the "
+"agreed functions becomes a storage driver or login provider, without "
+"touching the core. The contract is in [Extension "
+"development](extend/index.md)."
 
 #: ../../index.md:16
 msgid "我该看哪一页"
@@ -133,10 +136,9 @@ msgstr "[Troubleshooting](faq.md)"
 
 #: ../../index.md:29
 msgid ""
-"当前版本 **2.0.0-pre.1**（v2 重写版）。相对 v1 的变化：后端改为 API-only + Peewee、前端独立为 Vue 3 "
+"当前版本 **2.0.0-pre**（v2 重写版）。相对 v1 的变化：后端改为 API-only + Peewee、前端独立为 Vue 3 "
 "应用、运行时不再依赖 Redis；v1 代码不再随仓库发布（历史版本看 git tag）。 逐项变化见 `CHANGELOG.md`。"
-msgstr ""
-"Current version **2.0.0-pre.1** (the v2 rewrite). Compared with v1: the "
+msgstr "Current version **2.0.0-pre** (the v2 rewrite). Compared with v1: the "
 "backend is API-only + Peewee, the front end is a standalone Vue 3 app and "
 "Redis is no longer required at runtime; the v1 sources are no longer "
 "shipped in this repository (see the git tags). Item-by-item changes are in "

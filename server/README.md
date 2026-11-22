@@ -52,6 +52,8 @@ export FLASK_APP=sapic
 flask sa upgrade          # 建表 / 增量迁移（启动时已自动执行）
 flask sa create-admin -u admin -p 123456
 flask sa purge-expired    # 手动清理到期图片（请求期也会节流兜底清理）
+flask sa review-pending   # 手动跑一遍审核扫描（需启用 moderator 钩子）
+flask sa scheduler        # 前台常驻调度进程（web 端要先 sapic_scheduler=0 让位）
 ```
 
 ## 启动

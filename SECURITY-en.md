@@ -6,7 +6,7 @@
 
 | Line | Version | Supported |
 | --- | --- | --- |
-| v2 (`master`) | `2.0.0-pre.1` and later | Yes |
+| v2 (`master`) | `2.0.0-pre` and later | Yes |
 | v1 (`1.x` tags, `1.16.x`) | `1.16.10` and later | Security fixes only |
 | v1 (`1.x` tags) | `1.16.9` and earlier | No — upgrade to `1.16.10` |
 

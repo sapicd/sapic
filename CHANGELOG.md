@@ -1,20 +1,14 @@
 # 变更记录
 
-## 2.0.0-pre.1 — 2026-11-18
+## 2.0.0-pre — 2026-11-22
 
-### 修复
+首个 v2 预发布，相对 v1 是一次重写：后端改为 API-only 的 Flask 应用（`server/`，Peewee + 关系库），
+前端独立为 Vue 3 SPA（`web/`），存储后端与登录方式全部插件化。
 
-- **安全**：URL 上传的服务端抓取只连接校验过的 IP（修掉 DNS rebinding 绕过内网地址拦截），
-  并收紧为只接受域名、不跟随重定向；站点下载代理只对管理员生效。
-- 感谢 Gantrel LLC (Jason Sager) 私下上报上述问题。
-
-## 2.0.0-pre — 2026-11-11
-
-首个 v2 预发布。相对 v1 是一次重写：后端拆成 API-only 的 Flask 应用（`server/`，Peewee + 关系库），
-前端独立为 Vue 3 SPA（`web/`），存储后端与登录方式全部插件化。安装与升级步骤见 `docs/deploy.md`，
-接口细节见实例自带的在线文档（`/api/v2/docs`，Swagger UI 可直接试请求；文档源
-`/api/v2/openapi.json` 可导入 Apifox / Postman），
-跨接口的约定与鉴权流程见 `docs/api.md`。
+- 安装与部署：`docs/install.md`、`docs/deploy.md`
+- 从 v1 升级：`docs/migrate-v1.md`（要点见文末「升级注意」）
+- 在线接口文档：`GET /api/v2/docs` 是 Swagger UI（可填 PAT 直接试请求），文档源
+  `GET /api/v2/openapi.json`（可导入 Apifox / Postman / Insomnia）；跨接口约定与鉴权流程见 `docs/api.md`
 
 ### 新增
 
@@ -37,17 +31,38 @@
 
 - 访问令牌（PAT）分 `read` / `upload` / `write` / `admin` 四档 scope，逐请求生效。
 - 邮箱验证、注册审核（通过 / 拒绝 + 拒绝理由 + 通知邮件）、自助注销（需密码 + 名下无图）。
-- 头像上传与服务端裁剪；OIDC 统一登录（`passport` 钩子），支持绑定 / 解绑。
+- 头像上传与服务端裁剪；OIDC 统一登录（`passport` 钩子），支持绑定 / 解绑，
+  已绑定账号每次登录同步上游资料，解绑要求名下没有未删除的图片。
 - Cookie 会话的写操作强制 `X-CSRF-Token`。
+
+**内容审核**
+
+- `moderator` 钩子对已入库的图片给出「通过 / 拦截」结论（先发后审，上传接口不受影响）；
+  命中只**隐藏**（`review_state=block`），记录与文件都保留，管理员在
+  `GET /api/v2/review?state=block` 复核，用 `approve` 恢复或 `purge` 物理删除。
+- 审核扫描由后台任务驱动（默认每 300s 一轮），无需自建 cron；没有启用审核钩子时这趟直接跳过。
+
+**界面与文档**
+
+- 界面中英双语切换（顶栏常驻，选择记在本地），第三方钩子声明的字段文案随界面语言切换；
+  后端 `message` 固定英文原文，由前端词典映射。
+- 在线文档支持 `?lang=zh|en`，Swagger 页面右上角可切换，两种语言各自缓存。
 
 **扩展与运维**
 
 - 钩子用声明式 JSON 描述后台界面（manifest / 插槽 / action / dataset），前端按词表渲染。
-- 后台可安装、启停、重载第三方钩子包，并提供官方市场；存储后端支持多实例、优先级与异步副本。
-- 多阶段 Dockerfile（内置 nginx 托管静态文件）、`docker-compose.yml`（单容器 + SQLite）、
-  `kube-sapic.yaml`（单副本 Deployment + Service）。
-- `GET /api/v2/health` 健康检查（数据库不通返回 503）、后台版本更新检测。
-- 在线 API 文档：`GET /api/v2/docs` 是 Swagger UI（可填 PAT 直接试请求），文档源 `GET /api/v2/openapi.json`。
+- 后台可安装、启停、重载第三方钩子包，并提供官方市场（列表显示模块版本）；
+  存储后端支持多实例、优先级与异步副本。
+- 邮件通道可由 `mail` 类钩子（如 `sendcloud`）接管，内置 SMTP 只作兜底。
+- 后台任务（到期清理 / 审核扫描 / 演示账号改密）由 APScheduler 驱动：默认随服务启动并用文件锁选主，
+  也可用 `flask sa scheduler` 独立进程运行；「后台管理 → 定时任务」可看状态与手动执行。
+  演示账号改密的开关、账号、密码与间隔都在站点设置里。
+- 容器：多阶段 Dockerfile 内置前端与 nginx，另有 `docker-compose.yml`（单容器 + SQLite）与
+  `kube-sapic.yaml`（单副本 Deployment + Service）；镜像内由 supervisor 统管 gunicorn、
+  独立调度进程与 nginx，worker 重启不影响定时任务，`supervisorctl status` 可查三个进程。
+- 日志：应用日志写 `sys.log`（按天轮转、保留 10 天）并同时输出 stdout，**不再记访问日志**
+  （需要时用 `SAPIC_NGINX_ACCESS_LOG=1` 打开容器内 nginx 的访问日志）。
+- `GET /api/v2/health` 健康检查（数据库不通返回 503）；后台可检测新版本。
 - 个人设置（油猴开关、背景图与透明度）、按用户配置的防盗链。
 
 ### 变更
@@ -56,8 +71,20 @@
 - 鉴权：`Authorization: Token` → `Authorization: Bearer <PAT>`；`admin` scope 仅管理员可申请。
 - 图片地址：`/static/...` → 公开图直连存储后端，私有图与无直链后端走 `/raw/<sha>`（支持 Range）。
 - 图片列表是**个人图库**语义：只含自己的图片与共享给自己的相册，他人公开图不再出现在列表里。
-- 公告由白名单富文本改为纯文本；命令行只剩 `flask sa upgrade` / `create-admin` / `purge-expired`。
-- 界面固定中文，不再引入 v1 的翻译机制。
+- 公告由白名单富文本改为纯文本；命令行收敛为 `flask sa upgrade` / `create-admin` / `purge-expired` /
+  `review-pending` / `scheduler`。
+
+### 修复
+
+- **安全**：URL 上传的服务端抓取只连接校验过的 IP（修掉 DNS rebinding 绕过内网地址拦截），
+  并收紧为只接受域名、不跟随重定向；站点下载代理只对管理员生效。
+- **安全**：外链导入的 SSRF 加固，外链中转页的 XSS 收口。
+- **安全**：前端不再接受内联 SVG；响应统一补 `X-Content-Type-Options` / `X-Frame-Options` /
+  `Referrer-Policy`；容器首次启动生成并持久化会话密钥（`SAPIC_SECRET_FILE`）。
+- 感谢 Gantrel LLC (Jason Sager) 私下上报 URL 抓取相关问题。
+- 依赖：`pillow` 固定 12.3，Python 3.10 下可正常安装。
+- 前端：去掉玻璃面板的模糊与黑边，令牌表格不再撑出滚动条，注销后回到首页，
+  登录 / 注册输入框补占位提示。
 
 ### 移除
 
@@ -73,6 +100,6 @@
 - v1 → v2 数据迁移：`tools/migrate_v1_to_v2.py`（幂等、支持 `--dry-run`，保留原 `sha`，
   已发布的 `/raw/<sha>` 与直链继续有效），用法见 `docs/migrate-v1.md`。
 - 客户端（PicGo / uPic / ShareX / uTools / Typora / 右键菜单 / 油猴）需改一次配置，逐项见
-  [docs/usage.md](./docs/usage.md)。
+  [`docs/usage.md`](./docs/usage.md)。
 - `sapic_secretkey` 可选：内置默认值足够长，开箱即用；公网多用户建议换成自己的随机串。
   多进程 / 多副本请用 PostgreSQL 或 MySQL。

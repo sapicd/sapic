@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Project-Id-Version: sapic 2.0.0-pre\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-20 19:20+0800\n"
+"POT-Creation-Date: 2026-11-22 12:13+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -34,8 +34,8 @@ msgstr ""
 "contract."
 
 #: ../../extend/index.md:6
-msgid "四种扩展类型"
-msgstr "The four extension types"
+msgid "扩展类型"
+msgstr "The five extension types"
 
 #: ../../extend/index.md:8
 msgid ""
@@ -130,7 +130,9 @@ msgstr "`mail`"
 
 #: ../../extend/index.md
 msgid "`send_mail`（`mail_ready` 可选，报告配置是否完整）"
-msgstr "`send_mail` (`mail_ready` optional, reports whether the config is complete)"
+msgstr ""
+"`send_mail` (`mail_ready` optional, reports whether the config is "
+"complete)"
 
 #: ../../extend/index.md
 msgid "邮件发送通道"
@@ -139,6 +141,23 @@ msgstr "Mail transport"
 #: ../../extend/index.md
 msgid "`libs/mail.py`（配置完整时优先于 SMTP）"
 msgstr "`libs/mail.py` (a complete hook takes precedence over SMTP)"
+
+#: ../../extend/index.md
+msgid "`moderator`"
+msgstr "`moderator`"
+
+#: ../../extend/index.md
+msgid "`review_image`"
+msgstr "`review_image`"
+
+#: ../../extend/index.md
+msgid "内容审核（鉴黄等）：先发后审，**只拦不删**"
+msgstr "Content moderation (NSFW and friends): review after publishing, **block "
+"only, never delete**"
+
+#: ../../extend/index.md
+msgid "`libs/review.py` 的扫描（`flask sa review-pending`）"
+msgstr "the scan in `libs/review.py` (`flask sa review-pending`)"
 
 #: ../../extend/index.md
 msgid "其它/未声明"
@@ -160,7 +179,7 @@ msgstr "Interface blocks and actions only"
 msgid "`libs/hook.py` 的插槽/动作/数据集"
 msgstr "Slots / actions / data sources in `libs/hook.py`"
 
-#: ../../extend/index.md:19
+#: ../../extend/index.md:20
 msgid ""
 "清单里的 `kind` 与 `warnings` 由核心计算：`warnings` 会点明「声明了 upload 却缺 "
 "`upimg_save`」这类不完整实现，后台钩子页与 `GET /api/v2/hooks` 都能看到。"
@@ -170,11 +189,11 @@ msgstr ""
 "`upimg_save`, and both the admin hooks page and `GET /api/v2/hooks` show "
 "them."
 
-#: ../../extend/index.md:22
+#: ../../extend/index.md:23
 msgid "加载与生效流程"
 msgstr "How hooks are loaded and applied"
 
-#: ../../extend/index.md:24
+#: ../../extend/index.md:25
 msgid ""
 "**发现**：扫描包内 `server/sapic/hooks/*.py`（`family=local`）， 再按 "
 "`hooks_imported` 设置里的模块名 `import`（`family=third`， 模块来自 "
@@ -185,19 +204,19 @@ msgstr ""
 "setting are imported (`family=third`, coming from `HOOK_PKG_STORAGE_DIR` "
 "or an installed site-packages)."
 
-#: ../../extend/index.md:27
+#: ../../extend/index.md:28
 msgid "**校验元数据**：缺 `__version__` / `__author__` 的模块被跳过并记日志，不影响其它钩子。"
 msgstr ""
 "**Metadata check**: modules missing `__version__` / `__author__` are "
 "skipped and logged without affecting other hooks."
 
-#: ../../extend/index.md:28
+#: ../../extend/index.md:29
 msgid "**启停**：`hooks_state` 里的布尔值优先，缺省看模块自己的 `__state__`（默认启用）。"
 msgstr ""
 "**Enable/disable**: a boolean in `hooks_state` wins; otherwise the module"
 " `__state__` applies (enabled by default)."
 
-#: ../../extend/index.md:29
+#: ../../extend/index.md:30
 msgid ""
 "**配置**：`hooks_config` 存钩子级配置，字段由 `hook_manifest()` 的 `config_schema` 声明， "
 "后台钩子页据此渲染表单（`PUT /api/v2/hooks/config/<name>`）。"
@@ -206,19 +225,21 @@ msgstr ""
 " declared by `config_schema` in `hook_manifest()`, and the admin hooks "
 "page renders the form from it (`PUT /api/v2/hooks/config/<name>`)."
 
-#: ../../extend/index.md:31
+#: ../../extend/index.md:32
 msgid ""
 "**调用**：认证/存储/后处理按契约进入热路径；界面块、动作、数据集按前端请求触发。 "
 "处理器（`upimg_stream_processor`）还会拿到自己的 `config`（如 `pic2webp` 的 `quality`）， "
-"存储驱动则通过 `backend=` 取合并后的配置。"
-msgstr ""
-"**Invocation**: auth / storage / post-processing enter the hot path "
+"存储驱动则通过 `backend=` 取合并后的配置。审核（`review_image`）**不在请求路径里**， 由 `flask sa "
+"review-pending` 扫描时调用，见[内容审核](moderator.md)。"
+msgstr "**Invocation**: auth / storage / post-processing enter the hot path "
 "through their contract; interface blocks, actions and data sources are "
 "triggered by front-end requests. A processor (`upimg_stream_processor`) "
 "also receives its own `config` (e.g. `quality` for `pic2webp`), while a "
-"storage driver gets the merged config through `backend=`."
+"storage driver gets the merged config through `backend=`. Moderation "
+"(`review_image`) is **not on the request path**: the `flask sa "
+"review-pending` scan calls it, see [content moderation](moderator.md)."
 
-#: ../../extend/index.md:35
+#: ../../extend/index.md:37
 msgid ""
 "钩子热重载：`POST /api/v2/hooks/reload` 立即重建快照；平时每隔 `HOOK_RELOAD_TIME` 按「源文件 "
 "mtime + 已登记模块列表」决定是否换快照， 多 worker 部署下任意进程改了启停/安装列表，其它进程也会跟上。"
@@ -229,52 +250,52 @@ msgstr ""
 "a multi-worker deployment a change made in any process reaches the "
 "others."
 
-#: ../../extend/index.md:39
+#: ../../extend/index.md:41
 msgid "写一个最小钩子"
 msgstr "Write a minimal hook"
 
-#: ../../extend/index.md:41
+#: ../../extend/index.md:43
 msgid "先跑通再对照契约。下面是一个只有界面块的钩子（不声明 `__catalog__`，一个文件即可）："
 msgstr ""
 "Get it running first, then read the contract. Below is a hook with a "
 "single interface block (no `__catalog__`; one file is enough):"
 
-#: ../../extend/index.md:62
+#: ../../extend/index.md:64
 msgid "本地联调：不用打包、不用重启进程。"
 msgstr "Local debugging: no packaging, no process restart."
 
-#: ../../extend/index.md:77
+#: ../../extend/index.md:79
 msgid "钩子跑在应用进程里：日志用 `logging.getLogger(__name__)`，与后端同一个输出；`print()` 不走日志。"
 msgstr ""
 "Hooks run inside the application process: log with "
 "`logging.getLogger(__name__)` so output goes to the same place as the "
 "backend; `print()` does not reach the log."
 
-#: ../../extend/index.md:78
+#: ../../extend/index.md:80
 msgid "写成包（`sapic_storage_s3/`）时用 `pip install -e .` 装进当前解释器，再登记模块名同样能加载。"
 msgstr ""
 "When you turn it into a package (`sapic_storage_s3/`), install it into "
 "the running interpreter with `pip install -e .` and register the module "
 "name — it loads the same way."
 
-#: ../../extend/index.md:79
+#: ../../extend/index.md:81
 msgid "插槽会渲染在哪个页面由白名单决定（见[钩子基础契约](contract.md)），`admin.*` 开头的只对管理员渲染。"
 msgstr ""
 "Which page a slot renders on is decided by the allowlist (see [Hook "
 "basics](contract.md)); slots starting with `admin.` only render for "
 "administrators."
 
-#: ../../extend/index.md:80
+#: ../../extend/index.md:82
 msgid "本地环境搭建、跑测试与代码风格见[开发与贡献](../dev.md)。"
 msgstr ""
 "Local environment, tests and code style are covered in [Development and "
 "contributing](../dev.md)."
 
-#: ../../extend/index.md:82
+#: ../../extend/index.md:84
 msgid "照抄哪个内置实现"
 msgstr "Which built-in to copy"
 
-#: ../../extend/index.md:84
+#: ../../extend/index.md:86
 msgid "写自己的之前，先读 `server/sapic/hooks/` 里最短的对应实现："
 msgstr ""
 "Before writing your own, read the shortest matching implementation under "
@@ -343,6 +364,19 @@ msgid "`send_mail` / `mail_ready`，配置完整时接管 SMTP"
 msgstr "`send_mail` / `mail_ready`; takes over from SMTP while complete"
 
 #: ../../extend/index.md
+msgid "内容审核"
+msgstr "Content moderation"
+
+#: ../../extend/index.md
+msgid "无内置，见[内容审核](moderator.md)的最小实现"
+msgstr "None built in; see the minimal implementation in [content "
+"moderation](moderator.md)"
+
+#: ../../extend/index.md
+msgid "`review_image` 返回值与管理员队列"
+msgstr "`review_image` return value and the admin queue"
+
+#: ../../extend/index.md
 msgid "纯界面钩子"
 msgstr "A UI-only hook"
 
@@ -354,17 +388,17 @@ msgstr "No built-in; use the 20-line sample above"
 msgid "节点词表与动作返回值"
 msgstr "The node vocabulary and action return values"
 
-#: ../../extend/index.md:94
+#: ../../extend/index.md:97
 msgid "安装第三方包"
 msgstr "Installing third-party packages"
 
-#: ../../extend/index.md:96
+#: ../../extend/index.md:99
 msgid "两种方式都能把包交给 sapic（打包细节见 [发布与安装](publishing.md)）："
 msgstr ""
 "Both routes hand the package to sapic (packaging details are in "
 "[Packaging and publishing](publishing.md)):"
 
-#: ../../extend/index.md:98
+#: ../../extend/index.md:101
 msgid ""
 "**后台安装**（推荐）：`POST /api/v2/hooks/install`，等价于 `pip install --target "
 "$HOOK_PKG_STORAGE_DIR <包名>`；如果包目录名与模块名不同， 再用 `POST /api/v2/hooks/import` "
@@ -375,7 +409,7 @@ msgstr ""
 "the package directory name differs from the module name, register the "
 "module with `POST /api/v2/hooks/import` afterwards."
 
-#: ../../extend/index.md:101
+#: ../../extend/index.md:104
 msgid ""
 "**手动安装**：把包装进 `HOOK_PKG_STORAGE_DIR`（默认 `data/hooks`，已在 `sys.path` 上）， "
 "或装进解释器的 site-packages，然后登记模块名。"
@@ -384,7 +418,7 @@ msgstr ""
 "`data/hooks`, already on `sys.path`) or install it into the interpreter "
 "site-packages, then register the module name."
 
-#: ../../extend/index.md:104
+#: ../../extend/index.md:107
 msgid ""
 "该目录只加入 `sys.path`，**不参与扫描**：`pip install --target` 会把依赖一并丢进去， "
 "按目录扫描会让无关第三方代码被当作钩子执行。"
@@ -393,18 +427,18 @@ msgstr ""
 " install --target` drops dependencies in there too, and scanning it would"
 " execute unrelated third-party code as hooks."
 
-#: ../../extend/index.md:107
+#: ../../extend/index.md:110
 msgid "安全边界"
 msgstr "Security boundaries"
 
-#: ../../extend/index.md:109
+#: ../../extend/index.md:112
 msgid "安装、导入、删除、重载、读配置都是 admin 接口；钩子代码本身就是任意 Python， 没有沙箱，装之前要信任来源。"
 msgstr ""
 "Installing, importing, deleting, reloading and reading config are all "
 "admin APIs; hook code is arbitrary Python with no sandbox, so trust the "
 "source before installing."
 
-#: ../../extend/index.md:111
+#: ../../extend/index.md:114
 msgid ""
 "钩子返回的界面是**声明式 JSON**，不是 HTML/JS。节点类型、键、`href` 协议、 `action` 名、插槽名都在 "
 "`libs/ui.py` 白名单里清洗，未知内容直接丢弃， 因此插件不能在前端注入脚本。"
@@ -414,14 +448,14 @@ msgstr ""
 "sanitised against the `libs/ui.py` allowlist and unknown content is "
 "dropped, so a plugin cannot inject scripts into the front end."
 
-#: ../../extend/index.md:114
+#: ../../extend/index.md:117
 msgid "动作的 `scope` 由清单声明，`admin` 动作只有管理员能触发；数据源接口本身要求管理员。"
 msgstr ""
 "An action `scope` is declared in the manifest and `admin` actions can "
 "only be triggered by administrators; data source endpoints require an "
 "administrator as well."
 
-#: ../../extend/index.md:115
+#: ../../extend/index.md:118
 msgid ""
 "驱动拿到的配置由核心合并（钩子级默认值 + 后端行配置 + 运行时 `root`）， 驱动不能决定图片可见性、优先级或过期策略，那些留在 "
 "`libs/storage.py`。"

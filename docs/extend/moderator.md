@@ -78,7 +78,7 @@ def review_image(image, config=None) -> dict:
 完全不想用内置调度器时（例如已经有了统一的作业系统）：web 端设 `sapic_scheduler=0`，
 用 `flask sa scheduler` 或自己的 cron 调 `sa review-pending`：
 
-```cron
+```text
 */5 * * * * cd /srv/sapic/server && ../.venv/bin/flask sa review-pending -n 50
 ```
 

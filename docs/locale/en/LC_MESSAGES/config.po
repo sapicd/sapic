@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: sapic 2.0.0-pre.1\n"
+"Project-Id-Version: sapic 2.0.0-pre\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-20 19:20+0800\n"
+"POT-Creation-Date: 2026-11-22 12:13+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -87,10 +87,13 @@ msgid "内置随机串"
 msgstr "Built-in random string"
 
 #: ../../config.md
-msgid "Cookie 签名密钥，≥ 14 字节；可选，空值用默认（公开串，公网多用户建议替换）"
-msgstr ""
-"Cookie signing key, at least 14 bytes; optional, an empty value uses the "
-"default (a public string — replace it on a public multi-user site)"
+msgid ""
+"Cookie 签名密钥，≥ 14 字节；可选。容器镜像不传时 entrypoint "
+"会生成并持久化到数据目录（`SAPIC_SECRET_FILE`）；非容器部署空值仍用内置公开串，公网多用户建议替换"
+msgstr "Cookie signing key, ≥ 14 bytes; optional. The container image generates "
+"and persists one in the data directory when it is not supplied "
+"(`SAPIC_SECRET_FILE`); non-container deployments fall back to the built-in "
+"public string, so a public multi-user site should replace it"
 
 #: ../../config.md
 msgid "`DATABASE_URL`"
@@ -189,6 +192,23 @@ msgid "`DEBUG` / `INFO` / `WARNING` / `ERROR`"
 msgstr "`DEBUG` / `INFO` / `WARNING` / `ERROR`"
 
 #: ../../config.md
+msgid "`LOG_DIR`"
+msgstr "`LOG_DIR`"
+
+#: ../../config.md
+msgid "`sapic_log_dir`"
+msgstr "`sapic_log_dir`"
+
+#: ../../config.md
+msgid "`<server>/data/log`"
+msgstr "`<server>/data/log`"
+
+#: ../../config.md
+msgid "应用日志 `sys.log` 所在目录；置空只输出到标准错误"
+msgstr "Directory holding the application log `sys.log`; leave empty to log to "
+"stderr only"
+
+#: ../../config.md
 msgid "`HOOK_PKG_STORAGE_DIR`"
 msgstr "`HOOK_PKG_STORAGE_DIR`"
 
@@ -254,13 +274,68 @@ msgstr "Empty"
 msgid "给图片直链加前缀，空则按当前请求的域名补全"
 msgstr "Prefix for image links; empty derives it from the current request's host"
 
-#: ../../config.md:25
+#: ../../config.md
+msgid "`SCHEDULER`"
+msgstr "`SCHEDULER`"
+
+#: ../../config.md
+msgid "`sapic_scheduler`"
+msgstr "`sapic_scheduler`"
+
+#: ../../config.md
+msgid "`true`"
+msgstr "`true`"
+
+#: ../../config.md
+msgid ""
+"进程内跑后台任务（到期清理、审核扫描、演示账号改密）；多 worker 用文件锁选主，关掉后回到「请求时兜底清理」。容器镜像里 web 端固定 "
+"`0`，任务由 supervisor 拉起的 `flask sa scheduler` 进程负责"
+msgstr "Run the background jobs (expiry purge, moderation scan, demo password "
+"rotation) in-process; several workers elect a leader through a file lock, "
+"and turning it off falls back to the opportunistic sweep on requests. The "
+"container image pins the web side to `0` and runs the jobs in the `flask "
+"sa scheduler` process started by supervisor"
+
+#: ../../config.md
+msgid "`SCHEDULER_PURGE_INTERVAL`"
+msgstr "`SCHEDULER_PURGE_INTERVAL`"
+
+#: ../../config.md
+msgid "`sapic_scheduler_purge_interval`"
+msgstr "`sapic_scheduler_purge_interval`"
+
+#: ../../config.md
+msgid "`600`"
+msgstr "`600`"
+
+#: ../../config.md
+msgid "过期清理间隔（秒），最小 10"
+msgstr "Expiry purge interval (seconds), minimum 10"
+
+#: ../../config.md
+msgid "`SCHEDULER_REVIEW_INTERVAL`"
+msgstr "`SCHEDULER_REVIEW_INTERVAL`"
+
+#: ../../config.md
+msgid "`sapic_scheduler_review_interval`"
+msgstr "`sapic_scheduler_review_interval`"
+
+#: ../../config.md
+msgid "`300`"
+msgstr "`300`"
+
+#: ../../config.md
+msgid "审核扫描间隔（秒），最小 10；没有启用的 `moderator` 钩子时这趟直接跳过"
+msgstr "Moderation scan interval (seconds), minimum 10; the round is skipped when "
+"no `moderator` hook is enabled"
+
+#: ../../config.md:29
 msgid "排查环境变量是否写对时，直接打印最终生效的配置："
 msgstr ""
 "To check whether your environment variables are right, print the "
 "effective config:"
 
-#: ../../config.md:31
+#: ../../config.md:35
 msgid ""
 "本地没有 `server/.cfg` 也能直接跑（默认 SQLite + 内置密钥）；想切换到开发默认值 （DEBUG、DEBUG "
 "日志）时在命令前加 `sapic_env=dev`。"
@@ -269,11 +344,11 @@ msgstr ""
 "default); to switch to the development defaults (DEBUG and DEBUG logs) "
 "prefix the command with `sapic_env=dev`."
 
-#: ../../config.md:34
+#: ../../config.md:38
 msgid "站点设置"
 msgstr "Site settings"
 
-#: ../../config.md:36
+#: ../../config.md:40
 msgid ""
 "存在 `settings` 表，默认值与校验集中在 `sapic/libs/settings.py` 的 `DEFAULTS`， "
 "后台「站点设置」页（`PUT /api/v2/settings`，仅管理员）维护，可写键与类型校验在 "
@@ -343,6 +418,15 @@ msgstr ""
 "`forbidden_username`, `default_album_visibility`"
 
 #: ../../config.md
+msgid "演示账号"
+msgstr "Demo account"
+
+#: ../../config.md
+msgid "`demo_rotate_enabled`、`demo_rotate_username`、`demo_rotate_password`、`demo_rotate_interval`（秒，60～86400）"
+msgstr "`demo_rotate_enabled`, `demo_rotate_username`, `demo_rotate_password`, "
+"`demo_rotate_interval` (seconds, 60–86400)"
+
+#: ../../config.md
 msgid "广场"
 msgstr "Plaza"
 
@@ -375,11 +459,11 @@ msgstr ""
 "`hooks_state`, `hooks_config`, `hooks_imported` (written by the hooks "
 "API, outside the key allowlist)"
 
-#: ../../config.md:51
+#: ../../config.md:56
 msgid "几个容易踩的点："
 msgstr "A few gotchas:"
 
-#: ../../config.md:53
+#: ../../config.md:58
 msgid ""
 "`upload_fetch_proxy` 是**兜底**代理：直连拿到可用图片就不碰它，只有这一次直连「没拿到可用响应」 "
 "才用它重试一次——包括超时 / 连接错误 / 本地解析不了，以及被反爬或地区限制时边缘节点直接回的 4xx/5xx、还有 200 但内容是 "
@@ -404,32 +488,58 @@ msgstr ""
 "`direct url fetch failed (...), retrying via proxy` line confirming the "
 "fallback."
 
-#: ../../config.md:61
+#: ../../config.md:66
 msgid "`upload_count_limit` 是**单次批次**的前端队列限制，后端每次请求只处理一个文件， 想限制「每天能传多少」要另立语义。"
 msgstr ""
 "`upload_count_limit` is a **per-batch** limit on the front-end queue; the"
 " backend handles one file per request, so limiting e.g. uploads per day "
 "needs a different concept."
 
-#: ../../config.md:63
+#: ../../config.md:68
 msgid "`image_expire_max_days` 一旦大于 0，就不允许再创建永久图片，未指定时按上限处理。"
 msgstr ""
 "Once `image_expire_max_days` is greater than 0, permanent images can no "
 "longer be created; an unspecified expiry is clamped to the limit."
 
-#: ../../config.md:64
+#: ../../config.md:69
 msgid "`allow_video` 关掉后视频后缀直接拒收；后缀白名单仍是第一道门。"
 msgstr ""
 "With `allow_video` off, video extensions are rejected outright; the "
 "extension allowlist remains the first gate."
 
-#: ../../config.md:65
+#: ../../config.md:70
+msgid ""
+"`upload_allowed_ext` 默认**不含 `svg`**：SVG 能在同源执行脚本，只有明确加回才允许上传 "
+"（本地上传、头像与外链导入同一口径），并且 `/raw/<sha>` 对 SVG 一律返回 `Content-Disposition: "
+"attachment` + `application/octet-stream`，不会在站点源下渲染。"
+msgstr "`upload_allowed_ext` does **not** include `svg` by default: SVG can "
+"execute scripts on the same origin, so it is only allowed once explicitly "
+"added back (the same rule for local uploads, avatars and external "
+"imports), and `/raw/<sha>` always serves SVG with `Content-Disposition: "
+"attachment` + `application/octet-stream`, so it never renders under the "
+"site origin."
+
+#: ../../config.md:73
 msgid "`password_login` 关掉后本地登录与注册接口直接 403，只剩统一登录入口。"
 msgstr ""
 "With `password_login` off, the local login and registration endpoints "
 "return 403 and only single sign-on remains."
 
-#: ../../config.md:66
+#: ../../config.md:74
+msgid ""
+"演示账号轮换只在开关打开、用户名和密码都填了时生效：调度器按 `demo_rotate_interval` "
+"把该本地账号的密码重置回配置值（登录名统一转小写），同时吊销它的会话与 PAT。 "
+"账号不存在、或目标恰好是管理员时跳过——后者是为了避免把后台锁死。它不会创建账号； 密码读取只回掩码，把掩码原样回传表示不改。"
+msgstr "Demo rotation only works when the switch is on and both username and "
+"password are filled: every `demo_rotate_interval` the scheduler resets "
+"that local account's password back to the configured value (logins are "
+"lower-cased) and revokes its sessions and PATs. A missing account, or a "
+"target that happens to be an admin, is skipped — the latter so the admin "
+"area cannot lock itself out. It never creates accounts; the stored "
+"password is only returned as a mask, and sending the mask back unchanged "
+"means keep it."
+
+#: ../../config.md:78
 msgid ""
 "`site_announcement`（全站公告）只解析三种排版：`**加粗**`、`[文字](https://链接)`、 "
 "空行分段（单换行也换行）。链接只认 `http(s)://` 与 `mailto:`，其余写法按原文显示； 它是纯文本语法，**不执行任何 "
@@ -442,9 +552,17 @@ msgstr ""
 "**never executes HTML tags** (the front end builds nodes, there is no "
 "`v-html`)."
 
-#: ../../config.md:69
+#: ../../config.md:81
 msgid "新增配置项必须同时接进「后台表单 + 实际生效点」，不要留下只存不用的开关。"
 msgstr ""
 "A new config option must be wired into both the admin form and the code "
 "path that uses it — no switches that only store a value."
+
+#~ msgid "Cookie 签名密钥，≥ 14 字节；可选，空值用默认（公开串，公网多用户建议替换）"
+#~ msgstr ""
+#~ "Cookie signing key, at least 14 "
+#~ "bytes; optional, an empty value uses "
+#~ "the default (a public string — "
+#~ "replace it on a public multi-user"
+#~ " site)"
 

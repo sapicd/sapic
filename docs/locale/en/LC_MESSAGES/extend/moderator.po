@@ -1,0 +1,389 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, staugur
+# This file is distributed under the same license as the sapic package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: sapic 2.0.0-pre\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-22 12:13+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../extend/moderator.md:1
+msgid "内容审核（moderator）"
+msgstr "Content moderation (moderator)"
+
+#: ../../extend/moderator.md:3
+msgid ""
+"审核钩子对**已经入库**的图片给出「通过 / 拦截」结论，属于**先发后审**：上传接口 （`POST "
+"/api/v2/upload`）完全不受影响，判定由定时任务扫描完成。慢的外部内容安全 API、 限流与重试都在扫描里消化，不会拖慢用户上传。"
+msgstr "A moderation hook gives a pass / block verdict on images that are "
+"**already stored**, so this is **review-after-publish**: the upload "
+"endpoint (`POST /api/v2/upload`) is not affected at all, and a scheduled "
+"scan does the judging. Slow external moderation APIs, rate limits and "
+"retries are absorbed by the scan and never slow a user's upload."
+
+#: ../../extend/moderator.md:8
+msgid ""
+"拦截**只隐藏、不删除**。`block` 只是把图片从公开口径里摘出去（本人与管理员仍可见）， "
+"删掉记录是管理员看过之后的明确动作。钩子本身**不允许**改库或删对象。"
+msgstr "A block **only hides, never deletes**. `block` just takes the image out of "
+"the public surface (owner and admins still see it); removing the row is an "
+"explicit action an admin takes after looking at it. Hooks themselves are "
+"**not allowed** to touch the database or delete objects."
+
+#: ../../extend/moderator.md:12
+msgid "声明与必需函数"
+msgstr "Declaration and required functions"
+
+#: ../../extend/moderator.md:21
+msgid ""
+"`moderator` 只有一个必需函数 `review_image`；缺它时钩子清单的 `warnings` 会写 「moderator is "
+"missing required function: review_image」，后台钩子页可见。"
+msgstr "`moderator` has exactly one required function, `review_image`; without it "
+"the hook listing's `warnings` says “moderator is missing required "
+"function: review_image”, visible on the admin hooks page."
+
+#: ../../extend/moderator.md:24
+msgid "入参：`image`"
+msgstr "Input: `image`"
+
+#: ../../extend/moderator.md:7
+msgid "键"
+msgstr "Key"
+
+#: ../../extend/moderator.md:7
+msgid "说明"
+msgstr "Meaning"
+
+#: ../../extend/moderator.md:7
+msgid "`id` / `sha`"
+msgstr "`id` / `sha`"
+
+#: ../../extend/moderator.md:7
+msgid "行 id 与公开标识（`/raw/<sha>`）"
+msgstr "Row id and public identifier (`/raw/<sha>`)"
+
+#: ../../extend/moderator.md:7
+msgid "`filename` / `title` / `mime` / `size`"
+msgstr "`filename` / `title` / `mime` / `size`"
+
+#: ../../extend/moderator.md:7
+msgid "元数据"
+msgstr "Metadata"
+
+#: ../../extend/moderator.md:7
+msgid "`width` / `height` / `is_video`"
+msgstr "`width` / `height` / `is_video`"
+
+#: ../../extend/moderator.md:7
+msgid "尺寸与是否视频（视频同样送审，由钩子自己决定跳过）"
+msgstr "Dimensions and whether it is a video (videos are submitted too; skip them "
+"in the hook if you do not want that)"
+
+#: ../../extend/moderator.md:7
+msgid "`owner_id` / `album_id` / `created_at`"
+msgstr "`owner_id` / `album_id` / `created_at`"
+
+#: ../../extend/moderator.md:7
+msgid "归属与上传时间；匿名上传的 `owner_id` 为 `null`"
+msgstr "Ownership and upload time; `owner_id` is `null` for anonymous uploads"
+
+#: ../../extend/moderator.md:7
+msgid "`src`"
+msgstr "`src`"
+
+#: ../../extend/moderator.md:7
+msgid "站内路径 `/raw/<sha>`"
+msgstr "In-site path `/raw/<sha>`"
+
+#: ../../extend/moderator.md:7
+msgid "`url`"
+msgstr "`url`"
+
+#: ../../extend/moderator.md:7
+msgid "绝对地址，**只有**配置了 `sapic_external_base_url` 时才非空（多数内容安全 API 接受图片 URL）"
+msgstr "Absolute address, non-empty **only** when `sapic_external_base_url` is "
+"configured (most moderation APIs accept an image URL)"
+
+#: ../../extend/moderator.md:35
+msgid ""
+"`config` 是该钩子自己的配置（`hooks_config[<name>]`），字段由 `hook_manifest()` 的 "
+"`config_schema` 声明，与其他钩子一致。"
+msgstr "`config` is the hook's own configuration (`hooks_config[<name>]`), whose "
+"fields are declared by `config_schema` in `hook_manifest()` like any other "
+"hook."
+
+#: ../../extend/moderator.md:38
+msgid ""
+"需要字节不想配 `sapic_external_base_url` 时，可以在钩子里按自己的存储配置直接读对象； 核心只保证 `url` "
+"在配置齐全时可用。"
+msgstr "If you need the bytes and do not want to configure "
+"`sapic_external_base_url`, read the object directly inside the hook with "
+"your own storage settings; the core only guarantees that `url` works when "
+"it is configured."
+
+#: ../../extend/moderator.md:41
+msgid "返回"
+msgstr "Return value"
+
+#: ../../extend/moderator.md:7
+msgid "必需"
+msgstr "Required"
+
+#: ../../extend/moderator.md:7
+msgid "`code`"
+msgstr "`code`"
+
+#: ../../extend/moderator.md:7
+msgid "✅"
+msgstr "✅"
+
+#: ../../extend/moderator.md:7
+msgid "`0` 表示本次判定有效；非 0 表示「这次判不了」（超时、配额、服务异常）"
+msgstr "`0` means the verdict is usable; non-zero means “cannot judge this time” "
+"(timeout, quota, service error)"
+
+#: ../../extend/moderator.md:7
+msgid "`verdict`"
+msgstr "`verdict`"
+
+#: ../../extend/moderator.md:7
+msgid "✅（`code` 为 0 时）"
+msgstr "✅ (when `code` is 0)"
+
+#: ../../extend/moderator.md:7
+msgid "`pass` 或 `block`，其它值按「判不了」处理"
+msgstr "`pass` or `block`; any other value is treated as “cannot judge”"
+
+#: ../../extend/moderator.md:7
+msgid "`message`"
+msgstr "`message`"
+
+#: ../../extend/moderator.md:7
+msgid "简短原因，写进 `images.review_note`（截断 255），管理员在队列里能看到"
+msgstr "Short reason, written to `images.review_note` (truncated to 255) and shown "
+"to admins in the queue"
+
+#: ../../extend/moderator.md:53
+msgid "多个审核钩子并用时的合并规则："
+msgstr "Merge rules when several moderation hooks are enabled:"
+
+#: ../../extend/moderator.md:55
+msgid "**任一 `block` 即 block**（一个审核方说有问题就拦）；"
+msgstr "**Any `block` wins** (one reviewer reporting a problem blocks the image);"
+
+#: ../../extend/moderator.md:56
+msgid "没有任何 `block`，但存在 `code != 0` 或未知 `verdict` → **不落结论**，下一轮重试；"
+msgstr "no `block` but some `code != 0` or unknown `verdict` → **no verdict is "
+"recorded**, the image is retried next round;"
+
+#: ../../extend/moderator.md:57
+msgid "全部有效且都 `pass` 才算 `pass`。"
+msgstr "only when every hook is valid and says `pass` is the image marked `pass`."
+
+#: ../../extend/moderator.md:59
+msgid "失败时不会猜 `pass`：宁可多扫一轮，也不放行。"
+msgstr "Failures never guess `pass`: scanning one more round is cheaper than "
+"letting something through."
+
+#: ../../extend/moderator.md:61
+msgid "执行"
+msgstr "Running it"
+
+#: ../../extend/moderator.md:63
+msgid ""
+"**默认自动跑**：服务启动后由进程内 APScheduler 每 `SCHEDULER_REVIEW_INTERVAL`（默认 300s） "
+"扫一次，多 worker 用 `data/scheduler.lock` 选主，只有一个进程真正执行，所以不需要 cron。 调度细节见[部署 ·"
+" 后台任务](../deploy.md)。"
+msgstr "**It runs automatically by default**: after the service starts, the "
+"in-process APScheduler scans every `SCHEDULER_REVIEW_INTERVAL` (300s by "
+"default); several workers elect a leader through `data/scheduler.lock`, so "
+"only one of them really runs it and no cron is needed. See [deployment · "
+"background jobs](../deploy.md) for the scheduling details."
+
+#: ../../extend/moderator.md:67
+msgid "手动跑一批（默认 50 张，输出统计）："
+msgstr "Run one batch by hand (50 images by default, prints statistics):"
+
+#: ../../extend/moderator.md:74
+msgid ""
+"只处理 `status=enabled` 且**尚无结论**的图片，按上传时间从旧到新。每行用一条 `UPDATE ... WHERE "
+"review_state IS NULL` 原子抢占，多进程同时跑也不会重复判定 （重复调用意味着重复计费）。判定卡在 `running` 超过 "
+"10 分钟（进程被杀）会重新入队。"
+msgstr "Only images with `status=enabled` and **no verdict yet** are processed, "
+"oldest upload first. Each row is claimed atomically with an `UPDATE ... "
+"WHERE review_state IS NULL`, so concurrent processes never judge the same "
+"image twice (a duplicate call costs money twice). A row stuck in `running` "
+"for more than 10 minutes (the process was killed) is queued again."
+
+#: ../../extend/moderator.md:78
+msgid ""
+"完全不想用内置调度器时（例如已经有了统一的作业系统）：web 端设 `sapic_scheduler=0`， 用 `flask sa "
+"scheduler` 或自己的 cron 调 `sa review-pending`："
+msgstr "If you do not want the built-in scheduler at all (for example you already "
+"have a central job system): set `sapic_scheduler=0` on the web side and "
+"let `flask sa scheduler` or your own cron call `sa review-pending`:"
+
+#: ../../extend/moderator.md:85
+msgid "结论与管理员处理"
+msgstr "Verdicts and admin handling"
+
+#: ../../extend/moderator.md:87
+msgid "`images.review_state`："
+msgstr "`images.review_state`:"
+
+#: ../../extend/moderator.md:7
+msgid "值"
+msgstr "Value"
+
+#: ../../extend/moderator.md:7
+msgid "含义"
+msgstr "Meaning"
+
+#: ../../extend/moderator.md:7
+msgid "`NULL`"
+msgstr "`NULL`"
+
+#: ../../extend/moderator.md:7
+msgid "未审（含判定失败待重试）"
+msgstr "Not reviewed (including failed verdicts waiting for a retry)"
+
+#: ../../extend/moderator.md:7
+msgid "`running`"
+msgstr "`running`"
+
+#: ../../extend/moderator.md:7
+msgid "某一轮扫描正在处理（短窗口）"
+msgstr "A scan round is processing it (short window)"
+
+#: ../../extend/moderator.md:7
+msgid "`pass`"
+msgstr "`pass`"
+
+#: ../../extend/moderator.md:7
+msgid "通过，不再重扫"
+msgstr "Passed, never rescanned"
+
+#: ../../extend/moderator.md:7
+msgid "`block`"
+msgstr "`block`"
+
+#: ../../extend/moderator.md:7
+msgid "拦截：公开口径（`/raw` 的匿名访问、广场、公开列表）立即不可见"
+msgstr "Blocked: immediately invisible on the public surface (anonymous `/raw` "
+"access, the plaza, public lists)"
+
+#: ../../extend/moderator.md:96
+msgid "管理接口（均需 `admin`，不进 OpenAPI 文档）："
+msgstr "Admin endpoints (all need `admin` and stay out of the OpenAPI document):"
+
+#: ../../extend/moderator.md:7
+msgid "方法"
+msgstr "Method"
+
+#: ../../extend/moderator.md:7
+msgid "路径"
+msgstr "Path"
+
+#: ../../extend/moderator.md:7
+msgid "GET"
+msgstr "GET"
+
+#: ../../extend/moderator.md:7
+msgid "`/api/v2/review?state=block`"
+msgstr "`/api/v2/review?state=block`"
+
+#: ../../extend/moderator.md:7
+msgid ""
+"队列列表，`state` = `block`（默认）/ `pass` / `pending` / `all`，支持 `page` / "
+"`page_size`"
+msgstr "Queue listing; `state` = `block` (default) / `pass` / `pending` / `all`, "
+"with `page` / `page_size`"
+
+#: ../../extend/moderator.md:7
+msgid "POST"
+msgstr "POST"
+
+#: ../../extend/moderator.md:7
+msgid "`/api/v2/review/<sha>`"
+msgstr "`/api/v2/review/<sha>`"
+
+#: ../../extend/moderator.md:7
+#, python-brace-format
+msgid ""
+"`{\"action\": \"approve\", \"note\": \"误判\"}` 恢复公开；`{\"action\": "
+"\"block\"}` 维持拦截；`{\"action\": \"purge\"}` **物理删除**（副本与行一起消失，不可恢复）"
+msgstr "`{\"action\": \"approve\", \"note\": \"wrong call\"}` restores the image; "
+"`{\"action\": \"block\"}` keeps it blocked; `{\"action\": \"purge\"}` "
+"**deletes it physically** (copies and row gone, unrecoverable)"
+
+#: ../../extend/moderator.md:103
+msgid "`purge` 与过期清理走同一条路径（`libs/images.purge_image`），sha 不会被复用。"
+msgstr "`purge` goes through the same path as the expiry sweep "
+"(`libs/images.purge_image`), so a sha is never reused."
+
+#: ../../extend/moderator.md:105
+msgid "最小实现"
+msgstr "Minimal implementation"
+
+#: ../../extend/moderator.md:158
+#, python-brace-format
+msgid ""
+"装法与其他钩子一致：放进 `server/data/hooks/`，然后 `POST /api/v2/hooks/import "
+"{\"module\": \"my_moderator\"}`，再到后台钩子页启用并填配置。"
+msgstr "Install it like any other hook: drop it into `server/data/hooks/`, call "
+"`POST /api/v2/hooks/import {\"module\": \"my_moderator\"}`, then enable "
+"and configure it on the admin hooks page."
+
+#: ../../extend/moderator.md:161
+msgid "注意"
+msgstr "Caveats"
+
+#: ../../extend/moderator.md:163
+msgid ""
+"钩子跑在扫描进程里（`flask sa review-pending`），**不要**假设有请求上下文（没有 `request`、 没有 "
+"`g`）；需要站点地址就读 `image[\"url\"]` 或自己的配置。"
+msgstr "Hooks run in the scan process (`flask sa review-pending`), so **do not** "
+"assume a request context (no `request`, no `g`); read the site address "
+"from `image[\"url\"]` or from your own configuration."
+
+#: ../../extend/moderator.md:165
+msgid "单张判定要自己设超时；整批的吞吐由 `-n` 与 cron 频率控制，核心不并发调用审核钩子。"
+msgstr "Set your own timeout for a single verdict; batch throughput is controlled "
+"by `-n` and the cron frequency, and the core never calls moderation hooks "
+"concurrently."
+
+#: ../../extend/moderator.md:166
+msgid "返回 `block` 之前**不要**自行改库；判定结果由核心统一写入，管理员处理也只走 `/review` 接口。"
+msgstr "**Do not** write to the database before returning `block`; verdicts are "
+"recorded by the core, and admin actions only go through the `/review` "
+"endpoints."
+
+#: ../../extend/moderator.md:167
+msgid "视频默认也会送审（`is_video` 为 `true`）；不想审就按示例直接返回 `pass`。"
+msgstr "Videos are submitted too (`is_video` is `true`); return `pass` as in the "
+"example if you do not want to review them."
+
+#: ../../extend/moderator.md:168
+msgid ""
+"`block` 收口的是**本站入口**（`/raw` 的匿名访问、公开列表、广场），不是\"内容撤回\"： 如果存储后端是公有读桶，`src` "
+"那条 CDN 直链仍然可访问，彻底撤回只能由管理员 `purge`（删对象）或调整桶权限。要强约束就把后端设成 "
+"`visibility=private`， 所有读取都走 `/raw`。"
+msgstr "`block` closes off **this site's entry points** (anonymous `/raw`, public "
+"lists, the plaza); it is not a “content retraction”: with a public-read "
+"bucket the CDN link in `src` still works, so a full retraction needs an "
+"admin `purge` (delete the object) or a bucket policy change. For a hard "
+"guarantee set the backend to `visibility=private` and route every read "
+"through `/raw`."
+

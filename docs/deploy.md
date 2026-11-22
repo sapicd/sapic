@@ -205,7 +205,10 @@ server {
 
 镜像内已经包含 gunicorn + nginx（nginx 托管 `web/dist`，只把 `/api`、`/raw` 两条前缀反代给后端；
 油猴脚本在 `/api/v2/userscript.user.js` 下，因此不需要单独开 location），默认监听 80 端口，
-不需要再单独部署前端。容器内监听端口默认 `80`，可用 `SAPIC_HTTP_PORT` 改：`docker/nginx.conf`
+不需要再单独部署前端。三个进程（gunicorn、`flask sa scheduler`、nginx）由 supervisor 统管，
+entrypoint 只负责生成密钥、渲染 nginx 配置并跑一次 `flask sa upgrade`：web worker 固定
+`sapic_scheduler=0`，后台任务由同容器里的独立调度进程执行，worker 重启不影响定时任务。
+容器内监听端口默认 `80`，可用 `SAPIC_HTTP_PORT` 改：`docker/nginx.conf`
 是带端口占位符的模板，由 entrypoint 渲染到 `/etc/nginx/conf.d/default.conf`，健康检查也会跟着走
 同一个端口。`docker-compose.yml` 只把宿主的 `SAPIC_PORT`（默认 `80`）映射到容器 `80`。
 
@@ -253,6 +256,9 @@ hostPath 路径与 env 里的密钥/域名；没有 Ingress，Service 是 NodePo
   第三方钩子包（`hooks/`）都在这里；不挂卷等于每次重建容器丢数据。
 - 容器内 `sapic_proxyfix=true` 必须开启（compose 与 k8s 已配），否则日志与限流拿到的是 127.0.0.1。
 - 健康检查统一用 `GET /api/v2/health`：数据库不通返回 503。
+- 容器内三个进程由 supervisor 管（配置 `docker/supervisord.conf` → `/etc/supervisord.conf`，
+  socket `/run/supervisord.sock`）：`docker exec sapic supervisorctl status` 看状态，
+  `supervisorctl restart scheduler` 只重启调度进程、不动 web；`ps -ef`（`procps`）也能看进程。
 - 上传上限有三层，改大小时一起改：nginx `client_max_body_size`（容器内 32m）、
   `sapic_maxupload`（25）、后台 `upload_image_max_size` / `upload_video_max_size`。
 - 本地磁盘存储只能单副本（`Recreate` 策略）；要多副本必须换成对象存储类钩子并给
@@ -374,6 +380,11 @@ systemctl restart sapic        # incremental migrations run at startup
   # web 侧：sapic_scheduler=0
   cd /srv/sapic/server && ../.venv/bin/flask sa scheduler   # 前台常驻，日志进 sys.log
   ```
+
+  **容器镜像默认就是这个形态**：supervisor 拉起独立的 `flask sa scheduler`，web worker 固定
+  `sapic_scheduler=0`（`docker/sapic-web`），所以不需要额外服务，也别在编排里把
+  `sapic_scheduler` 改回 1。此时「定时任务」页的调度者显示为 `external`。
+
 - 一次性执行（k8s CronJob 等）：
 
   ```bash
