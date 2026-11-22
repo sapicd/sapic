@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 import { api, errorMessage } from '@/api/client'
 import HookConfigForm from '@/components/hook/HookConfigForm.vue'
 import { hookText } from '@/components/hook/text'
-import { t } from '@/i18n'
+import { registerHookCatalog, t } from '@/i18n'
 import { formatTime } from '@/utils/format'
 
 const router = useRouter()
@@ -16,6 +16,7 @@ const CATALOGS = computed(() => ({
   processor: t('adminHooks.catalogProcessor'),
   auth: t('adminHooks.catalogAuth'),
   mail: t('adminHooks.catalogMail'),
+  moderator: t('adminHooks.catalogModerator'),
 }))
 
 const MARKET_STATUS = computed(() => ({
@@ -82,6 +83,8 @@ async function loadHooks() {
   try {
     const data = await api.get('/hooks')
     manifests.value = data?.items || []
+    //: 钩子自带词表注入 CATALOGS，切换语言时其 UI 文案跟着翻译。
+    for (const item of manifests.value) registerHookCatalog(item.name, item)
   } catch (error) {
     ElMessage.error(errorMessage(error, t('adminHooks.loadListFailed')))
   } finally {
@@ -510,7 +513,7 @@ onMounted(refresh)
             :title="marketError"
           />
           <p class="hint">
-            {{ t('adminHooks.marketHintBefore') }}<code>appversion: "2.x"</code>{{
+            {{ t('adminHooks.marketHintBefore') }}<code>appversion: "2"</code>{{
               t('adminHooks.marketHintMiddle')
             }}<code>{{ marketMeta.storage_dir || t('adminHooks.packageDir') }}</code
             >{{ t('adminHooks.marketHintAfter') }}

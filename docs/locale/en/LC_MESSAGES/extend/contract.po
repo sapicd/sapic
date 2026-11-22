@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sapic 2.0.0-pre\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-22 12:13+0800\n"
+"POT-Creation-Date: 2026-11-22 17:40+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -45,12 +45,13 @@ msgid ""
 "`processor`（字节流后处理）、`moderator`（内容审核，见[内容审核](moderator.md)）、`mail`（邮件通道）；"
 " 其他值或留空都按纯界面钩子处理（清单里的 `kind` 为 `ui`）。 声明的类型与模块实际导出的函数对不上时，`warnings` "
 "里会列出缺失的函数名。"
-msgstr "`__catalog__` decides the **extension type**; only five values have a "
+msgstr ""
+"`__catalog__` decides the **extension type**; only five values have a "
 "dedicated contract: `auth` (login provider), `upload` (storage driver), "
 "`processor` (byte-stream post-processing), `moderator` (content "
 "moderation, see [content moderation](moderator.md)) and `mail` (mail "
-"transport). Any other value, or none at all, is treated as a UI-only hook "
-"(manifest `kind` is `ui`). When the declared type does not match the "
+"transport). Any other value, or none at all, is treated as a UI-only hook"
+" (manifest `kind` is `ui`). When the declared type does not match the "
 "functions the module actually exports, `warnings` lists the missing "
 "function names."
 
@@ -151,7 +152,21 @@ msgstr ""
 "Declared interface slots: `[{name: \"nav\"}]`; the render mode is always "
 "`declarative`"
 
-#: ../../extend/contract.md:36
+#: ../../extend/contract.md
+msgid "`translations`"
+msgstr "`translations`"
+
+#: ../../extend/contract.md
+msgid "dict"
+msgstr "dict"
+
+#: ../../extend/contract.md
+msgid "自带多语言词表，见下「多语言」；让第三方钩子不依赖站点词表就能被翻译"
+msgstr ""
+"Bundled vocabulary, see Localisation below; lets a third-party hook be "
+"translated without relying on the site catalogue"
+
+#: ../../extend/contract.md:37
 msgid ""
 "核心会额外输出 "
 "`kind`、`warnings`、`enabled`、`family`、`version`、`author`、`ui_version`。"
@@ -159,7 +174,7 @@ msgstr ""
 "The core additionally emits `kind`, `warnings`, `enabled`, `family`, "
 "`version`, `author` and `ui_version`."
 
-#: ../../extend/contract.md:38
+#: ../../extend/contract.md:39
 msgid "`config_schema` 字段"
 msgstr "`config_schema` fields"
 
@@ -244,13 +259,13 @@ msgstr "`multiple`"
 msgid "`select` 是否多选"
 msgstr "Whether `select` is multiple"
 
-#: ../../extend/contract.md:52
+#: ../../extend/contract.md:53
 msgid "只有清单声明的键才能写库，未知键一律 400。"
 msgstr ""
 "Only keys declared in the manifest can be stored; unknown keys always "
 "return 400."
 
-#: ../../extend/contract.md:54
+#: ../../extend/contract.md:55
 msgid "函数命名规则"
 msgstr "Function naming rules"
 
@@ -305,7 +320,7 @@ msgstr "`data_items(query, context)`"
 msgid "`query` 是查询串字典"
 msgstr "`query` is the query-string dict"
 
-#: ../../extend/contract.md:62
+#: ../../extend/contract.md:63
 msgid ""
 "点号会被换成下划线：插槽 `admin.hook_setting` → `slot_admin_hook_setting`。 "
 "函数签名只写需要的参数即可（核心按签名过滤关键字参数），`**kwargs` 会收到全部。"
@@ -315,11 +330,11 @@ msgstr ""
 "signature (the core filters keyword arguments by signature); `**kwargs` "
 "receives everything."
 
-#: ../../extend/contract.md:65
+#: ../../extend/contract.md:66
 msgid "插槽白名单"
 msgstr "Slot allowlist"
 
-#: ../../extend/contract.md:67
+#: ../../extend/contract.md:68
 msgid ""
 "`nav`、`login.after_form`、`profile`、`user.setting`、`admin.site_setting`、 "
 "`admin.hook_setting`、`image.detail`、`upload.after`。"
@@ -328,18 +343,18 @@ msgstr ""
 "`admin.site_setting`, `admin.hook_setting`, `image.detail`, "
 "`upload.after`."
 
-#: ../../extend/contract.md:70
+#: ../../extend/contract.md:71
 msgid "不在白名单里的插槽会被丢弃。以 `admin.` 开头的插槽、`scope: \"admin\"` 的动作与 数据源接口只对管理员开放。"
 msgstr ""
 "Slots outside the allowlist are dropped. Slots starting with `admin.`, "
 "actions with `scope: \"admin\"` and data-source endpoints are only "
 "available to administrators."
 
-#: ../../extend/contract.md:73
+#: ../../extend/contract.md:74
 msgid "界面节点词表"
 msgstr "Interface node vocabulary"
 
-#: ../../extend/contract.md:75
+#: ../../extend/contract.md:76
 #, python-brace-format
 msgid "钩子返回节点树（`{type, ...}` 或它们的列表），前端只有一个递归渲染器， 所有类型与键都在 `libs/ui.py` 里白名单化："
 msgstr ""
@@ -347,7 +362,7 @@ msgstr ""
 "end has a single recursive renderer and every type and key is allowlisted"
 " in `libs/ui.py`:"
 
-#: ../../extend/contract.md:78
+#: ../../extend/contract.md:79
 msgid ""
 "**结构**：`fieldset`、`group`、`row`（`gap`）、`col`（`span`）、`tabs`、`collapse`、 "
 "`list`（`empty`）、`list_item`（`title`、`description`、`row_actions`）"
@@ -356,7 +371,7 @@ msgstr ""
 "`tabs`, `collapse`, `list` (`empty`), `list_item` (`title`, "
 "`description`, `row_actions`)"
 
-#: ../../extend/contract.md:80
+#: ../../extend/contract.md:81
 msgid ""
 "**展示**：`text`（`muted`）、`alert` / "
 "`badge`（`level`）、`image`（`src`、`alt`、`fit`）、 `code`、`divider`（`label`）"
@@ -364,7 +379,7 @@ msgstr ""
 "**Display**: `text` (`muted`), `alert` / `badge` (`level`), `image` "
 "(`src`, `alt`, `fit`), `code`, `divider` (`label`)"
 
-#: ../../extend/contract.md:82
+#: ../../extend/contract.md:83
 msgid ""
 "**表单**：`input`、`number`、`password`、`textarea`、`switch`、`select`、`radio` "
 "（键与 `config_schema` 基本一致）"
@@ -372,7 +387,7 @@ msgstr ""
 "**Forms**: `input`, `number`, `password`, `textarea`, `switch`, `select`,"
 " `radio` (keys basically match `config_schema`)"
 
-#: ../../extend/contract.md:84
+#: ../../extend/contract.md:85
 msgid ""
 "**交互**：`button`（`action`、`with_form`、`confirm`、`refresh`、`variant`、`size`）、"
 " `link`（`href`、`target`）、`dropdown` / `dropdown_item`"
@@ -381,37 +396,37 @@ msgstr ""
 "`variant`, `size`), `link` (`href`, `target`), `dropdown` / "
 "`dropdown_item`"
 
-#: ../../extend/contract.md:87
+#: ../../extend/contract.md:88
 msgid "约定与限制："
 msgstr "Conventions and limits:"
 
-#: ../../extend/contract.md:89
+#: ../../extend/contract.md:90
 #, python-brace-format
 msgid "每个节点都可带 `when: {field, op, value}`，按当前表单值决定是否渲染（`eq` / `ne` 等）。"
 msgstr ""
 "Every node may carry `when: {field, op, value}` to decide whether it "
 "renders from the current form values (`eq` / `ne` and so on)."
 
-#: ../../extend/contract.md:90
+#: ../../extend/contract.md:91
 #, python-brace-format
 msgid "文案里的 `{key}` 会用 `context` 的值替换，用于显示 `{username}` 之类的信息。"
 msgstr ""
 "`{key}` inside text is replaced with the `context` value, for showing "
 "things like `{username}`."
 
-#: ../../extend/contract.md:91
+#: ../../extend/contract.md:92
 msgid "`href` 只接受站内路径或 `http(s)` 协议，`//evil.com` 会被丢弃。"
 msgstr ""
 "`href` only accepts in-site paths or the `http(s)` scheme; `//evil.com` "
 "is dropped."
 
-#: ../../extend/contract.md:92
+#: ../../extend/contract.md:93
 msgid "`action` 必须是清单里声明过的名字，否则按钮不生效。"
 msgstr ""
 "`action` must be a name declared in the manifest, otherwise the button "
 "does nothing."
 
-#: ../../extend/contract.md:93
+#: ../../extend/contract.md:94
 msgid ""
 "图标写 `builtin:xxx` 或 `brand:xxx`。前端是一张**固定映射表** "
 "（`web/src/components/hook/icons.js`），当前可用的 `builtin` "
@@ -429,34 +444,55 @@ msgstr ""
 "renders** (`<el-icon>` renders nothing); a name without a prefix is "
 "dropped during sanitising."
 
-#: ../../extend/contract.md:99
+#: ../../extend/contract.md:100
 msgid "单次返回节点数、层级、文本长度都有上限（`MAX_CHILDREN` / `MAX_DEPTH` / `MAX_TEXT`）。"
 msgstr ""
 "The node count per response, nesting depth and text length are all capped"
 " (`MAX_CHILDREN` / `MAX_DEPTH` / `MAX_TEXT`)."
 
-#: ../../extend/contract.md:100
+#: ../../extend/contract.md:101
 msgid ""
 "多语言：节点与 `config_schema` 可带 `text_key` / `label_key` / `placeholder_key` /"
 " `help_key`， 由前端词表（`web/src/i18n/zh.js` / `en.js`）翻译，词表没有该键时显示你给的原文。 "
 "**不声明这些键的钩子也能被翻译**——前端会按模块名兜底查 `hooks.<模块名>.fields.<字段 "
 "key>.label`（`placeholder` / `help` 同理）与 `hooks.<模块名>.title` / "
 "`.description`，所以站点可以在词表里为第三方钩子补译文，不必改钩子包。"
-msgstr "Localisation: nodes and `config_schema` can carry `text_key` / `label_key` "
-"/ `placeholder_key` / `help_key`, translated by the front-end catalogue "
-"(`web/src/i18n/zh.js` / `en.js`); when the catalogue has no such key the "
-"original text you provide is shown. **Hooks that declare none of these "
-"keys can still be translated** — the front end falls back to "
-"`hooks.<module>.fields.<field key>.label` by module name (`placeholder` / "
-"`help` likewise) plus `hooks.<module>.title` / `.description`, so a site "
-"can localise a third-party hook inside the catalogue without touching the "
-"package."
+msgstr ""
+"Localisation: nodes and `config_schema` can carry `text_key` / "
+"`label_key` / `placeholder_key` / `help_key`, translated by the front-end"
+" catalogue (`web/src/i18n/zh.js` / `en.js`); when the catalogue has no "
+"such key the original text you provide is shown. **Hooks that declare "
+"none of these keys can still be translated** — the front end falls back "
+"to `hooks.<module>.fields.<field key>.label` by module name "
+"(`placeholder` / `help` likewise) plus `hooks.<module>.title` / "
+"`.description`, so a site can localise a third-party hook inside the "
+"catalogue without touching the package."
 
 #: ../../extend/contract.md:106
+#, fuzzy, python-brace-format
+msgid ""
+"自带词表：更通用的是在清单里给 `translations`，把译文随钩子一起发布，站点完全不必预置。 结构为 `{语言: {title, "
+"description, fields: {字段key: {label, placeholder, help, options}}}}`， 其中 "
+"`options` 是 `select` / `radio` 选项的 `{value: 文案}` 映射； 默认语言的文案照常写在 `title` "
+"/ `config_schema` 里，`translations` 只放**其他语言**的译文。 目前只认 `zh` / "
+"`en`，值只认纯文本，单钩子词表总量上限 32KB；前端优先用译文， 缺某条时回退默认语言原文。"
+msgstr ""
+"Bundled vocabulary: more generally, ship `translations` in the manifest "
+"and the hook carries its own translations, so the site need not pre-seed "
+"anything. The shape is `{lang: {title, description, fields: {key: {label,"
+" placeholder, help, options}}}}`, where `options` maps a `select` / "
+"`radio` choice's `value` to its display text. The default-language text "
+"stays in `title` / `config_schema` as usual, while `translations` only "
+"holds **other languages**. Only `zh` / `en` are accepted, values are plain"
+" text, and the total is capped at 32 KB per hook. The front end prefers "
+"the translation and falls back to the default-language text for any "
+"missing entry."
+
+#: ../../extend/contract.md:113
 msgid "动作与数据集返回值"
 msgstr "Action and data-source return values"
 
-#: ../../extend/contract.md:108
+#: ../../extend/contract.md:115
 msgid "这里有**三层**「响应」，键名相近但互不相同，先分清再写代码："
 msgstr ""
 "There are **three layers** of response here. The key names look alike but"
@@ -529,32 +565,32 @@ msgstr "Your `upimg_*`"
 msgid "`libs/storage.py`，**不会**直接出现在 HTTP 响应里"
 msgstr "`libs/storage.py`; never appears in an HTTP response directly"
 
-#: ../../extend/contract.md:116
+#: ../../extend/contract.md:123
 msgid "所以动作接口的真实响应是两层嵌套："
 msgstr "So the real response of an action endpoint is nested two levels deep:"
 
-#: ../../extend/contract.md:131
+#: ../../extend/contract.md:138
 msgid "外层 `code` 是传输层结果，HTTP 200 时恒为 `\"OK\"`；内层 `code` 才是你的业务结果，`0` 成功、非 0 失败；"
 msgstr ""
 "The outer `code` is the transport result and is always `\"OK\"` for HTTP "
 "200; the inner `code` is your business result — `0` success, non-zero "
 "failure;"
 
-#: ../../extend/contract.md:132
+#: ../../extend/contract.md:139
 msgid "失败原因写在 `message`（英文），由前端映射成中文；`refresh: true` 让前端刷新当前块；"
 msgstr ""
 "the failure reason goes into `message` (English) and the front end maps "
 "it to Chinese; `refresh: true` makes the front end reload the current "
 "block;"
 
-#: ../../extend/contract.md:133
+#: ../../extend/contract.md:140
 #, python-brace-format
 msgid "数据集返回 `{items: [...], total: n}`，单行只保留可序列化的标量字段；"
 msgstr ""
 "a data source returns `{items: [...], total: n}`, keeping only "
 "serialisable scalar fields per row;"
 
-#: ../../extend/contract.md:134
+#: ../../extend/contract.md:141
 msgid ""
 "驱动 / processor / provider 的返回值同样是 `code: int` + `message`；沿用了老字段 `msg` 的 "
 "第三方驱动仍能工作（核心按 `message or msg` 读取），但新代码不要再用，见[存储驱动](storage.md)。"
@@ -564,7 +600,7 @@ msgstr ""
 "(the core reads `message or msg`), but new code must not — see [Storage "
 "drivers](storage.md)."
 
-#: ../../extend/contract.md:137
+#: ../../extend/contract.md:144
 msgid "相关接口"
 msgstr "Related endpoints"
 

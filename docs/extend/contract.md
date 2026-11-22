@@ -32,6 +32,7 @@ __state__ = "enabled"          # initial state; "disabled" means off by default
 | `actions` | list | 可触发动作：`{name, label, scope, with_form, confirm}` |
 | `data_sources` | list | 只读数据集：`{name, label}` |
 | `slots` | list | 声明界面插槽：`[{name: "nav"}]`，渲染模式固定 `declarative` |
+| `translations` | dict | 自带多语言词表，见下「多语言」；让第三方钩子不依赖站点词表就能被翻译 |
 
 核心会额外输出 `kind`、`warnings`、`enabled`、`family`、`version`、`author`、`ui_version`。
 
@@ -102,6 +103,12 @@ __state__ = "enabled"          # initial state; "disabled" means off by default
   **不声明这些键的钩子也能被翻译**——前端会按模块名兜底查
   `hooks.<模块名>.fields.<字段 key>.label`（`placeholder` / `help` 同理）与
   `hooks.<模块名>.title` / `.description`，所以站点可以在词表里为第三方钩子补译文，不必改钩子包。
+- 自带词表：更通用的是在清单里给 `translations`，把译文随钩子一起发布，站点完全不必预置。
+  结构为 `{语言: {title, description, fields: {字段key: {label, placeholder, help, options}}}}`，
+  其中 `options` 是 `select` / `radio` 选项的 `{value: 文案}` 映射；
+  默认语言的文案照常写在 `title` / `config_schema` 里，`translations` 只放**其他语言**的译文。
+  目前只认 `zh` / `en`，值只认纯文本，单钩子词表总量上限 32KB；前端优先用译文，
+  缺某条时回退默认语言原文。
 
 ## 动作与数据集返回值
 

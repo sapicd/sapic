@@ -74,7 +74,7 @@ POST /api/v2/hooks/import       {"module": "sapic_storage_s3"}
 | `pypi` | 包名，支持 `$name` 占位 |
 | `home` | 主页，缺省用 github |
 | `status` | 自定义标记（如 `beta`） |
-| `appversion` | 面向的 sapic 主版本，V2 钩子写 `"2.x"`；缺省视为 V1 |
+| `appversion` | 面向的 sapic 主版本，`"2"` / `"2.0"` / `"2.x"` 都行（只取第一个数字）；缺省视为 V1 |
 
 V1 与 V2 的钩子契约互不兼容（V1 靠 `slot_*` 函数，V2 靠 `hook_manifest()` 声明式
 UI），所以源里必须用 `appversion` 标出代际：**只有主版本号 ≥ 2 的条目才会进市场**，

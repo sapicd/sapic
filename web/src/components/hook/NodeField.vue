@@ -2,6 +2,7 @@
 import { computed, inject, onMounted, ref } from 'vue'
 
 import { api } from '@/api/client'
+import { hasKey, t } from '@/i18n'
 
 import { nodeText } from './text'
 
@@ -11,6 +12,17 @@ const props = defineProps({
 
 const runtime = inject('hookRuntime')
 const options = ref(props.node.options || [])
+
+//: select/radio 的选项文案也走词表：按 value 查 hooks.<hook>.fields.<key>.options.<value>，
+//: 词表没有（钩子未提供译文）时回落选项自带的 label。
+function optionLabel(option) {
+  const hook = runtime?.hook
+  if (hook && props.node.key && option?.value !== undefined) {
+    const scoped = `hooks.${hook}.fields.${props.node.key}.options.${option.value}`
+    if (hasKey(scoped)) return t(scoped)
+  }
+  return option.label
+}
 
 const value = computed({
   get: () => runtime.values[props.node.key],
@@ -104,7 +116,7 @@ onMounted(async () => {
         <el-option
           v-for="(option, index) in options"
           :key="index"
-          :label="option.label"
+          :label="optionLabel(option)"
           :value="option.value"
           :disabled="option.disabled"
         />
@@ -120,7 +132,7 @@ onMounted(async () => {
           :key="index"
           :value="option.value"
         >
-          {{ option.label }}
+          {{ optionLabel(option) }}
         </el-radio>
       </el-radio-group>
 

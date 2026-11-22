@@ -73,6 +73,53 @@ export function hasKey(key) {
   return typeof lookup(CATALOGS.zh, key) === 'string'
 }
 
+//: 第三方钩子的自带词表在运行时注入 CATALOGS。zh 用钩子默认语言原文（保证
+//: ``hasKey`` 命中与中文回退），其余语言用 manifest 声明的 ``translations`` 覆盖。
+export function registerHookCatalog(module, manifest) {
+  if (!module || !manifest || typeof manifest !== 'object') return
+  const sourceHooks = CATALOGS.zh.hooks || (CATALOGS.zh.hooks = {})
+
+  //: 默认语言词表：从 config_schema 字段提取原文，结构对齐 hooks.<module>.fields.<key>.<field>
+  const source = {}
+  if (typeof manifest.title === 'string' && manifest.title) source.title = manifest.title
+  if (typeof manifest.description === 'string' && manifest.description) {
+    source.description = manifest.description
+  }
+  const fieldNames = [
+    'label', 'help', 'placeholder', 'legend', 'title',
+    'description', 'text', 'empty', 'active_text', 'inactive_text',
+  ]
+  const fields = {}
+  for (const field of manifest.config_schema || []) {
+    if (!field || !field.key) continue
+    const entry = {}
+    for (const name of fieldNames) {
+      if (typeof field[name] === 'string' && field[name]) entry[name] = field[name]
+    }
+    //: select/radio 选项的默认语言文案，按 value 建索引供 hasKey 命中。
+    if (Array.isArray(field.options)) {
+      const opts = {}
+      for (const opt of field.options) {
+        if (opt && opt.value !== undefined && typeof opt.label === 'string' && opt.label) {
+          opts[String(opt.value)] = opt.label
+        }
+      }
+      if (Object.keys(opts).length) entry.options = opts
+    }
+    if (Object.keys(entry).length) fields[field.key] = entry
+  }
+  if (Object.keys(fields).length) source.fields = fields
+  sourceHooks[module] = source
+
+  //: 各语言译文覆盖（en 等），缺某语言或某字段时自然回退 zh 原文。
+  const translations = manifest.translations || {}
+  for (const [lang, catalog] of Object.entries(translations)) {
+    if (!CATALOGS[lang]) continue
+    const target = CATALOGS[lang].hooks || (CATALOGS[lang].hooks = {})
+    target[module] = catalog
+  }
+}
+
 export function useI18n() {
   return { t, locale, setLocale }
 }

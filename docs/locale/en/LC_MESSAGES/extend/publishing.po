@@ -248,8 +248,10 @@ msgid "`appversion`"
 msgstr "`appversion`"
 
 #: ../../extend/publishing.md
-msgid "面向的 sapic 主版本，V2 钩子写 `\"2.x\"`；缺省视为 V1"
-msgstr "Target sapic major version; a V2 hook declares `\"2.x\"`, absent means V1"
+msgid "面向的 sapic 主版本，`\"2\"` / `\"2.0\"` / `\"2.x\"` 都行（只取第一个数字）；缺省视为 V1"
+msgstr ""
+"Target sapic major version; `\"2\"`, `\"2.0\"` and `\"2.x\"` all work (only the "
+"first number is read). Absent means V1"
 
 #: ../../extend/publishing.md:79
 msgid ""

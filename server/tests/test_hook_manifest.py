@@ -141,3 +141,32 @@ def test_reload_refreshes_the_manifest(tmp_path):
     file.write_text(DEMO.replace('"Demo"', '"Demo2"'), encoding="utf-8")
     manager.reload()
     assert manager.manifest("demo")["title"] == "Demo2"
+
+
+TRANSLATED = '''
+__version__ = "1.0.0"
+__author__ = "tester"
+
+
+def hook_manifest():
+    return {
+        "title": "演示",
+        "catalog": "upload",
+        "config_schema": [{"key": "root", "type": "input", "label": "目录"}],
+        "translations": {
+            "en": {"title": "Demo", "fields": {"root": {"label": "Root"}}},
+            "fr": {"title": "Démo"},
+        },
+    }
+'''
+
+
+def test_manifest_keeps_supported_translations(tmp_path):
+    (tmp_path / "tr.py").write_text(TRANSLATED, encoding="utf-8")
+    manager = HookManager([tmp_path])
+
+    manifest = manager.manifest("tr")
+    #: en 保留，fr 不在支持列表被丢弃；字段词条按 key 对齐。
+    assert manifest["translations"] == {
+        "en": {"title": "Demo", "fields": {"root": {"label": "Root"}}},
+    }

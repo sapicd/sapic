@@ -213,3 +213,54 @@ def test_dataset_is_normalised():
         "total": 3,
     }
     assert ui.clean_dataset(None) == {"items": [], "total": 0}
+
+
+def test_translations_are_whitelisted():
+    cleaned = ui.clean_translations(
+        {
+            "en": {
+                "title": "Image moderation",
+                "description": "Pluggable hook",
+                "fields": {
+                    "provider": {
+                        "label": "Provider",
+                        "placeholder": "Pick one",
+                        "options": {
+                            "qiniu": "Qiniu moderation",
+                            "http": "Custom endpoint",
+                            42: "non-string value is dropped",
+                            "empty": "",
+                        },
+                    },
+                    "dropme": {"script": "<script>"},
+                },
+            },
+            "fr": {"title": "Modération"},
+            "zh": "not-a-dict",
+        }
+    )
+    assert cleaned == {
+        "en": {
+            "title": "Image moderation",
+            "description": "Pluggable hook",
+            "fields": {
+                "provider": {
+                    "label": "Provider",
+                    "placeholder": "Pick one",
+                    "options": {"qiniu": "Qiniu moderation", "http": "Custom endpoint"},
+                }
+            },
+        }
+    }
+
+
+def test_translations_reject_non_dict():
+    assert ui.clean_translations(None) == {}
+    assert ui.clean_translations("x") == {}
+    assert ui.clean_translations([{"en": {}}]) == {}
+
+
+def test_translations_are_size_capped():
+    #: 单条文案有 MAX_TEXT 上限，总量超限只能靠字段数量堆出来。
+    fields = {"f%d" % index: {"label": "y" * ui.MAX_TEXT} for index in range(20)}
+    assert ui.clean_translations({"en": {"fields": fields}}) == {}

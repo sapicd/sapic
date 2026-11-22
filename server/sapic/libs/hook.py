@@ -392,6 +392,11 @@ class HookManager:
             "data_sources": ui.clean_sources(data.get("data_sources")),
             "slots": ui.clean_slots(data.get("slots")),
         }
+        #: Hook-provided translations (``translations.<lang>``) let a third-party
+        #: hook localise its own UI strings without the host pre-seeding them.
+        translations = ui.clean_translations(data.get("translations"))
+        if translations:
+            entry["translations"] = translations
         #: Optional i18n keys for the manifest strings; the frontend prefers them
         #: and falls back to ``title`` / ``description`` for unknown entries.
         title_key = ui.clean_key(data.get("title_key"))

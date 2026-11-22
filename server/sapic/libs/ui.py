@@ -11,6 +11,7 @@ produced and consumed.
 
 from __future__ import annotations
 
+import json
 import re
 
 UI_VERSION = 1
@@ -19,6 +20,17 @@ MAX_TEXT = 2000
 MAX_CHILDREN = 64
 MAX_ROWS = 500
 MAX_DEPTH = 8
+#: Languages a hook may ship translations for; the frontend catalogue only has
+#: these two, anything else is dropped.
+SUPPORTED_LANGUAGES = ("zh", "en")
+#: Cap on the serialized size of one hook's translations, bounding what an
+#: untrusted third-party hook can push into the UI catalogue.
+MAX_TRANSLATION_BYTES = 32 * 1024
+#: Visible field names a hook may translate inside ``translations.<lang>.fields``.
+TRANSLATION_FIELDS = (
+    "label", "help", "placeholder", "legend", "title", "description",
+    "text", "empty", "active_text", "inactive_text",
+)
 
 #: Named slots a hook may declare. Anything else is rejected by the server.
 SLOTS = {
@@ -140,6 +152,67 @@ def clean_key(value):
     if not key or len(key) > 64 or not KEY_RE.match(key):
         return None
     return key
+
+
+def clean_translations(value):
+    """Whitelisted ``translations`` map of a hook manifest.
+
+    A hook ships its own localized strings here so third-party hooks stay
+    localisable without the host pre-seeding a catalogue. Shape::
+
+        {"en": {"title": str, "description": str, "fields": {key: {...}}}}
+
+    Only ``zh``/``en`` are accepted; values are plain text and the whole map is
+    size-capped. Anything malformed is dropped silently.
+    """
+    if not isinstance(value, dict):
+        return {}
+    result = {}
+    for lang, catalog in value.items():
+        if lang not in SUPPORTED_LANGUAGES or not isinstance(catalog, dict):
+            continue
+        entry = {}
+        for name in ("title", "description"):
+            text = _text(catalog.get(name))
+            if text:
+                entry[name] = text
+        fields = catalog.get("fields")
+        if isinstance(fields, dict):
+            cleaned = {}
+            for field_key, texts in fields.items():
+                if not isinstance(field_key, str) or not field_key:
+                    continue
+                if not isinstance(texts, dict):
+                    continue
+                item = {}
+                for name in TRANSLATION_FIELDS:
+                    text = _text(texts.get(name))
+                    if text:
+                        item[name] = text
+                #: select/radio 的选项文案按 value 翻译：{"qiniu": "Qiniu moderation", ...}
+                options = texts.get("options")
+                if isinstance(options, dict):
+                    cleaned_options = {}
+                    for opt_value, opt_label in options.items():
+                        if not isinstance(opt_value, str) or not opt_value:
+                            continue
+                        text = _text(opt_label)
+                        if text:
+                            cleaned_options[_text(opt_value, 64)] = text
+                    if cleaned_options:
+                        item["options"] = cleaned_options
+                if item:
+                    cleaned[_text(field_key, 64)] = item
+            if cleaned:
+                entry["fields"] = cleaned
+        if entry:
+            result[lang] = entry
+    try:
+        if len(json.dumps(result, ensure_ascii=False).encode("utf-8")) > MAX_TRANSLATION_BYTES:
+            return {}
+    except (TypeError, ValueError):
+        return {}
+    return result
 
 
 def _expand(text, context):
