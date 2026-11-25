@@ -27,7 +27,7 @@ pip package can add a new object store or identity provider without touching the
   share templates (URL / HTML / Markdown / rST).
 - **Albums and visibility**: permissions are per album (public / private / shared), sharing is by username with
   read or write access and an optional expiry, and a single image can override its album.
-- **Storage**: multiple backends with priority and replicas; built-in local / Qiniu / Upyun / GitHub / Gitee.
+- **Storage**: multiple backends with priority and replicas; built-in local / Bitiful S4 / Qiniu / Upyun / GitHub / Gitee.
 - **Accounts**: registration review, email verification, password reset, OIDC single sign-on; access tokens
   scoped `read` / `upload` / `write` / `admin`.
 - **Extensions**: hooks describe their admin UI in declarative JSON; third-party packages can be installed,

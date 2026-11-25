@@ -14,7 +14,8 @@
 | 数据库 | PostgreSQL / MySQL / SQLite | 由 `sapic_db_url` 指定，默认 SQLite（`server/data/sapic.db`） |
 
 依赖由 `server/requirements/` 管理：`base.txt`（运行时，含内置钩子用到的 requests / Pillow /
-七牛 / 又拍云 SDK）、`dev.txt`（base + 测试）、`prod.txt`（base + gunicorn + gevent + setproctitle）。
+七牛 / 又拍云 SDK、缤纷云 S4 用的 boto3）、`dev.txt`（base + 测试）、
+`prod.txt`（base + gunicorn + gevent + setproctitle）。
 第三方钩子是独立的 pip 包，自带自己的依赖。
 
 ## 源码运行

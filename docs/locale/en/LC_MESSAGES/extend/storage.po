@@ -484,6 +484,17 @@ msgid "`upimg_url` 做法"
 msgstr "`upimg_url` approach"
 
 #: ../../extend/storage.md
+msgid "`up2bitiful`"
+msgstr "`up2bitiful`"
+
+#: ../../extend/storage.md
+msgid ""
+"S3 协议（boto3）：`generate_presigned_url(\"get_object\")` 签发，有效期上限 7 天"
+msgstr ""
+"S3 protocol (boto3): `generate_presigned_url(\"get_object\")`, capped at "
+"7 days"
+
+#: ../../extend/storage.md
 msgid "`up2qiniu`"
 msgstr "`up2qiniu`"
 

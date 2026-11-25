@@ -629,6 +629,9 @@ export default {
     announcementHint: '只解析加粗与链接，其余内容按纯文本显示（不执行任何 HTML 标签）',
     announcementPlaceholder: '支持 **加粗**、[文字](https://链接)，空行分段',
     anonymousUpload: '匿名上传',
+    apiRateLimit: 'API 限速',
+    apiRateLimitHint:
+      '次 / 分钟 / 客户端，0 表示不限制；已登录按用户、匿名按 IP 计数，多 worker 各自计数',
     background: '背景图',
     backgroundMobile: '移动端背景',
     backgroundMobilePlaceholder: '留空复用背景图',
@@ -900,6 +903,27 @@ export default {
         },
       },
       title: '腾讯云 COS',
+    },
+    up2bitiful: {
+      description: '将图片保存到缤纷云 S4',
+      fields: {
+        access_key: {
+          hint: '子账户的 AccessKey（需先在控制台授权该桶或目录）',
+          label: 'AccessKey',
+        },
+        basedir: { hint: '图片存储到缤纷云的基础目录，默认是根目录', label: '存储根目录' },
+        bucket: { hint: 'S4 存储桶名称', label: 'Bucket' },
+        domain: {
+          hint: '绑定到存储桶的 CDN 域名，如 https://img.example.com；私有桶留空，由 sapic 转发读取',
+          label: '访问域名',
+        },
+        secret_key: { hint: '子账户的 SecretKey', label: 'SecretKey' },
+        thumb_suffix: {
+          hint: '图片处理后缀，如 ?w=400&fmt=webp；留空则列表页加载原图',
+          label: '缩略图参数',
+        },
+      },
+      title: '缤纷云存储',
     },
     up2gitee: {
       description: '将图片保存到Gitee',

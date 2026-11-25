@@ -64,6 +64,9 @@ DEFAULTS = {
     "allow_user_backends": False,
     #: 每个用户最多能建几个自定义存储后端。
     "user_backend_limit": 3,
+    #: 全局 API 限速（次 / 分钟 / 客户端，0 表示关闭）；已登录按用户、
+    #: 匿名按 IP 计数。计数器在进程内，多 worker 各自计数（见 libs/ratelimit.py）。
+    "api_rate_limit": 120,
     "forbidden_username": "admin,root,sys,anonymous",
     #: 默认相册是上传的兜底归属，默认公开才能拿到可外链地址。
     "default_album_visibility": "public",

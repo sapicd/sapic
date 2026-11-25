@@ -227,6 +227,10 @@ onMounted(loadSettings)
 
         <el-tab-pane :label="t('adminSite.tabSystem')" name="system">
           <el-form :label-width="labelWidth">
+            <el-form-item :label="t('adminSite.apiRateLimit')">
+              <el-input-number v-model="form.api_rate_limit" :min="0" :max="6000" />
+              <span class="form-suffix">{{ t('adminSite.apiRateLimitHint') }}</span>
+            </el-form-item>
             <el-form-item :label="t('adminSite.plaza')">
               <el-switch v-model="form.plaza_enabled" />
               <span class="form-suffix">{{ t('adminSite.plazaHint') }}</span>

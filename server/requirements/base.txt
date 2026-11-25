@@ -2,6 +2,7 @@
 #:   passport / up2github / up2gitee  -> requests
 #:   up2qiniu                         -> qiniu
 #:   up2upyun                         -> upyun
+#:   up2bitiful                       -> boto3
 #:   pic2webp                         -> pillow
 #: 第三方钩子（pip 安装的独立包）自带依赖，不靠这里。
 Flask==3.1.3
@@ -16,4 +17,6 @@ PyJWT==2.15.1
 pillow==12.3.0
 qiniu==7.15.0
 upyun==2.5.5
+#: 缤纷云 S4 官方 Python 接入方式就是 boto3（S3 协议）。
+boto3==1.44.11
 requests==2.34.2

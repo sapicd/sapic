@@ -29,6 +29,7 @@ def create_app(config: dict | None = None) -> Flask:
     from .libs.auth import init_app as init_auth
     from .libs.hook import init_app as init_hooks
     from .libs.images import sweep_expired
+    from .libs.ratelimit import init_app as init_rate_limit
     from .libs.scheduler import init_app as init_scheduler
     from .libs.storage import sync_backends
     from .migrations import auto_upgrade
@@ -46,7 +47,9 @@ def create_app(config: dict | None = None) -> Flask:
     init_log(app)
 
     if app.config.get("PROXY_FIX"):
-        app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+        #: x_for 让请求拿到真实客户端 IP：容器里 gunicorn 只听 127.0.0.1，
+        #: 不信任 X-Forwarded-For 时限速会把全站算成同一个客户端。
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     init_db(app)
     auto_upgrade()
@@ -65,6 +68,10 @@ def create_app(config: dict | None = None) -> Flask:
     @app.before_request
     def _request_id():
         g.request_id = request.headers.get("X-Request-Id") or uuid4().hex[:16]
+
+    #: 放在鉴权与 request_id 之后：已登录用户按账号计数、匿名按 IP 计数，
+    #: 429 响应也能带上 request_id。
+    init_rate_limit(app)
 
     if not app.config.get("SCHEDULER"):
         #: 关掉调度器时的兜底（老部署/单进程开发也能清理到期图片）：

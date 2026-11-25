@@ -644,6 +644,9 @@ export default {
     announcementHint: 'Only bold and links are parsed, everything else is plain text (no HTML is rendered)',
     announcementPlaceholder: 'Supports **bold** and [text](https://link), separate paragraphs with a blank line',
     anonymousUpload: 'Anonymous upload',
+    apiRateLimit: 'API rate limit',
+    apiRateLimitHint:
+      'requests per minute per client, 0 disables it; signed-in users are counted per account and anonymous requests per IP, each worker keeps its own counter',
     background: 'Background image',
     backgroundMobile: 'Mobile background',
     backgroundMobilePlaceholder: 'Leave empty to reuse the background image',
@@ -954,6 +957,33 @@ export default {
         },
       },
       title: 'Tencent COS',
+    },
+    up2bitiful: {
+      description: 'Save images to Bitiful S4',
+      fields: {
+        access_key: {
+          hint: 'AccessKey of a Bitiful sub-account (grant it the bucket or directory in the console first)',
+          label: 'AccessKey',
+        },
+        basedir: {
+          hint: 'Base directory inside the bucket, defaults to the root',
+          label: 'Storage root',
+        },
+        bucket: { hint: 'S4 bucket name', label: 'Bucket' },
+        domain: {
+          hint: 'CDN domain bound to the bucket, e.g. https://img.example.com; leave empty for private buckets, which sapic relays through /raw',
+          label: 'CDN domain',
+        },
+        secret_key: {
+          hint: 'SecretKey of the Bitiful sub-account',
+          label: 'SecretKey',
+        },
+        thumb_suffix: {
+          hint: 'Image processing suffix, e.g. ?w=400&fmt=webp; leave empty to load originals in lists',
+          label: 'Thumbnail suffix',
+        },
+      },
+      title: 'Bitiful S4 storage',
     },
     up2gitee: {
       description: 'Save images to a Gitee repository',

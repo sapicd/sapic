@@ -10,6 +10,7 @@ from ..basis.errors import ApiError, ErrorCode
 from ..libs import release
 from ..libs.auth import admin_required
 from ..libs.mail import SMTP_DEFAULTS, mail_ready, send_test_mail
+from ..libs.ratelimit import forget_rate_limit
 from ..libs.settings import DEFAULTS, get_setting, set_setting
 from ..libs.users import normalize_username, validate_password
 from ..utils.common import parse_proxy_url
@@ -57,6 +58,8 @@ _INT_KEYS = {
     #: 0 表示不启用（永久 / 不限制上限）。
     "image_expire_default_days": (0, 3650),
     "image_expire_max_days": (0, 3650),
+    #: API 限速（次 / 分钟）；0 关闭。
+    "api_rate_limit": (0, 6000),
     #: 演示账号轮换间隔（秒）：最短一分钟，最长一天。
     "demo_rotate_interval": (60, 86400),
 }
@@ -236,6 +239,9 @@ def write_settings():
         updated[key] = _clean(key, value)
     for key, value in updated.items():
         set_setting(key, value)
+    #: 当前 worker 立即生效；其它 worker 最多等 CONFIG_TTL 秒（见 libs/ratelimit.py）。
+    #: 改了限额就清空窗口，避免旧计数按新阈值误伤马上到来的请求。
+    forget_rate_limit(reset="api_rate_limit" in updated)
     return ok(_payload_of_settings())
 
 

@@ -16,7 +16,7 @@ def module_of(app, name):
 
 def test_builtin_drivers_declare_their_read_capability(app):
     #: 有读契约的驱动才能被设成 private 后端。
-    for name in ("up2local", "up2qiniu", "up2upyun", "up2github"):
+    for name in ("up2local", "up2bitiful", "up2qiniu", "up2upyun", "up2github"):
         module = module_of(app, name)
         if name == "up2local":
             continue  # 本地副本由 /raw 直接读盘，不需要 upimg_url

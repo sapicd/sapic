@@ -109,6 +109,7 @@ def upimg_url(save_result, filename="", backend=None, expires=300) -> dict      
 
 | 驱动 | `upimg_url` 做法 |
 | --- | --- |
+| `up2bitiful` | S3 协议（boto3）：`generate_presigned_url("get_object")` 签发，有效期上限 7 天 |
 | `up2qiniu` | `Auth.private_download_url(domain + "/" + key, expires)`；私有桶仍需配 `domain` |
 | `up2upyun` | 无预签名 URL：指向 `https://v0.api.upyun.com/{bucket}/{key}`，返回 `Authorization: UPYUN op:base64(hmac-sha1(md5(pwd), "GET&uri&date"))` + `Date` |
 | `up2github` | 私有仓库走 contents API（`Accept: application/vnd.github.raw`），返回 `Authorization: token ...` |

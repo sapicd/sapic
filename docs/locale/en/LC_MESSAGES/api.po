@@ -89,7 +89,26 @@ msgstr ""
 "`web/src/api/messages.js`. When debugging, match the `request_id` from "
 "the response headers or body against the server logs."
 
-#: ../../api.md:37
+#: ../../api.md:36
+msgid "限速"
+msgstr "Rate limiting"
+
+#: ../../api.md:38
+msgid ""
+"所有 `/api/` 请求按客户端计数：已登录用户按账号、匿名请求按 IP。默认每分钟 120 次， "
+"可在后台「站点设置 → 系统」的「API 限速」调整，`0` 表示关闭。超限返回 `429`、 "
+"`code` 为 `RATE_LIMITED`，并带 `Retry-After`（秒）响应头；`GET /api/v2/health` 与 "
+"`/raw/` 等非 API 路径不计数。计数器保存在进程内，多 worker 部署时每个 worker 各自计数。"
+msgstr ""
+"Every `/api/` request is counted per client: signed-in users by account, "
+"anonymous requests by IP. The default is 120 per minute; adjust it under "
+"Admin → Site settings → System (\"API rate limit\"), and `0` disables it. "
+"Exceeding it returns `429` with `code: RATE_LIMITED` and a `Retry-After` "
+"header in seconds; `GET /api/v2/health` and non-API paths such as `/raw/` "
+"are never counted. Counters live in the process, so a multi-worker "
+"deployment counts separately per worker."
+
+#: ../../api.md:44
 msgid ""
 "这是**传输层**信封。钩子动作、数据集等内部返回值会原样放进 `data`，里面可能再有 `code` / `message` "
 "字段——那是业务层结果，与这里的 `code` 不是一回事， 详见[钩子基础契约](extend/contract.md)。"

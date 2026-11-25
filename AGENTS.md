@@ -300,6 +300,9 @@ ShareX 等的逐项配置见 `docs/usage.md`。**不要再为老客户端补第�
 
 - 默认值集中在 `sapic/libs/settings.py` 的 `DEFAULTS`，读写统一走 `get_setting` / `set_setting`
 - `upload_count_limit` 是**单次批次**限制，只由前端上传控件强制；后端每次请求只有一个文件，不做（也无从做）该校验。要服务端配额应另立「每日/每小时次数」这类语义
+- 全局 API 限速是 `api_rate_limit`（默认 120 次/分钟/客户端，`0` 关闭），实现在 `libs/ratelimit.py`：
+  已登录按用户、匿名按 IP，进程内固定窗口，多 worker 各自计数；`/api/v2/health` 与 `/raw/` 不计数。
+  改限额由 `views/settings.py` 调 `forget_rate_limit(reset=True)` 让当前 worker 立即生效
 - 后台通过 `GET/PUT /api/v2/settings` 管理（仅管理员），可写键白名单与类型校验在 `views/settings.py`
 - 前台展示字段由公开接口 `GET /api/v2/site` 输出，前端在 `stores/site.js` 消费
 - 全站公告 `site_announcement` 走**微型纯文本语法**（`**加粗**` / `[文字](https://链接)` / 空行分段），
