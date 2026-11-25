@@ -18,6 +18,7 @@ class FakeS4:
         self.saved = []
         self.deleted = []
         self.presigned = []
+        self.headed = []
         self.errors = {}
 
     def put_object(self, **kwargs):
@@ -31,6 +32,7 @@ class FakeS4:
         return {}
 
     def head_object(self, **kwargs):
+        self.headed.append(kwargs)
         raise FakeClientError("404", "Not Found")
 
     def generate_presigned_url(self, operation, Params=None, ExpiresIn=0):
@@ -185,6 +187,29 @@ def test_bitiful_ping_accepts_a_missing_probe_object(app, monkeypatch):
 
     assert result["code"] == 0
     assert result["toast"]["level"] == "success"
+
+
+def test_bitiful_ping_probes_inside_basedir(app, monkeypatch):
+    module = module_of(app)
+    fake = FakeS4()
+    use_fake(monkeypatch, module, fake)
+
+    result = module.action_ping(
+        values={},
+        context={
+            "backend": {
+                "config": {
+                    "bucket": "demo",
+                    "access_key": "ak",
+                    "secret_key": "sk",
+                    "basedir": "/test",
+                }
+            }
+        },
+    )
+
+    assert result["code"] == 0
+    assert fake.headed == [{"Bucket": "demo", "Key": "test/__sapic_probe__"}]
 
 
 def test_bitiful_reports_a_missing_dependency(app, monkeypatch):

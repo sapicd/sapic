@@ -231,6 +231,15 @@ export default {
     intro:
       'Uploads are written synchronously to the enabled backend with the smallest priority, while the other enabled backends replicate in the background (can be disabled in the site settings); direct links and reads pick available replicas in ascending priority order and fall through to the next one, which is why a backend that still holds replicas cannot be deleted or disabled. Enabling a storage hook adds its backend automatically and driver credentials are only entered here (one driver can back several backends, each with its own settings). A public backend serves public images straight from the driver; a private one (Qiniu / Upyun / private GitHub repo, or a local directory) relays every image through /raw with a server-signed URL, so the bucket stays closed.',
     loadFailed: 'Failed to load storage backends',
+    migrate: 'Migrate',
+    migrateConfirm:
+      'Migrate {count} replicas held by "{name}" to the target backend: redundant replicas are deleted, and sole replicas are rewritten to the target before their source object is removed.',
+    migrateEmpty: 'This backend holds no replicas and can be deleted directly.',
+    migrateFailed: 'Failed to migrate replicas',
+    migrateSuccess: 'Replicas migrated',
+    migrateTarget: 'Target backend',
+    migrateTargetPlaceholder: 'Choose the backend to receive the replicas',
+    migrateTitle: 'Migrate replicas',
     moveDown: 'Move down',
     moveUp: 'Move up',
     name: 'Name',
@@ -822,7 +831,7 @@ export default {
     statusRc: 'Release candidate',
     statusStable: 'Stable',
     storageConfigAlert:
-      'Credentials of the storage drivers ({names}) are configured under "Storage backends"',
+      'Storage driver credentials are configured under "Storage backends":',
     summary:
       '{total} hook(s), {enabled} enabled (disabling one takes its slots and actions offline immediately)',
     switchOff: 'Off',

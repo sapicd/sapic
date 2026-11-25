@@ -12,6 +12,10 @@ const saving = ref(false)
 const toggling = ref(0)
 const checking = ref(0)
 const checkingForm = ref(false)
+const migrating = ref(0)
+const migrateDialog = ref(false)
+const migrateRow = ref(null)
+const migrateTarget = ref(null)
 
 const dialog = ref(false)
 const form = reactive({
@@ -26,6 +30,9 @@ const form = reactive({
 const editing = computed(() => form.id !== null)
 const fields = computed(
   () => drivers.value.find((item) => item.name === form.hook_name)?.fields || [],
+)
+const migrateOptions = computed(() =>
+  items.value.filter((item) => item.id !== migrateRow.value?.id),
 )
 //: 驱动没有 upimg_url 时只能当公开后端用，后端保存时也会拒绝。
 const driverPrivateReadable = computed(
@@ -152,10 +159,17 @@ async function move(row, step) {
   const index = enabledRows.findIndex((item) => item.id === row.id)
   const target = enabledRows[index + step]
   if (!target) return
+  // 数值越小越靠前，两行交换 priority 即可换位。但相邻两行 priority
+  // 相同时交换等于没动（排序靠 id 决胜），于是让被移动的行额外偏移一格。
+  let rowPriority = target.priority
+  const targetPriority = row.priority
+  if (targetPriority === rowPriority) {
+    rowPriority += step
+  }
   try {
-    await api.patch(`/backends/${row.id}`, { json: { priority: target.priority } })
+    await api.patch(`/backends/${row.id}`, { json: { priority: rowPriority } })
     const data = await api.patch(`/backends/${target.id}`, {
-      json: { priority: row.priority },
+      json: { priority: targetPriority },
     })
     items.value = data?.items || items.value
   } catch (error) {
@@ -179,6 +193,36 @@ async function remove(row) {
     ElMessage.success(t('backends.deleted'))
   } catch (error) {
     ElMessage.error(errorMessage(error, t('backends.deleteFailed')))
+  }
+}
+
+function openMigrate(row) {
+  if (!row.replicas) {
+    ElMessage.info(t('backends.migrateEmpty'))
+    return
+  }
+  migrateRow.value = row
+  migrateTarget.value = null
+  migrateDialog.value = true
+}
+
+async function confirmMigrate() {
+  if (!migrateTarget.value) {
+    ElMessage.warning(t('backends.migrateTargetPlaceholder'))
+    return
+  }
+  migrating.value = migrateRow.value.id
+  try {
+    await api.post(`/backends/${migrateRow.value.id}/migrate`, {
+      json: { target: migrateTarget.value },
+    })
+    migrateDialog.value = false
+    ElMessage.success(t('backends.migrateSuccess'))
+    await load()
+  } catch (error) {
+    ElMessage.error(errorMessage(error, t('backends.migrateFailed')))
+  } finally {
+    migrating.value = 0
   }
 }
 
@@ -226,8 +270,8 @@ onMounted(load)
             <div class="hint">{{ row.hook_name }}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="priority" :label="t('backends.priority')" width="90" />
-        <el-table-column :label="t('backends.accessLabel')" width="100">
+        <el-table-column prop="priority" :label="t('backends.priority')" width="70" />
+        <el-table-column :label="t('backends.accessLabel')" width="90">
           <template #default="{ row }">
             <el-tooltip
               :content="
@@ -246,14 +290,14 @@ onMounted(load)
             </el-tooltip>
           </template>
         </el-table-column>
-        <el-table-column :label="t('backends.replicas')" width="80">
+        <el-table-column :label="t('backends.replicas')" width="70">
           <template #default="{ row }">
             <el-tooltip :content="t('backends.replicaTooltip')" placement="top">
               <span>{{ row.replicas }}</span>
             </el-tooltip>
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.status')" width="100">
+        <el-table-column :label="t('common.status')" width="90">
           <template #default="{ row }">
             <el-switch
               :model-value="row.enabled"
@@ -265,7 +309,7 @@ onMounted(load)
             />
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" width="260" align="right">
+        <el-table-column :label="t('common.actions')" width="300">
           <template #default="{ row }">
             <el-button link size="small" :disabled="!row.enabled" @click="move(row, -1)">
               {{ t('backends.moveUp') }}
@@ -282,6 +326,16 @@ onMounted(load)
               {{ t('backends.check') }}
             </el-button>
             <el-button link type="primary" size="small" @click="openEdit(row)">{{ t('backends.config') }}</el-button>
+            <el-button
+              v-if="row.replicas"
+              link
+              size="small"
+              type="warning"
+              :loading="migrating === row.id"
+              @click="openMigrate(row)"
+            >
+              {{ t('backends.migrate') }}
+            </el-button>
             <el-button link type="danger" size="small" @click="remove(row)">{{ t('common.delete') }}</el-button>
           </template>
         </el-table-column>
@@ -361,6 +415,34 @@ onMounted(load)
         <el-button :loading="checkingForm" @click="pingForm">{{ t('backends.check') }}</el-button>
         <el-button @click="dialog = false">{{ t('common.cancel') }}</el-button>
         <el-button type="primary" :loading="saving" @click="save">{{ t('common.save') }}</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="migrateDialog" :title="t('backends.migrateTitle')" width="480px">
+      <p v-if="migrateRow" class="hint">
+        {{ t('backends.migrateConfirm', { name: migrateRow.name, count: migrateRow.replicas }) }}
+      </p>
+      <el-select
+        v-model="migrateTarget"
+        :placeholder="t('backends.migrateTargetPlaceholder')"
+        style="width: 100%"
+      >
+        <el-option
+          v-for="item in migrateOptions"
+          :key="item.id"
+          :label="item.name"
+          :value="item.id"
+        />
+      </el-select>
+      <template #footer>
+        <el-button @click="migrateDialog = false">{{ t('common.cancel') }}</el-button>
+        <el-button
+          type="primary"
+          :loading="migrating === migrateRow?.id"
+          @click="confirmMigrate"
+        >
+          {{ t('backends.migrate') }}
+        </el-button>
       </template>
     </el-dialog>
   </div>

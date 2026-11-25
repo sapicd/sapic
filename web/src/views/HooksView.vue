@@ -449,15 +449,11 @@ onMounted(refresh)
             style="margin-bottom: 16px"
           >
             <template #title>
-              {{
-                t('adminHooks.storageConfigAlert', {
-                  names: uploadConfigs.map((item) => manifestText(item, 'title')).join(' / '),
-                })
-              }}
+              {{ t('adminHooks.storageConfigAlert') }}
+              <el-button link type="primary" @click="router.push({ name: 'admin-backends' })">
+                {{ t('adminHooks.goBackends') }}
+              </el-button>
             </template>
-            <el-button link type="primary" @click="router.push({ name: 'admin-backends' })">
-              {{ t('adminHooks.goBackends') }}
-            </el-button>
           </el-alert>
 
           <el-empty

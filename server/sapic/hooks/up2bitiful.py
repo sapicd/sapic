@@ -32,7 +32,7 @@ except ImportError:  # pragma: no cover - optional dependency
     boto3 = None
     Config = None
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 __author__ = "staugur"
 __description__ = "将图片保存到缤纷云 S4"
 __catalog__ = "upload"
@@ -315,7 +315,11 @@ def action_ping(values=None, context=None, **kwargs):
 
     try:
         #: 探测一个不存在的键：404 说明凭据与桶都没问题，403 才是没授权。
-        client.head_object(Bucket=str(merged["bucket"]).strip(), Key=PROBE_KEY)
+        #: 探测键落在 basedir 前缀下，只授予目录级权限（如 test/）的子账户也能通过。
+        client.head_object(
+            Bucket=str(merged["bucket"]).strip(),
+            Key=_key(merged.get("basedir"), "", PROBE_KEY),
+        )
     except Exception as exc:
         if _error_code(exc) not in ("404", "NoSuchKey", "NotFound"):
             return {"code": 1, "message": _error_message(exc)}

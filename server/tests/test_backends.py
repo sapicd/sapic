@@ -257,3 +257,38 @@ def test_backend_api_requires_admin(client):
     register_and_login(client)
     assert client.get("/api/v2/backends").status_code == 403
     assert client.post("/api/v2/backends", json={}).status_code == 403
+
+
+def test_backend_migrate_endpoint_moves_the_sole_replica(app, client, admin, tmp_path):
+    assert upload(client, admin).status_code == 201
+    target_root = tmp_path / "target"
+    created = client.post(
+        "/api/v2/backends",
+        json={
+            "name": "target",
+            "hook_name": "up2local",
+            "config": {"root": str(target_root)},
+            "priority": 900,
+        },
+        headers={"X-CSRF-Token": admin},
+    )
+    assert created.status_code == 201, created.get_json()
+    source_id = backends(client)["items"][0]["id"]
+    target_id = next(
+        item["id"] for item in created.get_json()["data"]["items"] if item["name"] == "target"
+    )
+
+    response = client.post(
+        "/api/v2/backends/%d/migrate" % source_id,
+        json={"target": target_id},
+        headers={"X-CSRF-Token": admin},
+    )
+    assert response.status_code == 200, response.get_json()
+    assert response.get_json()["data"]["moved"] == 1
+
+    with app.app_context():
+        replica = ImageBackend.get()
+        assert replica.backend.name == "target"
+    #: 字节真的搬过去了：目标目录有文件，源目录不再有。
+    assert list(target_root.rglob("photo-*.png"))
+    assert not list((tmp_path / "upload").rglob("photo-*.png"))

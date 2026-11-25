@@ -15,7 +15,9 @@ from __future__ import annotations
 import logging
 from concurrent.futures import Future, ThreadPoolExecutor, wait
 from pathlib import Path
+from posixpath import basename, dirname
 
+import requests
 from flask import Flask, current_app
 from peewee import IntegrityError
 
@@ -970,3 +972,103 @@ def replicas_for(image) -> list[ImageBackend]:
         )
         .order_by(StorageBackend.priority, ImageBackend.id)
     )
+
+
+def _read_bytes(url: str, headers: dict | None = None) -> bytes | None:
+    """Fetch an object body in full; ``None`` on any transport error.
+
+    Only storage backends reach this path (their URLs are configured by an
+    operator, not raw user input), so there is no address validation here.
+    """
+    try:
+        response = requests.get(url, headers=headers, timeout=60, stream=True)
+        response.raise_for_status()
+        chunks = []
+        for chunk in response.iter_content(chunk_size=64 * 1024):
+            if chunk:
+                chunks.append(chunk)
+        return b"".join(chunks)
+    except Exception:
+        logger.warning("read object failed", exc_info=True)
+        return None
+
+
+def read_object(image, replica: ImageBackend) -> bytes | None:
+    """Bytes of one replica: local file, public URL or signed private URL."""
+    path = local_path(replica)
+    if path is not None:
+        try:
+            return path.read_bytes()
+        except OSError:
+            logger.warning("read local object %s failed", path, exc_info=True)
+            return None
+    direct = public_src(replica)
+    if direct is not None:
+        return _read_bytes(direct)
+    signed = object_url(replica)
+    if signed is not None:
+        return _read_bytes(signed["url"], signed.get("headers"))
+    return None
+
+
+def migrate_backend(source: StorageBackend, target: StorageBackend) -> dict:
+    """Move or drop every ``ok`` replica held by ``source`` so it can be removed.
+
+    Redundant replicas (the image still has another ``ok`` replica) are deleted
+    together with their object; sole replicas are rewritten to ``target`` first
+    and only then removed from the source, so no image ever loses its last copy.
+    """
+    target_dict = _as_dict(target)
+    moved = deleted = failed = 0
+    errors: list[str] = []
+    rows = (
+        ImageBackend.select(ImageBackend, StorageBackend)
+        .join(StorageBackend)
+        .where((ImageBackend.backend == source) & (ImageBackend.state == STATE_OK))
+    )
+    for replica in rows:
+        image = replica.image
+        others = [row for row in replicas_for(image) if row.id != replica.id]
+        if others:
+            delete_object(image, replica)
+            replica.delete_instance()
+            deleted += 1
+            continue
+        data = read_object(image, replica)
+        if data is None:
+            failed += 1
+            errors.append("%s: cannot read source object" % image.sha)
+            continue
+        key = replica.object_key or ""
+        result = save_object(
+            target_dict,
+            image.sha,
+            basename(key) or image.filename,
+            data,
+            dirname(key),
+        )
+        if result.get("code") != 0:
+            failed += 1
+            errors.append(
+                "%s: %s"
+                % (
+                    image.sha,
+                    result.get("message") or result.get("msg") or "save failed",
+                )
+            )
+            continue
+        delete_object(image, replica)
+        #: 目标端若残留同图副本行，先清掉，避免撞 (image, backend) 唯一索引。
+        ImageBackend.delete().where(
+            (ImageBackend.image == image) & (ImageBackend.backend == target)
+        ).execute()
+        replica.backend = target
+        replica.object_key = result.get("path") or ""
+        replica.url = result.get("src")
+        replica.size = result.get("size") or len(data)
+        replica.etag = result.get("etag")
+        replica.is_primary = True
+        replica.checked_at = now()
+        replica.save()
+        moved += 1
+    return {"moved": moved, "deleted": deleted, "failed": failed, "errors": errors}

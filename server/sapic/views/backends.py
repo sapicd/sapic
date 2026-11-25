@@ -30,6 +30,7 @@ from ..libs.storage import (
     list_backend_rows,
     list_backends,
     list_user_backend_rows,
+    migrate_backend,
     primary_backend_id,
     private_readable,
     update_backend,
@@ -40,7 +41,7 @@ from ..libs.storage import (
     user_backends_allowed,
 )
 from ..models import StorageBackend
-from ..models.storage import SCOPE_USER, VISIBILITY_PUBLIC
+from ..models.storage import SCOPE_USER, SYSTEM_SCOPES, VISIBILITY_PUBLIC
 from ..utils.web import ok
 
 bp = Blueprint("backends", __name__)
@@ -176,6 +177,21 @@ def modify_backend(backend_id: int):
         raise ApiError("backend not found", ErrorCode.NOT_FOUND, 404)
     update_backend(row, _json_body())
     return ok(_payload())
+
+
+@bp.post("/backends/<int:backend_id>/migrate")
+@admin_required
+def migrate_backend_view(backend_id: int):
+    row = StorageBackend.get_or_none(StorageBackend.id == backend_id)
+    if row is None:
+        raise ApiError("backend not found", ErrorCode.NOT_FOUND, 404)
+    target_id = _json_body().get("target")
+    target = StorageBackend.get_or_none(
+        (StorageBackend.id == target_id) & StorageBackend.scope.in_(SYSTEM_SCOPES)
+    )
+    if target is None or target.id == row.id:
+        raise ApiError("invalid target backend", ErrorCode.PARAM_ERROR)
+    return ok(migrate_backend(row, target))
 
 
 @bp.delete("/backends/<int:backend_id>")
