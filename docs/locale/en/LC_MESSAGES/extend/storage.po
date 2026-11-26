@@ -471,6 +471,56 @@ msgstr ""
 " as well, so create a separate `public` backend for public images and give "
 "it a higher priority."
 
+#: ../../extend/storage.md
+msgid "## 后台跨后端迁移"
+msgstr "## Cross-backend migration in the admin"
+
+#: ../../extend/storage.md
+msgid ""
+"管理员在后台「存储」里可对单个后端执行迁移（`POST /api/v2/backends/<id>/migrate`），"
+"把该后端上 `ok` 状态的副本写到目标后端。**默认只复制、不删源站**：源对象与源副本行都保留，"
+"方便先验证目标站；确认无误后回到对话框勾选「迁移完成后删除源站副本」再跑一次，才会清空源站。"
+msgstr ""
+"An administrator can migrate a single backend from the admin \"Storage\" page "
+"(`POST /api/v2/backends/<id>/migrate`), writing its `ok` replicas to a target "
+"backend. **By default this only copies and keeps the source**: source objects "
+"and replica rows stay in place so the target can be verified first. Return to "
+"the dialog, tick \"Delete source replicas after migration\" and run it again "
+"to erase the source."
+
+#: ../../extend/storage.md
+msgid ""
+"- 复制模式：逐条读源字节写入目标，在目标新建副本行（`object_key` 采用目标驱动的 "
+"`path`），源副本行原样保留、仍为 `is_primary`；写失败只跳过该图，源不动。"
+msgstr ""
+"- Copy mode: read each source object and write it to the target, creating a "
+"target replica row (`object_key` comes from the target driver's `path`). The "
+"source row is kept unchanged and stays `is_primary`; a failed write only "
+"skips that image."
+
+#: ../../extend/storage.md
+msgid ""
+"- 删除模式：已有其它健康副本的图直接删源对象与源副本行；唯一副本先写目标成功、"
+"再删源对象，最后把副本行改挂到目标，全程不会让图片失去最后一个副本。"
+msgstr ""
+"- Delete mode: images with another healthy replica have their source object "
+"and row dropped directly; sole replicas are written to the target first, "
+"then the source object is deleted and the row re-pointed at the target, so "
+"an image never loses its last copy."
+
+#: ../../extend/storage.md
+msgid ""
+"- 文件名与目录沿用源 `object_key` 的 basename/dirname，但最终 key 由目标驱动的 "
+"`basedir` 规则生成，不同驱动间可能有差异（如又拍 key 带前导 `/`、缤纷云不带）。"
+msgstr ""
+"- Filename and directory come from the source `object_key`'s basename/dirname, "
+"but the final key is built by the target driver's `basedir` rules and may "
+"differ between drivers (e.g. Upyun keys start with `/`, Bitiful's do not)."
+
+#: ../../extend/storage.md
+msgid "- 图片对外链接 `/raw/<sha>` 不变。"
+msgstr "- Public image links `/raw/<sha>` are unchanged."
+
 #: ../../extend/storage.md:108
 msgid "内置驱动的实现方式可以直接参照："
 msgstr "The built-in drivers are the reference:"

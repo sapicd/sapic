@@ -127,12 +127,12 @@ online documentation served by each instance** (`GET /api/v2/docs`, source
 
 Authentication: cookie session (writes require `X-CSRF-Token`) or `Authorization: Bearer <PAT>`.
 
-Single sign-on (OIDC, provided by the `passport` hook):
+Single sign-on (OIDC, provided by the `oidc` hook):
 
 - Login order: an already bound identity logs in directly; an unbound identity whose provider has a
   verified email matching a locally verified account is linked automatically; otherwise an account is
   created from the provider data (the main entry point for new users, creating a default album too).
-- A new account takes the provider's stable identifier as its local username (for Passport that is
+- A new account takes the provider's stable identifier as its local username (for OIDC that is
   `sub`/uid, 22 lowercase characters); the nickname is only stored as the display name in `nickname` —
   nicknames can change and repeat, so they must not be used as account names.
 - Email linking is always enabled and requires **both the provider and the local account to have a

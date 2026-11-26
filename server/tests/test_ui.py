@@ -75,15 +75,15 @@ def test_i18n_keys_are_whitelisted():
         {
             "type": "link",
             "text": "登录",
-            "text_key": "hooks.passport.signIn",
+            "text_key": "hooks.oidc.signIn",
             "label_key": "common.or",
             "href": "/login",
         }
     )
-    assert node["text_key"] == "hooks.passport.signIn"
+    assert node["text_key"] == "hooks.oidc.signIn"
     #: ``label_key`` 只属于带 ``label`` 的节点，其他类型带了也不透传。
     assert "label_key" not in node
-    #: 键必须是点分标识符（``hooks.passport.signIn``），非法值静默丢弃。
+    #: 键必须是点分标识符（``hooks.oidc.signIn``），非法值静默丢弃。
     for bad in ("Not A Key", "hooks..title", "hooks/title", "x" * 80, 42):
         assert "text_key" not in ui.clean_node(
             {"type": "text", "text": "hi", "text_key": bad}
@@ -97,9 +97,9 @@ def test_field_i18n_keys_are_kept_and_validated():
                 "type": "input",
                 "key": "issuer",
                 "label": "Issuer 地址",
-                "label_key": "hooks.passport.fields.issuer.label",
+                "label_key": "hooks.oidc.fields.issuer.label",
                 "placeholder": "x",
-                "placeholder_key": "hooks.passport.fields.issuer.hint",
+                "placeholder_key": "hooks.oidc.fields.issuer.hint",
                 "help_key": "bad key",
             }
         ]
@@ -110,8 +110,8 @@ def test_field_i18n_keys_are_kept_and_validated():
             "key": "issuer",
             "label": "Issuer 地址",
             "placeholder": "x",
-            "label_key": "hooks.passport.fields.issuer.label",
-            "placeholder_key": "hooks.passport.fields.issuer.hint",
+            "label_key": "hooks.oidc.fields.issuer.label",
+            "placeholder_key": "hooks.oidc.fields.issuer.hint",
         }
     ]
 

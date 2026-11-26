@@ -212,6 +212,16 @@ msgstr ""
 "Failures never guess `pass`: scanning one more round is cheaper than "
 "letting something through."
 
+#: ../../extend/moderator.md
+msgid ""
+"没给 `message` 时核心会合成一条 （如 `my_moderator: invalid verdict 'approved'`），所以后台队列里很少看不到原因；"
+"定时任务页的「上次结果」也会附上最多 3 条失败样例（`sha: note`），便于定位哪个钩子返回了什么。"
+msgstr ""
+"When no `message` is given the core composes one (e.g. `my_moderator: "
+"invalid verdict 'approved'`), so the admin queue usually shows a reason. "
+"The scheduler page also attaches up to 3 failure samples (`sha: note`) to "
+"the \"last result\" so you can see what each hook returned."
+
 #: ../../extend/moderator.md:61
 msgid "执行"
 msgstr "Running it"
@@ -245,6 +255,21 @@ msgstr ""
 "`running` for more than 10 minutes (the process was killed) is queued "
 "again."
 
+#: ../../extend/moderator.md
+msgid ""
+"**判定失败有退避**：钩子判不了的行会退回 `review_state=NULL`，但 `reviewed_at` "
+"保留为本轮时间，1 小时内（`RETRY_DELAY`）不再扫它——否则一个坏钩子会让扫描 "
+"每轮都卡在最老的 50 张、后面的图永远轮不到。退避只在**本批**图片太少时会让坏图重新入列；"
+"正常情况下新图先审完，1 小时后再回头重试失败图。"
+msgstr ""
+"**Failed verdicts back off**: a row the hook cannot judge returns to "
+"`review_state=NULL` but keeps `reviewed_at` from the current round, and is "
+"skipped for one hour (`RETRY_DELAY`). Otherwise a broken hook would pin "
+"every scan to the same oldest 50 rows and the rest of the queue would never "
+"be reached. Backoff only lets failed rows back in early when the batch has "
+"too few images; normally new images are judged first and failures are "
+"retried an hour later."
+
 #: ../../extend/moderator.md:78
 msgid ""
 "完全不想用内置调度器时（例如已经有了统一的作业系统）：web 端设 `sapic_scheduler=0`， 用 `flask sa "
@@ -275,8 +300,10 @@ msgid "`NULL`"
 msgstr "`NULL`"
 
 #: ../../extend/moderator.md:7
-msgid "未审（含判定失败待重试）"
-msgstr "Not reviewed (including failed verdicts waiting for a retry)"
+msgid "未审（含判定失败、退避中待重试；失败原因见 `review_note`）"
+msgstr ""
+"Not reviewed (including failed verdicts waiting out their backoff; the "
+"reason is in `review_note`)"
 
 #: ../../extend/moderator.md:7
 msgid "`running`"

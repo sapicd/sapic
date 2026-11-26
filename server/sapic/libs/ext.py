@@ -232,10 +232,11 @@ def _as_bool(value) -> bool:
 def normalize_identity(claims) -> dict:
     """Validate and trim the dict returned by ``oidc_exchange``.
 
-    A provider may return ``sub`` instead of ``subject`` (the OIDC spelling) and
-    may omit ``username`` (it then falls back to the subject). ``ValueError`` is
-    raised when no subject is present, so a broken provider can never create a
-    user row keyed on an empty identity.
+    A provider may return ``sub`` instead of ``subject`` (the OIDC spelling),
+    ``preferred_username`` instead of ``username``, and may omit ``username``
+    (it then falls back to ``preferred_username`` and finally the subject).
+    ``ValueError`` is raised when no subject is present, so a broken provider
+    can never create a user row keyed on an empty identity.
     """
     data = claims if isinstance(claims, dict) else {}
     subject = str(data.get("subject") or data.get("sub") or "").strip()[:255]
@@ -243,14 +244,19 @@ def normalize_identity(claims) -> dict:
         raise ValueError("invalid oidc identity: subject is missing")
 
     username = (
-        str(data.get("username") or "").strip()[:32]
+        str(data.get("username") or data.get("preferred_username") or "").strip()[:32]
         or subject[:32]
     )
     return {
         "issuer": str(data.get("issuer") or "").strip()[:255],
         "subject": subject,
         "username": username,
-        "nickname": str(data.get("nickname") or "").strip()[:64],
+        "nickname": str(
+            data.get("nickname")
+            or data.get("preferred_username")
+            or data.get("name")
+            or ""
+        ).strip()[:64],
         "email": str(data.get("email") or "").strip()[:128],
         "email_verified": _as_bool(data.get("email_verified")),
     }

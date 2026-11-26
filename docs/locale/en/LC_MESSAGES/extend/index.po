@@ -332,8 +332,8 @@ msgid "登录 Provider"
 msgstr "A login provider"
 
 #: ../../extend/index.md
-msgid "`passport.py`（OIDC）"
-msgstr "`passport.py` (OIDC)"
+msgid "`oidc.py`（OIDC）"
+msgstr "`oidc.py` (OIDC)"
 
 #: ../../extend/index.md
 msgid "`oidc_authorize_url` / `oidc_exchange`，登录按钮插槽"

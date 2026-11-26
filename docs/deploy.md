@@ -311,8 +311,8 @@ sapic_db_url=sqlite:////data/sapic/sapic.db
    （配置完整时优先于 SMTP）；不配也能用，但相关功能不可用。
    端口决定传输方式：465/994 走隐式 SSL（不勾 STARTTLS），587 勾 STARTTLS，25 一般都不用。
    阿里/腾讯企业邮箱用 465 + 授权码（不是登录密码）。
-5. 统一登录（OIDC）：`/admin/hooks` 启用 `passport`，填 `issuer` / `client_id` / `client_secret`；
-   在 Passport 侧登记回调地址 `https://img.example.com/api/v2/auth/oidc/passport/callback`。
+5. 统一登录（OIDC）：`/admin/hooks` 启用 `oidc`，填 `issuer` / `client_id` / `client_secret`；
+   在 OIDC 服务端登记回调地址 `https://img.example.com/api/v2/auth/oidc/callback`。
    站内首次登录会用 provider 的稳定标识（uid）建号，昵称只作显示名。
    关闭 `password_login` 后只能走统一登录，建议先给管理员账号绑定 OIDC 再关。
 6. 存储后端：`up2local` 默认启用并自动创建 `local` 后端（写到 `STORAGE_DIR`）。要用云存储：

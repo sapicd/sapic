@@ -41,6 +41,12 @@ REVIEW_BATCH = 50
 #: mid-scan) and becomes claimable again.
 STALE_CLAIM = 600
 
+#: A failed verdict keeps ``reviewed_at`` as a backoff clock: skip it for a
+#: while so a permanently broken hook cannot starve the rest of the queue.
+#: Must be longer than the scheduler interval (5 min by default), otherwise
+#: the retry is due again on the very next tick and nothing else gets scanned.
+RETRY_DELAY = 3600
+
 #: ``review_note`` is a short column; the hook message is only a hint anyway.
 NOTE_MAX = 255
 
@@ -63,6 +69,7 @@ def pending_query(limit: int = REVIEW_BATCH):
     the public cannot see is pointless.
     """
     stale = now() - STALE_CLAIM
+    retry_due = now() - RETRY_DELAY
     return (
         Image.select(Image)
         .join(Album, JOIN.LEFT_OUTER, on=(Image.album == Album.id))
@@ -70,7 +77,14 @@ def pending_query(limit: int = REVIEW_BATCH):
             public_visibility_condition(),
             (Image.status == STATUS_ENABLED)
             & (
-                Image.review_state.is_null()
+                #: 未审过；或失败退避到期；或 running 被遗弃。
+                (
+                    Image.review_state.is_null()
+                    & (
+                        Image.reviewed_at.is_null()
+                        | (Image.reviewed_at < retry_due)
+                    )
+                )
                 | ((Image.review_state == REVIEW_RUNNING) & (Image.reviewed_at < stale))
             ),
         )
@@ -87,12 +101,19 @@ def _claim(image: Image) -> bool:
     claimed would judge (and bill) the same image twice.
     """
     stale = now() - STALE_CLAIM
+    retry_due = now() - RETRY_DELAY
     updated = (
         Image.update(review_state=REVIEW_RUNNING, reviewed_at=now())
         .where(
             (Image.id == image.id)
             & (
-                Image.review_state.is_null()
+                (
+                    Image.review_state.is_null()
+                    & (
+                        Image.reviewed_at.is_null()
+                        | (Image.reviewed_at < retry_due)
+                    )
+                )
                 | ((Image.review_state == REVIEW_RUNNING) & (Image.reviewed_at < stale))
             )
         )
@@ -152,20 +173,25 @@ def judge(image: Image) -> tuple[str | None, str]:
     """
     names = moderator_names()
     if not names:
-        return None, ""
+        return None, "no enabled moderator hook"
     payload = image_payload(image)
     blocked: list[str] = []
     passed = False
     failed = False
     notes: list[str] = []
-    for result in get_hook_manager().call(
-        "review_image", include=names, with_config=True, image=payload
-    ):
+    results = list(
+        get_hook_manager().call(
+            "review_image", include=names, with_config=True, image=payload
+        )
+    )
+    if not results:
+        return None, "no verdict returned by moderator hooks"
+    for result in results:
+        sender = str(result.get("sender") or "moderator")
         message = str(result.get("message") or "").strip()
         if result.get("code") != 0:
             failed = True
-            if message:
-                notes.append(message)
+            notes.append(message or "%s: error code %s" % (sender, result.get("code")))
             continue
         verdict = str(result.get("verdict") or "").strip().lower()
         if verdict == REVIEW_BLOCK:
@@ -174,8 +200,10 @@ def judge(image: Image) -> tuple[str | None, str]:
             passed = True
         else:
             failed = True
-            if message:
-                notes.append(message)
+            notes.append(
+                message
+                or "%s: invalid verdict %r" % (sender, result.get("verdict"))
+            )
     if blocked:
         return REVIEW_BLOCK, (blocked[0] or "blocked by moderator")
     if failed or not passed:
@@ -185,7 +213,14 @@ def judge(image: Image) -> tuple[str | None, str]:
 
 def review_pending(limit: int = REVIEW_BATCH) -> dict:
     """Judge up to ``limit`` images; returns counters for the CLI output."""
-    counts = {"scanned": 0, "passed": 0, "blocked": 0, "purged": 0, "failed": 0}
+    counts = {
+        "scanned": 0,
+        "passed": 0,
+        "blocked": 0,
+        "purged": 0,
+        "failed": 0,
+        "samples": [],
+    }
     auto_purge = bool(get_setting("review_auto_purge"))
     for candidate in list(pending_query(limit)):
         if not _claim(candidate):
@@ -197,12 +232,14 @@ def review_pending(limit: int = REVIEW_BATCH) -> dict:
             logger.exception("moderation of image %s failed", candidate.sha)
             verdict, note = None, ""
         if verdict is None:
-            #: Give the row back so the next run retries instead of leaving it
-            #: stuck in ``running`` until the stale window expires.
+            #: Give the row back with ``reviewed_at`` as a backoff clock, so a
+            #: broken hook cannot keep the scan reading the same 50 rows forever.
             Image.update(
-                review_state=None, reviewed_at=None, review_note=note or None
+                review_state=None, reviewed_at=now(), review_note=note or None
             ).where(Image.id == candidate.id).execute()
             counts["failed"] += 1
+            if len(counts["samples"]) < 3:
+                counts["samples"].append({"sha": candidate.sha, "note": note})
             continue
         if verdict == REVIEW_BLOCK and auto_purge:
             #: 后台策略打开时直接物理删除；失败则退回普通 block，保留复核机会。

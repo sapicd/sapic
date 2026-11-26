@@ -330,7 +330,7 @@ ShareX 等的逐项配置见 `docs/usage.md`。**不要再为老客户端补第�
   **禁止在校验后让 urllib/requests 再解析一次**——那就是 DNS rebinding 的 TOCTOU 缺口
   （名字第一次答公网、第二次答内网）。重定向每一跳都重新走这套流程。
 - `password_login`（默认开）关闭后 `views/auth.py` 的登录与注册接口直接 403，登录页只渲染统一登录入口
-- 统一登录（OIDC）：`passport` 钩子提供 provider 能力，`views/auth.py` 负责发起/回调与绑定，
+- 统一登录（OIDC）：`oidc` 钩子提供 provider 能力，`views/auth.py` 负责发起/回调与绑定，
   `libs/users.py` 的 `resolve_oidc_user` 处理「已绑定 → 登录 / 双方邮箱均已验证 → 自动关联 / 否则按
   provider 信息建号」（新用户主要入口）；解绑需校验当前密码，且**名下有未删除的图片时直接 409**
 （`libs/users.unbind_oidc_identity` 里查 `status=enabled` 的图片数，与自助注销同一口径），删干净后才允许解绑。
@@ -540,7 +540,7 @@ __state__ = "enabled"       # enabled / disabled
   标识符），`config_schema` 的字段用 `label_key` / `help_key` / `placeholder_key`，manifest 用
   `title_key` / `description_key`。前端词表（`web/src/i18n/*.js`）有译文就用译文、没有就显示钩子
   给的原文，所以第三方钩子只写一种语言也能用；内置钩子的译文放在词表的 `hooks.<模块名>` 下
-  （如 `hooks.passport.title`、`hooks.up2github.fields.repo.label`），管理员填过的自定义文案
+  （如 `hooks.oidc.title`、`hooks.up2github.fields.repo.label`），管理员填过的自定义文案
   不带键、永远照原样显示
 - 钩子**没声明**键时，前端还会按模块名兜底查 `hooks.<模块名>.title` / `.description`
   （`web/src/components/hook/text.js` 的 `hookText`）：给市场里的第三方钩子补译文不必改它的包，

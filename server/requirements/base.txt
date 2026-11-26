@@ -1,5 +1,5 @@
 #: 运行时依赖。内置钩子属于基本能力，它们用到的第三方库直接在这里装：
-#:   passport / up2github / up2gitee  -> requests
+#:   oidc / up2github / up2gitee     -> requests
 #:   up2qiniu                         -> qiniu
 #:   up2upyun                         -> upyun
 #:   up2bitiful                       -> boto3

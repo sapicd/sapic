@@ -137,11 +137,11 @@ msgid "OIDC 回调 400 `invalid oidc state`"
 msgstr "OIDC callback returns 400 `invalid oidc state`"
 
 #: ../../faq.md
-msgid "回调域名/协议与发起时不一致：检查 `sapic_proxyfix`、外层 TLS 透传与 Passport 侧登记的回调地址"
+msgid "回调域名/协议与发起时不一致：检查 `sapic_proxyfix`、外层 TLS 透传与 OIDC 侧登记的回调地址"
 msgstr ""
 "The callback domain or scheme differs from the one used to start the "
 "flow: check `sapic_proxyfix`, TLS passthrough on the outer layer and the "
-"callback URL registered on the Passport side"
+"callback URL registered on the OIDC side"
 
 #: ../../faq.md
 msgid "登录提示账号未激活"

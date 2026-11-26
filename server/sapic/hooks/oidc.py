@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""passport — sign in through a Passport (OIDC) provider.
+"""oidc — sign in through any standard OpenID Connect provider.
 
 The hook owns only the provider conversation, following the standard
 authorization-code flow: the discovery document decides the endpoints, the
@@ -27,9 +27,9 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     requests = None
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 __author__ = "staugur"
-__description__ = "使用 Passport 统一登录（OIDC）"
+__description__ = "标准 OpenID Connect 统一登录"
 __catalog__ = "auth"
 __state__ = "disabled"
 
@@ -39,11 +39,11 @@ DEFAULT_SCOPES = "openid profile email"
 
 #: (key, node type, label, hint)；``input`` 的 hint 是占位文案，``switch`` 的 hint 是说明提示。
 FIELDS = (
-    ("issuer", "input", "Issuer 地址", "Passport 服务地址，如 https://passport.example.com"),
-    ("client_id", "input", "Client ID", "Passport 后台创建 OIDC 应用后获得"),
+    ("issuer", "input", "Issuer 地址", "OIDC 服务地址，如 https://id.example.com"),
+    ("client_id", "input", "Client ID", "在 OIDC 服务端创建应用后获得"),
     ("client_secret", "password", "Client Secret", "OIDC 应用密钥"),
     ("scopes", "input", "Scope", DEFAULT_SCOPES),
-    ("button_text", "input", "按钮文案", "登录页按钮文案，默认「通过 Passport 登录」"),
+    ("button_text", "input", "按钮文案", "登录页按钮文案，默认「通过 OIDC 登录」"),
 )
 #: 输入框下方要补充说明的字段：``key -> help``（占位文案放不下这些取舍）。
 FIELD_HELP = {
@@ -65,10 +65,10 @@ def _field_node(key: str, kind: str, label: str, hint: str) -> dict:
             "type": kind,
             "key": key,
             "label": label,
-            "label_key": "hooks.passport.fields.%s.label" % key,
+            "label_key": "hooks.oidc.fields.%s.label" % key,
             "default": True,
             "help": hint,
-            "help_key": "hooks.passport.fields.%s.hint" % key,
+            "help_key": "hooks.oidc.fields.%s.hint" % key,
             "active_text": "开启",
             "inactive_text": "关闭",
         }
@@ -76,22 +76,22 @@ def _field_node(key: str, kind: str, label: str, hint: str) -> dict:
         "type": kind,
         "key": key,
         "label": label,
-        "label_key": "hooks.passport.fields.%s.label" % key,
+        "label_key": "hooks.oidc.fields.%s.label" % key,
         "placeholder": hint,
-        "placeholder_key": "hooks.passport.fields.%s.hint" % key,
+        "placeholder_key": "hooks.oidc.fields.%s.hint" % key,
         "required": key in REQUIRED,
     }
     if FIELD_HELP.get(key):
         node["help"] = FIELD_HELP[key]
-        node["help_key"] = "hooks.passport.fields.%s.help" % key
+        node["help_key"] = "hooks.oidc.fields.%s.help" % key
     return node
 
 
 def hook_manifest():
     return {
-        "title": "Passport 统一登录",
-        "title_key": "hooks.passport.title",
-        "description_key": "hooks.passport.description",
+        "title": "OIDC 统一登录",
+        "title_key": "hooks.oidc.title",
+        "description_key": "hooks.oidc.description",
         "catalog": "auth",
         "config_schema": [_field_node(*field) for field in FIELDS],
         "actions": [
@@ -115,12 +115,12 @@ def slot_login_after_form(context=None, **kwargs):
     text = str(config.get("button_text") or "").strip()
     link = {
         "type": "link",
-        "text": text or "通过 Passport 登录",
-        "href": "/api/v2/auth/oidc/passport",
+        "text": text or "通过 OIDC 登录",
+        "href": "/api/v2/auth/oidc",
         "icon": "builtin:link",
     }
     if not text:
-        link["text_key"] = "hooks.passport.signIn"
+        link["text_key"] = "hooks.oidc.signIn"
     return [
         {"type": "divider", "label": "或", "label_key": "common.or"},
         link,
@@ -138,7 +138,7 @@ def _settings(config: dict) -> tuple[str, str, str, str]:
     client_id = str(config.get("client_id") or "").strip()
     client_secret = str(config.get("client_secret") or "").strip()
     if not issuer or not client_id or not client_secret:
-        raise ValueError("passport is not configured")
+        raise ValueError("oidc is not configured")
     scopes = str(config.get("scopes") or "").strip() or DEFAULT_SCOPES
     return issuer, client_id, client_secret, scopes
 
@@ -199,17 +199,26 @@ def _identity(claims: dict, issuer: str) -> dict:
             "subject is missing from the provider claims (got: %s)"
             % (", ".join(sorted(claims)) or "empty response")
         )
-    #: Passport 的 sub 就是用户 uid（22 位小写），昵称会随用户改名而变化，
-    #: 所以本地账号名一律取 uid，昵称只作显示名。
-    #: Passport 只把验证过的手机号/邮箱入库，缺字段按已验证处理。
+    #: OIDC 标准 claim 里 preferred_username 才是用户可读的用户名，sub 通常是
+    #: 机器标识（UUID），直接当账号名难读也不友好。所以用户名优先取
+    #: preferred_username，拿不到才回落 sub；登录判定只看 issuer+sub，username
+    #: 仅作本地账号名与显示，下游 _oidc_username 会去掉非法字符并去重。
+    #: 昵称链补 preferred_username，让只回 preferred_username 的 provider 也有显示名。
+    #: 部分 provider 只把验证过的邮箱入库，缺字段按已验证处理。
     verified = claims.get("email_verified", True)
     if isinstance(verified, str):
         verified = verified.strip().lower() in ("true", "1", "yes")
+    username = str(claims.get("preferred_username") or "").strip()
     return {
         "issuer": str(claims.get("iss") or issuer),
         "subject": subject,
-        "username": subject,
-        "nickname": str(claims.get("nickname") or claims.get("name") or ""),
+        "username": username or subject,
+        "nickname": str(
+            claims.get("nickname")
+            or claims.get("preferred_username")
+            or claims.get("name")
+            or ""
+        ).strip(),
         "email": str(claims.get("email") or ""),
         #: 只有 provider 明确验证过的邮箱才允许自动关联本地老账号。
         "email_verified": bool(verified),

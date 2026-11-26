@@ -16,6 +16,8 @@ const migrating = ref(0)
 const migrateDialog = ref(false)
 const migrateRow = ref(null)
 const migrateTarget = ref(null)
+//: 默认只复制、保留源站；用户明确勾选后才删除源对象。
+const migrateDeleteSource = ref(false)
 
 const dialog = ref(false)
 const form = reactive({
@@ -203,6 +205,7 @@ function openMigrate(row) {
   }
   migrateRow.value = row
   migrateTarget.value = null
+  migrateDeleteSource.value = false
   migrateDialog.value = true
 }
 
@@ -213,11 +216,21 @@ async function confirmMigrate() {
   }
   migrating.value = migrateRow.value.id
   try {
-    await api.post(`/backends/${migrateRow.value.id}/migrate`, {
-      json: { target: migrateTarget.value },
+    const result = await api.post(`/backends/${migrateRow.value.id}/migrate`, {
+      json: {
+        target: migrateTarget.value,
+        delete_source: migrateDeleteSource.value,
+      },
     })
     migrateDialog.value = false
-    ElMessage.success(t('backends.migrateSuccess'))
+    ElMessage.success(
+      t('backends.migrateSuccess', {
+        copied: result?.copied ?? 0,
+        moved: result?.moved ?? 0,
+        deleted: result?.deleted ?? 0,
+        failed: result?.failed ?? 0,
+      })
+    )
     await load()
   } catch (error) {
     ElMessage.error(errorMessage(error, t('backends.migrateFailed')))
@@ -434,6 +447,13 @@ onMounted(load)
           :value="item.id"
         />
       </el-select>
+      <div class="migrate-delete-source">
+        <el-switch v-model="migrateDeleteSource" />
+        <span>{{ t('backends.migrateDeleteSource') }}</span>
+      </div>
+      <p class="hint">
+        {{ t('backends.migrateDeleteSourceHint') }}
+      </p>
       <template #footer>
         <el-button @click="migrateDialog = false">{{ t('common.cancel') }}</el-button>
         <el-button

@@ -483,7 +483,7 @@ a {
 }
 
 .user-cell__name {
-  /*: 用户名可能很长（Passport 的 uid 22 位），列宽固定后靠省略号收尾。 */
+  /*: 用户名可能很长（OIDC 的 uid 通常是长串），列宽固定后靠省略号收尾。 */
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -1130,6 +1130,13 @@ a {
   max-width: 100%;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+/*: 回调地址、mono 文本域等长 URL 用等宽字体，字符对齐更容易核对。 */
+.node-field .el-input.is-mono .el-input__inner,
+.node-field .el-textarea.is-mono .el-textarea__inner {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
 }
 
 /* ============================================================

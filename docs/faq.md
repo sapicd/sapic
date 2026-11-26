@@ -22,7 +22,7 @@
 | 现象 | 原因与处理 |
 | --- | --- |
 | 登录成功但刷新就掉线 | 反代没传 `X-Forwarded-Proto` 或没开 `sapic_proxyfix=1`，Cookie 的 `Secure` 与站点协议不一致 |
-| OIDC 回调 400 `invalid oidc state` | 回调域名/协议与发起时不一致：检查 `sapic_proxyfix`、外层 TLS 透传与 Passport 侧登记的回调地址 |
+| OIDC 回调 400 `invalid oidc state` | 回调域名/协议与发起时不一致：检查 `sapic_proxyfix`、外层 TLS 透传与 OIDC 服务端登记的回调地址 |
 | 登录提示账号未激活 | `status=1` 与待审核（`-1`）能登录；已拒绝 / 已禁用不行，管理员在 `/admin/users` 处理。待审核账号可正常浏览，只是不能上传图片 |
 | 关闭密码登录后进不去了 | `password_login` 关掉前要先把管理员账号绑定 OIDC；已锁死则直接改库里的站点设置 |
 | `invalid csrf token` | 拿浏览器会话当令牌用了；客户端一律用 PAT |

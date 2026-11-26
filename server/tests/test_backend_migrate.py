@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""``migrate_backend``: moving replicas off a backend so it can be removed."""
+"""``migrate_backend``: copy replicas to a target, optionally deleting the source."""
 
 from sapic.libs import storage as storage_mod
 from sapic.models import Image, ImageBackend, StorageBackend
@@ -52,7 +52,7 @@ def test_migrate_rewrites_sole_replicas_and_drops_redundant(app, monkeypatch):
         )
         monkeypatch.setattr(storage_mod, "delete_object", lambda image, replica: True)
 
-        result = storage_mod.migrate_backend(source, target)
+        result = storage_mod.migrate_backend(source, target, delete_source=True)
 
     assert result["moved"] == 1
     assert result["deleted"] == 1
@@ -108,3 +108,61 @@ def test_migrate_keeps_the_source_when_the_target_write_fails(app, monkeypatch):
             (ImageBackend.image == sole) & (ImageBackend.state == "ok")
         )
         assert row.backend_id == source.id
+
+
+def test_migrate_copies_by_default_and_keeps_the_source(app, monkeypatch):
+    with app.app_context():
+        source = _backend("src")
+        target = _backend("dst")
+        image = _image("sha-copy")
+        ImageBackend.create(
+            image=image,
+            backend=source,
+            object_key="alice/2026/copy.png",
+            state="ok",
+            is_primary=True,
+        )
+
+        monkeypatch.setattr(
+            storage_mod, "read_object", lambda image, replica: b"payload"
+        )
+        monkeypatch.setattr(
+            storage_mod,
+            "save_object",
+            lambda backend, sha, filename, stream, upload_path: {
+                "code": 0,
+                "path": "copied/%s" % filename,
+                "size": len(stream),
+                "etag": "e3",
+            },
+        )
+        #: 复制模式绝不能删源站对象。
+        monkeypatch.setattr(
+            storage_mod,
+            "delete_object",
+            lambda image, replica: (_ for _ in ()).throw(
+                AssertionError("delete_object must not be called")
+            ),
+        )
+
+        result = storage_mod.migrate_backend(source, target)
+
+    assert result == {
+        "moved": 0,
+        "copied": 1,
+        "deleted": 0,
+        "failed": 0,
+        "errors": [],
+    }
+
+    with app.app_context():
+        rows = {
+            row.backend_id: row
+            for row in ImageBackend.select().where(ImageBackend.image == image)
+        }
+        assert source.id in rows
+        assert rows[source.id].object_key == "alice/2026/copy.png"
+        assert rows[source.id].is_primary is True
+        assert target.id in rows
+        assert rows[target.id].object_key == "copied/copy.png"
+        assert rows[target.id].state == "ok"

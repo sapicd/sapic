@@ -56,7 +56,9 @@ def review_image(image, config=None) -> dict:
 - 没有任何 `block`，但存在 `code != 0` 或未知 `verdict` → **不落结论**，下一轮重试；
 - 全部有效且都 `pass` 才算 `pass`。
 
-失败时不会猜 `pass`：宁可多扫一轮，也不放行。
+失败时不会猜 `pass`：宁可多扫一轮，也不放行。没给 `message` 时核心会合成一条
+（如 `my_moderator: invalid verdict 'approved'`），所以后台队列里很少看不到原因；
+定时任务页的「上次结果」也会附上最多 3 条失败样例（`sha: note`），便于定位哪个钩子返回了什么。
 
 ## 执行
 
@@ -75,6 +77,11 @@ def review_image(image, config=None) -> dict:
 `UPDATE ... WHERE review_state IS NULL` 原子抢占，多进程同时跑也不会重复判定
 （重复调用意味着重复计费）。判定卡在 `running` 超过 10 分钟（进程被杀）会重新入队。
 
+**判定失败有退避**：钩子判不了的行会退回 `review_state=NULL`，但 `reviewed_at`
+保留为本轮时间，1 小时内（`RETRY_DELAY`）不再扫它——否则一个坏钩子会让扫描
+每轮都卡在最老的 50 张、后面的图永远轮不到。退避只在**本批**图片太少时会让坏图重新入列；
+正常情况下新图先审完，1 小时后再回头重试失败图。
+
 完全不想用内置调度器时（例如已经有了统一的作业系统）：web 端设 `sapic_scheduler=0`，
 用 `flask sa scheduler` 或自己的 cron 调 `sa review-pending`：
 
@@ -88,7 +95,7 @@ def review_image(image, config=None) -> dict:
 
 | 值 | 含义 |
 | --- | --- |
-| `NULL` | 未审（含判定失败待重试） |
+| `NULL` | 未审（含判定失败、退避中待重试；失败原因见 `review_note`） |
 | `running` | 某一轮扫描正在处理（短窗口） |
 | `pass` | 通过，不再重扫 |
 | `block` | 拦截：公开口径（`/raw` 的匿名访问、广场、公开列表）立即不可见 |

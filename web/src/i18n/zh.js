@@ -64,12 +64,12 @@ export default {
     noAccount: '还没有账号？',
     oidc: {
       denied: {
-        description: '如需登录，请重新点击「通过 Passport 登录」。',
-        title: '已取消 Passport 授权',
+        description: '如需登录，请重新点击「通过 OIDC 登录」。',
+        title: '已取消 OIDC 授权',
       },
       error: {
         description: '请重试；若持续失败，请联系管理员查看后端日志。',
-        title: 'Passport 登录失败',
+        title: 'OIDC 登录失败',
       },
       inactive: {
         description: '该账号已被拒绝或禁用，请联系管理员处理。',
@@ -77,16 +77,16 @@ export default {
       },
       invalid: {
         description: 'Provider 未返回必要的 subject，请联系管理员检查 OIDC 配置。',
-        title: 'Passport 身份信息无效',
+        title: 'OIDC 身份信息无效',
       },
       provider: {
         description:
           '统一登录服务拒绝了本次请求（授权码可能已失效或已使用），请重新点击登录；若持续失败，请联系管理员查看后端日志。',
-        title: 'Passport 服务返回异常',
+        title: 'OIDC 服务返回异常',
       },
       unlinked: {
-        description: '该 Passport 账号暂时无法关联本地用户，请联系管理员检查统一登录配置或账号状态。',
-        title: 'Passport 账号无法登录',
+        description: '该 OIDC 账号暂时无法关联本地用户，请联系管理员检查统一登录配置或账号状态。',
+        title: 'OIDC 账号无法登录',
       },
     },
     password: '密码',
@@ -227,10 +227,12 @@ export default {
       '上传同步写入 priority 数值最小的启用后端（数值越小越优先），其余启用的后端在后台异步补副本（站点设置里可关闭）；直链与读取按 priority 升序在可用副本间选择，取不到就换下一个，所以仍有副本的后端不能删除或禁用。启用存储钩子后会自动出现对应后端，驱动凭据只在这里填写（同一驱动可建多个后端各自一套配置）。后端为公开时公开图直接用直链，为私有时（七牛 / 又拍 / GitHub 私有仓库，或本地目录）所有图片都经 /raw 由服务端签名读取，桶始终不对外。',
     loadFailed: '加载存储后端失败',
     migrate: '迁移',
-    migrateConfirm: '将「{name}」名下的 {count} 个副本迁移到目标后端：冗余副本直接删除，唯一副本先重写到目标后端再删除源对象。',
+    migrateConfirm: '将「{name}」名下的 {count} 个副本写入目标后端。',
+    migrateDeleteSource: '迁移完成后删除源站副本',
+    migrateDeleteSourceHint: '默认关闭：只复制、源站对象保留，确认目标站无误后可再次开启此开关执行删除。开启后冗余副本直接删除，唯一副本先写入目标再删源。',
     migrateEmpty: '该后端没有副本，可直接删除。',
     migrateFailed: '副本迁移失败',
-    migrateSuccess: '副本迁移完成',
+    migrateSuccess: '迁移完成：复制 {copied}、搬迁 {moved}、删除 {deleted}、失败 {failed}。',
     migrateTarget: '目标后端',
     migrateTargetPlaceholder: '选择接收副本的后端',
     migrateTitle: '迁移副本',
@@ -819,18 +821,20 @@ export default {
   },
   hooks: {
     actionFailed: '操作失败',
+    callbackHint: '把此地址登记到 OIDC 服务端的回调地址（Redirect URI）',
+    callbackUrl: '回调地址',
     check: '检测',
     confirmText: '确定执行「{action}」吗？',
     confirmTitle: '确认操作',
     dataLoadFailed: '数据加载失败',
-    passport: {
-      description: '使用 Passport 统一登录（OIDC）',
+    oidc: {
+      description: '标准 OpenID Connect 统一登录',
       fields: {
-        button_text: { hint: '登录页按钮文案，默认「通过 Passport 登录」', label: '按钮文案' },
-        client_id: { hint: 'Passport 后台创建 OIDC 应用后获得', label: 'Client ID' },
+        button_text: { hint: '登录页按钮文案，默认「通过 OIDC 登录」', label: '按钮文案' },
+        client_id: { hint: '在 OIDC 服务端创建应用后获得', label: 'Client ID' },
         client_secret: { hint: 'OIDC 应用密钥', label: 'Client Secret' },
         issuer: {
-          hint: 'Passport 服务地址，如 https://passport.example.com',
+          hint: 'OIDC 服务地址，如 https://id.example.com',
           label: 'Issuer 地址',
         },
         scopes: {
@@ -839,8 +843,8 @@ export default {
           label: 'Scope',
         },
       },
-      signIn: '通过 Passport 登录',
-      title: 'Passport 统一登录',
+      signIn: '通过 OIDC 登录',
+      title: 'OIDC 统一登录',
     },
     pic2webp: {
       description: '将JPG/PNG图片转为webp格式',

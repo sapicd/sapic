@@ -207,7 +207,7 @@ server/sapic/
 - 节点词表见 `libs/ui.py`（唯一可信来源），未知类型/键、非法 `href`、未声明的 `action` 一律丢弃。
 - `slots` 必须在白名单内；`admin.*` 插槽与 `scope: "admin"` 的动作、数据集接口只允许管理员。
 - 内置钩子：`up2local`、`up2github`、`up2gitee`、`up2qiniu`、`up2upyun`、`pic2webp`（图片后处理）、
-  `passport`（OIDC 统一登录）、`sendcloud`（SendCloud 邮件通道）。启用状态与配置存在 `settings.hooks_state` / `hooks_config`，
+  `oidc`（OIDC 统一登录）、`sendcloud`（SendCloud 邮件通道）。启用状态与配置存在 `settings.hooks_state` / `hooks_config`，
   第三方模块名存 `hooks_imported`，包目录 `HOOK_PKG_STORAGE_DIR`（默认 `data/hooks`）只加入
   `sys.path`、参与扫描的是模块名，所以 `pip install --target` 装进去的包可按模块名 import，
   而其依赖不会被当成钩子执行。
@@ -226,7 +226,7 @@ server/sapic/
   的图，每行原子抢占后才调 `review_image`，结论写 `review_state`（`pass` / `block`，失败留空重试）。
   `block` 只让 `can_view` 与 `public_condition` 挡住公开口径，记录与文件都保留；管理员通过
   `views/review.py` 的接口放行，或 `purge_image` 物理删除（与过期清理同一条路径）。
-- 内置钩子（`up2qiniu` / `up2upyun` / `up2github` / `up2gitee` / `passport` / `sendcloud` / `pic2webp`）用到的
+- 内置钩子（`up2qiniu` / `up2upyun` / `up2github` / `up2gitee` / `oidc` / `sendcloud` / `pic2webp`）用到的
   SDK 属基本能力，统一放在 `server/requirements/base.txt`；第三方钩子作为独立 pip 包自带依赖，
   代码里仍用 `try/except ImportError` 兜底给出「请安装 X」的提示。
 

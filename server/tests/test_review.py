@@ -88,7 +88,14 @@ def test_scan_blocks_and_hides_from_others(app, client, monkeypatch):
 
     with app.app_context():
         counts = review_pending()
-    assert counts == {"scanned": 1, "passed": 0, "blocked": 1, "purged": 0, "failed": 0}
+    assert counts == {
+        "scanned": 1,
+        "passed": 0,
+        "blocked": 1,
+        "purged": 0,
+        "failed": 0,
+        "samples": [],
+    }
 
     with app.app_context():
         image = Image.get(Image.sha == sha)
@@ -116,7 +123,9 @@ def test_scan_does_not_repeat_a_judged_image(app, client, monkeypatch):
         assert Image.get(Image.review_state == REVIEW_PASS) is not None
 
 
-def test_failed_verdict_is_retried(app, client, monkeypatch):
+def test_failed_verdict_is_retried_after_backoff(app, client, monkeypatch):
+    from sapic.libs import review as review_mod
+
     csrf = register_and_login(client)
     sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
     manager = use_manager(monkeypatch, code=1, verdict="", message="timeout")
@@ -124,13 +133,67 @@ def test_failed_verdict_is_retried(app, client, monkeypatch):
     with app.app_context():
         counts = review_pending()
     assert counts["failed"] == 1
+    assert counts["samples"] == [{"sha": sha, "note": "timeout"}]
     with app.app_context():
         #: 不可判定时退回未审，而不是猜一个 pass 放行。
-        assert Image.get(Image.sha == sha).review_state is None
+        image = Image.get(Image.sha == sha)
+        assert image.review_state is None
+        assert image.reviewed_at is not None
+        assert image.review_note == "timeout"
 
+    #: 退避期内立即重扫不会重复调用钩子（避免坏钩子把队列饿死）。
     with app.app_context():
         review_pending()
+    assert len(manager.calls) == 1
+
+    #: 退避到期后恢复重试。
+    with app.app_context():
+        image = Image.get(Image.sha == sha)
+        image.reviewed_at -= review_mod.RETRY_DELAY + 1
+        image.save(only=[Image.reviewed_at])
+        review_pending()
     assert len(manager.calls) == 2
+
+
+def test_failed_rows_do_not_starve_the_rest_of_the_queue(
+    app, client, monkeypatch
+):
+    from sapic.libs import review as review_mod
+
+    csrf = register_and_login(client)
+    shas = [
+        upload(client, csrf, filename="f%d.png" % i).get_json()["data"]["image"]["sha"]
+        for i in range(review_mod.REVIEW_BATCH + 1)
+    ]
+    manager = use_manager(monkeypatch, code=1, message="broken")
+
+    with app.app_context():
+        first = review_pending()
+        assert first["scanned"] == review_mod.REVIEW_BATCH
+        assert first["failed"] == review_mod.REVIEW_BATCH
+
+        #: 退避期内再扫：同一批失败图被跳过，最后一张新图终于轮到。
+        manager.verdict = "pass"
+        manager.code = 0
+        second = review_pending()
+
+    assert second["scanned"] == 1
+    assert second["passed"] == 1
+    assert manager.calls[-1]["sha"] == shas[-1]
+
+
+def test_invalid_verdict_records_why(app, client, monkeypatch):
+    csrf = register_and_login(client)
+    sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
+    manager = use_manager(monkeypatch, verdict="approved", message="")
+
+    with app.app_context():
+        counts = review_pending()
+    assert counts["failed"] == 1
+    with app.app_context():
+        assert Image.get(Image.sha == sha).review_note == (
+            "fake_moderator: invalid verdict 'approved'"
+        )
 
 
 def test_payload_hands_the_hook_a_public_url(app, client, monkeypatch):
@@ -210,7 +273,14 @@ def test_private_image_is_not_moderated(app, client, monkeypatch):
     with app.app_context():
         counts = review_pending()
 
-    assert counts == {"scanned": 0, "passed": 0, "blocked": 0, "purged": 0, "failed": 0}
+    assert counts == {
+        "scanned": 0,
+        "passed": 0,
+        "blocked": 0,
+        "purged": 0,
+        "failed": 0,
+        "samples": [],
+    }
     assert manager.calls == []
     with app.app_context():
         assert Image.get(Image.sha == sha).review_state is None

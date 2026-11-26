@@ -394,15 +394,28 @@ OPERATIONS: dict[str, dict] = {
         "auth": "login",
         "data": {"type": "object", "properties": {"logged_out": _BOOL}},
     },
+    "auth.oidc_builtin_start": {
+        "summary": "发起 OIDC 登录",
+        "tag": "认证",
+        "auth": "none",
+        "redirect": True,
+    },
+    "auth.oidc_callback_builtin": {
+        "summary": "OIDC 登录回调",
+        "tag": "认证",
+        "auth": "none",
+        "redirect": True,
+        "params": [_q("code", "Provider 回传的授权码"), _q("state", "防重放状态值")],
+    },
     "auth.oidc_start": {
-        "summary": "发起统一登录",
+        "summary": "发起第三方统一登录",
         "tag": "认证",
         "auth": "none",
         "redirect": True,
         "path": {"name": "Provider 名（见 `/auth/identities`）"},
     },
     "auth.oidc_callback": {
-        "summary": "统一登录回调",
+        "summary": "第三方统一登录回调",
         "tag": "认证",
         "auth": "none",
         "redirect": True,
@@ -896,7 +909,9 @@ TRANSLATIONS_EN: dict[str, str] = {
         "Anonymous read; 404 when the site disables the plaza. Lists only images their owner "
         "published explicitly with public visibility."
     ),
+    "发起 OIDC 登录": "Start OIDC sign-in",
     "发起统一登录": "Start single sign-on",
+    "发起第三方统一登录": "Start third-party single sign-on",
     "发送重置邮件": "Send a reset email",
     "只含自己的图片与共享给自己的相册；管理员需显式 `scope=all` 看全站公开图。": (
         "Only your own images and albums shared with you; admins must pass `scope=all` to see "
@@ -1010,7 +1025,9 @@ TRANSLATIONS_EN: dict[str, str] = {
     "站点未开启广场": "The plaza is disabled on this site",
     "站点未配置 SMTP": "SMTP is not configured",
     "纯文本 + `**加粗**` / `[文字](链接)`": "Plain text plus `**bold**` / `[text](link)`",
+    "OIDC 登录回调": "OIDC sign-in callback",
     "统一登录回调": "Single sign-on callback",
+    "第三方统一登录回调": "Third-party single sign-on callback",
     "自助注销": "Delete my account",
     "解绑第三方身份": "Unbind a third-party identity",
     "认证": "Auth",

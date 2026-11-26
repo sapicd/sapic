@@ -133,6 +133,21 @@ def test_normalize_identity_accepts_the_oidc_spelling():
     }
 
 
+def test_normalize_identity_accepts_preferred_username():
+    identity = ext.normalize_identity(
+        {
+            "sub": "u-2",
+            "preferred_username": "octocat",
+        }
+    )
+
+    #: OIDC 标准 claim：没给 username 时优先取 preferred_username 而非 sub。
+    assert identity["subject"] == "u-2"
+    assert identity["username"] == "octocat"
+    #: 显示名链也回落到 preferred_username。
+    assert identity["nickname"] == "octocat"
+
+
 def test_normalize_identity_requires_a_subject():
     with pytest.raises(ValueError):
         ext.normalize_identity({"email": "a@example.com"})

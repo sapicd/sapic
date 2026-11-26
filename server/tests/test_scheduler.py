@@ -71,7 +71,13 @@ def test_purge_job_removes_an_expired_image(app, client):
 
 def test_review_job_is_a_noop_without_moderator(app):
     counts = scheduler.run_review(app)
-    assert counts == {"scanned": 0, "passed": 0, "blocked": 0, "failed": 0}
+    assert counts == {
+        "scanned": 0,
+        "passed": 0,
+        "blocked": 0,
+        "failed": 0,
+        "samples": [],
+    }
 
 
 def test_jobs_log_instead_of_raising(app, monkeypatch):

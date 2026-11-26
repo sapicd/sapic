@@ -11,11 +11,11 @@ from __future__ import annotations
 import json
 import re
 
-from flask import Blueprint, abort, request
+from flask import Blueprint, abort, request, url_for
 
 from ..basis.common import as_bool
 from ..basis.errors import ApiError, ErrorCode
-from ..libs import hook_pkg, ui
+from ..libs import ext, hook_pkg, ui
 from ..libs.auth import admin_required, current_user, login_required
 from ..libs.hook import MAX_IMPORTED, get_hook_manager
 from ..libs.settings import get_setting, set_setting
@@ -324,6 +324,20 @@ def read_config():
         for key in ("title_key", "description_key"):
             if manifest.get(key):
                 item[key] = manifest[key]
+        #: Provider 把回调地址登记到上游，所以后台表单要能直接看到并复制。
+        #: 内置 oidc 用短路由，第三方仍走通用路由，和发起端用的地址一致。
+        name = manifest["name"]
+        hook = _manager().get(name)
+        if hook is not None and hook.enabled and ext.is_provider(hook.module):
+            endpoint = (
+                "auth.oidc_callback_builtin"
+                if name == "oidc"
+                else "auth.oidc_callback"
+            )
+            if name == "oidc":
+                item["callback_url"] = url_for(endpoint, _external=True)
+            else:
+                item["callback_url"] = url_for(endpoint, name=name, _external=True)
         items.append(item)
     return ok({"items": items})
 

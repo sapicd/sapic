@@ -53,8 +53,8 @@ from .storage import (
     delete_object,
     driver_backend,
     list_backends,
-    public_src,
     queue_replicas,
+    replica_link,
     replicas_for,
     save_object,
     thumb_suffix,
@@ -169,6 +169,29 @@ def tag_condition(tag: str):
     return SQL("tags LIKE ?", (pattern,))
 
 
+def _public_replica_link(
+    rows: list[ImageBackend],
+) -> tuple[str, ImageBackend] | None:
+    """Direct link of the primary replica, when it is anonymous-readable.
+
+    The primary replica is the one the UI marks as 主副本 and the one ``/raw``
+    would read first, so using any other replica's link would disagree with the
+    served bytes and could bypass a private backend's visibility check. A
+    primary that has no anonymous link (local storage or a private bucket)
+    keeps the image behind ``/raw``. ``replica_link`` fills in ``domain/key``
+    for rows written before the backend had a domain.
+    """
+    for replica in rows:
+        if replica.is_primary:
+            link = replica_link(replica)
+            return (link, replica) if link else None
+    #: 存量数据可能没有主副本标记：沿用读取顺序的第一个，保持旧行为。
+    if rows:
+        link = replica_link(rows[0])
+        return (link, rows[0]) if link else None
+    return None
+
+
 def image_src(
     image: Image,
     album: Album | None = None,
@@ -176,9 +199,9 @@ def image_src(
 ) -> str:
     """Direct link for public images, stable ``/raw/<sha>`` for the rest.
 
-    Public payloads link to the highest priority replica whose backend is
-    world-readable, which keeps sapic out of the data path; private images — and
-    every image living on a ``private`` backend — must stay behind ``/raw/<sha>``
+    Public payloads link to the primary replica (or the next world-readable
+    one), which keeps sapic out of the data path; private images — and every
+    image living only on a ``private`` backend — must stay behind ``/raw/<sha>``
     so the visibility check keeps applying.
     """
     if album is None:
@@ -191,12 +214,9 @@ def image_src(
         if image.source_url:
             return image.source_url
         rows = replicas if replicas is not None else replicas_for(image)
-        #: 仍然只看优先级最高的副本（与 /raw 的输出顺序一致）；但它若在私有桶里，
-        #: 匿名请求会 403，这种情况回落到 /raw，而不是借用低优先级副本的直链。
-        if rows:
-            src = public_src(rows[0])
-            if src:
-                return src
+        found = _public_replica_link(rows)
+        if found:
+            return found[0]
     return public_url(image.sha)
 
 
@@ -216,13 +236,15 @@ def image_thumb(
     """
     if image.is_video:
         return None
-    if src is None:
-        src = image_src(image, album, replicas)
     rows = replicas if replicas is not None else replicas_for(image)
-    if not src or not rows or src != public_src(rows[0]):
+    found = _public_replica_link(rows)
+    if not found:
         return None
-    suffix = thumb_suffix(rows[0].backend)
-    return "%s%s" % (src, suffix) if suffix else None
+    link, replica = found
+    if src is not None and src != link:
+        return None
+    suffix = thumb_suffix(replica.backend)
+    return "%s%s" % (link, suffix) if suffix else None
 
 
 def share_templates(

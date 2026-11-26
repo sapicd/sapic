@@ -88,7 +88,7 @@ curl -X POST http://127.0.0.1:9514/api/v2/hooks/reload -H 'X-CSRF-Token: <csrf>'
 | 想写什么 | 参考实现 | 看点 |
 | --- | --- | --- |
 | 存储驱动 | `up2local.py`（最简，只写本地文件）→ 再看 `up2github.py`（HTTP API + 配置项 + 加速域名） | `upimg_save` / `upimg_delete` / `upimg_url` |
-| 登录 Provider | `passport.py`（OIDC） | `oidc_authorize_url` / `oidc_exchange`，登录按钮插槽 |
+| 登录 Provider | `oidc.py`（OIDC） | `oidc_authorize_url` / `oidc_exchange`，登录按钮插槽 |
 | 上传后处理 | `pic2webp.py` | `upimg_stream_processor` 与 processor 配置 |
 | 邮件通道 | `sendcloud.py`（HTTP API） | `send_mail` / `mail_ready`，配置完整时接管 SMTP |
 | 内容审核 | 无内置，见[内容审核](moderator.md)的最小实现 | `review_image` 返回值与管理员队列 |

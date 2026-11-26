@@ -65,12 +65,12 @@ export default {
     noAccount: 'No account yet?',
     oidc: {
       denied: {
-        description: 'Click "Sign in with Passport" again if you still want to sign in.',
-        title: 'Passport authorisation cancelled',
+        description: 'Click "Sign in with OIDC" again if you still want to sign in.',
+        title: 'OIDC authorisation cancelled',
       },
       error: {
         description: 'Try again; if it keeps failing, ask the administrator to check the server log.',
-        title: 'Passport sign-in failed',
+        title: 'OIDC sign-in failed',
       },
       inactive: {
         description: 'This account was rejected or disabled. Contact the administrator.',
@@ -78,17 +78,17 @@ export default {
       },
       invalid: {
         description: 'The provider did not return a subject. Ask the administrator to check the OIDC config.',
-        title: 'Invalid Passport identity',
+        title: 'Invalid OIDC identity',
       },
       provider: {
         description:
           'The identity service rejected this request (the code may have expired or been used). Sign in again; if it keeps failing, ask the administrator to check the server log.',
-        title: 'Passport service error',
+        title: 'OIDC service error',
       },
       unlinked: {
         description:
-          'This Passport account cannot be linked to a local user right now. Ask the administrator to check the OIDC config or the account status.',
-        title: 'Passport account cannot sign in',
+          'This OIDC account cannot be linked to a local user right now. Ask the administrator to check the OIDC config or the account status.',
+        title: 'OIDC account cannot sign in',
       },
     },
     password: 'Password',
@@ -232,11 +232,13 @@ export default {
       'Uploads are written synchronously to the enabled backend with the smallest priority, while the other enabled backends replicate in the background (can be disabled in the site settings); direct links and reads pick available replicas in ascending priority order and fall through to the next one, which is why a backend that still holds replicas cannot be deleted or disabled. Enabling a storage hook adds its backend automatically and driver credentials are only entered here (one driver can back several backends, each with its own settings). A public backend serves public images straight from the driver; a private one (Qiniu / Upyun / private GitHub repo, or a local directory) relays every image through /raw with a server-signed URL, so the bucket stays closed.',
     loadFailed: 'Failed to load storage backends',
     migrate: 'Migrate',
-    migrateConfirm:
-      'Migrate {count} replicas held by "{name}" to the target backend: redundant replicas are deleted, and sole replicas are rewritten to the target before their source object is removed.',
+    migrateConfirm: 'Write {count} replicas held by "{name}" to the target backend.',
+    migrateDeleteSource: 'Delete source replicas after migration',
+    migrateDeleteSourceHint:
+      'Off by default: copy only and keep the source objects. Once the target is verified, turn this on and migrate again to delete them. When on, redundant replicas are dropped directly and sole replicas are written to the target before the source is removed.',
     migrateEmpty: 'This backend holds no replicas and can be deleted directly.',
     migrateFailed: 'Failed to migrate replicas',
-    migrateSuccess: 'Replicas migrated',
+    migrateSuccess: 'Done: {copied} copied, {moved} moved, {deleted} deleted, {failed} failed.',
     migrateTarget: 'Target backend',
     migrateTargetPlaceholder: 'Choose the backend to receive the replicas',
     migrateTitle: 'Migrate replicas',
@@ -847,24 +849,26 @@ export default {
   },
   hooks: {
     actionFailed: 'Action failed',
+    callbackHint: 'Register this URL as the Redirect URI on your OIDC provider',
+    callbackUrl: 'Callback URL',
     check: 'Check',
     confirmText: 'Run "{action}"?',
     confirmTitle: 'Confirm action',
     dataLoadFailed: 'Failed to load the data',
-    passport: {
-      description: 'Sign in through Passport (OIDC)',
+    oidc: {
+      description: 'Standard OpenID Connect single sign-on',
       fields: {
         button_text: {
-          hint: 'Login page button text, defaults to "Sign in with Passport"',
+          hint: 'Login page button text, defaults to "Sign in with OIDC"',
           label: 'Button text',
         },
         client_id: {
-          hint: 'Obtained after creating an OIDC app in the Passport admin',
+          hint: 'Obtained after creating an OIDC application on your provider',
           label: 'Client ID',
         },
         client_secret: { hint: 'OIDC application secret', label: 'Client Secret' },
         issuer: {
-          hint: 'Passport service URL, e.g. https://passport.example.com',
+          hint: 'OIDC provider URL, e.g. https://id.example.com',
           label: 'Issuer URL',
         },
         scopes: {
@@ -873,8 +877,8 @@ export default {
           label: 'Scope',
         },
       },
-      signIn: 'Sign in with Passport',
-      title: 'Passport single sign-on',
+      signIn: 'Sign in with OIDC',
+      title: 'OIDC single sign-on',
     },
     pic2webp: {
       description: 'Convert JPG/PNG images to WebP',

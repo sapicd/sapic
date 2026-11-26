@@ -69,12 +69,14 @@ function resultText(job) {
   if (job.id === 'demo_rotate') {
     return demoText(result.reason)
   }
-  return t('adminScheduler.scanned', {
+  const text = t('adminScheduler.scanned', {
     scanned: result.scanned ?? 0,
     blocked: result.blocked ?? 0,
     purged: result.purged ?? 0,
     failed: result.failed ?? 0,
   })
+  const sample = (result.samples || [])[0]
+  return sample ? `${text} · ${sample.sha}: ${sample.note || '-'}` : text
 }
 
 //: 下次运行时间只在 APScheduler 进程内可见；上次结果由调度进程写共享文件、后端回显。

@@ -1,6 +1,6 @@
 # 登录 Provider（`catalog = "auth"`）
 
-内置的 `passport` 钩子（OIDC 统一登录）就是按这份契约实现的，第三方包照着实现即可接入，
+内置的 `oidc` 钩子（OIDC 统一登录）就是按这份契约实现的，第三方包照着实现即可接入，
 核心代码不需要改。
 
 钩子只负责**与 Provider 对话**：拼授权地址、用授权码换用户信息。
@@ -19,8 +19,8 @@ def identity_issuer(config) -> str        # optional
 
 | 函数 | 说明 |
 | --- | --- |
-| `oidc_authorize_url` | 返回把浏览器送去 Provider 的完整地址。参数 `config` 是后台保存的钩子配置，`state` 必须原样带上（核心用 Cookie 校验回跳）。失败抛 `ValueError`（英文消息），核心返回 400。 |
-| `oidc_exchange` | 用 `code` 换用户信息并返回下面的字典。抛 `ValueError`（英文消息，核心会写进日志）表示与 Provider 对话失败，核心跳 `/login?oidc=provider`；其他异常跳 `/login?oidc=error`。消息里带上上游的 HTTP 状态与响应片段，排查时日志才有用。 |
+| `oidc_authorize_url` | 返回把浏览器送去 Provider 的完整地址。参数 `config` 是后台保存的钩子配置，`state` 必须原样带上（核心用 Cookie 校验回跳）；`redirect_uri` 是本站的回调地址（后台配置页可见），必须原样传给 Provider。失败抛 `ValueError`（英文消息），核心返回 400。 |
+| `oidc_exchange` | 用 `code` 换用户信息并返回下面的字典；`redirect_uri` 必须与授权时一致（多数 Provider 会校验）。抛 `ValueError`（英文消息，核心会写进日志）表示与 Provider 对话失败，核心跳 `/login?oidc=provider`；其他异常跳 `/login?oidc=error`。消息里带上上游的 HTTP 状态与响应片段，排查时日志才有用。 |
 | `identity_issuer` | 返回身份命名空间，写进本地账号的 `oidc_issuer`。缺省用 `config["issuer"]`（适合 OIDC 的 issuer 地址）；非 OIDC 的 Provider（如 GitHub）用它声明一个固定值，否则「已绑定」判定会拿不到值。返回值与 `config["issuer"]` 都会去掉末尾 `/` 后使用（写入与「已绑定」判定走同一个归一化）。 |
 
 `oidc_exchange` 的返回值：
@@ -40,14 +40,22 @@ def identity_issuer(config) -> str        # optional
 ## 登录与绑定流程
 
 ```text
+# 内置 oidc 钩子用短路由；第三方 provider 仍用带 <name> 的通用路由
+GET /api/v2/auth/oidc[?bind=1&next=/settings]
 GET /api/v2/auth/oidc/<name>[?bind=1&next=/settings]
    -> 302 to the provider authorisation page, planting a signed state cookie (10 minutes)
+GET /api/v2/auth/oidc/callback?code=...&state=...
 GET /api/v2/auth/oidc/<name>/callback?code=...&state=...
    -> verify state -> oidc_exchange -> bind or sign in -> 302 back to next
 ```
 
 - `<name>` 是**钩子名**（模块名）。包名写成 `sapic_oauth_github`，地址就是
-  `/api/v2/auth/oidc/sapic_oauth_github`。
+  `/api/v2/auth/oidc/sapic_oauth_github`，回调 `/api/v2/auth/oidc/sapic_oauth_github/callback`。
+- 内置 `oidc` 钩子固定用 `/api/v2/auth/oidc` 与 `/api/v2/auth/oidc/callback`；
+  第三方 provider 的名字只要不是 `oidc`，就自动落到通用路由，无需核心登记。
+- **回调地址在后台「钩子 → 配置」页自动显示并可复制**（字段 `callback_url`）：
+  启用 provider 后打开配置页即可看到，复制去 Provider 控制台登记 Redirect URI。
+  回调地址由部署域名生成，换域名后要重新登记。
 - `bind=1` 表示把身份绑到当前登录账号（要求已登录），完成后回 `next` 并带
   `?identity=bound`；失败分两种：`identity=conflict`（该身份已被另一个账号绑定，
   需先去那边解绑）与 `identity=error`（其他原因）。
@@ -82,7 +90,8 @@ __version__ = "0.1.0"
 __author__ = "you"
 __description__ = "Sign in with GitHub"
 __catalog__ = "auth"
-        # enable in the admin after installing and fill in client_id/client_secret
+# enable in the admin after installing and fill in client_id/client_secret;
+# the callback URL is shown on that config page (copy it into the GitHub app)
 
 AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 TOKEN_URL = "https://github.com/login/oauth/access_token"
@@ -191,7 +200,7 @@ Provider 拿到的 `config` 只有后台钩子页保存的键（`hooks_config[<h
 
 ## 现有实现参考
 
-内置 `server/sapic/hooks/passport.py`：走 OIDC discovery 文档，
+内置 `server/sapic/hooks/oidc.py`：走 OIDC discovery 文档，
 `oidc_authorize_url` 从 `/.well-known/openid-configuration` 取授权端点，
 `oidc_exchange` 用 `id_token` / userinfo 取 claims，并带 5 分钟 discovery 缓存。
 

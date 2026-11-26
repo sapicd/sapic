@@ -403,6 +403,26 @@ def _v018_lowercase_usernames() -> None:
             user.save(only=[User.username])
 
 
+def _v019_rename_passport_hook_to_oidc() -> None:
+    """Move the built-in auth hook's saved state/config to its new name.
+
+    A hook's name is its module filename, so renaming ``passport.py`` to
+    ``oidc.py`` would orphan ``hooks_state.passport`` and
+    ``hooks_config.passport``: the provider would come back disabled with no
+    credentials. An existing ``oidc`` entry wins (an operator may already have
+    configured the new hook), and the stale ``passport`` key is always removed.
+    """
+    for key in ("hooks_state", "hooks_config"):
+        row = Setting.get_or_none(Setting.key == key)
+        if row is None or not isinstance(row.value, dict) or "passport" not in row.value:
+            continue
+        saved = dict(row.value)
+        old = saved.pop("passport")
+        saved.setdefault("oidc", old)
+        row.value = saved
+        row.save(only=[Setting.value, Setting.updated_at])
+
+
 MIGRATIONS = [
     (1, "initial", _v001_initial),
     (2, "album_ownership", _v002_album_ownership),
@@ -422,6 +442,7 @@ MIGRATIONS = [
     (16, "user_oidc_profile", _v016_user_oidc_profile),
     (17, "user_password_set", _v017_user_password_set),
     (18, "lowercase_usernames", _v018_lowercase_usernames),
+    (19, "rename_passport_hook_to_oidc", _v019_rename_passport_hook_to_oidc),
 ]
 
 

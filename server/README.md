@@ -120,10 +120,10 @@ gunicorn "sapic:create_app()" -b 0.0.0.0:9514 -w 4 -k gevent --name sapic
 
 认证方式：Cookie 会话（写操作需要 `X-CSRF-Token`）或 `Authorization: Bearer <PAT>`。
 
-统一登录（OIDC，由 `passport` 钩子提供）：
+统一登录（OIDC，由 `oidc` 钩子提供）：
 
 - 登录顺序：身份已绑定 → 直接登录；未绑定但 provider 已验证的邮箱与本地已验证账号一致 → 自动关联；否则按 provider 信息自动建号（新用户的主要入口，同时创建默认相册）。
-- 新账号的本地用户名取 provider 的稳定标识（Passport 即 `sub`／uid，22 位小写），昵称仅写入 `nickname` 作显示名——昵称可改、可重复，不适合当账号名。
+- 新账号的本地用户名取 provider 的稳定标识（OIDC 即 `sub`／uid，22 位小写），昵称仅写入 `nickname` 作显示名——昵称可改、可重复，不适合当账号名。
 - 邮箱关联始终启用，且要求**provider 与本地账号的邮箱都验证过**：provider 缺 `email_verified` 字段按已验证处理、显式 `false` 不关联；本地邮箱需先通过验证流程，避免「抢填他人邮箱」的账号被接管。
 - 邮箱验证：注册时自动寄出令牌，也可在「账号设置」重新发送（`POST /api/v2/auth/email/verify`），提交令牌到 `POST /api/v2/auth/email/confirm` 后置为已验证；修改邮箱会重置为未验证，旧令牌随之失效。找回密码（`/auth/password/forgot`）同样只对已验证邮箱签发令牌。
 - 已登录用户可在「账号设置 → 统一登录」绑定/解绑；解绑需输入当前密码，避免 OIDC 专用账号（随机密码）把自己锁在门外。

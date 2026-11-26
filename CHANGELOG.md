@@ -1,5 +1,32 @@
 # 变更记录
 
+## Unreleased
+
+### 修复
+
+- 公开图片的「复制链接」现在取 **主副本**（`is_primary`）的直链，并支持后端
+  `domain + object_key` 兜底：主副本是公开桶（如缤纷云 S4）但 `url` 字段为空时，
+  不再错误回落到 `/raw/<sha>` 代理；主副本是本地/私有桶时仍走 `/raw`。
+- 内容审核扫描：判定失败的行保留 `reviewed_at` 作 1 小时退避，避免坏钩子让每轮 5 分钟扫描
+  永远卡在最老 50 张、后续图片饿死；失败原因合成可见文案（含钩子名与无效 verdict），
+  定时任务页「上次结果」附最多 3 条失败样例。
+
+### 新增
+
+- 后台存储迁移增加「删除源站副本」开关，默认关闭：迁移只复制、源站保留；
+  确认目标站无误后再勾选执行删除。API 对应 `POST /backends/<id>/migrate` 的 `delete_source` 参数。
+
+### 变更
+
+- 内置 OIDC 钩子 `passport` 更名为 `oidc`，成为标准 OpenID Connect client（authorization code + discovery）：
+  登录按钮指向 `/api/v2/auth/oidc`，回调 `/api/v2/auth/oidc/callback`；
+  第三方 Provider 仍用 `/api/v2/auth/oidc/<name>`。
+
+### 升级注意
+
+- 旧 `hooks_state.passport` / `hooks_config.passport` 由 v019 迁移自动转到 `oidc`，无需手动改库；
+  OIDC 服务端登记的外部回调地址需从 `.../auth/oidc/passport/callback` 改为 `.../auth/oidc/callback`。
+
 ## 2.0.0-pre — 2026-11-22
 
 首个 v2 预发布，相对 v1 是一次重写：后端改为 API-only 的 Flask 应用（`server/`，Peewee + 关系库），
@@ -31,7 +58,7 @@
 
 - 访问令牌（PAT）分 `read` / `upload` / `write` / `admin` 四档 scope，逐请求生效。
 - 邮箱验证、注册审核（通过 / 拒绝 + 拒绝理由 + 通知邮件）、自助注销（需密码 + 名下无图）。
-- 头像上传与服务端裁剪；OIDC 统一登录（`passport` 钩子），支持绑定 / 解绑，
+- 头像上传与服务端裁剪；OIDC 统一登录（`oidc` 钩子），支持绑定 / 解绑，
   已绑定账号每次登录同步上游资料，解绑要求名下没有未删除的图片。
 - Cookie 会话的写操作强制 `X-CSRF-Token`。
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Passport (OIDC) login: the start/callback flow and the hook contract."""
+"""Standard OIDC login: the built-in and named provider flows."""
 
 import io
 from json import dumps
@@ -18,16 +18,16 @@ from sapic.libs.users import (
 from sapic.models import Image, User
 
 CONFIG = {
-    "issuer": "https://passport.example.com",
+    "issuer": "https://id.example.com",
     "client_id": "sp-client",
     "client_secret": "sp-secret",
 }
 
 DISCOVERY = {
-    "issuer": "https://passport.example.com",
-    "authorization_endpoint": "https://passport.example.com/oidc/authorize",
-    "token_endpoint": "https://passport.example.com/oidc/token",
-    "userinfo_endpoint": "https://passport.example.com/oidc/userinfo",
+    "issuer": "https://id.example.com",
+    "authorization_endpoint": "https://id.example.com/oidc/authorize",
+    "token_endpoint": "https://id.example.com/oidc/token",
+    "userinfo_endpoint": "https://id.example.com/oidc/userinfo",
     "scopes_supported": ["openid", "profile", "email"],
 }
 
@@ -64,13 +64,13 @@ class FakeRequests:
 
 def enable_hook(app, config=None):
     with app.app_context():
-        set_setting("hooks_state", {"passport": True})
-        set_setting("hooks_config", {"passport": config or CONFIG})
+        set_setting("hooks_state", {"oidc": True})
+        set_setting("hooks_config", {"oidc": config or CONFIG})
         app.extensions["hooks"].reload()
 
 
 def hook_module(app):
-    return app.extensions["hooks"].get("passport").module
+    return app.extensions["hooks"].get("oidc").module
 
 
 def identity(module, monkeypatch, **claims):
@@ -80,7 +80,7 @@ def identity(module, monkeypatch, **claims):
         "username": "alice",
         "nickname": "Alice",
         "email": "alice@example.com",
-        #: Passport 只在库里存验证过的邮箱，钩子输出已归一化为 True。
+        #: 本测试用的 provider 只存验证过的邮箱，钩子输出已归一化为 True。
         "email_verified": True,
     }
     payload.update(claims)
@@ -105,18 +105,18 @@ def start_flow(client, monkeypatch, module, query="?next=/albums"):
         lambda config, redirect_uri, state: "%s?state=%s"
         % (DISCOVERY["authorization_endpoint"], state),
     )
-    response = client.get("/api/v2/auth/oidc/passport" + query)
+    response = client.get("/api/v2/auth/oidc" + query)
     state = parse_qs(urlparse(response.headers["Location"]).query)["state"][0]
     return response, state
 
 
 def test_hook_is_disabled_and_declares_the_login_slot(app):
-    hook = app.extensions["hooks"].get("passport")
+    hook = app.extensions["hooks"].get("oidc")
     assert hook is not None
     assert hook.meta["__catalog__"] == "auth"
     assert hook.enabled is False
 
-    manifest = app.extensions["hooks"].manifest("passport")
+    manifest = app.extensions["hooks"].manifest("oidc")
     keys = [field["key"] for field in manifest["config_schema"]]
     assert keys == [
         "issuer",
@@ -142,9 +142,9 @@ def test_login_slot_only_renders_when_configured(app):
         context={"config": {"issuer": CONFIG["issuer"], "client_id": "sp-client"}}
     )
     link = next(node for node in nodes if node["type"] == "link")
-    assert link["href"] == "/api/v2/auth/oidc/passport"
+    assert link["href"] == "/api/v2/auth/oidc"
     #: 默认文案带 i18n 键，英文界面才能翻译；管理员自定义文案时不带。
-    assert link["text_key"] == "hooks.passport.signIn"
+    assert link["text_key"] == "hooks.oidc.signIn"
     divider = next(node for node in nodes if node["type"] == "divider")
     assert divider["label_key"] == "common.or"
 
@@ -159,6 +159,39 @@ def test_login_slot_only_renders_when_configured(app):
     )
     assert next(node for node in custom if node["type"] == "link")["text"] == "SSO"
     assert "text_key" not in next(node for node in custom if node["type"] == "link")
+
+
+def test_builtin_flow_uses_the_short_redirect_uri(app, client, monkeypatch):
+    """The built-in hook's authorize/callback must agree on redirect_uri."""
+    enable_hook(app)
+    module = hook_module(app)
+    seen = {}
+
+    def capture(config, redirect_uri, state):
+        seen["redirect_uri"] = redirect_uri
+        return "%s?state=%s" % (DISCOVERY["authorization_endpoint"], state)
+
+    monkeypatch.setattr(module, "oidc_authorize_url", capture)
+
+    def exchange(config, code, redirect_uri):
+        seen["exchange_redirect"] = redirect_uri
+        return {
+            "issuer": CONFIG["issuer"],
+            "subject": "u-short",
+            "username": "short",
+            "nickname": "Short",
+            "email": "",
+            "email_verified": False,
+        }
+
+    monkeypatch.setattr(module, "oidc_exchange", exchange)
+
+    start = client.get("/api/v2/auth/oidc")
+    state = parse_qs(urlparse(start.headers["Location"]).query)["state"][0]
+    client.get("/api/v2/auth/oidc/callback?code=c&state=%s" % state)
+
+    assert seen["redirect_uri"] == "http://localhost/api/v2/auth/oidc/callback"
+    assert seen["exchange_redirect"] == seen["redirect_uri"]
 
 
 def test_authorize_url_follows_the_discovery_document(app, monkeypatch):
@@ -219,7 +252,7 @@ def test_identity_treats_missing_email_verified_as_verified(app):
     module = hook_module(app)
     claims = {"sub": "u-1", "email": "bob@example.com"}
 
-    #: Passport 只存验证过的邮箱，缺字段按已验证处理。
+    #: OIDC 只存验证过的邮箱，缺字段按已验证处理。
     assert module._identity(claims, CONFIG["issuer"])["email_verified"] is True
 
     #: Provider 显式给出 false 时仍然尊重它的说法。
@@ -227,6 +260,21 @@ def test_identity_treats_missing_email_verified_as_verified(app):
         {**claims, "email_verified": False}, CONFIG["issuer"]
     )
     assert explicit["email_verified"] is False
+
+
+def test_identity_prefers_preferred_username_over_the_subject(app):
+    module = hook_module(app)
+    #: OIDC 标准 claim：用户名优先取 preferred_username，sub 是机器标识。
+    result = module._identity(
+        {"sub": "u-42", "preferred_username": "octocat"}, CONFIG["issuer"]
+    )
+    assert result["subject"] == "u-42"
+    assert result["username"] == "octocat"
+    assert result["nickname"] == "octocat"
+
+    #: 拿不到 preferred_username 时仍回落 sub，兼容只回 sub 的 provider。
+    fallback = module._identity({"sub": "u-42"}, CONFIG["issuer"])
+    assert fallback["username"] == "u-42"
 
 
 def test_start_redirects_and_sets_the_state_cookie(app, client, monkeypatch):
@@ -247,7 +295,7 @@ def test_callback_links_by_email_and_starts_a_session(app, client, monkeypatch):
     identity(module, monkeypatch)
 
     response = client.get(
-        "/api/v2/auth/oidc/passport/callback?code=code-1&state=%s" % state
+        "/api/v2/auth/oidc/callback?code=code-1&state=%s" % state
     )
 
     assert response.status_code == 302
@@ -270,7 +318,7 @@ def test_second_login_reuses_the_bound_account(app, client, monkeypatch):
 
     _, state = start_flow(client, monkeypatch, module)
     identity(module, monkeypatch, email="carol@example.com")
-    client.get("/api/v2/auth/oidc/passport/callback?code=c1&state=%s" % state)
+    client.get("/api/v2/auth/oidc/callback?code=c1&state=%s" % state)
     first = client.get("/api/v2/auth/session").get_json()["data"]["user"]
 
     #: 上游改名后仍然绑定到同一个本地账号，也不会再建新账号。
@@ -282,7 +330,7 @@ def test_second_login_reuses_the_bound_account(app, client, monkeypatch):
         username="carol-renamed",
         nickname="Renamed",
     )
-    client.get("/api/v2/auth/oidc/passport/callback?code=c2&state=%s" % state)
+    client.get("/api/v2/auth/oidc/callback?code=c2&state=%s" % state)
     second = client.get("/api/v2/auth/session").get_json()["data"]["user"]
 
     assert first["id"] == second["id"] == user_id
@@ -296,7 +344,7 @@ def test_callback_rejects_a_forged_state(app, client, monkeypatch):
     identity(module, monkeypatch)
 
     response = client.get(
-        "/api/v2/auth/oidc/passport/callback?code=code-1&state=forged"
+        "/api/v2/auth/oidc/callback?code=code-1&state=forged"
     )
 
     assert response.status_code == 400
@@ -310,7 +358,7 @@ def test_new_account_is_created_with_a_default_album(app, client, monkeypatch):
     identity(module, monkeypatch)
 
     response = client.get(
-        "/api/v2/auth/oidc/passport/callback?code=code-1&state=%s" % state
+        "/api/v2/auth/oidc/callback?code=code-1&state=%s" % state
     )
 
     assert response.status_code == 302
@@ -372,7 +420,7 @@ def test_verified_email_links_the_migrated_account(app, client, monkeypatch):
     )
 
     response = client.get(
-        "/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state
+        "/api/v2/auth/oidc/callback?code=c&state=%s" % state
     )
 
     assert response.status_code == 302
@@ -397,7 +445,7 @@ def test_unverified_email_is_not_linked(app, client, monkeypatch):
     )
 
     response = client.get(
-        "/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state
+        "/api/v2/auth/oidc/callback?code=c&state=%s" % state
     )
 
     #: provider 声明邮箱未验证时不关联老账号，而是按新用户建号。
@@ -415,7 +463,7 @@ def test_unverified_local_email_is_not_linked(app, client, monkeypatch):
     identity(module, monkeypatch, email="carol@example.com")
 
     response = client.get(
-        "/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state
+        "/api/v2/auth/oidc/callback?code=c&state=%s" % state
     )
 
     #: 本地邮箱没过验证流程时不关联旧账号，而是按新用户建号。
@@ -437,7 +485,7 @@ def test_bind_flow_links_the_signed_in_account(app, client, monkeypatch):
     identity(module, monkeypatch, subject="u-4", email="carol@example.com")
 
     response = client.get(
-        "/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state
+        "/api/v2/auth/oidc/callback?code=c&state=%s" % state
     )
 
     assert response.status_code == 302
@@ -449,7 +497,7 @@ def test_bind_flow_links_the_signed_in_account(app, client, monkeypatch):
 def test_bind_holds_when_the_configured_issuer_ends_with_a_slash(
     app, client, monkeypatch
 ):
-    #: 后台填 `https://passport.example.com/` 很常见；写入与「已绑定」判定
+    #: 后台填 `https://id.example.com/` 很常见；写入与「已绑定」判定
     #: 必须用同一个归一化值，否则绑定成功却一直显示未绑定。
     user_id = local_user(app)
     enable_hook(app, config={**CONFIG, "issuer": CONFIG["issuer"] + "/"})
@@ -462,17 +510,17 @@ def test_bind_holds_when_the_configured_issuer_ends_with_a_slash(
     identity(module, monkeypatch, subject="u-6")
 
     response = client.get(
-        "/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state
+        "/api/v2/auth/oidc/callback?code=c&state=%s" % state
     )
 
     assert response.headers["Location"] == "/settings?identity=bound"
     with app.app_context():
         assert User.get_by_id(user_id).oidc_issuer == CONFIG["issuer"]
     items = client.get("/api/v2/auth/identities").get_json()["data"]["items"]
-    passport = next(item for item in items if item["name"] == "passport")
-    assert passport["bound"]
+    oidc = next(item for item in items if item["name"] == "oidc")
+    assert oidc["bound"]
     #: 账号设置里的 Provider 名称同样带 i18n 键。
-    assert passport["title_key"] == "hooks.passport.title"
+    assert oidc["title_key"] == "hooks.oidc.title"
 
 
 def test_identities_shows_the_linked_account_details(app, client, monkeypatch):
@@ -485,23 +533,23 @@ def test_identities_shows_the_linked_account_details(app, client, monkeypatch):
     _, state = start_flow(
         client, monkeypatch, module, query="?bind=1&next=/settings"
     )
-    identity(module, monkeypatch, subject="passport-user-1234", nickname="Carol")
-    client.get("/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state)
+    identity(module, monkeypatch, subject="oidc-user-1234", nickname="Carol")
+    client.get("/api/v2/auth/oidc/callback?code=c&state=%s" % state)
 
     items = client.get("/api/v2/auth/identities").get_json()["data"]["items"]
-    passport = next(item for item in items if item["name"] == "passport")
-    assert passport["bound"] is True
-    assert passport["display_name"] == "Carol"
+    oidc = next(item for item in items if item["name"] == "oidc")
+    assert oidc["bound"] is True
+    assert oidc["display_name"] == "Carol"
     #: 本地邮箱能让人认出绑的是哪个账号，比一串脱敏 subject 有用。
-    assert passport["email"] == "carol@example.com"
+    assert oidc["email"] == "carol@example.com"
     #: 中间被遮掉、只留首尾：响应体里不该出现完整的 subject。
-    assert passport["subject"] == "pass" + "*" * 12 + "34"
-    assert passport["issuer"] == CONFIG["issuer"]
-    assert passport["bound_at"]
+    assert oidc["subject"] == "oidc" + "*" * 8 + "34"
+    assert oidc["issuer"] == CONFIG["issuer"]
+    assert oidc["bound_at"]
 
     #: 解绑后详情一并清空，重新显示为「未绑定」。
     response = client.delete(
-        "/api/v2/auth/identities/passport",
+        "/api/v2/auth/identities/oidc",
         json={"password": "secret123"},
         headers={"X-CSRF-Token": csrf},
     )
@@ -524,7 +572,7 @@ def test_returning_login_refreshes_a_legacy_display_name(app, client, monkeypatc
     _, state = start_flow(client, monkeypatch, module)
     identity(module, monkeypatch, subject="u-7", nickname="Carol New")
     response = client.get(
-        "/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state
+        "/api/v2/auth/oidc/callback?code=c&state=%s" % state
     )
     assert response.status_code in (302, 303)
 
@@ -536,12 +584,12 @@ def test_oidc_username_is_lowercased_so_password_login_works(app):
     """provider 的用户名带大写时也按小写存，否则密码登录查不到这一行。"""
     with app.app_context():
         user = resolve_oidc_user(
-            CONFIG["issuer"], "u-11", username="PassportUID", nickname="Pat"
+            CONFIG["issuer"], "u-11", username="OIDCUID", nickname="Pat"
         )
-        assert user.username == "passportuid"
+        assert user.username == "oidcuid"
 
         change_password(user, "secret123")
-        assert authenticate("PassportUID", "secret123").id == user.id
+        assert authenticate("OIDCUID", "secret123").id == user.id
 
 
 def test_unbind_keeps_the_account_and_its_images(app, client):
@@ -561,7 +609,7 @@ def test_unbind_keeps_the_account_and_its_images(app, client):
     sha = uploaded.get_json()["data"]["image"]["sha"]
 
     response = client.delete(
-        "/api/v2/auth/identities/passport",
+        "/api/v2/auth/identities/oidc",
         json={"password": "secret123"},
         headers={"X-CSRF-Token": csrf},
     )
@@ -593,7 +641,7 @@ def test_returning_login_fills_an_empty_local_profile(app, client, monkeypatch):
         nickname="Carol New",
         email="new@example.com",
     )
-    client.get("/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state)
+    client.get("/api/v2/auth/oidc/callback?code=c&state=%s" % state)
 
     with app.app_context():
         user = User.get_by_id(user_id)
@@ -622,7 +670,7 @@ def test_returning_login_keeps_profile_values_chosen_locally(app, client, monkey
         nickname="Upstream Name",
         email="upstream@example.com",
     )
-    client.get("/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state)
+    client.get("/api/v2/auth/oidc/callback?code=c&state=%s" % state)
 
     with app.app_context():
         user = User.get_by_id(user_id)
@@ -648,7 +696,7 @@ def test_bind_reports_an_identity_bound_to_another_account(app, client, monkeypa
     identity(module, monkeypatch, subject="u-7")
 
     response = client.get(
-        "/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state
+        "/api/v2/auth/oidc/callback?code=c&state=%s" % state
     )
 
     #: 该身份属于别的账号时要能区分出来，页面才知道提示「先去解绑」。
@@ -677,7 +725,7 @@ def test_bind_requires_a_signed_in_user(app, client, monkeypatch):
         lambda config, redirect_uri, state: "https://x/authorize",
     )
 
-    assert client.get("/api/v2/auth/oidc/passport?bind=1").status_code == 401
+    assert client.get("/api/v2/auth/oidc?bind=1").status_code == 401
 
 
 def test_failed_token_exchange_names_the_upstream_response(app, monkeypatch):
@@ -718,7 +766,7 @@ def test_provider_rejection_is_not_reported_as_an_invalid_identity(
     )
 
     response = client.get(
-        "/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state
+        "/api/v2/auth/oidc/callback?code=c&state=%s" % state
     )
 
     #: 令牌交换失败不能落到 invalid（那会让登录页误报「没返回 subject」）。
@@ -734,7 +782,7 @@ def test_claims_without_a_subject_still_land_on_invalid(app, client, monkeypatch
     )
 
     response = client.get(
-        "/api/v2/auth/oidc/passport/callback?code=c&state=%s" % state
+        "/api/v2/auth/oidc/callback?code=c&state=%s" % state
     )
 
     assert response.headers["Location"] == "/login?oidc=invalid"
@@ -746,29 +794,29 @@ def test_identities_list_and_password_checked_unbind(app, client):
     csrf = login(client)
 
     items = client.get("/api/v2/auth/identities").get_json()["data"]["items"]
-    passport = next(item for item in items if item["name"] == "passport")
-    assert passport["bound"] is False
-    query = parse_qs(urlparse(passport["bind_url"]).query)
+    oidc = next(item for item in items if item["name"] == "oidc")
+    assert oidc["bound"] is False
+    query = parse_qs(urlparse(oidc["bind_url"]).query)
     assert query == {"bind": ["1"], "next": ["/settings"]}
 
     with app.app_context():
         bind_oidc_identity(User.get_by_id(user_id), CONFIG["issuer"], "u-5")
 
     items = client.get("/api/v2/auth/identities").get_json()["data"]["items"]
-    assert next(item for item in items if item["name"] == "passport")["bound"]
+    assert next(item for item in items if item["name"] == "oidc")["bound"]
 
     headers = {"X-CSRF-Token": csrf}
-    missing = client.delete("/api/v2/auth/identities/passport", headers=headers)
+    missing = client.delete("/api/v2/auth/identities/oidc", headers=headers)
     assert missing.status_code == 403
     wrong = client.delete(
-        "/api/v2/auth/identities/passport",
+        "/api/v2/auth/identities/oidc",
         json={"password": "nope"},
         headers=headers,
     )
     assert wrong.status_code == 403
 
     response = client.delete(
-        "/api/v2/auth/identities/passport",
+        "/api/v2/auth/identities/oidc",
         json={"password": "secret123"},
         headers=headers,
     )
@@ -802,11 +850,11 @@ def test_login_slot_renders_the_button_over_http(app, client):
 
     assert response.status_code == 200
     blocks = response.get_json()["data"]["blocks"]
-    assert [block["hook"] for block in blocks] == ["passport"]
+    assert [block["hook"] for block in blocks] == ["oidc"]
     #: i18n 键穿过清洗层到达前端，英文界面据此翻译。
-    assert blocks[0]["title_key"] == "hooks.passport.title"
+    assert blocks[0]["title_key"] == "hooks.oidc.title"
     link = next(node for node in blocks[0]["nodes"] if node["type"] == "link")
-    assert link["href"] == "/api/v2/auth/oidc/passport"
-    assert link["text_key"] == "hooks.passport.signIn"
+    assert link["href"] == "/api/v2/auth/oidc"
+    assert link["text_key"] == "hooks.oidc.signIn"
     divider = next(node for node in blocks[0]["nodes"] if node["type"] == "divider")
     assert divider["label_key"] == "common.or"

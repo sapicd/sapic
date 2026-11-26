@@ -209,14 +209,20 @@ def run_review(app: Flask) -> dict:
     with app.app_context():
         try:
             counts = (
-                {"scanned": 0, "passed": 0, "blocked": 0, "failed": 0}
+                {"scanned": 0, "passed": 0, "blocked": 0, "failed": 0, "samples": []}
                 if not moderator_names()
                 else review_pending()
             )
         except Exception:
             logger.exception("scheduled moderation scan failed")
             _record("review_pending", False, None)
-            return {"scanned": 0, "passed": 0, "blocked": 0, "failed": 0}
+            return {
+                "scanned": 0,
+                "passed": 0,
+                "blocked": 0,
+                "failed": 0,
+                "samples": [],
+            }
         _record("review_pending", True, counts)
         return counts
 

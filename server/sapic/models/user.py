@@ -39,7 +39,7 @@ class User(BaseModel):
     email_verified = BooleanField(default=False)
     #: Incremented to revoke all existing cookie sessions for this user.
     session_version = IntegerField(default=0)
-    #: Reserved for the passportd OIDC integration.
+    #: Filled by the built-in OIDC hook (or any auth provider).
     oidc_issuer = CharField(max_length=255, null=True)
     oidc_subject = CharField(max_length=255, null=True)
     #: What the provider called this identity and when it was linked; shown on

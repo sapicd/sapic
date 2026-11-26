@@ -1011,15 +1011,19 @@ def read_object(image, replica: ImageBackend) -> bytes | None:
     return None
 
 
-def migrate_backend(source: StorageBackend, target: StorageBackend) -> dict:
-    """Move or drop every ``ok`` replica held by ``source`` so it can be removed.
+def migrate_backend(
+    source: StorageBackend, target: StorageBackend, delete_source: bool = False
+) -> dict:
+    """Copy ``ok`` replicas from ``source`` to ``target``, optionally removing them.
 
-    Redundant replicas (the image still has another ``ok`` replica) are deleted
-    together with their object; sole replicas are rewritten to ``target`` first
-    and only then removed from the source, so no image ever loses its last copy.
+    The default is a safe copy: the source object and its replica row stay in
+    place, so an operator can verify the target before erasing anything. With
+    ``delete_source=True`` the source is cleaned up: redundant replicas are
+    dropped without a copy, and sole replicas are rewritten to ``target`` before
+    the source object is deleted, so no image ever loses its last copy.
     """
     target_dict = _as_dict(target)
-    moved = deleted = failed = 0
+    moved = copied = deleted = failed = 0
     errors: list[str] = []
     rows = (
         ImageBackend.select(ImageBackend, StorageBackend)
@@ -1028,12 +1032,14 @@ def migrate_backend(source: StorageBackend, target: StorageBackend) -> dict:
     )
     for replica in rows:
         image = replica.image
-        others = [row for row in replicas_for(image) if row.id != replica.id]
-        if others:
-            delete_object(image, replica)
-            replica.delete_instance()
-            deleted += 1
-            continue
+        #: 删除模式下，已有其它健康副本的图无需再复制，直接删源即可。
+        if delete_source:
+            others = [row for row in replicas_for(image) if row.id != replica.id]
+            if others:
+                delete_object(image, replica)
+                replica.delete_instance()
+                deleted += 1
+                continue
         data = read_object(image, replica)
         if data is None:
             failed += 1
@@ -1057,18 +1063,34 @@ def migrate_backend(source: StorageBackend, target: StorageBackend) -> dict:
                 )
             )
             continue
-        delete_object(image, replica)
         #: 目标端若残留同图副本行，先清掉，避免撞 (image, backend) 唯一索引。
         ImageBackend.delete().where(
             (ImageBackend.image == image) & (ImageBackend.backend == target)
         ).execute()
-        replica.backend = target
-        replica.object_key = result.get("path") or ""
-        replica.url = result.get("src")
-        replica.size = result.get("size") or len(data)
-        replica.etag = result.get("etag")
-        replica.is_primary = True
-        replica.checked_at = now()
-        replica.save()
-        moved += 1
-    return {"moved": moved, "deleted": deleted, "failed": failed, "errors": errors}
+        fields = {
+            "object_key": result.get("path") or "",
+            "url": result.get("src"),
+            "size": result.get("size") or len(data),
+            "etag": result.get("etag"),
+            "state": STATE_OK,
+            "checked_at": now(),
+        }
+        if delete_source:
+            delete_object(image, replica)
+            for field, value in fields.items():
+                setattr(replica, field, value)
+            replica.backend = target
+            replica.is_primary = True
+            replica.save()
+            moved += 1
+        else:
+            #: 复制模式：源副本原样保留，只在目标新建一条副本。
+            ImageBackend.create(image=image, backend=target, **fields)
+            copied += 1
+    return {
+        "moved": moved,
+        "copied": copied,
+        "deleted": deleted,
+        "failed": failed,
+        "errors": errors,
+    }

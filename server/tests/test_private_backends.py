@@ -214,6 +214,53 @@ def test_private_backend_relays_a_signed_read(app, client, driver, monkeypatch):
     assert remote.closed is True
 
 
+def test_primary_public_replica_lends_its_direct_link(app, client):
+    """A primary public bucket wins ``src`` even when a local replica is higher priority."""
+    csrf = login_admin(app, client)
+    sha = upload(client, csrf)["sha"]
+    with app.app_context():
+        image = Image.get(Image.sha == sha)
+        local = StorageBackend.create(
+            name="local-first",
+            hook_name="up2local",
+            config={"root": "/tmp/sapic-test"},
+            scope="global",
+            visibility="public",
+            priority=1,
+            enabled=True,
+        )
+        cdn = StorageBackend.create(
+            name="cdn-primary",
+            hook_name="up2upyun",
+            config={"domain": "https://cdn.example.com", "bucket": "b"},
+            scope="global",
+            visibility="public",
+            priority=5,
+            enabled=True,
+        )
+        ImageBackend.delete().where(ImageBackend.image == image).execute()
+        ImageBackend.create(
+            image=image,
+            backend=local,
+            object_key="a.png",
+            url="/raw/%s" % sha,
+            size=5,
+            state="ok",
+        )
+        #: 主副本是公开桶，url 为空——单副本链接靠 domain + object_key 兜底。
+        ImageBackend.create(
+            image=image,
+            backend=cdn,
+            object_key="test/a.png",
+            size=5,
+            state="ok",
+            is_primary=True,
+        )
+
+    detail = client.get("/api/v2/images/%s" % sha).get_json()["data"]
+    assert detail["image"]["src"] == "https://cdn.example.com/test/a.png"
+
+
 def test_failed_private_replica_falls_back(app, client, driver, monkeypatch):
     csrf = login_admin(app, client)
     sha = upload(client, csrf)["sha"]

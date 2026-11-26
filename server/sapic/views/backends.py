@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from flask import Blueprint, g, request
 
+from ..basis.common import as_bool
 from ..basis.errors import ApiError, ErrorCode
 from ..libs.auth import admin_required, login_required
 from ..libs.storage import (
@@ -185,13 +186,15 @@ def migrate_backend_view(backend_id: int):
     row = StorageBackend.get_or_none(StorageBackend.id == backend_id)
     if row is None:
         raise ApiError("backend not found", ErrorCode.NOT_FOUND, 404)
-    target_id = _json_body().get("target")
+    data = _json_body()
+    target_id = data.get("target")
     target = StorageBackend.get_or_none(
         (StorageBackend.id == target_id) & StorageBackend.scope.in_(SYSTEM_SCOPES)
     )
     if target is None or target.id == row.id:
         raise ApiError("invalid target backend", ErrorCode.PARAM_ERROR)
-    return ok(migrate_backend(row, target))
+    #: 默认只复制、保留源站；调用方显式确认后才删除源对象。
+    return ok(migrate_backend(row, target, delete_source=as_bool(data.get("delete_source"))))
 
 
 @bp.delete("/backends/<int:backend_id>")

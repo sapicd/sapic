@@ -199,7 +199,15 @@ def _oidc_hook(name: str):
     return hook
 
 
-def _oidc_redirect_uri(name: str) -> str:
+def _oidc_redirect_uri(name: str | None = None) -> str:
+    """Callback address for the built-in (``None``) or a named provider.
+
+    The built-in OIDC hook has its own short route, so its ``redirect_uri``
+    must be generated from that endpoint -- using the generic one would give a
+    different address than the one registered at the provider.
+    """
+    if name is None:
+        return url_for("auth.oidc_callback_builtin", _external=True)
     return url_for("auth.oidc_callback", name=name, _external=True)
 
 
@@ -245,9 +253,8 @@ def _finish_bind(
     return clear_cookie_state(response, OIDC_COOKIE)
 
 
-@bp.get("/auth/oidc/<name>")
-def oidc_start(name: str):
-    """Kick off the authorization-code flow for a hook-based provider."""
+def _oidc_start(name: str, redirect_uri: str):
+    """Shared authorization-code kickoff for built-in and named providers."""
     hook = _oidc_hook(name)
     user = current_user()
     binding = as_bool(request.args.get("bind"))
@@ -258,7 +265,7 @@ def oidc_start(name: str):
     try:
         location = hook.module.oidc_authorize_url(
             config=hook_config(name),
-            redirect_uri=_oidc_redirect_uri(name),
+            redirect_uri=redirect_uri,
             state=state,
         )
     except ValueError as exc:
@@ -278,9 +285,20 @@ def oidc_start(name: str):
     )
 
 
-@bp.get("/auth/oidc/<name>/callback")
-def oidc_callback(name: str):
-    """Finish the flow: bind the identity, then start a normal session."""
+@bp.get("/auth/oidc")
+def oidc_builtin_start():
+    """Start the standard OIDC flow through the built-in ``oidc`` hook."""
+    return _oidc_start("oidc", _oidc_redirect_uri())
+
+
+@bp.get("/auth/oidc/<name>")
+def oidc_start(name: str):
+    """Kick off the authorization-code flow for a named provider."""
+    return _oidc_start(name, _oidc_redirect_uri(name))
+
+
+def _oidc_finish(name: str, redirect_uri: str):
+    """Shared callback logic for built-in and named providers."""
     hook = _oidc_hook(name)
     if request.args.get("error"):
         return redirect("/login?oidc=denied")
@@ -299,7 +317,7 @@ def oidc_callback(name: str):
         claims = hook.module.oidc_exchange(
             config=config,
             code=code,
-            redirect_uri=_oidc_redirect_uri(name),
+            redirect_uri=redirect_uri,
         )
     except ValueError as exc:
         #: 与 Provider 的对话失败（discovery / token / userinfo）和「claims 缺
@@ -356,6 +374,18 @@ def oidc_callback(name: str):
     return clear_cookie_state(response, OIDC_COOKIE)
 
 
+@bp.get("/auth/oidc/callback")
+def oidc_callback_builtin():
+    """Complete the standard flow through the built-in ``oidc`` hook."""
+    return _oidc_finish("oidc", _oidc_redirect_uri())
+
+
+@bp.get("/auth/oidc/<name>/callback")
+def oidc_callback(name: str):
+    """Complete the flow for a named provider."""
+    return _oidc_finish(name, _oidc_redirect_uri(name))
+
+
 @bp.get("/auth/identities")
 @login_required
 def read_identities():
@@ -378,7 +408,11 @@ def read_identities():
             "name": name,
             "title": manifest.get("title") or name,
             "bound": bound,
-            "bind_url": url_for("auth.oidc_start", name=name, bind=1, next="/settings"),
+            "bind_url": (
+                url_for("auth.oidc_builtin_start", bind=1, next="/settings")
+                if name == "oidc"
+                else url_for("auth.oidc_start", name=name, bind=1, next="/settings")
+            ),
         }
         if bound:
             #: 只回显绑定详情：第三方显示名、脱敏后的 subject（本地 UUID 很长，

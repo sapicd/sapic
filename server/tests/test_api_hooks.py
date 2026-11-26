@@ -296,6 +296,23 @@ def test_config_requires_admin(client):
     assert client.get("/api/v2/hooks/config").status_code == 403
 
 
+def test_config_exposes_callback_url_for_auth_providers(app, client):
+    from sapic.libs.settings import set_setting
+
+    signin(client, app=app, admin=True)
+    with app.app_context():
+        set_setting("hooks_state", {"oidc": True})
+        app.extensions["hooks"].reload()
+
+    items = {
+        item["name"]: item
+        for item in client.get("/api/v2/hooks/config").get_json()["data"]["items"]
+    }
+    assert items["oidc"]["callback_url"] == "http://localhost/api/v2/auth/oidc/callback"
+    #: storage / processor 等非 provider 钩子没有回调地址。
+    assert "callback_url" not in items["up2local"]
+
+
 def test_import_and_remove_a_third_party_hook(app, client, tmp_path, monkeypatch):
     from uuid import uuid4
 

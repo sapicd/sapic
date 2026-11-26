@@ -166,11 +166,11 @@ msgstr ""
 
 #: ../../intro.md:31
 msgid ""
-"**扩展**：内置本地 / 缤纷云 S4 / 七牛 / 又拍云 / GitHub / Gitee 驱动、WebP 后处理、Passport OIDC 登录、 "
+"**扩展**：内置本地 / 缤纷云 S4 / 七牛 / 又拍云 / GitHub / Gitee 驱动、WebP 后处理、OIDC OIDC 登录、 "
 "SendCloud 邮件通道；第三方包通过钩子体系接入，后台可安装、启停、配置。"
 msgstr ""
 "**Extensions**: built-in local / Bitiful S4 / Qiniu / Upyun / GitHub / Gitee drivers, "
-"WebP post-processing, Passport OIDC login and a SendCloud mail transport;"
+"WebP post-processing, OIDC OIDC login and a SendCloud mail transport;"
 " third-party packages plug in through hooks and can be installed, toggled"
 " and configured in the admin."
 

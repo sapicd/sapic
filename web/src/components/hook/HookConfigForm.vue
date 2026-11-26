@@ -44,6 +44,15 @@ const canPing = computed(() =>
   (props.config.actions || []).some((action) => action.name === 'ping'),
 )
 
+async function copyCallback() {
+  try {
+    await navigator.clipboard.writeText(props.config.callback_url)
+    ElMessage.success(t('common.copiedToast'))
+  } catch (error) {
+    ElMessage.warning(t('common.copyFailed'))
+  }
+}
+
 //: manifest 文案优先用钩子声明的键，其次按模块名兜底，最后才是钩子原文。
 function localized(field) {
   return hookText(
@@ -87,6 +96,18 @@ function localized(field) {
     <p v-if="config.description" class="hook-config__desc">
       {{ localized('description') }}
     </p>
+
+    <div v-if="config.callback_url" class="node-field">
+      <label class="node-field__label">{{ t('hooks.callbackUrl') }}</label>
+      <div class="node-field__control">
+        <el-input :model-value="config.callback_url" readonly class="is-mono">
+          <template #append>
+            <el-button @click="copyCallback">{{ t('common.copy') }}</el-button>
+          </template>
+        </el-input>
+        <div class="node-field__help">{{ t('hooks.callbackHint') }}</div>
+      </div>
+    </div>
 
     <NodeRenderer v-for="field in config.fields" :key="field.key" :node="field" />
   </section>
