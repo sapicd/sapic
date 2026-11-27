@@ -18,7 +18,7 @@ nginx ─┬─ /         → web/dist (Vue 3 SPA, static files + SPA fallback)
 | --- | --- | --- |
 | Python | 3.10+ | 后端只跑在 `server/`，包 `sapic` 是本地包，**不要** `pip install` 它 |
 | 依赖 | `server/requirements/prod.txt`（离线可用 `base.txt` + gunicorn/gevent/setproctitle） | 装在仓库根的 `.venv/` |
-| Node.js | 23+，pnpm 8（`packageManager: pnpm@8.14.1`） | 只在构建前端时用到 |
+| Node.js | 23+，pnpm 12（锁文件由 12.23.0 生成） | 只在构建前端时用到 |
 | 数据库 | PostgreSQL / MySQL 5.7+ / SQLite | 多 worker、多实例建议 PostgreSQL 或 MySQL |
 | nginx | 任意版本 | 反代 + 静态站点，需要支持 `try_files` |
 
@@ -188,9 +188,12 @@ server {
   （映射 `MAX_CONTENT_LENGTH`）、站点设置里按媒体类型的单文件上限
   （`upload_image_max_size` / `upload_video_max_size`）。multipart 有额外开销，进程级上限要比
   站点上限略大。
-- **防盗链**：用户可在「个性化」里为自己的公开图开启 Referer 校验，拦截发生在 `/raw/`，
-  nginx 只要原样转发 `Referer`（默认就转发），不要清空它。图片走存储直链（存储后端配了加速域名、
-  或图片是外链登记）时 sapic 不在链路上，需要在 CDN/静态服务器侧另外配置：
+- **防盗链 / 限速 / IP 控制**：默认 `link_mode=raw`，所有图片都经 `/raw/`，三层规则因此全在
+  本站生效——防盗链由用户在「个性化」里为自己的公开图开启（「允许空 Referer」在后台），
+  `/raw` 还有独立的每分钟限速与 IP 访问控制（后台「站点设置」）。nginx 只要原样转发 `Referer`
+  与真实客户端 IP（`set_real_ip_from` + `X-Forwarded-For`，并开 `sapic_proxyfix=1`），
+  不要清空 `Referer`。切到 `link_mode=direct`（或图片被直接引用存储直链）时 sapic 不在链路上，
+  需要在 CDN/静态服务器侧另外配置：
 
   ```nginx
   location /upload/ {
@@ -201,6 +204,8 @@ server {
   ```
 
   阿里云 OSS / 腾讯云 COS 在控制台「防盗链」里配同一份白名单，并显式选择是否允许空 Referer。
+  多 worker 需要共享 `/raw` 解析缓存时配 `sapic_redis_url`（不配则各 worker 各自缓存 30 秒，
+  功能不受影响）。
 
 ### 容器与编排
 

@@ -216,6 +216,9 @@ def test_private_backend_relays_a_signed_read(app, client, driver, monkeypatch):
 
 def test_primary_public_replica_lends_its_direct_link(app, client):
     """A primary public bucket wins ``src`` even when a local replica is higher priority."""
+    with app.app_context():
+        #: 这条用例覆盖 link_mode=direct 下的选链逻辑；默认 raw 一律给 /raw。
+        set_setting("link_mode", "direct")
     csrf = login_admin(app, client)
     sha = upload(client, csrf)["sha"]
     with app.app_context():

@@ -23,6 +23,7 @@
 | `HOOK_MARKET_URL` | `sapic_hookmarketurl` | 官方 list.json | 钩子市场数据源，可换镜像 |
 | `UPDATE_CHECK_URL` | `sapic_updatecheckurl` | 官方发布接口 | 版本检测数据源，置空即关闭（内网部署） |
 | `EXTERNAL_BASE_URL` | `sapic_external_base_url` | 空 | 给图片直链加前缀，空则按当前请求的域名补全 |
+| `REDIS_URL` | `sapic_redis_url` | 空 | `/raw` 解析缓存的可选 Redis（`redis://host:6379/0`）；空或连不上时自动降级为进程内缓存 |
 | `SCHEDULER` | `sapic_scheduler` | `true` | 进程内跑后台任务（到期清理、审核扫描、演示账号改密）；多 worker 用文件锁选主，关掉后回到「请求时兜底清理」。容器镜像里 web 端固定 `0`，任务由 supervisor 拉起的 `flask sa scheduler` 进程负责 |
 | `SCHEDULER_PURGE_INTERVAL` | `sapic_scheduler_purge_interval` | `600` | 过期清理间隔（秒），最小 10 |
 | `SCHEDULER_REVIEW_INTERVAL` | `sapic_scheduler_review_interval` | `300` | 审核扫描间隔（秒），最小 10；没有启用的 `moderator` 钩子时这趟直接跳过 |
@@ -48,6 +49,7 @@ cd server && ../.venv/bin/python -c "import json; from sapic.basis.conf import l
 | 上传 | `allow_anonymous_upload`、`upload_notice`、`upload_allowed_ext`、`upload_image_max_size`、`upload_video_max_size`、`upload_count_limit`、`allow_video`、`upload_fetch_proxy`（URL 抓取代理，见下） |
 | 有效期 | `image_expire_default_days`、`image_expire_max_days`（0 表示不启用规则） |
 | 存储 | `storage_replica`（多副本）、`allow_user_backends`、`user_backend_limit` |
+| 外链与访问控制 | `link_mode`（`raw` 统一出口 / `direct` 存储直链）、`raw_rate_limit`（次 / 分钟，0 关闭）、`raw_ip_mode`（`off` / `allow` / `deny`）、`raw_ip_list`（IP / CIDR）、`hotlink_allow_empty`（空 Referer 是否放行） |
 | 注册与账号 | `allow_register`、`register_review`、`password_login`、`forbidden_username`、`default_album_visibility` |
 | 审核 | `review_auto_purge`（默认关；开则 moderator 判 `block` 立即删除，不进审核队列，误判不可挽回） |
 | 演示账号 | `demo_rotate_enabled`、`demo_rotate_username`、`demo_rotate_password`、`demo_rotate_interval`（秒，60～86400） |
@@ -80,4 +82,13 @@ cd server && ../.venv/bin/python -c "import json; from sapic.basis.conf import l
 - `site_announcement`（全站公告）只解析三种排版：`**加粗**`、`[文字](https://链接)`、
   空行分段（单换行也换行）。链接只认 `http(s)://` 与 `mailto:`，其余写法按原文显示；
   它是纯文本语法，**不执行任何 HTML 标签**（前端用节点构造渲染，没有 `v-html`）。
+- `link_mode` 默认 `raw`：**所有**图片对外都是 `/raw/<sha>`，公开副本再 302 到存储直链。
+  这是唯一能让防盗链、IP 访问控制与限速覆盖全部图片的形态；`direct` 仍可用（少一次跳转），
+  但公开图的规则得在 CDN/nginx 上另配。302 一律 `Cache-Control: no-store`，否则判定会被缓存住。
+- `raw_rate_limit` 与 `api_rate_limit` 各自计数，互不占用对方的额度；`/raw` 的解析结果
+  （本地路径 / 302 目标）缓存 30 秒，配了 `sapic_redis_url` 时跨 worker 共享，删图、改可见性
+  与后端变更会主动失效。
+- `raw_ip_mode` 判的是 `request.remote_addr`，**反代/容器部署要设 `sapic_proxyfix=1`**，否则
+  看到的是代理地址。`raw_ip_list` 为空时规则不生效：避免一次误配把全站图片锁死。
+- `hotlink_allow_empty` 是站点级规则（用户只维护自己的放行域名），原本在个人设置里。
 - 新增配置项必须同时接进「后台表单 + 实际生效点」，不要留下只存不用的开关。

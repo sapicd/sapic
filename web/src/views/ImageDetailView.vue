@@ -170,8 +170,8 @@ function copy() {
   copyText(srcUrl.value)
 }
 
-//: /raw/<sha> 是 sapic 的出口，出现它有两种原因：私有图必须靠它鉴权，
-//: 公开图则是后端没配加速域名（本地存储常见）。
+//: /raw/<sha> 是 sapic 的出口，出现它有三种原因：私有图必须靠它鉴权；
+//: 统一 /raw 模式下这是全站策略；直链模式下则是后端没配加速域名。
 const srcIsRaw = computed(() => {
   if (!srcUrl.value) return false
   try {
@@ -183,10 +183,10 @@ const srcIsRaw = computed(() => {
 
 const linkHint = computed(() => {
   if (!srcIsRaw.value) return ''
-  //: 非公开图（私有 / 共享）的 /raw 是鉴权出口；公开图回落 /raw 则是出不了直链。
-  return effective.value.value === 'public'
-    ? t('detail.proxyHint')
-    : t('detail.privateHint')
+  //: 非公开图（私有 / 共享）的 /raw 是鉴权出口。
+  if (effective.value.value !== 'public') return t('detail.privateHint')
+  //: 公开图走 /raw：统一出口是策略，直链模式下才是「出不了直链」。
+  return site.linkMode === 'raw' ? t('detail.unifiedHint') : t('detail.proxyHint')
 })
 
 //: 模板由后端按 v1 的 gen_url_tpl 生成；src 是相对地址时补全，复制出去才可用。

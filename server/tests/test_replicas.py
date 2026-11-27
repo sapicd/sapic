@@ -61,6 +61,8 @@ def add_backend(client, csrf, name, root, priority, domain=""):
 def test_upload_fans_out_to_all_backends(app, client, admin, tmp_path):
     with app.app_context():
         set_setting("storage_replica", True)
+        #: 这条用例断言直链；默认的 link_mode=raw 会把 src 统一成 /raw。
+        set_setting("link_mode", "direct")
     mirror_root = tmp_path / "mirror"
     add_backend(client, admin, "mirror", mirror_root, 10, "https://cdn.mirror")
 

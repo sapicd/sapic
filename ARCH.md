@@ -7,8 +7,8 @@
 
 - **API-only 后端 + 独立前端**：`server/` 只提供 `/api/v2/*` 与 `/raw/<sha>`，`web/` 是独立的
   Vue 3 SPA，两者通过 HTTP 同源交互，生产环境由同一个 nginx 站点提供服务。
-- **Peewee ORM + 真实数据库**（PostgreSQL / MySQL / SQLite 三选一），不再像 v1 那样以 Redis 为主存储，
-  v2 不再依赖 Redis（只有 v1 数据迁移工具要读它）。
+- **Peewee ORM + 真实数据库**（PostgreSQL / MySQL / SQLite 三选一），不再像 v1 那样以 Redis 为主存储。
+  Redis 只在显式配置 `sapic_redis_url` 时用作 `/raw` 的可选解析缓存，不配也能运行（多 worker 各缓存各的）。
 - **存储后端插件化**：图片落到哪个后端由「驱动钩子 + backend 配置 + 副本」决定，新增驱动不需要改核心代码。
 - 当前版本：`server/sapic/version.py` 的 `__version__`。
 
@@ -145,31 +145,40 @@ server/sapic/
 - 上传是两级写入：`priority` 最小的启用后端**同步**写入（失败即上传失败），其余启用的后端随后由
   后台线程池（`libs/storage._REPLICA_POOL`）**异步**补副本，成功/失败记录在 `image_backends.state`
   + `last_error`；站点设置 `storage_replica` 可整体关闭。`is_primary` 标记同步写入的那一份。
-- 读取（`/raw` 与公开图直链）按「后端 `priority` 升序、副本 id 升序」挑选 `state=ok` 且后端启用的副本，
-  所以**优先级最高的后端既是写入目标，也是直链与读取的首选**。`/raw` 先找本地副本（`send_file`），
-  再按优先级逐个尝试远程副本：某个取不到就换下一个（`_relay` 捕获 `ApiError`），不再直接 404。
+- 读取（`/raw`，以及 `link_mode=direct` 时的公开图直链）按「后端 `priority` 升序、副本 id 升序」挑选
+  `state=ok` 且后端启用的副本，所以**优先级最高的后端既是写入目标，也是读取的首选**。`/raw` 先找本地
+  副本（`send_file`），再按优先级逐个尝试远程副本：某个取不到就换下一个（`_relay` 捕获 `ApiError`），
+  不再直接 404。默认 `link_mode=raw` 下公开图也由 `/raw` 302 到直链（`no-store`），
+  解析结果本身缓存 30 秒（`libs/cache.py`）。
 - 存储 key 固定为 `{用户}/{年}/{月}/{日}/{ASCII 文件名}-{sha 片段}.{ext}`。
-- **外链登记**（`images.source_url`）：只登记地址、不下载、不产生副本。公开图的 `src` 就是源站地址，
-  私有图由 `/raw/<sha>` 转发；删除记录只删元数据，不触碰源站。
+- **外链登记**（`images.source_url`）：只登记地址、不下载、不产生副本。默认 `link_mode=raw` 时
+  `src` 仍是 `/raw/<sha>`，`/raw` 再 302 到源站（规则才管得到它）；`direct` 模式下公开图的 `src`
+  就是源站地址。私有图一律由 `/raw/<sha>` 转发；删除记录只删元数据，不触碰源站。
 - **后端归属（scope）**：`system` 行是管理员维护的默认存储，可按 `UserBackend` 授权/排序给用户；
   `user` 行是用户自定义存储（`owner_id` 即归属人），只有本人可用。`list_backends(user)` 把两类合并后按
   有效优先级排序（授权行用 `UserBackend.priority` 覆盖），别人的 `user` 行对当前用户不可见。
   用户自定义能力由站点设置 `allow_user_backends`（默认关）把关，关着时即使库里有 `user` 行也不参与上传；
   用户端的增删改查 API 与界面尚未实现，管理员后台只管理 `system` 行。
-- **后端 visibility**：`public`（默认）= 桶公有读，公开图直接返回主副本直链；`private` = 桶私有读，
-  `src` 一律回落 `/raw/<sha>`，`/raw` 向驱动要 `upimg_url` 签发的临时读地址后由 sapic 转发
-  （URL 或 URL + headers，如又拍的 `Authorization`/`Date`），桶始终不对外。
-  `private` 只能给实现了 `upimg_url` 的驱动（`up2local` 例外，直接读盘），否则建/改后端时 400。
+- **对外链接（`link_mode`）**：默认 `raw`，所有图片（含公开图）对外都是 `/raw/<sha>`，公开副本由
+  `/raw` 302 到直链。这样防盗链、IP 访问控制与限速才能覆盖全部图片；`direct` 才把公开图的存储直链
+  直接交出去，少一次跳转，但规则只能在 CDN/nginx 上配。
+- **后端 visibility**：`public`（默认）= 桶公有读，公开图可直接 302 到主副本直链；`private` = 桶私有读，
+  `/raw` 向驱动要 `upimg_url` 签发的临时读地址后由 sapic 转发（URL 或 URL + headers，如又拍的
+  `Authorization`/`Date`），桶始终不对外。`private` 只能给实现了 `upimg_url` 的驱动
+  （`up2local` 例外，直接读盘），否则建/改后端时 400。
 - **私有图**（图片可见性）固定走 `/raw/<sha>`，远程副本流式转发不暴露源站；后端是 `private` 时同样如此。
-- 直链只取**优先级最高的副本**，它若在私有桶里就回落到 `/raw`，不会借用低优先级副本的直链。
+- `direct` 模式下的直链只取**优先级最高的副本**，它若在私有桶里就回落到 `/raw`，不会借用低优先级副本的直链。
 - 后端地址由服务端产生，`/raw` 转发时 `open_remote(allow_private=True)` 跳过公网校验（自建 MinIO 在
   `10.x` 也能读）；URL 上传那条路仍保留 SSRF 白名单，二者不能混用。
-- **防盗链**（`libs/hotlink.py`）只作用于 `/raw/<sha>` 上的公开图，规则来自图片所有者的个人设置
-  （`hotlink_enabled` / `hotlink_allow_hosts` / `hotlink_allow_empty`）：本站域名（`EXTERNAL_BASE_URL`
-  与当前 host）永远放行，`*.example.com` 只匹配子域。命中拦截返回 403 且 `no-store`（`/raw` 平时是
-  一年 `immutable`），放行时降级为 `private` 并 `Vary: Referer`，避免共享缓存把校验绕过去。
-  私有图不受影响（已有 `can_view`，且会话 Cookie 是 `SameSite=Lax`）；走存储直链或外链登记的图片
-  不经 sapic，需在 CDN/nginx 侧配置。
+- **防盗链**（`libs/hotlink.py`）只作用于 `/raw/<sha>` 上的公开图：图片所有者决定是否开启
+  （`hotlink_enabled`）与放行域名（`hotlink_allow_hosts`，本站域名永远放行，`*.example.com` 只匹配
+  子域）；没有 `Referer` 的请求是否放行是**站点级**开关 `hotlink_allow_empty`。命中拦截返回 403 且
+  `no-store`（`/raw` 平时是一年 `immutable`），放行时降级为 `private` 并 `Vary: Referer`，避免共享
+  缓存把校验绕过去。私有图不受影响（已有 `can_view`，且会话 Cookie 是 `SameSite=Lax`）。
+  `link_mode=direct` 时的公开直链不经过 sapic，这些规则需要在 CDN/nginx 侧另配。
+- 与防盗链并列的还有两道 `/raw` 站点级门槛：`raw_rate_limit`（独立于 API 的每分钟配额）与
+  `raw_ip_mode` + `raw_ip_list`（`libs/access.py`，IPv4/IPv6/CIDR；列表为空时规则不生效）。
+  它们同样只在 `/raw` 生效，所以默认的 `link_mode=raw` 是这套访问控制成立的前提。
 - 后端行（`storage_backends`）由「启用的存储钩子」自动派生：启动时与每次 `list_backends()` 都会
   `sync_backends()`，为每个启用的 `catalog=upload` 钩子补一行。**存储驱动的凭据只配在后端行**
   （`config`，新增/修改时按 `config_schema.required` 校验，缺项报 400 且列表标「待配置」）；

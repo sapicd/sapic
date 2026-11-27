@@ -269,9 +269,6 @@ export default {
     allowDomainsHint:
       '*.example.com only matches subdomains, not example.com itself; your own domain is always allowed.',
     allowDomainsPlaceholder: 'e.g. blog.example.com,*.example.org (comma separated)',
-    allowEmptyHint:
-      'Requests such as opening an image directly or a chat preview carry no referer; when off they are rejected too.',
-    allowEmptyReferer: 'Allow an empty referer',
     apiDocs: 'Open the API docs (try requests)',
     avatar: 'Avatar',
     avatarHint:
@@ -308,7 +305,7 @@ export default {
     followSite: 'Follow the site again',
     hotlink: 'Hotlink protection',
     hotlinkHint:
-      'When on, only this site and the domains below may embed your public images; other referers get 403. It only covers /raw links served by sapic; for a backend with a CDN domain, configure that CDN/nginx separately.',
+      'When on, only this site and the domains below may embed your public images; other referers get 403. Whether requests without a referer (direct open, chat preview) pass is set by the administrator. Direct-link mode bypasses sapic, so that backend needs its own CDN/nginx rule.',
     identitiesHeader: 'Unified login',
     identitiesLoadFailed: 'Failed to load providers',
     mailNotConfigured: 'No mail service configured, contact the administrator',
@@ -418,6 +415,8 @@ export default {
     proxyHint:
       'The address is served by this site: no CDN domain is configured, or the bucket does not allow anonymous reads.',
     privateHint: 'This image is not public: the address is authenticated here, so others must sign in.',
+    unifiedHint:
+      'Served through the /raw endpoint of this site so hotlink, IP and rate rules apply centrally.',
     quickLinks: 'Quick links',
     replicaPrivateHint:
       'Private backend or no CDN domain configured, so access goes through /raw/<sha>',
@@ -674,10 +673,18 @@ export default {
     footer: 'Footer copyright',
     forbiddenUsername: 'Reserved usernames',
     forbiddenUsernamePlaceholder: 'Comma separated, cannot be registered',
+    hotlinkAllowEmpty: 'Allow an empty referer',
+    hotlinkAllowEmptyHint:
+      'Whether /raw requests without a Referer (direct open, chat preview) pass; users only maintain their own allow list.',
     icp: 'ICP filing number',
     icpPlaceholder: 'e.g. 京ICP备xxxxxxx号-1',
     imageMaxSize: 'Image size limit',
     imageMaxSizeUnit: 'MB / image',
+    linkMode: 'Outbound links',
+    linkModeDirect: 'Storage direct link',
+    linkModeHint:
+      'Routing every image through /raw is the only way to enforce hotlink, IP and rate rules centrally; direct links save one hop but those rules must live on the CDN or nginx.',
+    linkModeRaw: 'Always /raw (recommended)',
     loadFailed: 'Failed to load site settings',
     loginNotice: 'Login page notice',
     loginNoticePlaceholder: 'Shown under the login card title, hidden when empty',
@@ -701,6 +708,18 @@ export default {
     plazaHint: 'Only shows public images their owners published',
     port: 'Port',
     portHint: '25 / 465 (SSL) / 587 (STARTTLS)',
+    rawIpList: 'IP / CIDR list',
+    rawIpListHint:
+      'IPv4 / IPv6 and CIDR, comma or newline separated; an empty list disables the rule so a typo cannot lock the site out.',
+    rawIpListPlaceholder: 'e.g. 10.0.0.0/8, 2001:db8::/32',
+    rawIpMode: 'IP access control',
+    rawIpModeAllow: 'Only the listed',
+    rawIpModeDeny: 'Everything but the listed',
+    rawIpModeHint:
+      'Applies to /raw; behind a container or reverse proxy set sapic_proxyfix=1, otherwise only the proxy address is visible.',
+    rawIpModeOff: 'Off',
+    rawRateLimit: '/raw rate limit',
+    rawRateLimitHint: 'Requests per minute per client, 0 disables it; counted separately from the API budget.',
     registerReview: 'Registration review',
     registerReviewHint: 'New accounts must be approved before they can upload',
     reviewAutoPurge: 'Purge on moderation block',

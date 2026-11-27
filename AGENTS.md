@@ -6,7 +6,8 @@ v1 代码已从仓库移除（历史代码看 git tag）。v1 → v2 的功能�
 `.codebuddy/MIGRATION.md`（被 git 忽略、不入库），需要查「某能力 v1 有 v2 有没有」时读它。
 当前版本见 `server/sapic/version.py` 中的 `__version__`。
 
-技术栈（后端）：Python 3.10+，Flask，Peewee，psycopg(binary)，PyMySQL，PyJWT。（v2 不用 Redis。）
+技术栈（后端）：Python 3.10+，Flask，Peewee，psycopg(binary)，PyMySQL，PyJWT。
+（Redis 只在配置 `sapic_redis_url` 后用于 `/raw` 的可选解析缓存，不是必选依赖。）
 前端：`web/` 是独立的 Vue 3 + Vite + Element Plus 应用，与后端通过 `/api` 与 `/raw/` 交互。
 详细架构见 `ARCH.md`，部署与运维见 `docs/deploy.md`，开发约定与测试见 `docs/dev.md`。
 
@@ -91,7 +92,7 @@ make dev              # 开发服务器 0.0.0.0:9514 (flask run --reload，改�
 make serve            # gunicorn 前台运行 (WORKERS=4 -k gevent)
 make scheduler        # 前台跑后台任务（清理/审核）；web 端需 sapic_scheduler=0 让位
 make test             # 后端 pytest
-make web-dev          # 前端开发服务器 127.0.0.1:5173（/api 与 /raw/ 代理到 9514）
+make web-dev          # 前端开发服务器 127.0.0.1:5173（/api 与 /raw/ 代理到 9514）；WEB_HOST=0.0.0.0 对外监听，WEB_ALLOWED_HOSTS 放行外部域名
 make web-build        # 前端构建到 web/dist
 make clean            # 清理缓存与构建产物
 ```
@@ -301,8 +302,18 @@ ShareX 等的逐项配置见 `docs/usage.md`。**不要再为老客户端补第�
 - 默认值集中在 `sapic/libs/settings.py` 的 `DEFAULTS`，读写统一走 `get_setting` / `set_setting`
 - `upload_count_limit` 是**单次批次**限制，只由前端上传控件强制；后端每次请求只有一个文件，不做（也无从做）该校验。要服务端配额应另立「每日/每小时次数」这类语义
 - 全局 API 限速是 `api_rate_limit`（默认 120 次/分钟/客户端，`0` 关闭），实现在 `libs/ratelimit.py`：
-  已登录按用户、匿名按 IP，进程内固定窗口，多 worker 各自计数；`/api/v2/health` 与 `/raw/` 不计数。
-  改限额由 `views/settings.py` 调 `forget_rate_limit(reset=True)` 让当前 worker 立即生效
+  已登录按用户、匿名按 IP，进程内固定窗口，多 worker 各自计数；`/api/v2/health` 不计数。
+  `/raw/` 有**独立**的一档 `raw_rate_limit`（默认 600，`0` 关闭），同一个 `RateLimiter` 换
+  `setting=` 实现，互不占用额度。改限额由 `views/settings.py` 调 `forget_rate_limit(reset=True)`
+  让当前 worker 立即生效（两个 limiter 一起清）
+- 对外链接与 `/raw` 的访问控制：`link_mode`（默认 `raw`，**所有**图片都给 `/raw/<sha>`；
+  `direct` 才给存储直链）、`raw_ip_mode` + `raw_ip_list`（`libs/access.py`，`allow` / `deny`，
+  支持 IPv4/IPv6/CIDR，**列表为空时规则不生效**以免误锁全站）、`hotlink_allow_empty`
+  （站点级开关；用户只维护 `hotlink_allow_hosts` 白名单）。`/raw` 的 302 分支必须
+  `Cache-Control: no-store`，否则防盗链与副本变更会被缓存冻结。解析结果缓存 30 秒
+  （`libs/cache.py`，配 `sapic_redis_url` 时跨 worker 共享，未配置/连不上自动降级进程内；
+  删图、改可见性、增删改后端时主动失效）。IP 规则看 `request.remote_addr`，反代部署要开
+  `sapic_proxyfix`
 - 后台通过 `GET/PUT /api/v2/settings` 管理（仅管理员），可写键白名单与类型校验在 `views/settings.py`
 - 前台展示字段由公开接口 `GET /api/v2/site` 输出，前端在 `stores/site.js` 消费
 - 全站公告 `site_announcement` 走**微型纯文本语法**（`**加粗**` / `[文字](https://链接)` / 空行分段），
@@ -438,17 +449,21 @@ ShareX 等的逐项配置见 `docs/usage.md`。**不要再为老客户端补第�
 - 分享模板（`tpl`）：`libs.images.share_templates` 生成 `URL` / `HTML` / `Markdown` / `rST` 四项，
   键名与 v1 的 `gen_url_tpl` 保持一致（视频的 Markdown/rST 用 `<figure><iframe>`），
   由 `serialize_image` 随图片一起返回；详情页「复制与分享」直接消费，不要再在前端手拼模板。
-- 图片地址（`src`）：公开图直接返回优先级最高副本的直链（钩子 `upimg_save` 返回的 `src`），
-  私有图固定走 `/raw/<sha>` 由 sapic 鉴权后输出；私有远程副本在 `/raw/` 内流式转发，不做 302，
-  避免暴露源站地址。没有直链的后端（未配 `domain` 的本地存储）同样回落到 `/raw/<sha>`。
-- 缩略图（`thumb`）：只有列表与广场（共用 `libs.images.album_serializer`）会输出，值为
-  `src` + 存储后端 `config.thumb_suffix`（七牛 `?imageView2/2/w/400`、又拍 `!/fw/400`，裸查询串
-  自动补 `?`，`libs/storage.thumb_suffix`）。仅当 `src` 本身是公开直链（非 `/raw/<sha>`、非外链源站）
-  且图片不是视频时才有值——`src` 与 `tpl` 永远是原图，**不要把后缀拼进 `src`**，否则分享出去的
-  直链会被永久缩小。配置项在驱动 `config_schema` 里声明（`up2qiniu` / `up2upyun` 已有），
-  本地存储、GitHub/Gitee 没有图片处理能力，不要给它们加这个字段。
-- 外链登记（`images.source_url`，`POST /images/import`）不下载文件、不写副本：公开图 `src` 直接是源站地址，
-  私有图经 `/raw/<sha>` 转发；删除只删元数据。批量操作走 `POST /images/batch/delete` 与
+- 图片地址（`src`）由站点设置 `link_mode` 决定（`libs.images.raw_link_mode`）。默认 `raw`：
+  **所有**图片都返回 `/raw/<sha>`——公开图由 `/raw` 302 到存储直链，私有图鉴权后转发，
+  私有远程副本流式转发、不做 302（不暴露源站）。`direct`：公开图直接返回优先级最高副本的直链
+  （`upimg_save` 的 `src`，缺失时用 `domain + object_key` 兜底），私有图仍走 `/raw`。
+  没有直链的后端（未配 `domain` 的本地存储）在任何模式下都回落 `/raw/<sha>`。
+- 缩略图（`thumb`）：只有列表与广场（共用 `libs.images.album_serializer`）会输出。`raw` 模式是
+  `/raw/<sha>?thumb=1`，由 `/raw` 把 `config.thumb_suffix`（七牛 `?imageView2/2/w/400`、
+  又拍 `!/fw/400`，裸查询串自动补 `?`，`libs/storage.thumb_suffix`）追加到 302 目标上；
+  `direct` 模式是 `src` + 后缀。仅当主副本是公开直链且不是视频时才有值——`src` 与 `tpl` 永远是
+  原图，**不要把后缀拼进 `src`**，否则分享出去的地址会被永久缩小。配置项在驱动
+  `config_schema` 里声明（`up2qiniu` / `up2upyun` 已有），本地存储、GitHub/Gitee 没有图片处理能力，
+  不要给它们加这个字段。
+- 外链登记（`images.source_url`，`POST /images/import`）不下载文件、不写副本：`raw` 模式下
+  `src` 仍是 `/raw/<sha>`（`/raw` 再 302 到源站，规则才管得到它），`direct` 模式下公开图的
+  `src` 直接是源站地址；私有图一律经 `/raw/<sha>` 转发。删除只删元数据。批量操作走 `POST /images/batch/delete` 与
   `PATCH /images/batch`（≤100 张，只允许自己的图片，移动目标需 `can_write`）。
   链接校验在写入时做（`libs.images.validate_external_url`，逐条失败进 `failed`）：**只收 https 的公网域名**，
   地址字面量、带凭据的链接、解析到内网/保留地址的域名一律拒绝；解析不到（含离线）放行，因为

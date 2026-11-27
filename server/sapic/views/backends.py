@@ -23,6 +23,7 @@ from flask import Blueprint, g, request
 from ..basis.common import as_bool
 from ..basis.errors import ApiError, ErrorCode
 from ..libs.auth import admin_required, login_required
+from ..libs.cache import invalidate_all_raw
 from ..libs.storage import (
     backend_payload,
     create_backend,
@@ -129,6 +130,8 @@ def add_my_backend():
         enabled=data.get("enabled", True),
         visibility=data.get("visibility") or VISIBILITY_PUBLIC,
     )
+    #: 副本解析结果可能指向旧后端，写操作后让 /raw 重新查一次。
+    invalidate_all_raw()
     return ok(_my_payload(), status=201)
 
 
@@ -136,6 +139,7 @@ def add_my_backend():
 @login_required
 def modify_my_backend(backend_id: int):
     update_user_backend(_own_backend(backend_id), _json_body())
+    invalidate_all_raw()
     return ok(_my_payload())
 
 
@@ -143,6 +147,7 @@ def modify_my_backend(backend_id: int):
 @login_required
 def remove_my_backend(backend_id: int):
     delete_backend(_own_backend(backend_id))
+    invalidate_all_raw()
     return ok(_my_payload())
 
 
@@ -167,6 +172,7 @@ def add_backend():
         enabled=data.get("enabled", True),
         visibility=data.get("visibility") or VISIBILITY_PUBLIC,
     )
+    invalidate_all_raw()
     return ok(_payload(), status=201)
 
 
@@ -177,6 +183,7 @@ def modify_backend(backend_id: int):
     if row is None:
         raise ApiError("backend not found", ErrorCode.NOT_FOUND, 404)
     update_backend(row, _json_body())
+    invalidate_all_raw()
     return ok(_payload())
 
 
@@ -194,7 +201,11 @@ def migrate_backend_view(backend_id: int):
     if target is None or target.id == row.id:
         raise ApiError("invalid target backend", ErrorCode.PARAM_ERROR)
     #: 默认只复制、保留源站；调用方显式确认后才删除源对象。
-    return ok(migrate_backend(row, target, delete_source=as_bool(data.get("delete_source"))))
+    result = migrate_backend(
+        row, target, delete_source=as_bool(data.get("delete_source"))
+    )
+    invalidate_all_raw()
+    return ok(result)
 
 
 @bp.delete("/backends/<int:backend_id>")
@@ -204,4 +215,5 @@ def remove_backend(backend_id: int):
     if row is None:
         raise ApiError("backend not found", ErrorCode.NOT_FOUND, 404)
     delete_backend(row)
+    invalidate_all_raw()
     return ok(_payload())

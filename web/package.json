@@ -2,10 +2,9 @@
   "name": "sapic-web",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@8.14.1",
   "engines": {
     "node": ">=23",
-    "pnpm": ">=8"
+    "pnpm": ">=12"
   },
   "scripts": {
     "dev": "vite",

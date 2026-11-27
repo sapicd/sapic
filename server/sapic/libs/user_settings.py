@@ -29,13 +29,14 @@ DEFAULTS: dict[str, object] = {
     "bg_image_mobile": "",
     #: 背景遮罩透明度，``None`` 表示跟随站点设置。
     "bg_opacity": None,
-    #: 防盗链：只拦截公开图在 ``/raw/<sha>`` 上的外站引用；走存储直链（配置了
-    #: 加速域名）的图片不经过 sapic，需要在 CDN/nginx 上另外配置。
+    #: 防盗链：拦截公开图在 ``/raw/<sha>`` 上的外站引用。站点设置
+    #: ``link_mode=direct`` 时公开图走存储直链、不经过 sapic，这条规则也就管不到
+    #: 它；默认的 ``raw`` 模式才能全部覆盖。
     "hotlink_enabled": False,
     #: 额外放行的引用域名，逗号分隔，支持 ``*.example.com``；本站域名永远放行。
     "hotlink_allow_hosts": "",
-    #: 没有 ``Referer`` 的请求（直接打开、聊天工具预览等）是否放行。
-    "hotlink_allow_empty": True,
+    #: 空 Referer 是否放行是站点级开关（``settings.hotlink_allow_empty``），
+    #: 不放在个人偏好里：它是全站规则强度，不该由单个用户放松。
 }
 
 

@@ -2,8 +2,15 @@
 import io
 from email.message import Message
 
+from sapic.libs.settings import set_setting
 from sapic.libs.storage import thumb_suffix
 from sapic.models import Image, ImageBackend, StorageBackend
+
+
+def use_direct_links(app):
+    """Opt into the ``link_mode=direct`` behaviour the legacy assertions cover."""
+    with app.app_context():
+        set_setting("link_mode", "direct")
 
 
 def register_and_login(client):
@@ -74,6 +81,7 @@ class FakeRemote:
 
 
 def test_public_image_links_to_the_backend_domain(app, client, tmp_path):
+    use_direct_links(app)
     csrf = register_and_login(client)
     with app.app_context():
         StorageBackend.create(
@@ -114,6 +122,7 @@ def test_configured_base_url_wins_over_the_request_host(app, client):
 
 
 def test_public_image_with_remote_replica_redirects(app, client):
+    use_direct_links(app)
     csrf = register_and_login(client)
     sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
     url = "https://raw.githubusercontent.com/u/r/main/photo.png"
@@ -238,6 +247,7 @@ def add_thumb_backend(app, tmp_path, suffix="?imageView2/2/w/400"):
 
 
 def test_listing_serves_thumbnails_from_the_backend_suffix(app, client, tmp_path):
+    use_direct_links(app)
     add_thumb_backend(app, tmp_path)
     csrf = register_and_login(client)
 
@@ -255,6 +265,57 @@ def test_listing_serves_thumbnails_from_the_backend_suffix(app, client, tmp_path
     assert detail["image"]["src"] == image["src"]
 
 
+def add_remote_replica(app, sha, url, thumb_suffix=""):
+    """Replace the local replica with one on a public remote driver."""
+    with app.app_context():
+        image = Image.get(Image.sha == sha)
+        backend = StorageBackend.create(
+            name="remote-thumb",
+            hook_name="up2github",
+            config={"thumb_suffix": thumb_suffix} if thumb_suffix else {},
+            scope="global",
+            visibility="public",
+            priority=1,
+            enabled=True,
+        )
+        ImageBackend.delete().where(ImageBackend.image == image).execute()
+        ImageBackend.create(
+            image=image,
+            backend=backend,
+            object_key="photo.png",
+            url=url,
+            size=5,
+            is_primary=True,
+            state="ok",
+        )
+
+
+def test_raw_mode_publishes_one_address_and_keeps_the_thumbnail(app, client):
+    """默认 link_mode=raw：src 统一 /raw，缩略图参数跟着 /raw 走。"""
+    csrf = register_and_login(client)
+    sha = upload(client, csrf).get_json()["data"]["image"]["sha"]
+    url = "https://raw.githubusercontent.com/u/r/main/photo.png"
+    add_remote_replica(app, sha, url, "?imageView2/2/w/400")
+
+    image = client.get("/api/v2/images/%s" % sha).get_json()["data"]["image"]
+    assert image["src"] == "http://localhost/raw/%s" % sha
+    assert image["thumb"] is None
+
+    listing = client.get("/api/v2/images").get_json()["data"]["items"][0]
+    assert listing["src"] == "http://localhost/raw/%s" % sha
+    assert listing["thumb"] == "http://localhost/raw/%s?thumb=1" % sha
+
+    plain = client.get("/raw/%s" % sha)
+    assert plain.status_code == 302
+    assert plain.headers["Location"] == url
+    #: 302 不能被缓存：副本顺序与防盗链判定每次都要重新执行。
+    assert plain.headers["Cache-Control"] == "no-store"
+
+    thumb = client.get("/raw/%s?thumb=1" % sha)
+    assert thumb.status_code == 302
+    assert thumb.headers["Location"] == url + "?imageView2/2/w/400"
+
+
 def test_thumbnail_is_skipped_without_a_direct_link(app, client):
     """No domain means ``src`` points at ``/raw/<sha>``: a suffix there would 404."""
     csrf = register_and_login(client)
@@ -266,6 +327,7 @@ def test_thumbnail_is_skipped_without_a_direct_link(app, client):
 
 
 def test_private_and_video_images_have_no_thumbnail(app, client, tmp_path):
+    use_direct_links(app)
     add_thumb_backend(app, tmp_path)
     csrf = register_and_login(client)
     sha = upload(client, csrf).get_json()["data"]["image"]["sha"]

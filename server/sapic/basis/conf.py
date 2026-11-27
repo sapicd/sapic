@@ -69,6 +69,10 @@ class BaseConfig:
     STORAGE_DIR: str = join(DATA_DIR, "upload")
     #: Public base URL prepended to image links, empty means relative.
     EXTERNAL_BASE_URL: str = ""
+    #: Optional Redis DSN (``redis://host:6379/0``) for the shared ``/raw``
+    #: cache. Empty — or an unreachable server — keeps it in this process, so a
+    #: single node needs no Redis at all.
+    REDIS_URL: str = ""
 
     #: Trust ``X-Forwarded-*`` headers from a reverse proxy.
     PROXY_FIX: bool = False

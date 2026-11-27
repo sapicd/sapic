@@ -215,6 +215,21 @@ onMounted(loadSettings)
               <el-switch v-model="form.storage_replica" />
               <span class="form-suffix">{{ t('adminSite.replicaHint') }}</span>
             </el-form-item>
+            <el-form-item :label="t('adminSite.linkMode')">
+              <el-select v-model="form.link_mode" style="width: 220px">
+                <el-option value="raw" :label="t('adminSite.linkModeRaw')" />
+                <el-option value="direct" :label="t('adminSite.linkModeDirect')" />
+              </el-select>
+              <span class="form-suffix">{{ t('adminSite.linkModeHint') }}</span>
+            </el-form-item>
+            <el-form-item :label="t('adminSite.rawRateLimit')">
+              <el-input-number v-model="form.raw_rate_limit" :min="0" :max="60000" />
+              <span class="form-suffix">{{ t('adminSite.rawRateLimitHint') }}</span>
+            </el-form-item>
+            <el-form-item :label="t('adminSite.hotlinkAllowEmpty')">
+              <el-switch v-model="form.hotlink_allow_empty" />
+              <span class="form-suffix">{{ t('adminSite.hotlinkAllowEmptyHint') }}</span>
+            </el-form-item>
             <el-form-item :label="t('adminSite.fetchProxy')">
               <el-input
                 v-model="form.upload_fetch_proxy"
@@ -230,6 +245,26 @@ onMounted(loadSettings)
             <el-form-item :label="t('adminSite.apiRateLimit')">
               <el-input-number v-model="form.api_rate_limit" :min="0" :max="6000" />
               <span class="form-suffix">{{ t('adminSite.apiRateLimitHint') }}</span>
+            </el-form-item>
+            <el-form-item :label="t('adminSite.rawIpMode')">
+              <el-select v-model="form.raw_ip_mode" style="width: 220px">
+                <el-option value="off" :label="t('adminSite.rawIpModeOff')" />
+                <el-option value="allow" :label="t('adminSite.rawIpModeAllow')" />
+                <el-option value="deny" :label="t('adminSite.rawIpModeDeny')" />
+              </el-select>
+              <span class="form-suffix">{{ t('adminSite.rawIpModeHint') }}</span>
+            </el-form-item>
+            <el-form-item
+              v-if="form.raw_ip_mode && form.raw_ip_mode !== 'off'"
+              :label="t('adminSite.rawIpList')"
+            >
+              <el-input
+                v-model="form.raw_ip_list"
+                type="textarea"
+                :rows="3"
+                :placeholder="t('adminSite.rawIpListPlaceholder')"
+              />
+              <span class="form-suffix">{{ t('adminSite.rawIpListHint') }}</span>
             </el-form-item>
             <el-form-item :label="t('adminSite.plaza')">
               <el-switch v-model="form.plaza_enabled" />

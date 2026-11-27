@@ -4,6 +4,8 @@
 
 ### 修复
 
+- 前端依赖安装兼容 pnpm 12：批准 esbuild 与 vue-demi 的安装脚本，`pnpm install` 不再被
+  `ERR_PNPM_IGNORED_BUILDS` 中断；CI、容器与文档统一使用 pnpm 12.23.0。
 - 公开图片的「复制链接」现在取 **主副本**（`is_primary`）的直链，并支持后端
   `domain + object_key` 兜底：主副本是公开桶（如缤纷云 S4）但 `url` 字段为空时，
   不再错误回落到 `/raw/<sha>` 代理；主副本是本地/私有桶时仍走 `/raw`。
@@ -13,19 +15,32 @@
 
 ### 新增
 
+- `make web-dev` 支持 `WEB_HOST=0.0.0.0` 对外监听，并用 `WEB_ALLOWED_HOSTS` 放行外部域名，默认仍为 127.0.0.1。
 - 后台存储迁移增加「删除源站副本」开关，默认关闭：迁移只复制、源站保留；
   确认目标站无误后再勾选执行删除。API 对应 `POST /backends/<id>/migrate` 的 `delete_source` 参数。
+- 图片外链统一模式（默认开启）：所有图片对外都是 `/raw/<sha>`，公开图再临时跳转到存储直链，
+  防盗链、IP 访问控制与限速因此能覆盖全部图片；后台可切回「存储直链」。
+- `/raw` 增加独立的每分钟限速（默认 600，`0` 关闭）与 IP 访问控制（仅允许 / 仅拒绝，
+  支持 IPv4、IPv6 与 CIDR），与 API 限速分开计数、互不占用额度。
+- `/raw` 的解析结果支持 Redis 共享缓存（`sapic_redis_url`；未配置或连不上时自动使用进程内缓存）。
+- 列表缩略图在统一模式下改为 `/raw/<sha>?thumb=1`，由 `/raw` 追加存储后端的图片处理后缀。
 
 ### 变更
 
 - 内置 OIDC 钩子 `passport` 更名为 `oidc`，成为标准 OpenID Connect client（authorization code + discovery）：
   登录按钮指向 `/api/v2/auth/oidc`，回调 `/api/v2/auth/oidc/callback`；
   第三方 Provider 仍用 `/api/v2/auth/oidc/<name>`。
+- 「允许空 Referer」从个人防盗链设置上移到后台站点设置，用户只维护自己的放行域名；
+  个人设置接口不再接受该键。
+- `/raw` 跳转到存储直链时改为不可缓存（`no-store`）：防盗链判定与副本变更必须每次重新计算。
 
 ### 升级注意
 
 - 旧 `hooks_state.passport` / `hooks_config.passport` 由 v019 迁移自动转到 `oidc`，无需手动改库；
   OIDC 服务端登记的外部回调地址需从 `.../auth/oidc/passport/callback` 改为 `.../auth/oidc/callback`。
+- 统一外链模式是默认值：升级后已发布的地址不变（本来就是 `/raw/<sha>`），但公开图不再直接给出
+  存储直链。若依赖直链/CDN 缓存，请在后台「外链模式」切到「存储直链」。
+- 之前某个用户把「允许空 Referer」关掉的话，该偏好不再生效：需要时在后台站点设置里关闭。
 
 ## 2.0.0-pre — 2026-11-22
 

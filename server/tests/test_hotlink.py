@@ -4,6 +4,7 @@ import io
 import pytest
 
 from sapic.basis.errors import ApiError
+from sapic.libs.settings import set_setting
 from sapic.utils.common import host_allowed, parse_allow_hosts, validate_allow_hosts
 
 USER = {"username": "alice", "password": "secret123", "email": "alice@example.com"}
@@ -37,6 +38,12 @@ def set_prefs(client, csrf, **prefs):
     )
     assert response.status_code == 200, response.get_json()
     return response.get_json()["data"]["settings"]
+
+
+def set_site(app, **values):
+    with app.app_context():
+        for key, value in values.items():
+            set_setting(key, value)
 
 
 def test_allow_list_is_normalised():
@@ -83,7 +90,8 @@ def test_hotlink_is_off_until_the_owner_asks(client):
     assert "Referer" in passed.headers.get("Vary", "")
 
 
-def test_empty_referer_can_be_rejected(client):
+def test_empty_referer_is_a_site_wide_rule(app, client):
+    """空 Referer 是否放行由后台决定，用户只能维护自己的域名白名单。"""
     csrf = register(client)
     sha = upload(client, csrf)
     set_prefs(client, csrf, hotlink_enabled=True)
@@ -91,8 +99,16 @@ def test_empty_referer_can_be_rejected(client):
     #: 默认放行空来源：直开图片、聊天工具预览都不带 Referer。
     assert client.get("/raw/%s" % sha).status_code == 200
 
-    set_prefs(client, csrf, hotlink_allow_empty=False)
+    set_site(app, hotlink_allow_empty=False)
     assert client.get("/raw/%s" % sha).status_code == 403
+
+    #: 个人设置不再接受这个键：站点规则不该被单个用户放松。
+    rejected = client.put(
+        "/api/v2/auth/settings",
+        json={"hotlink_allow_empty": True},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert rejected.status_code == 400
 
 
 def test_allow_list_lets_the_owners_sites_through(client):
@@ -121,7 +137,8 @@ def test_private_images_are_not_affected(app, client):
         headers={"X-CSRF-Token": csrf},
     )
     assert response.status_code == 200, response.get_json()
-    set_prefs(client, csrf, hotlink_enabled=True, hotlink_allow_empty=False)
+    set_prefs(client, csrf, hotlink_enabled=True)
+    set_site(app, hotlink_allow_empty=False)
 
     #: 私有图靠 can_view 而不是防盗链，带会话照常可读。
     assert client.get("/raw/%s" % sha, headers=FOREIGN).status_code == 200

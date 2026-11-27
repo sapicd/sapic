@@ -20,3 +20,7 @@ upyun==2.5.5
 #: 缤纷云 S4 官方 Python 接入方式就是 boto3（S3 协议）。
 boto3==1.44.11
 requests==2.34.2
+#: 可选：``sapic_redis_url`` 配置后 /raw 的解析缓存跨 worker 共享；
+#: 未配置或连不上时自动降级为进程内缓存，不影响运行。
+#: 客户端同时供 v1 数据迁移工具（tools/migrate_v1_to_v2.py）读取旧 Redis 使用。
+redis==8.1.0

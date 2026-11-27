@@ -46,6 +46,7 @@ from ..models.image import (
 from ..models.storage import STATE_OK
 from ..utils.common import parse_proxy_url
 from .albums import resolve_album, share_for
+from .cache import invalidate_raw
 from .hook import get_hook_manager
 from .media import image_size, strip_metadata
 from .settings import get_setting
@@ -192,24 +193,38 @@ def _public_replica_link(
     return None
 
 
+def raw_link_mode() -> bool:
+    """Whether outbound links must go through ``/raw/<sha>``.
+
+    ``raw`` (the default) keeps every image behind one endpoint, which is the
+    only way the site-wide hotlink / IP / rate-limit rules can cover them all.
+    ``direct`` returns the storage link for public images: one hop less, but
+    those URLs leave sapic's control (the bucket or its CDN must then enforce
+    its own referer rules).
+    """
+    return str(get_setting("link_mode") or "raw").strip().lower() != "direct"
+
+
 def image_src(
     image: Image,
     album: Album | None = None,
     replicas: list[ImageBackend] | None = None,
 ) -> str:
-    """Direct link for public images, stable ``/raw/<sha>`` for the rest.
+    """Direct link for public images in ``direct`` mode, else ``/raw/<sha>``.
 
     Public payloads link to the primary replica (or the next world-readable
     one), which keeps sapic out of the data path; private images — and every
     image living only on a ``private`` backend — must stay behind ``/raw/<sha>``
-    so the visibility check keeps applying.
+    so the visibility check keeps applying. In ``raw`` mode the same address is
+    handed out for public images too, so ``/raw`` remains the single exit where
+    access rules are enforced.
     """
     if album is None:
         album = image.album
     visibility = image.visibility or (
         album.visibility if album is not None else VISIBILITY_PUBLIC
     )
-    if visibility == VISIBILITY_PUBLIC:
+    if visibility == VISIBILITY_PUBLIC and not raw_link_mode():
         #: 外链登记的图片字节不在 sapic，公开图直接指向源站。
         if image.source_url:
             return image.source_url
@@ -226,13 +241,16 @@ def image_thumb(
     replicas: list[ImageBackend] | None = None,
     src: str | None = None,
 ) -> str | None:
-    """``src`` rewritten through the backend's image-processing suffix.
+    """List thumbnail: the primary replica through the backend's suffix.
 
-    Only a direct link can be rewritten: ``/raw/<sha>`` is sapic's own route and
-    ``source_url`` points at another site, so neither can carry the bucket's
-    parameters. Visibility is left entirely to :func:`image_src` — comparing the
-    result with the top replica keeps both in lockstep instead of repeating the
-    album/override rules here.
+    Visibility is left entirely to :func:`image_src` — comparing the result with
+    the top replica keeps both in lockstep instead of repeating the album/override
+    rules here. A private bucket or local storage has no suffix to append, so it
+    gets ``None`` and the list falls back to the original image.
+
+    In ``raw`` mode the suffix cannot live on the published address (``/raw`` is
+    sapic's own route), so the flag ``?thumb=1`` is used and ``/raw`` appends the
+    backend suffix to the redirect target.
     """
     if image.is_video:
         return None
@@ -241,10 +259,17 @@ def image_thumb(
     if not found:
         return None
     link, replica = found
+    suffix = thumb_suffix(replica.backend)
+    if not suffix:
+        return None
+    if raw_link_mode():
+        stable = public_url(image.sha)
+        if src is not None and src != stable:
+            return None
+        return stable + "?thumb=1"
     if src is not None and src != link:
         return None
-    suffix = thumb_suffix(replica.backend)
-    return "%s%s" % (link, suffix) if suffix else None
+    return "%s%s" % (link, suffix)
 
 
 def share_templates(
@@ -1284,6 +1309,8 @@ def user_image_counts(user_ids: list[int]) -> dict[int, int]:
 
 def delete_image(image: Image) -> None:
     """Soft delete metadata, then remove every replica."""
+    #: 先失效 /raw 的解析缓存：删除后不能再有 30 秒的 302 窗口。
+    invalidate_raw(image.sha)
     image.status = STATUS_DELETED
     image.deleted_at = now()
     image.updated_at = now()

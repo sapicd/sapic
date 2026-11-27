@@ -7,7 +7,8 @@
 ```
 
 sapic 是一个自建图床：后端是 API-only 的 Flask 应用（`server/`，包名 `sapic`），
-前端是独立的 Vue 3 + Vite 应用（`web/`），元数据存关系库（Peewee + PostgreSQL / MySQL / SQLite），不需要 Redis。
+前端是独立的 Vue 3 + Vite 应用（`web/`），元数据存关系库（Peewee + PostgreSQL / MySQL / SQLite），
+不需要 Redis（配置 `sapic_redis_url` 时仅用于 `/raw` 的解析缓存，多 worker 共享，可选）。
 
 **存储后端和登录方式都是扩展点**：一个第三方 pip 包声明 `__catalog__` 并实现约定的函数，
 就能作为存储驱动或登录 Provider 接入，核心代码不需要改动。这部分契约见

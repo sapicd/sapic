@@ -8,6 +8,7 @@ from flask import Blueprint, g, request
 from ..basis.common import as_bool
 from ..basis.errors import ApiError, ErrorCode
 from ..libs import release
+from ..libs.access import clean_mode, validate_ip_list
 from ..libs.auth import admin_required
 from ..libs.mail import SMTP_DEFAULTS, mail_ready, send_test_mail
 from ..libs.ratelimit import forget_rate_limit
@@ -60,6 +61,8 @@ _INT_KEYS = {
     "image_expire_max_days": (0, 3650),
     #: API 限速（次 / 分钟）；0 关闭。
     "api_rate_limit": (0, 6000),
+    #: /raw 图片请求的独立限额；图片量级远大于 API，默认更宽。
+    "raw_rate_limit": (0, 60000),
     #: 演示账号轮换间隔（秒）：最短一分钟，最长一天。
     "demo_rotate_interval": (60, 86400),
 }
@@ -70,6 +73,7 @@ _BOOL_KEYS = {
     "allow_user_backends",
     "allow_video",
     "demo_rotate_enabled",
+    "hotlink_allow_empty",
     "password_login",
     "plaza_enabled",
     "storage_replica",
@@ -78,11 +82,21 @@ _BOOL_KEYS = {
     "upload_enabled",
 }
 
+#: Enum settings and their accepted values.
+_ENUM_KEYS = {
+    "link_mode": ("raw", "direct"),
+}
+
 _FLOAT_KEYS = {"site_background_opacity": (0.0, 1.0)}
 
 #: Keys the admin UI may write; everything else in ``DEFAULTS`` is internal.
 EDITABLE_KEYS = sorted(
-    _STR_KEYS | set(_INT_KEYS) | _BOOL_KEYS | set(_FLOAT_KEYS) | {"smtp"}
+    _STR_KEYS
+    | set(_INT_KEYS)
+    | _BOOL_KEYS
+    | set(_FLOAT_KEYS)
+    | set(_ENUM_KEYS)
+    | {"raw_ip_mode", "raw_ip_list", "smtp"}
 )
 
 
@@ -174,6 +188,24 @@ def _clean(key: str, value):
             return ""
         return validate_password(value)[:128]
 
+    if key in _ENUM_KEYS:
+        text = str(value or "").strip().lower()
+        allowed = _ENUM_KEYS[key]
+        if text not in allowed:
+            raise ApiError(
+                "%s must be one of %s" % (key, ", ".join(allowed)),
+                ErrorCode.PARAM_ERROR,
+            )
+        return text
+
+    if key == "raw_ip_mode":
+        return clean_mode(value)
+
+    if key == "raw_ip_list":
+        if not isinstance(value, str):
+            raise ApiError("raw_ip_list must be a string", ErrorCode.PARAM_ERROR)
+        return validate_ip_list(value)
+
     if key in _STR_KEYS:
         if not isinstance(value, str):
             raise ApiError("%s must be a string" % key, ErrorCode.PARAM_ERROR)
@@ -241,7 +273,9 @@ def write_settings():
         set_setting(key, value)
     #: 当前 worker 立即生效；其它 worker 最多等 CONFIG_TTL 秒（见 libs/ratelimit.py）。
     #: 改了限额就清空窗口，避免旧计数按新阈值误伤马上到来的请求。
-    forget_rate_limit(reset="api_rate_limit" in updated)
+    forget_rate_limit(
+        reset=bool({"api_rate_limit", "raw_rate_limit"} & set(updated))
+    )
     return ok(_payload_of_settings())
 
 

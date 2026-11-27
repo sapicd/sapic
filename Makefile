@@ -8,12 +8,14 @@
 
 PY ?= $(shell [ -x $(CURDIR)/.venv/bin/python ] && echo $(CURDIR)/.venv/bin/python || echo python3)
 PNPM ?= pnpm
-PNPM_VERSION ?= 8.14.1
+PNPM_VERSION ?= 12.23.0
 SERVER_DIR ?= server
 REQ_DIR ?= $(SERVER_DIR)/requirements
 FLASK_APP ?= sapic
 HOST ?= 0.0.0.0
 PORT ?= 9514
+WEB_HOST ?= 127.0.0.1
+WEB_ALLOWED_HOSTS ?=
 WORKERS ?= 4
 U ?= admin
 P ?=
@@ -39,7 +41,8 @@ help:
 	@echo "  test           运行后端测试 (pytest)"
 	@echo ""
 	@echo "前端"
-	@echo "  web-dev        启动 Vite 开发服务器 (127.0.0.1:5173)"
+	@echo "  web-dev        启动 Vite 开发服务器 ($(WEB_HOST):5173，WEB_HOST=0.0.0.0 可对外监听，"
+	@echo "                 WEB_ALLOWED_HOSTS=host1,host2 允许外部域名访问)"
 	@echo "  web-build      构建到 web/dist"
 	@echo ""
 	@echo "文档"
@@ -95,7 +98,7 @@ scheduler:
 	cd $(SERVER_DIR) && $(PY) -m flask sa scheduler
 
 web-dev: ensure-pnpm
-	cd web && $(PNPM) run dev
+	cd web && WEB_ALLOWED_HOSTS='$(WEB_ALLOWED_HOSTS)' $(PNPM) run dev --host $(WEB_HOST)
 
 web-build: ensure-pnpm
 	cd web && $(PNPM) run build

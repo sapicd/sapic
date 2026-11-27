@@ -179,6 +179,6 @@ def review_image(image, config=None):
 - 返回 `block` 之前**不要**自行改库；判定结果由核心统一写入，管理员处理也只走 `/review` 接口。
 - 视频默认也会送审（`is_video` 为 `true`）；不想审就按示例直接返回 `pass`。
 - `block` 收口的是**本站入口**（`/raw` 的匿名访问、公开列表、广场），不是"内容撤回"：
-  如果存储后端是公有读桶，`src` 那条 CDN 直链仍然可访问，彻底撤回只能由管理员
-  `purge`（删对象）或调整桶权限。要强约束就把后端设成 `visibility=private`，
-  所有读取都走 `/raw`。
+  默认 `link_mode=raw` 时 `src` 就是 `/raw`，拦截后该地址立即 403；但若切到 `link_mode=direct`，
+  公有读桶里那条对象仍可被直接访问，彻底撤回只能由管理员 `purge`（删对象）或调整桶权限。
+  要强约束就保持默认模式，或把后端设成 `visibility=private`，所有读取都走 `/raw`。

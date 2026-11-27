@@ -4,11 +4,16 @@
 Referer based hotlink protection for public images.
 
 Every user decides for their own images, through ``user_settings``: whether
-external sites may embed them (``hotlink_enabled``), which hosts are still
-allowed (``hotlink_allow_hosts``) and whether a request without ``Referer``
-passes (``hotlink_allow_empty``). The check runs in ``views.public`` only, and
-only for public images: private ones are already authorised, and images served
-from a storage url never reach sapic (the CDN/nginx needs its own referer rule).
+external sites may embed them (``hotlink_enabled``) and which hosts are still
+allowed (``hotlink_allow_hosts``). Whether a request without ``Referer`` passes
+is a site setting (``hotlink_allow_empty``): an empty Referer is what a browser
+sends when the image is opened directly or echoed by a chat app, so it cannot be
+judged per image and letting one user relax it would weaken the whole site.
+
+The check runs in ``views.public`` only, and only for public images: private
+ones are already authorised. It only covers what actually reaches sapic, i.e.
+``link_mode=raw`` (the default); with ``link_mode=direct`` public images link
+straight to the bucket and the CDN/nginx needs its own referer rule.
 """
 
 from __future__ import annotations
@@ -24,6 +29,7 @@ from ..utils.common import (
     normalize_host,
     parse_allow_hosts,
 )
+from .settings import get_setting
 from .user_settings import get_user_settings
 
 #: ``/raw/<sha>`` verdicts. ``PASS`` still means the decision depends on the
@@ -59,6 +65,11 @@ def referer_host() -> str:
     return host if is_valid_host(host) else ""
 
 
+def allow_empty_referer() -> bool:
+    """Site-wide rule for requests that carry no ``Referer`` at all."""
+    return bool(get_setting("hotlink_allow_empty", True))
+
+
 def hotlink_verdict(image: Image, public: bool) -> str:
     """Classify the running ``/raw/<sha>`` request against the owner's rules."""
     if not public:
@@ -73,8 +84,6 @@ def hotlink_verdict(image: Image, public: bool) -> str:
 
     host = referer_host()
     if not host:
-        if prefs.get("hotlink_allow_empty", True):
-            return HOTLINK_PASS
-        return HOTLINK_BLOCK
+        return HOTLINK_PASS if allow_empty_referer() else HOTLINK_BLOCK
     allowed = site_hosts() + parse_allow_hosts(prefs.get("hotlink_allow_hosts"))
     return HOTLINK_PASS if host_allowed(host, allowed) else HOTLINK_BLOCK

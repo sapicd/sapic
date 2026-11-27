@@ -11,6 +11,12 @@ const ELEMENT_COMPONENTS_DIR = fileURLToPath(
   new URL('./node_modules/element-plus/es/components', import.meta.url),
 )
 
+//: Vite 6 默认拒绝非本机 Host，从环境变量补充允许的外部域名（逗号分隔）。
+const extraAllowedHosts = (process.env.WEB_ALLOWED_HOSTS || '')
+  .split(',')
+  .map((host) => host.trim())
+  .filter(Boolean)
+
 //: Element Plus 的组件样式是按需引入的（`<组件>/style/css`），Vite 只有在首次访问用到某个
 //: 组件的页面时才会发现它们，每发现一批就重新预构建并整页 reload（开发期「点开新页面就刷新」）。
 //: 这里把现有组件样式全部列进预构建，把多次刷新收敛到启动阶段；生产构建的产物不受影响。
@@ -50,6 +56,7 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    allowedHosts: ['localhost', '127.0.0.1', '[::1]', ...extraAllowedHosts],
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:9514',

@@ -128,7 +128,6 @@ const prefs = reactive({
   bg_opacity: null,
   hotlink_enabled: false,
   hotlink_allow_hosts: '',
-  hotlink_allow_empty: true,
 })
 const savingPrefs = ref(false)
 
@@ -159,7 +158,6 @@ function syncPrefs() {
   prefs.bg_opacity = saved.bg_opacity ?? null
   prefs.hotlink_enabled = saved.hotlink_enabled ?? false
   prefs.hotlink_allow_hosts = saved.hotlink_allow_hosts || ''
-  prefs.hotlink_allow_empty = saved.hotlink_allow_empty ?? true
 }
 
 async function savePrefs() {
@@ -643,12 +641,6 @@ onMounted(() => {
               />
               <div class="node-field__help">
                 {{ t('settings.allowDomainsHint') }}
-              </div>
-            </el-form-item>
-            <el-form-item :label="t('settings.allowEmptyReferer')">
-              <el-switch v-model="prefs.hotlink_allow_empty" />
-              <div class="node-field__help">
-                {{ t('settings.allowEmptyHint') }}
               </div>
             </el-form-item>
           </template>

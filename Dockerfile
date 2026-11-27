@@ -4,10 +4,10 @@
 FROM node:23-alpine AS web
 
 WORKDIR /app/web
-RUN corepack enable && corepack prepare pnpm@8.14.1 --activate
+RUN corepack enable && corepack prepare pnpm@12.23.0 --activate
 
-#: 先只装依赖，改源码时能命中缓存。
-COPY web/package.json web/pnpm-lock.yaml ./
+#: 先只装依赖，改源码时能命中缓存。pnpm-workspace.yaml 含构建脚本批准名单。
+COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY web/ ./

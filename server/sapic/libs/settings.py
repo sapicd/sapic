@@ -51,6 +51,20 @@ DEFAULTS = {
     #: 后端在后台异步补副本。
     #: 关掉后只保留单副本（省空间/流量），失败也不会影响上传结果。
     "storage_replica": True,
+    #: 对外链接模式。``raw``：所有图片统一给 ``/raw/<sha>``，出口只有一处，
+    #: 防盗链 / IP 访问控制 / 限速才能覆盖全部图片。``direct``：公开图直接给
+    #: 存储直链（少一次跳转，但访问策略得在 CDN 上另配）。
+    "link_mode": "raw",
+    #: ``/raw`` 单客户端限速（次 / 分钟，0 关闭）：图片请求量大，单独一档，
+    #: 与 ``api_rate_limit`` 互不影响。
+    "raw_rate_limit": 600,
+    #: ``/raw`` 的 IP 访问控制：``off`` / ``allow``（仅列表内） / ``deny``（排除列表）。
+    "raw_ip_mode": "off",
+    #: IP / CIDR 列表，逗号或换行分隔；解析规则见 ``libs/access.py``。
+    "raw_ip_list": "",
+    #: 没有 ``Referer`` 的 ``/raw`` 请求是否放行（直开图片、聊天工具预览都不带
+    #: Referer）。站点级开关：用户只维护自己的放行域名，规则强度由管理员定。
+    "hotlink_allow_empty": True,
     #: 系统
     "allow_register": True,
     "register_review": False,

@@ -2,6 +2,4 @@
 
 pytest==9.2.0
 pytest-cov==7.1.0
-#: 只有 v1 数据迁移工具（tools/migrate_v1_to_v2.py，及其测试）要读 v1 的 Redis；
-#: 应用运行时不用 Redis，所以不放在 base.txt。
-redis==8.1.0
+#: redis 已在 base.txt（/raw 的可选缓存与 v1 数据迁移工具共用同一个客户端）。

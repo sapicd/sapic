@@ -11,8 +11,9 @@ Insomnia）。两者都支持 `?lang=zh|en`（页面右上角可切换）；不�
 ## 约定
 
 - 业务接口前缀 `/api/v2`，请求与响应都是 JSON（上传除外，走 `multipart/form-data`）。
-- 根路径上还有两个不属于 `/api/v2` 的端点：`GET /raw/<sha>`（图片输出，已发布直链的兜底）
-  与 `GET /i/<sha>`（旧版直链，跳转到 `/raw/`）。油猴脚本在 `/api/v2/userscript.user.js`。
+- 根路径上还有两个不属于 `/api/v2` 的端点：`GET /raw/<sha>`（图片输出，默认就是所有图片的
+  统一对外地址）与 `GET /i/<sha>`（旧版直链，跳转到 `/raw/`）。油猴脚本在
+  `/api/v2/userscript.user.js`。
 - **成功**：
 
 ```json
@@ -43,8 +44,11 @@ Insomnia）。两者都支持 `?lang=zh|en`（页面右上角可切换）；不�
 
 所有 `/api/` 请求按客户端计数：已登录用户按账号、匿名请求按 IP。默认每分钟 120 次，
 可在后台「站点设置 → 系统」的「API 限速」调整，`0` 表示关闭。超限返回 `429`、
-`code` 为 `RATE_LIMITED`，并带 `Retry-After`（秒）响应头；`GET /api/v2/health` 与
-`/raw/` 等非 API 路径不计数。计数器保存在进程内，多 worker 部署时每个 worker 各自计数。
+`code` 为 `RATE_LIMITED`，并带 `Retry-After`（秒）响应头；`GET /api/v2/health` 不计数。
+
+`/raw/<sha>` 是另一档独立的预算（`raw_rate_limit`，默认 600 次 / 分钟，`0` 关闭），
+同样按客户端计数、同样返回 `429` + `Retry-After`：图片量级远大于接口调用，混在一起
+会让一次翻相册把 API 额度用光。计数器保存在进程内，多 worker 部署时每个 worker 各自计数。
 
 ## 鉴权
 
@@ -178,9 +182,14 @@ curl -X POST "https://your.site/api/v2/upload" \
   **系统相册**（管理员能在相册列表里看到 `role=system` 那条，用于筛选匿名图片）。
 - 图库列表只含自己的图片 + 共享给自己的相册。**管理员也是个人图库**，要看全站必须显式传
   `scope=all`；该视图只放大到公开图片，别人的私有相册不会出现。非管理员传该参数 403。
-- `src` 已按可见性处理：公开图给存储直链（后端没配 `domain` 时回落到 `/raw/<sha>`），
-  私有图固定 `/raw/<sha>`。存储后端 `visibility=private`（私有读桶）时直链不对外使用，
-  所有访问都经 `/raw/<sha>` 由驱动签发临时读地址后转发。
+- `src` 由站点设置 `link_mode` 决定。默认 `raw`：**所有**图片（含公开图）都是
+  `/raw/<sha>`，公开图由 `/raw` 302 到存储直链（`Cache-Control: no-store`），私有图由
+  `/raw` 鉴权后转发。这样防盗链、IP 访问控制与限速才覆盖全部图片。`link_mode=direct`
+  时公开图直接给存储直链（后端没配 `domain` 或只有本地副本时仍回落 `/raw/<sha>`），
+  但那些地址脱离本站，规则要在 CDN/nginx 上另配。存储后端 `visibility=private`
+  （私有读桶）时直链永不对外，所有访问都经 `/raw/<sha>` 由驱动签发临时读地址后转发。
+- 列表页的 `thumb` 在 `raw` 模式下是 `/raw/<sha>?thumb=1`，由 `/raw` 在 302 目标上
+  追加后端的图片处理后缀；`direct` 模式则直接是「直链 + 后缀」。
 - 被内容审核拦截的图（`review_state=block`）收口的是**本站入口**：`/raw/<sha>` 对匿名与其他
   用户返回 403，公开列表与广场也不再列出；本人与管理员仍可访问。如果 `src` 是公有桶直链，
   那条 URL 已经脱离本站控制，彻底撤回需要管理员删除图片（`purge`）或调整桶权限。

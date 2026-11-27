@@ -79,8 +79,9 @@ def test_import_link_skips_the_download(app, client):
     image = body["imported"][0]
     assert image["external"] is True
     assert image["filename"] == "photo.png"
-    #: 默认相册是公开的，公开图直接指向源站。
-    assert image["src"] == LINK
+    #: 默认相册是公开的，但默认 link_mode=raw：地址统一走本站出口，
+    #: 由 /raw 再 302 到源站（这样防盗链与访问规则才能覆盖外链图）。
+    assert image["src"] == "http://localhost/raw/%s" % image["sha"]
     with app.app_context():
         assert ImageBackend.select().count() == 0
 

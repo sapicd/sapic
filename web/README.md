@@ -8,7 +8,7 @@ English version: [README-en.md](./README-en.md)。
 
 ## 环境要求
 
-- Node.js 23+、pnpm 8（`packageManager: pnpm@8.14.1`，`corepack enable` 即可用）
+- Node.js 23+、pnpm 12（推荐 12.23.0，`corepack enable` 即可用）
 - 后端跑在 `127.0.0.1:9514`（仓库根 `make dev`）
 
 ## 开发

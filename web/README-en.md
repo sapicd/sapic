@@ -9,7 +9,7 @@ prefixes to Flask (the container image already does this, see `docs/deploy.md`).
 
 ## Requirements
 
-- Node.js 23+, pnpm 8 (`packageManager: pnpm@8.14.1`, `corepack enable` is enough)
+- Node.js 23+, pnpm 12 (12.23.0 recommended, `corepack enable` is enough)
 - The backend running on `127.0.0.1:9514` (run `make dev` at the repository root)
 
 ## Development

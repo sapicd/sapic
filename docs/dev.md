@@ -42,14 +42,15 @@ tools/                  v1 -> v2 data migration script
 make setup          # backend dev.txt + front-end pnpm install
 make dev            # 0.0.0.0:9514, auto reload (sets sapic_env=dev)
 make test           # backend pytest
-make web-dev        # front end on 127.0.0.1:5173
+make web-dev        # front end on 127.0.0.1:5173; WEB_HOST=0.0.0.0 to expose
 make web-build      # build the front end into web/dist
 make upgrade        # manual migration fallback
 make create-admin U=admin P='password'
 make docs           # build these docs into docs/_build/html
 ```
 
-变量可覆盖：`make dev PORT=8080`、`make serve WORKERS=8`。
+变量可覆盖：`make dev PORT=8080`、`make serve WORKERS=8`、
+`make web-dev WEB_HOST=0.0.0.0 WEB_ALLOWED_HOSTS=test.example.com`（Vite 6 会拒绝未列出的 Host）。
 
 ```{note}
 上面这些是 `Makefile` 的封装，只图本地少敲字：它们假定仓库根的 `.venv` 存在、机器上有 `make`。

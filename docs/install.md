@@ -10,7 +10,7 @@
 | 组件 | 要求 | 说明 |
 | --- | --- | --- |
 | Python | 3.10+ | 后端 `server/`，包名 `sapic`（纯本地包，不做 `pip install`） |
-| Node.js | 23+、pnpm 8 | 只在构建 / 开发前端时需要 |
+| Node.js | 23+、pnpm 12 | 只在构建 / 开发前端时需要 |
 | 数据库 | PostgreSQL / MySQL / SQLite | 由 `sapic_db_url` 指定，默认 SQLite（`server/data/sapic.db`） |
 
 依赖由 `server/requirements/` 管理：`base.txt`（运行时，含内置钩子用到的 requests / Pillow /

@@ -33,6 +33,8 @@ export const useSiteStore = defineStore('site', {
     //: 未配置 SMTP 时验证邮件发不出去，相关入口直接隐藏。
     mailEnabled: false,
     allowAnonymousUpload: false,
+    //: 对外链接模式：raw 时公开图也给 /raw 地址（集中做访问控制）。
+    linkMode: 'raw',
     //: 与后端默认值一致：个人图床形态下广场是关闭的。
     plazaEnabled: false,
     version: '',
@@ -93,6 +95,7 @@ export const useSiteStore = defineStore('site', {
         this.passwordLogin = data?.password_login !== false
         this.mailEnabled = Boolean(data?.mail_enabled)
         this.allowAnonymousUpload = Boolean(data?.allow_anonymous_upload)
+        this.linkMode = data?.link_mode === 'direct' ? 'direct' : 'raw'
         this.plazaEnabled = data?.plaza_enabled !== false
         this.version = data?.version || ''
       } catch (error) {

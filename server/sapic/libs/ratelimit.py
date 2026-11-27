@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Per-client API rate limiting.
+"""Per-client request rate limiting.
 
-Every ``/api/`` request is counted against the site setting
-``api_rate_limit`` (requests per minute, ``0`` disables it). The counter is a
-fixed one-minute window kept in this process: multi-worker deployments therefore
-allow ``limit`` requests *per worker*, because sharing the window would need a
-store (Redis) that sapic v2 deliberately does not require.
+Two independent fixed one-minute windows are kept in this process:
+
+* ``/api/`` requests are counted against ``api_rate_limit``;
+* ``/raw/`` requests are counted against ``raw_rate_limit``, because image
+  traffic is an order of magnitude larger and must not consume the API budget.
+
+``0`` disables the corresponding limit. Multi-worker deployments allow ``limit``
+requests *per worker*: the window is deliberately kept in process so the guard
+needs no shared store and cannot fail on a Redis outage.
 
 Clients are identified by their signed-in user id, or by IP for anonymous
-requests. ``/api/v2/health`` and non-API paths (``/raw/``) are never counted, so
-health probes and image delivery keep working when the limit is exhausted.
+requests. ``/api/v2/health`` is never counted, so health probes keep working
+when the limit is exhausted.
 """
 
 from __future__ import annotations
@@ -37,6 +41,10 @@ MAX_KEYS = 10000
 PRUNE_EVERY = 1024
 #: Health checks come from load balancers and must never be throttled.
 HEALTH_PATH = "/api/v2/health"
+#: Image delivery budget, kept separate from the API one.
+RAW_PATH_PREFIX = "/raw/"
+RAW_SETTING = "raw_rate_limit"
+API_SETTING = "api_rate_limit"
 
 
 class RateLimiter:
@@ -47,10 +55,12 @@ class RateLimiter:
         window: float = WINDOW,
         config_ttl: float = CONFIG_TTL,
         max_keys: int = MAX_KEYS,
+        setting: str = API_SETTING,
     ):
         self._window = float(window)
         self._config_ttl = float(config_ttl)
         self._max_keys = max(1, int(max_keys))
+        self._setting = setting
         #: ``key -> [window_index, count]``; the window index makes stale rows
         #: distinguishable without storing timestamps per entry.
         self._buckets: dict[str, list[int]] = {}
@@ -77,15 +87,18 @@ class RateLimiter:
         #: Read outside the lock: this is a database query, and two workers
         #: racing on a refresh is harmless.
         try:
-            value = int(get_setting("api_rate_limit"))
+            value = int(get_setting(self._setting))
         except (TypeError, ValueError):
-            logger.warning("invalid api_rate_limit setting, rate limiting disabled")
+            logger.warning(
+                "invalid %s setting, rate limiting disabled", self._setting
+            )
             value = 0
         value = max(0, value)
         with self._lock:
             self._limit = value
             self._limit_at = monotonic()
             return value
+
 
     def check(
         self, key: str, limit: int, now: float | None = None
@@ -131,15 +144,24 @@ def client_key() -> str:
 
 def forget_rate_limit(reset: bool = False) -> None:
     """Apply a just-saved limit on this worker (see ``views/settings.py``)."""
-    limiter = current_app.extensions.get("rate_limiter")
-    if limiter is not None:
-        limiter.forget(reset=reset)
+    for name in ("rate_limiter", "raw_rate_limiter"):
+        limiter = current_app.extensions.get(name)
+        if limiter is not None:
+            limiter.forget(reset=reset)
+
+
+def _limit_or_none(limiter: RateLimiter) -> int | None:
+    """The configured limit, or ``None`` when it is off."""
+    limit = limiter.limit()
+    return limit if limit > 0 else None
 
 
 def init_app(app) -> None:
-    """Register the limiter and its ``before_request`` guard."""
+    """Register both limiters and their ``before_request`` guards."""
     limiter = RateLimiter()
     app.extensions["rate_limiter"] = limiter
+    raw_limiter = RateLimiter(setting=RAW_SETTING)
+    app.extensions["raw_rate_limiter"] = raw_limiter
 
     @app.before_request
     def _api_rate_limit():
@@ -147,10 +169,26 @@ def init_app(app) -> None:
             return None
         if not request.path.startswith("/api/") or request.path == HEALTH_PATH:
             return None
-        limit = limiter.limit()
-        if limit <= 0:
+        limit = _limit_or_none(limiter)
+        if limit is None:
             return None
         allowed, retry_after = limiter.check(client_key(), limit)
+        if allowed:
+            return None
+        g.rate_limit_retry_after = retry_after
+        raise ApiError("rate limit exceeded", ErrorCode.RATE_LIMITED, 429)
+
+    @app.before_request
+    def _raw_rate_limit():
+        """Image delivery has its own budget: a hot page must not starve the API."""
+        if request.method == "OPTIONS":
+            return None
+        if not request.path.startswith(RAW_PATH_PREFIX):
+            return None
+        limit = _limit_or_none(raw_limiter)
+        if limit is None:
+            return None
+        allowed, retry_after = raw_limiter.check(client_key(), limit)
         if allowed:
             return None
         g.rate_limit_retry_after = retry_after

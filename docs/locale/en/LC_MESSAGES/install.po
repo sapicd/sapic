@@ -72,8 +72,8 @@ msgid "Node.js"
 msgstr "Node.js"
 
 #: ../../install.md
-msgid "23+、pnpm 8"
-msgstr "23+, pnpm 8"
+msgid "23+、pnpm 12"
+msgstr "23+, pnpm 12"
 
 #: ../../install.md
 msgid "只在构建 / 开发前端时需要"

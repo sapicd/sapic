@@ -27,6 +27,7 @@ def create_app(config: dict | None = None) -> Flask:
     from .basis.log import init_app as init_log
     from .cli import sa_cli
     from .libs.auth import init_app as init_auth
+    from .libs.cache import init_app as init_cache
     from .libs.hook import init_app as init_hooks
     from .libs.images import sweep_expired
     from .libs.ratelimit import init_app as init_rate_limit
@@ -54,6 +55,8 @@ def create_app(config: dict | None = None) -> Flask:
     init_db(app)
     auto_upgrade()
     init_auth(app)
+    #: /raw 的解析缓存：配了 sapic_redis_url 才跨进程共享，否则进程内。
+    init_cache(app)
     init_hooks(app)
     #: 启用的存储钩子必须有对应的后端行才能被上传链路选中。
     with app.app_context():

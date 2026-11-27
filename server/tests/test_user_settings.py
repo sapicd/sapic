@@ -39,7 +39,6 @@ def test_settings_defaults(app, client):
         "bg_opacity": None,
         "hotlink_enabled": False,
         "hotlink_allow_hosts": "",
-        "hotlink_allow_empty": True,
     }
 
 

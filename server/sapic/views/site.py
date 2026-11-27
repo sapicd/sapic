@@ -44,6 +44,8 @@ def site():
             "image_expire_max_days": int(
                 get_setting("image_expire_max_days", 0) or 0
             ),
+            #: 对外链接模式：``raw`` 时公开图也是 /raw 地址，前端据此解释地址形态。
+            "link_mode": str(get_setting("link_mode") or "raw"),
             "plaza_enabled": bool(get_setting("plaza_enabled", False)),
             "allow_register": bool(get_setting("allow_register", True)),
             "password_login": bool(get_setting("password_login", True)),
